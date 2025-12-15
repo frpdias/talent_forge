@@ -73,8 +73,8 @@ npm run dev
 
 ### Infra
 - **Supabase** - PostgreSQL + Auth + Storage
-- **Vercel** - Deploy frontend (recomendado)
-- **Railway/Render** - Deploy backend (recomendado)
+- **Vercel** - Deploy API e Frontend (serverless)
+- Deploy configurado para monorepo (apps separados)
 
 ## Estrutura do Projeto
 
@@ -136,6 +136,7 @@ npm run dev:web      # Apenas Web
 
 ## Documentação
 
+- [docs/DEPLOY_VERCEL.md](docs/DEPLOY_VERCEL.md) - ⭐ **Guia completo de deploy no Vercel**
 - [docs/manifesto.md](docs/manifesto.md) - Narrativa, roadmap e entregáveis
 - [docs/decisions.md](docs/decisions.md) - Decisões de stack
 - [docs/data-model.sql](docs/data-model.sql) - Schema do banco

@@ -2,14 +2,20 @@
   "version": 2,
   "builds": [
     {
-      "src": "api/index.ts",
+      "src": "package.json",
       "use": "@vercel/node"
     }
   ],
   "routes": [
     {
       "src": "/(.*)",
-      "dest": "api/index.ts"
+      "dest": "/api/index.ts"
     }
-  ]
+  ],
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
+  "installCommand": "npm install",
+  "env": {
+    "NODE_ENV": "production"
+  }
 }

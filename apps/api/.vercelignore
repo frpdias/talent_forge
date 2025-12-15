@@ -1,0 +1,20 @@
+# Vercel ignore patterns for API
+
+# Development files
+*.log
+.env
+.env.local
+.env.*.local
+
+# Test files
+test/
+**/*.spec.ts
+**/*.test.ts
+coverage/
+
+# Documentation
+README.md
+
+# IDE
+.vscode/
+.idea/
