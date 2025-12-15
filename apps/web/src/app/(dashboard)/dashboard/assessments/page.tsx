@@ -21,8 +21,8 @@ interface Assessment {
   candidate_id: string;
   assessment_type: string;
   status: string;
-  completed_at: string;
-  candidate: Candidate;
+  completed_at: string | null;
+  candidates?: Candidate[];
 }
 
 interface DISCResult {

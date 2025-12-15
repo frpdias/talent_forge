@@ -12,6 +12,7 @@
     "dev:web": "npm run dev -w tf-web",
     "build": "npm run build -w tf-api && npm run build -w tf-web",
     "build:api": "npm run build -w tf-api",
+    "build:api:serverless": "npm run build -w tf-api",
     "build:web": "npm run build -w tf-web",
     "lint": "npm run lint -w tf-api && npm run lint -w tf-web",
     "test": "npm run test -w tf-api",
