@@ -1,15 +1,21 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import type { INestApplication } from '@nestjs/common';
 
-let app: INestApplication;
+let app: any = null;
 
-async function bootstrap(): Promise<INestApplication> {
+async function bootstrap() {
   if (app) {
     return app;
   }
 
-  const { NestFactory } = await import('@nestjs/core');
-  const { AppModule } = await import('../dist/app.module');
+  // Use require with path relative to the function location
+  const path = require('path');
+  const distPath = path.join(__dirname, '..', 'dist', 'app.module.js');
+  
+  console.log('Looking for module at:', distPath);
+  console.log('__dirname:', __dirname);
+  
+  const { NestFactory } = require('@nestjs/core');
+  const { AppModule } = require(distPath);
 
   app = await NestFactory.create(AppModule, {
     logger: ['error', 'warn', 'log'],
@@ -29,10 +35,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const httpAdapter = nestApp.getHttpAdapter();
     const instance = httpAdapter.getInstance();
     
-    // Handle the request
-    return new Promise((resolve) => {
+    return new Promise<void>((resolve) => {
       instance(req, res, () => {
-        resolve(undefined);
+        resolve();
       });
     });
   } catch (error: any) {
@@ -40,6 +45,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(500).json({
       error: error.message,
       stack: error.stack,
+      dirname: __dirname,
     });
   }
 }
