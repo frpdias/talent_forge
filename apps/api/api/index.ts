@@ -1,71 +1,89 @@
-// Vercel serverless entrypoint for the Nest API
-import type { Handler } from 'aws-lambda';
+// Vercel serverless entrypoint
+import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { ExpressAdapter } from '@nestjs/platform-express';
 import express from 'express';
-import serverlessExpress from '@vendia/serverless-express';
-import { AppModule } from '../dist/app.module';
 
-let cachedHandler: Handler | null = null;
+let app: any = null;
 
-async function bootstrap(): Promise<Handler> {
-  const expressApp = express();
-  const adapter = new ExpressAdapter(expressApp);
-  const app = await NestFactory.create(AppModule, adapter, {
-    bodyParser: true,
-    logger: ['error', 'warn'],
-  });
+async function bootstrap() {
+  if (app) return app;
 
-  // Global prefix
-  app.setGlobalPrefix('api/v1');
+  try {
+    // Dynamic import to avoid build issues
+    const { AppModule } = await import('../dist/app.module.js');
+    
+    const expressApp = express();
+    const adapter = new ExpressAdapter(expressApp);
+    
+    app = await NestFactory.create(AppModule, adapter, {
+      bodyParser: true,
+      logger: ['error', 'warn', 'log'],
+    });
 
-  // CORS
-  app.enableCors({
-    origin: [
-      process.env.FRONTEND_URL || 'http://localhost:3000',
-      'http://127.0.0.1:3000',
-    ],
-    credentials: true,
-  });
+    // Global prefix
+    app.setGlobalPrefix('api/v1');
 
-  // Validation
-  app.useGlobalPipes(
-    new ValidationPipe({
-      whitelist: true,
-      forbidNonWhitelisted: true,
-      transform: true,
-      transformOptions: {
-        enableImplicitConversion: true,
-      },
-    }),
-  );
+    // CORS
+    app.enableCors({
+      origin: true,
+      credentials: true,
+    });
 
-  // Swagger
-  const config = new DocumentBuilder()
-    .setTitle('TalentForge API')
-    .setDescription(
-      'API para recrutamento inteligente com testes comportamentais',
-    )
-    .setVersion('1.0')
-    .addBearerAuth()
-    .addApiKey({ type: 'apiKey', name: 'x-org-id', in: 'header' }, 'x-org-id')
-    .build();
+    // Validation
+    app.useGlobalPipes(
+      new ValidationPipe({
+        whitelist: true,
+        forbidNonWhitelisted: true,
+        transform: true,
+        transformOptions: {
+          enableImplicitConversion: true,
+        },
+      }),
+    );
 
-  const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('docs', app, document);
+    // Swagger
+    const config = new DocumentBuilder()
+      .setTitle('TalentForge API')
+      .setDescription('API para recrutamento inteligente com testes comportamentais')
+      .setVersion('1.0')
+      .addBearerAuth()
+      .addApiKey({ type: 'apiKey', name: 'x-org-id', in: 'header' }, 'x-org-id')
+      .build();
 
-  await app.init();
-  
-  return serverlessExpress({
-    app: adapter.getInstance(),
-  });
+    const document = SwaggerModule.createDocument(app, config);
+    SwaggerModule.setup('docs', app, document);
+
+    await app.init();
+    
+    console.log('✅ NestJS app initialized successfully');
+    return app;
+  } catch (error) {
+    console.error('❌ Error initializing NestJS app:', error);
+    throw error;
+  }
 }
 
-export default async (event: any, context: any) => {
-  if (!cachedHandler) {
-    cachedHandler = await bootstrap();
+export default async function handler(req: VercelRequest, res: VercelResponse) {
+  try {
+    const nestApp = await bootstrap();
+    const expressApp = nestApp.getHttpAdapter().getInstance();
+    
+    // Handle request with Express
+    return new Promise((resolve, reject) => {
+      expressApp(req, res, (err: any) => {
+        if (err) reject(err);
+        else resolve(undefined);
+      });
+    });
+  } catch (error: any) {
+    console.error('❌ Handler error:', error);
+    return res.status(500).json({
+      error: 'Internal Server Error',
+      message: error?.message || 'Unknown error',
+      stack: process.env.NODE_ENV === 'development' ? error?.stack : undefined,
+    });
   }
-  return cachedHandler(event, context, () => {});
-};
+}
