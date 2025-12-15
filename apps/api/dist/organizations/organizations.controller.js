@@ -19,7 +19,6 @@ const organizations_service_1 = require("./organizations.service");
 const dto_1 = require("./dto");
 const current_user_decorator_1 = require("../auth/decorators/current-user.decorator");
 let OrganizationsController = class OrganizationsController {
-    organizationsService;
     constructor(organizationsService) {
         this.organizationsService = organizationsService;
     }

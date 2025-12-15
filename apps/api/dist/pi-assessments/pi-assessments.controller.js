@@ -17,7 +17,6 @@ const common_1 = require("@nestjs/common");
 const pi_assessments_service_1 = require("./pi-assessments.service");
 const dto_1 = require("./dto");
 let PiAssessmentsController = class PiAssessmentsController {
-    piAssessmentsService;
     constructor(piAssessmentsService) {
         this.piAssessmentsService = piAssessmentsService;
     }

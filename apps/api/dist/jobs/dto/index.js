@@ -36,14 +36,6 @@ var JobStatus;
     JobStatus["CLOSED"] = "closed";
 })(JobStatus || (exports.JobStatus = JobStatus = {}));
 class CreateJobDto {
-    title;
-    description;
-    location;
-    salaryMin;
-    salaryMax;
-    employmentType;
-    seniority;
-    status;
 }
 exports.CreateJobDto = CreateJobDto;
 __decorate([
@@ -94,14 +86,6 @@ __decorate([
     __metadata("design:type", String)
 ], CreateJobDto.prototype, "status", void 0);
 class UpdateJobDto {
-    title;
-    description;
-    location;
-    salaryMin;
-    salaryMax;
-    employmentType;
-    seniority;
-    status;
 }
 exports.UpdateJobDto = UpdateJobDto;
 __decorate([
@@ -153,8 +137,6 @@ __decorate([
     __metadata("design:type", String)
 ], UpdateJobDto.prototype, "status", void 0);
 class CreatePipelineStageDto {
-    name;
-    position;
 }
 exports.CreatePipelineStageDto = CreatePipelineStageDto;
 __decorate([
@@ -168,8 +150,6 @@ __decorate([
     __metadata("design:type", Number)
 ], CreatePipelineStageDto.prototype, "position", void 0);
 class UpdatePipelineStageDto {
-    name;
-    position;
 }
 exports.UpdatePipelineStageDto = UpdatePipelineStageDto;
 __decorate([

@@ -19,7 +19,6 @@ const reports_service_1 = require("./reports.service");
 const org_guard_1 = require("../auth/guards/org.guard");
 const org_decorator_1 = require("../auth/decorators/org.decorator");
 let ReportsController = class ReportsController {
-    reportsService;
     constructor(reportsService) {
         this.reportsService = reportsService;
     }
