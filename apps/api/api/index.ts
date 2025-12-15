@@ -1,16 +1,17 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
+import type { INestApplication } from '@nestjs/common';
 
-let cachedHandler: any = null;
+let app: INestApplication;
 
-async function bootstrap() {
-  if (cachedHandler) {
-    return cachedHandler;
+async function bootstrap(): Promise<INestApplication> {
+  if (app) {
+    return app;
   }
 
-  const { NestFactory } = require('@nestjs/core');
-  const { AppModule } = require('../dist/app.module');
+  const { NestFactory } = await import('@nestjs/core');
+  const { AppModule } = await import('../dist/app.module');
 
-  const app = await NestFactory.create(AppModule, {
+  app = await NestFactory.create(AppModule, {
     logger: ['error', 'warn', 'log'],
   });
 
@@ -19,15 +20,21 @@ async function bootstrap() {
 
   await app.init();
 
-  const expressApp = app.getHttpAdapter().getInstance();
-  cachedHandler = expressApp;
-  return expressApp;
+  return app;
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
-    const app = await bootstrap();
-    return app(req, res);
+    const nestApp = await bootstrap();
+    const httpAdapter = nestApp.getHttpAdapter();
+    const instance = httpAdapter.getInstance();
+    
+    // Handle the request
+    return new Promise((resolve) => {
+      instance(req, res, () => {
+        resolve(undefined);
+      });
+    });
   } catch (error: any) {
     console.error('Handler Error:', error);
     return res.status(500).json({
