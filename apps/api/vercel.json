@@ -3,6 +3,11 @@
   "buildCommand": "npm run build",
   "outputDirectory": ".",
   "installCommand": "npm install",
+  "functions": {
+    "api/index.ts": {
+      "includeFiles": "dist/**"
+    }
+  },
   "rewrites": [
     {
       "source": "/(.*)",
