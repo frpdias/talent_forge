@@ -4,8 +4,11 @@ node_modules/
 # Next.js / build outputs
 .next/
 out/
-dist/
 build/
+
+# API dist is needed for Vercel deployment - do NOT ignore apps/api/dist
+# Only ignore dist at root level if exists
+/dist/
 
 # Logs and cache
 npm-debug.log*

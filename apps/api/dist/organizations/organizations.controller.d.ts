@@ -1,0 +1,42 @@
+import { OrganizationsService } from './organizations.service';
+import { CreateOrganizationDto, UpdateOrganizationDto } from './dto';
+import type { JwtPayload } from '../auth/auth.service';
+export declare class OrganizationsController {
+    private organizationsService;
+    constructor(organizationsService: OrganizationsService);
+    create(dto: CreateOrganizationDto, user: JwtPayload): Promise<{
+        id: any;
+        name: any;
+        orgType: any;
+        slug: any;
+        createdAt: any;
+        updatedAt: any;
+    }>;
+    findAll(user: JwtPayload): Promise<{
+        role: any;
+        id: any;
+        name: any;
+        orgType: any;
+        slug: any;
+        createdAt: any;
+        updatedAt: any;
+    }[]>;
+    findOne(id: string, user: JwtPayload): Promise<{
+        role: any;
+        id: any;
+        name: any;
+        orgType: any;
+        slug: any;
+        createdAt: any;
+        updatedAt: any;
+    }>;
+    update(id: string, dto: UpdateOrganizationDto, user: JwtPayload): Promise<{
+        id: any;
+        name: any;
+        orgType: any;
+        slug: any;
+        createdAt: any;
+        updatedAt: any;
+    }>;
+    getMembers(id: string, user: JwtPayload): Promise<any[]>;
+}

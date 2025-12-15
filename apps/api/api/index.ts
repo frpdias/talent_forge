@@ -3,7 +3,7 @@ import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { ExpressAdapter } from '@nestjs/platform-express';
 import express from 'express';
-import { AppModule } from '../dist/app.module';
+import path from 'path';
 
 let cachedServer: any = null;
 
@@ -11,6 +11,10 @@ async function bootstrapServer() {
   if (cachedServer) {
     return cachedServer;
   }
+
+  // Resolve path to compiled AppModule - works in Vercel
+  const distPath = path.join(process.cwd(), 'dist', 'app.module.js');
+  const { AppModule } = await import(distPath);
 
   const expressApp = express();
   const adapter = new ExpressAdapter(expressApp);
@@ -46,9 +50,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return server(req, res);
   } catch (error: any) {
     console.error('Handler error:', error);
+    console.error('CWD:', process.cwd());
+    console.error('Stack:', error.stack);
     return res.status(500).json({
       error: 'Internal Server Error',
       message: error.message,
+      cwd: process.cwd(),
     });
   }
 }
