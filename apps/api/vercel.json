@@ -1,12 +1,6 @@
 {
   "version": 2,
-  "buildCommand": "npm install && npm run build",
-  "functions": {
-    "api/index.ts": {
-      "memory": 1024,
-      "maxDuration": 10
-    }
-  },
+  "buildCommand": "npm run build",
   "rewrites": [
     {
       "source": "/(.*)",

@@ -16,10 +16,10 @@
 2. Selecione o repositório do projeto
 3. Configure:
    - **Framework Preset**: Other
-   - **Root Directory**: `apps/api`
-   - **Build Command**: `npm run build`
-   - **Output Directory**: `dist`
-   - **Install Command**: `npm install`
+   - **Root Directory**: `apps/api` ⚠️ **CRÍTICO**
+   - **Build Command**: deixe vazio (usa do vercel.json)
+   - **Output Directory**: deixe vazio
+   - **Install Command**: deixe vazio
 
 ### 2. Configurar Variáveis de Ambiente
 
