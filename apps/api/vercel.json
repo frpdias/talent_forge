@@ -1,8 +1,9 @@
 {
   "version": 2,
+  "buildCommand": "npm run build",
   "builds": [
     {
-      "src": "package.json",
+      "src": "api/index.ts",
       "use": "@vercel/node"
     }
   ],
@@ -11,11 +12,5 @@
       "src": "/(.*)",
       "dest": "/api/index.ts"
     }
-  ],
-  "buildCommand": "npm run build",
-  "outputDirectory": "dist",
-  "installCommand": "npm install",
-  "env": {
-    "NODE_ENV": "production"
-  }
+  ]
 }
