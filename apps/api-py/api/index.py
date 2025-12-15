@@ -15,13 +15,18 @@ def get_supabase_client() -> Client:
     return create_client(url, service_key)
 
 
-app = FastAPI(title="TalentForge API (Python)", version="0.1.0")
+app = FastAPI(title="Talent Forge API", version="1.0.0")
 supabase = get_supabase_client()
+
+
+@app.get("/")
+def root():
+    return {"status": "ok", "service": "talent-forge-api", "version": "1.0.0"}
 
 
 @app.get("/health")
 def health():
-    return {"status": "ok"}
+    return {"status": "healthy"}
 
 
 @app.get("/color/questions")
