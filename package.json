@@ -1,0 +1,24 @@
+{
+  "name": "talentforge",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "concurrently \"npm run dev:api\" \"npm run dev:web\"",
+    "dev:api": "npm run start:dev -w tf-api",
+    "dev:web": "npm run dev -w tf-web",
+    "build": "npm run build -w tf-api && npm run build -w tf-web",
+    "build:api": "npm run build -w tf-api",
+    "build:web": "npm run build -w tf-web",
+    "lint": "npm run lint -w tf-api && npm run lint -w tf-web",
+    "test": "npm run test -w tf-api",
+    "db:migrate": "supabase db push",
+    "db:reset": "supabase db reset"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}
