@@ -19,6 +19,7 @@ const auth_service_1 = require("./auth.service");
 const current_user_decorator_1 = require("./decorators/current-user.decorator");
 const public_decorator_1 = require("./decorators/public.decorator");
 let AuthController = class AuthController {
+    authService;
     constructor(authService) {
         this.authService = authService;
     }

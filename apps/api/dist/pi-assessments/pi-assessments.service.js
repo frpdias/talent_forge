@@ -14,6 +14,7 @@ const common_1 = require("@nestjs/common");
 const supabase_service_1 = require("../supabase/supabase.service");
 const dto_1 = require("./dto");
 let PiAssessmentsService = class PiAssessmentsService {
+    supabaseService;
     constructor(supabaseService) {
         this.supabaseService = supabaseService;
     }

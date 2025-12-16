@@ -21,6 +21,7 @@ const org_guard_1 = require("../auth/guards/org.guard");
 const org_decorator_1 = require("../auth/decorators/org.decorator");
 const current_user_decorator_1 = require("../auth/decorators/current-user.decorator");
 let JobsController = class JobsController {
+    jobsService;
     constructor(jobsService) {
         this.jobsService = jobsService;
     }

@@ -20,6 +20,8 @@ var ColorChoice;
     ColorChoice["BRANCO"] = "branco";
 })(ColorChoice || (exports.ColorChoice = ColorChoice = {}));
 class SubmitColorResponseDto {
+    questionId;
+    selectedColor;
 }
 exports.SubmitColorResponseDto = SubmitColorResponseDto;
 __decorate([

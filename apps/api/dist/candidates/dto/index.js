@@ -13,6 +13,15 @@ exports.CreateCandidateNoteDto = exports.UpdateCandidateDto = exports.CreateCand
 const class_validator_1 = require("class-validator");
 const swagger_1 = require("@nestjs/swagger");
 class CreateCandidateDto {
+    fullName;
+    email;
+    phone;
+    location;
+    currentTitle;
+    linkedinUrl;
+    salaryExpectation;
+    availabilityDate;
+    tags;
 }
 exports.CreateCandidateDto = CreateCandidateDto;
 __decorate([
@@ -73,6 +82,15 @@ __decorate([
     __metadata("design:type", Array)
 ], CreateCandidateDto.prototype, "tags", void 0);
 class UpdateCandidateDto {
+    fullName;
+    email;
+    phone;
+    location;
+    currentTitle;
+    linkedinUrl;
+    salaryExpectation;
+    availabilityDate;
+    tags;
 }
 exports.UpdateCandidateDto = UpdateCandidateDto;
 __decorate([
@@ -134,6 +152,7 @@ __decorate([
     __metadata("design:type", Array)
 ], UpdateCandidateDto.prototype, "tags", void 0);
 class CreateCandidateNoteDto {
+    note;
 }
 exports.CreateCandidateNoteDto = CreateCandidateNoteDto;
 __decorate([

@@ -20,6 +20,9 @@ var PiAxis;
     PiAxis["ESTRUTURA"] = "estrutura";
 })(PiAxis || (exports.PiAxis = PiAxis = {}));
 class SubmitPiSituationalDto {
+    questionId;
+    selectedAxis;
+    block;
 }
 exports.SubmitPiSituationalDto = SubmitPiSituationalDto;
 __decorate([
