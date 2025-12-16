@@ -149,7 +149,10 @@ export default function ColorDynamicsTestPage() {
     try {
       const res = await colorApi.finalize(assessmentId, token);
       const resData = (res as any)?.data ?? res;
-      const scores = (resData as any).scores as Record<ColorCode, number>;
+      const scores = (resData as any)?.scores as Record<ColorCode, number> | undefined;
+      if (!scores) {
+        throw new Error('Resultado inválido ao finalizar o teste (scores ausentes)');
+      }
       const order = (Object.keys(scores) as ColorCode[]).sort((a, b) => scores[b] - scores[a]);
       setResult({
         scores,
