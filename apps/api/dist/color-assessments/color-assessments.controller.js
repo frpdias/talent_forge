@@ -17,7 +17,6 @@ const common_1 = require("@nestjs/common");
 const color_assessments_service_1 = require("./color-assessments.service");
 const dto_1 = require("./dto");
 let ColorAssessmentsController = class ColorAssessmentsController {
-    colorAssessmentsService;
     constructor(colorAssessmentsService) {
         this.colorAssessmentsService = colorAssessmentsService;
     }

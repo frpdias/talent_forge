@@ -15,8 +15,6 @@ const core_1 = require("@nestjs/core");
 const auth_service_1 = require("../auth.service");
 const public_decorator_1 = require("../decorators/public.decorator");
 let OrgGuard = class OrgGuard {
-    authService;
-    reflector;
     constructor(authService, reflector) {
         this.authService = authService;
         this.reflector = reflector;

@@ -20,8 +20,6 @@ var ApplicationStatus;
     ApplicationStatus["REJECTED"] = "rejected";
 })(ApplicationStatus || (exports.ApplicationStatus = ApplicationStatus = {}));
 class CreateApplicationDto {
-    jobId;
-    candidateId;
 }
 exports.CreateApplicationDto = CreateApplicationDto;
 __decorate([
@@ -35,9 +33,6 @@ __decorate([
     __metadata("design:type", String)
 ], CreateApplicationDto.prototype, "candidateId", void 0);
 class UpdateApplicationStageDto {
-    toStageId;
-    status;
-    note;
 }
 exports.UpdateApplicationStageDto = UpdateApplicationStageDto;
 __decorate([

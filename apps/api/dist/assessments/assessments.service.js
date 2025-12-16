@@ -82,7 +82,6 @@ const BEHAVIORAL_OPTIONS = [
     { value: 5, label: 'Concordo totalmente' },
 ];
 let AssessmentsService = class AssessmentsService {
-    supabaseService;
     constructor(supabaseService) {
         this.supabaseService = supabaseService;
     }

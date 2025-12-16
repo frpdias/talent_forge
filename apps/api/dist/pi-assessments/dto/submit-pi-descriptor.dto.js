@@ -17,9 +17,6 @@ var PiBlock;
     PiBlock["ADAPTADO"] = "adaptado";
 })(PiBlock || (exports.PiBlock = PiBlock = {}));
 class SubmitPiDescriptorDto {
-    descriptorId;
-    block;
-    selected;
 }
 exports.SubmitPiDescriptorDto = SubmitPiDescriptorDto;
 __decorate([

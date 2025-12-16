@@ -21,7 +21,6 @@ const org_guard_1 = require("../auth/guards/org.guard");
 const org_decorator_1 = require("../auth/decorators/org.decorator");
 const public_decorator_1 = require("../auth/decorators/public.decorator");
 let AssessmentsController = class AssessmentsController {
-    assessmentsService;
     constructor(assessmentsService) {
         this.assessmentsService = assessmentsService;
     }

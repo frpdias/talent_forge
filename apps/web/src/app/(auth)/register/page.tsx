@@ -19,6 +19,7 @@ function RegisterContent() {
   const typeParam = searchParams.get('type') as 'recruiter' | 'candidate' | null;
   
   const [userType, setUserType] = useState<'recruiter' | 'candidate'>(typeParam || 'recruiter');
+  const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -51,6 +52,7 @@ function RegisterContent() {
         options: {
           data: {
             user_type: userType,
+            full_name: fullName,
           },
           emailRedirectTo: `${window.location.origin}/auth/callback?type=${userType}`,
         },
@@ -72,7 +74,7 @@ function RegisterContent() {
           .insert({
             id: data.user.id,
             user_type: userType,
-            full_name: name,
+            full_name: fullName || email,
             email_verified: false,
             onboarding_completed: false,
           });
@@ -203,6 +205,20 @@ function RegisterContent() {
                 Fazer login
               </Link>
             </p>
+          </div>
+
+          {/* Full name */}
+          <div className="mb-4 sm:mb-5">
+            <label className="block text-xs sm:text-sm font-medium text-[#141042] mb-1.5">
+              Nome completo
+            </label>
+            <input
+              type="text"
+              value={fullName}
+              onChange={(e) => setFullName(e.target.value)}
+              placeholder="Digite seu nome completo"
+              className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-[#E5E5DC] rounded-xl text-sm sm:text-base outline-none focus:border-[#141042] focus:ring-2 focus:ring-[#141042]/10"
+            />
           </div>
 
           {/* User Type Selection */}

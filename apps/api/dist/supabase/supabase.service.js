@@ -14,9 +14,6 @@ const common_1 = require("@nestjs/common");
 const config_1 = require("@nestjs/config");
 const supabase_js_1 = require("@supabase/supabase-js");
 let SupabaseService = class SupabaseService {
-    configService;
-    supabase;
-    supabaseAdmin;
     constructor(configService) {
         this.configService = configService;
     }

@@ -18,8 +18,6 @@ var OrgType;
     OrgType["COMPANY"] = "company";
 })(OrgType || (exports.OrgType = OrgType = {}));
 class CreateOrganizationDto {
-    name;
-    orgType;
 }
 exports.CreateOrganizationDto = CreateOrganizationDto;
 __decorate([
@@ -33,7 +31,6 @@ __decorate([
     __metadata("design:type", String)
 ], CreateOrganizationDto.prototype, "orgType", void 0);
 class UpdateOrganizationDto {
-    name;
 }
 exports.UpdateOrganizationDto = UpdateOrganizationDto;
 __decorate([

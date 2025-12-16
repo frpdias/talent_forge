@@ -18,9 +18,6 @@ var AssessmentKind;
     AssessmentKind["BEHAVIORAL_V1"] = "behavioral_v1";
 })(AssessmentKind || (exports.AssessmentKind = AssessmentKind = {}));
 class CreateAssessmentDto {
-    candidateId;
-    jobId;
-    assessmentKind;
 }
 exports.CreateAssessmentDto = CreateAssessmentDto;
 __decorate([
@@ -46,8 +43,6 @@ __decorate([
     __metadata("design:type", String)
 ], CreateAssessmentDto.prototype, "assessmentKind", void 0);
 class AssessmentAnswerDto {
-    questionId;
-    value;
 }
 exports.AssessmentAnswerDto = AssessmentAnswerDto;
 __decorate([
@@ -61,7 +56,6 @@ __decorate([
     __metadata("design:type", Number)
 ], AssessmentAnswerDto.prototype, "value", void 0);
 class SubmitAssessmentDto {
-    answers;
 }
 exports.SubmitAssessmentDto = SubmitAssessmentDto;
 __decorate([
