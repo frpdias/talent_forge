@@ -99,9 +99,14 @@ export default function PiTestPage() {
           piApi.createAssessment(user.id, session.access_token),
         ]);
 
-        setDescriptors(descData as Descriptor[]);
-        setQuestions(qData as SituationalQuestion[]);
-        setAssessmentId((assessment as any).id);
+        const descriptorsList = (descData as any)?.items ?? descData;
+        const questionsList = (qData as any)?.items ?? qData;
+        const assessmentData = (assessment as any)?.data ?? assessment;
+        const created = Array.isArray(assessmentData) ? assessmentData[0] : assessmentData;
+
+        setDescriptors(Array.isArray(descriptorsList) ? descriptorsList : []);
+        setQuestions(Array.isArray(questionsList) ? questionsList : []);
+        setAssessmentId(created?.id);
       } catch (err: any) {
         console.error('Erro ao iniciar TF-PI:', err?.message || err);
         setError(err?.message || 'Erro ao iniciar TF-PI.');

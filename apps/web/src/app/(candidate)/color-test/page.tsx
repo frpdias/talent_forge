@@ -83,7 +83,8 @@ export default function ColorDynamicsTestPage() {
 
         // Perguntas
         const questionData = await colorApi.listQuestions(session.access_token);
-        const mapped: Question[] = (questionData as any[]).map((q) => ({
+        const questionItems = (questionData as any)?.items ?? questionData;
+        const mapped: Question[] = (Array.isArray(questionItems) ? questionItems : []).map((q) => ({
           id: q.id,
           prompt: q.prompt,
           options: [
@@ -98,7 +99,9 @@ export default function ColorDynamicsTestPage() {
 
         // Assessment
         const assessment = await colorApi.createAssessment(user.id, session.access_token);
-        setAssessmentId((assessment as any).id);
+        const assessmentData = (assessment as any)?.data ?? assessment;
+        const created = Array.isArray(assessmentData) ? assessmentData[0] : assessmentData;
+        setAssessmentId(created?.id);
       } catch (err: any) {
         console.error('Erro ao iniciar teste das cores:', err?.message || err);
         setError(err?.message || 'Erro ao iniciar teste.');
@@ -145,12 +148,13 @@ export default function ColorDynamicsTestPage() {
     }
     try {
       const res = await colorApi.finalize(assessmentId, token);
-      const scores = (res as any).scores as Record<ColorCode, number>;
+      const resData = (res as any)?.data ?? res;
+      const scores = (resData as any).scores as Record<ColorCode, number>;
       const order = (Object.keys(scores) as ColorCode[]).sort((a, b) => scores[b] - scores[a]);
       setResult({
         scores,
-        primary: (res as any).primary_color,
-        secondary: (res as any).secondary_color,
+        primary: (resData as any).primary_color,
+        secondary: (resData as any).secondary_color,
         order,
       });
     } catch (err: any) {
