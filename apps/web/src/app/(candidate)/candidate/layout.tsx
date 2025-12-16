@@ -1,8 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { 
   Home, 
   Briefcase, 
@@ -17,6 +17,7 @@ import {
   Search,
   ChevronDown
 } from 'lucide-react';
+import { createClient } from '@/lib/supabase/client';
 
 const navItems = [
   { href: '/candidate', label: 'Início', icon: Home },
@@ -32,8 +33,15 @@ const moreItems = [
 
 export default function CandidateLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter();
+  const supabase = useMemo(() => createClient(), []);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    router.push('/login');
+  };
 
   return (
     <div className="min-h-screen bg-[#FAFAF8]">
@@ -113,7 +121,10 @@ export default function CandidateLayout({ children }: { children: React.ReactNod
         </nav>
 
         <div className="absolute bottom-4 left-3 right-3 sm:left-4 sm:right-4">
-          <button className="flex items-center space-x-3 px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl text-[#666666] hover:bg-[#F5F5F0] hover:text-[#141042] transition-all w-full">
+          <button
+            onClick={handleLogout}
+            className="flex items-center space-x-3 px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl text-[#666666] hover:bg-[#F5F5F0] hover:text-[#141042] transition-all w-full"
+          >
             <LogOut className="w-5 h-5" />
             <span className="font-medium text-sm sm:text-base">Sair</span>
           </button>
