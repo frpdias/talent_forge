@@ -1,4 +1,6 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://talent-forge-api.vercel.app';
+
+const DEFAULT_TIMEOUT_MS = 10_000;
 
 interface FetchOptions extends RequestInit {
   token?: string;
@@ -9,7 +11,7 @@ export async function apiFetch<T>(
   endpoint: string,
   options: FetchOptions = {}
 ): Promise<T> {
-  const { token, orgId, ...fetchOptions } = options;
+  const { token, orgId, signal, ...fetchOptions } = options;
 
   const headers: HeadersInit = {
     'Content-Type': 'application/json',
@@ -24,18 +26,38 @@ export async function apiFetch<T>(
     (headers as Record<string, string>)['x-org-id'] = orgId;
   }
 
-  const response = await fetch(`${API_URL}${endpoint}`, {
-    ...fetchOptions,
-    headers,
-  });
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), DEFAULT_TIMEOUT_MS);
 
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({ message: 'An error occurred' }));
-    throw new Error(error.message || `HTTP error! status: ${response.status}`);
+  try {
+    const response = await fetch(`${API_URL}${endpoint}`, {
+      ...fetchOptions,
+      headers,
+      signal: signal ?? controller.signal,
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ message: 'An error occurred' }));
+      const message =
+        error?.message || `HTTP error! status: ${response.status} (${response.statusText})`;
+      throw new Error(message);
+    }
+
+    return response.json();
+  } catch (err: any) {
+    if (err?.name === 'AbortError') {
+      throw new Error('Request timed out');
+    }
+    throw err;
+  } finally {
+    clearTimeout(timeout);
   }
-
-  return response.json();
 }
+
+export const healthApi = {
+  root: () => apiFetch<{ status: string; service: string; version: string }>('/'),
+  health: () => apiFetch<{ status: string }>('/health'),
+};
 
 // Organizations
 export const organizationsApi = {
