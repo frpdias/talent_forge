@@ -234,3 +234,182 @@ def get_disc_scores(assessment_id: str, user=Depends(get_current_user)):
     if not resp.data:
         raise HTTPException(status_code=404, detail="assessment not found")
     return resp.data
+
+
+# ----------------------------
+# Aliases sem /v1 (compat web atual)
+# ----------------------------
+
+
+@app.post("/color-assessments")
+def create_color_assessment_public(payload: dict):
+    candidate_user_id = payload.get("candidateUserId") or payload.get("candidate_user_id")
+    if not candidate_user_id:
+        raise HTTPException(status_code=400, detail="candidateUserId is required")
+    resp = (
+        supabase.table("color_assessments")
+        .insert({"candidate_user_id": candidate_user_id, "status": "draft"})
+        .execute()
+    )
+    return {"data": resp.data}
+
+
+@app.get("/color-assessments/questions")
+def list_color_questions_public():
+    resp = (
+        supabase.table("color_questions")
+        .select("*")
+        .eq("active", True)
+        .order("question_number")
+        .execute()
+    )
+    return {"items": resp.data}
+
+
+@app.post("/color-assessments/{assessment_id}/responses")
+def create_color_response_public(assessment_id: str, payload: dict):
+    question_id = payload.get("questionId") or payload.get("question_id")
+    selected_color = payload.get("selectedColor") or payload.get("selected_color")
+    if not selected_color or not question_id:
+        raise HTTPException(status_code=400, detail="selectedColor and questionId are required")
+    resp = (
+        supabase.table("color_responses")
+        .insert(
+            {
+                "assessment_id": assessment_id,
+                "question_id": question_id,
+                "selected_color": selected_color,
+            }
+        )
+        .execute()
+    )
+    return {"data": resp.data}
+
+
+@app.post("/color-assessments/{assessment_id}/complete")
+def finalize_color_assessment_public(assessment_id: str):
+    supabase.table("color_assessments").update({"status": "completed"}).eq("id", assessment_id).execute()
+    resp = (
+        supabase.table("color_assessments")
+        .select("scores,primary_color,secondary_color,status")
+        .eq("id", assessment_id)
+        .single()
+        .execute()
+    )
+    return {"data": resp.data}
+
+
+@app.get("/color-assessments/latest")
+def latest_color_assessment_public():
+    resp = (
+        supabase.table("color_assessments")
+        .select("id,candidate_user_id,status,primary_color,secondary_color,scores,created_at")
+        .order("created_at", desc=True)
+        .limit(1)
+        .execute()
+    )
+    return {"data": resp.data[0] if resp.data else None}
+
+
+@app.post("/pi-assessments")
+def create_pi_assessment_public(payload: dict):
+    candidate_user_id = payload.get("candidateUserId") or payload.get("candidate_user_id")
+    if not candidate_user_id:
+        raise HTTPException(status_code=400, detail="candidateUserId is required")
+    resp = (
+        supabase.table("pi_assessments")
+        .insert({"candidate_user_id": candidate_user_id, "status": "draft"})
+        .execute()
+    )
+    return {"data": resp.data}
+
+
+@app.get("/pi-assessments/questions")
+def list_pi_questions_public():
+    resp = (
+        supabase.table("pi_situational_questions")
+        .select("*")
+        .eq("active", True)
+        .order("question_number")
+        .execute()
+    )
+    return {"items": resp.data}
+
+
+@app.get("/pi-assessments/descriptors")
+def list_pi_descriptors_public():
+    resp = (
+        supabase.table("pi_descriptors")
+        .select("*")
+        .eq("active", True)
+        .order("position")
+        .execute()
+    )
+    return {"items": resp.data}
+
+
+@app.post("/pi-assessments/{assessment_id}/responses/situational")
+def create_pi_situational_public(assessment_id: str, payload: dict):
+    question_id = payload.get("questionId") or payload.get("question_id")
+    selected_axis = payload.get("selectedAxis") or payload.get("selected_axis")
+    block = payload.get("block")
+    if not question_id or not selected_axis or not block:
+        raise HTTPException(status_code=400, detail="questionId, selectedAxis e block são obrigatórios")
+    resp = (
+        supabase.table("pi_situational_responses")
+        .insert(
+            {
+                "assessment_id": assessment_id,
+                "question_id": question_id,
+                "selected_axis": selected_axis,
+                "block": block,
+            }
+        )
+        .execute()
+    )
+    return {"data": resp.data}
+
+
+@app.post("/pi-assessments/{assessment_id}/responses/descriptor")
+def create_pi_descriptor_public(assessment_id: str, payload: dict):
+    descriptor_id = payload.get("descriptorId") or payload.get("descriptor_id")
+    block = payload.get("block")
+    if not descriptor_id or not block:
+        raise HTTPException(status_code=400, detail="descriptorId e block são obrigatórios")
+    resp = (
+        supabase.table("pi_descriptor_responses")
+        .upsert(
+            {
+                "assessment_id": assessment_id,
+                "descriptor_id": descriptor_id,
+                "block": block,
+            }
+        )
+        .execute()
+    )
+    return {"data": resp.data}
+
+
+@app.post("/pi-assessments/{assessment_id}/complete")
+def finalize_pi_assessment_public(assessment_id: str):
+    supabase.table("pi_assessments").update({"status": "completed"}).eq("id", assessment_id).execute()
+    resp = (
+        supabase.table("pi_assessments")
+        .select("scores_natural,scores_adapted,gaps,status")
+        .eq("id", assessment_id)
+        .single()
+        .execute()
+    )
+    return {"data": resp.data}
+
+
+@app.get("/pi-assessments/latest")
+def latest_pi_assessment_public():
+    resp = (
+        supabase.table("pi_assessments")
+        .select("id,candidate_user_id,status,scores_natural,scores_adapted,gaps,created_at")
+        .order("created_at", desc=True)
+        .limit(1)
+        .execute()
+    )
+    return {"data": resp.data[0] if resp.data else None}
