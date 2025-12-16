@@ -205,6 +205,8 @@ export default function PiTestPage() {
   const currentQuestion = questions[currentIndex];
   const currentAnswer =
     currentQuestion && situationalAnswers[currentBlock]?.[currentQuestion.id];
+  const descriptorsList = Array.isArray(descriptors) ? descriptors : [];
+  const questionsList = Array.isArray(questions) ? questions : [];
 
   if (loading) {
     return (
@@ -277,7 +279,7 @@ export default function PiTestPage() {
               </span>
             </div>
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
-              {descriptors.map((d) => {
+              {descriptorsList.map((d) => {
                 const active = selectedDescriptors[
                   phase === 'natural-descritores' ? 'natural' : 'adaptado'
                 ].has(d.id);
@@ -322,7 +324,7 @@ export default function PiTestPage() {
                 Situações forçadas — {phase === 'natural-situacional' ? 'Perfil Natural' : 'Perfil Adaptado ao Papel'}
               </h2>
               <span className="text-sm text-white/70">
-                Questão {currentIndex + 1} / {questions.length}
+                Questão {currentIndex + 1} / {questionsList.length}
               </span>
             </div>
 
