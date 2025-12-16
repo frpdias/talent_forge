@@ -115,7 +115,7 @@ export default function ColorDynamicsTestPage() {
 
   const currentQuestion = questions[currentIndex];
   const totalAnswered = Object.keys(answers).length;
-  const progress = Math.round((totalAnswered / questions.length) * 100);
+  const progress = questions.length ? Math.round((totalAnswered / questions.length) * 100) : 0;
 
   const handleSelect = async (color: ColorCode) => {
     if (!currentQuestion || !assessmentId || !token) return;
