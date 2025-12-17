@@ -191,11 +191,55 @@ export default function CandidateDashboard() {
     const loadColor = async () => {
       try {
         setColorLoading(true);
+        setColorError(null);
         const supabase = createClient();
+        const { data: { user } } = await supabase.auth.getUser();
         const { data: { session } } = await supabase.auth.getSession();
-        if (!session?.access_token) return;
-        const latest = await colorApi.latest(session.access_token);
-        setColorResult(latest);
+        
+        console.log('[CandidateDash] User:', user?.id);
+        console.log('[CandidateDash] Session:', !!session);
+        
+        if (!session?.access_token) {
+          console.log('[CandidateDash] No access token');
+          setColorError('Não autenticado');
+          setColorLoading(false);
+          return;
+        }
+        
+        if (!user?.id) {
+          console.log('[CandidateDash] No user id');
+          setColorError('Usuário não identificado');
+          setColorLoading(false);
+          return;
+        }
+        
+        // Buscar diretamente do Supabase para validar os dados
+        console.log('[CandidateDash] Buscando assessment completado...');
+        const { data: colorData, error: colorError } = await supabase
+          .from('color_assessments')
+          .select('*')
+          .eq('candidate_user_id', user.id)
+          .eq('status', 'completed')
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        
+        console.log('[CandidateDash] Supabase result:', colorData);
+        
+        if (colorError) {
+          console.error('[CandidateDash] Supabase error:', colorError);
+          setColorError(colorError.message);
+          setColorLoading(false);
+          return;
+        }
+        
+        if (colorData) {
+          console.log('[CandidateDash] Encontrado assessment:', colorData);
+          setColorResult(colorData);
+        } else {
+          console.log('[CandidateDash] Nenhum assessment completado encontrado');
+          setColorResult(null);
+        }
       } catch (err: any) {
         console.error('Erro ao carregar perfil de cores:', err?.message || err);
         setColorError(err?.message || 'Erro ao carregar perfil de cores');
@@ -393,7 +437,8 @@ export default function CandidateDashboard() {
                   { code: 'verde', label: 'Verde', colorClasses: 'from-emerald-400/80 to-emerald-500/90', summary: colorSummary['verde'] },
                   { code: 'branco', label: 'Branco', colorClasses: 'from-slate-300/80 to-slate-400/90', summary: colorSummary['branco'] },
                 ] as const).map((item) => {
-                  const val = (colorResult.scores || {})[item.code] || 0;
+                  const scores = (colorResult.scores || {}) as Record<string, number>;
+                  const val = scores[item.code] || 0;
                   return (
                     <div
                       key={item.code}
@@ -425,11 +470,11 @@ export default function CandidateDashboard() {
               <p className="text-sm text-[#2E2E2E] leading-relaxed mt-3">
                 Cor primária:{' '}
                 <strong title={colorSummary[colorResult.primary_color as string] || ''}>
-                  {colorResult.primary_color || '-'}
+                  {colorLabel[colorResult.primary_color as string] || colorResult.primary_color || '-'}
                 </strong>{' '}
                 • Secundária:{' '}
                 <strong title={colorSummary[colorResult.secondary_color as string] || ''}>
-                  {colorResult.secondary_color || '-'}
+                  {colorLabel[colorResult.secondary_color as string] || colorResult.secondary_color || '-'}
                 </strong>
               </p>
             </>

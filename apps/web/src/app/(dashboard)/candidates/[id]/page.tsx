@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { Header } from '@/components/layout';
 import { Card, CardContent, Badge, Button, Avatar, Textarea } from '@/components/ui';
 import { useOrgStore } from '@/lib/store';
-import { candidatesApi, applicationsApi } from '@/lib/api';
+import { candidatesApi, applicationsApi, piApi } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { formatDate, formatDateTime, getApplicationStatusLabel, getApplicationStatusColor } from '@/lib/utils';
 import {
@@ -21,6 +21,7 @@ import {
   MessageSquare,
   Send,
   Brain,
+  Zap,
 } from 'lucide-react';
 
 interface Candidate {
@@ -47,6 +48,16 @@ interface Application {
   fitScore?: number;
 }
 
+interface PIAssessment {
+  id: string;
+  candidate_user_id: string;
+  status: string;
+  scores_natural?: Record<string, number>;
+  scores_adapted?: Record<string, number>;
+  gaps?: Record<string, number>;
+  completed_at?: string;
+}
+
 export default function CandidateDetailPage() {
   const { id } = useParams();
   const { currentOrg } = useOrgStore();
@@ -56,12 +67,28 @@ export default function CandidateDetailPage() {
   const [loading, setLoading] = useState(true);
   const [newNote, setNewNote] = useState('');
   const [addingNote, setAddingNote] = useState(false);
+  const [piAssessment, setPiAssessment] = useState<PIAssessment | null>(null);
+  const [piLoading, setPiLoading] = useState(false);
 
   useEffect(() => {
     if (currentOrg?.id && session?.access_token && id) {
       loadCandidate();
+      loadPIAssessment();
     }
   }, [currentOrg?.id, session?.access_token, id]);
+
+  const loadPIAssessment = async () => {
+    try {
+      setPiLoading(true);
+      const data = await piApi.latestByCandidate(id as string, session!.access_token);
+      setPiAssessment(data as PIAssessment);
+    } catch (error) {
+      console.error('Failed to load PI assessment:', error);
+      setPiAssessment(null);
+    } finally {
+      setPiLoading(false);
+    }
+  };
 
   const loadCandidate = async () => {
     try {
@@ -201,7 +228,110 @@ export default function CandidateDetailPage() {
               </CardContent>
             </Card>
 
-            {/* Applications */}
+            {/* PI Assessment */}
+            {!piLoading && piAssessment && piAssessment.status === 'completed' && (
+              <Card>
+                <div className="p-4 border-b border-gray-200">
+                  <h3 className="font-semibold text-gray-900 flex items-center gap-2">
+                    <Zap className="h-5 w-5" />
+                    Teste PI - Drives Comportamentais
+                  </h3>
+                </div>
+                <CardContent className="p-6">
+                  <div className="space-y-6">
+                    {/* Perfil Natural */}
+                    <div>
+                      <h4 className="font-semibold text-gray-900 mb-3">Perfil Natural</h4>
+                      <div className="grid grid-cols-2 gap-4">
+                        {piAssessment.scores_natural && Object.entries(piAssessment.scores_natural).map(([axis, score]) => (
+                          <div key={axis} className="space-y-1">
+                            <div className="flex justify-between items-center">
+                              <label className="text-sm font-medium text-gray-700 capitalize">
+                                {axis === 'direcao' && 'Direção'}
+                                {axis === 'energia_social' && 'Energia Social'}
+                                {axis === 'ritmo' && 'Ritmo'}
+                                {axis === 'estrutura' && 'Estrutura'}
+                              </label>
+                              <span className="text-sm font-semibold text-gray-900">{score}</span>
+                            </div>
+                            <div className="w-full bg-gray-200 rounded-full h-2">
+                              <div
+                                className="bg-blue-500 h-2 rounded-full"
+                                style={{ width: `${Math.min((score / 50) * 100, 100)}%` }}
+                              />
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Perfil Adaptado */}
+                    <div>
+                      <h4 className="font-semibold text-gray-900 mb-3">Perfil Adaptado</h4>
+                      <div className="grid grid-cols-2 gap-4">
+                        {piAssessment.scores_adapted && Object.entries(piAssessment.scores_adapted).map(([axis, score]) => (
+                          <div key={axis} className="space-y-1">
+                            <div className="flex justify-between items-center">
+                              <label className="text-sm font-medium text-gray-700 capitalize">
+                                {axis === 'direcao' && 'Direção'}
+                                {axis === 'energia_social' && 'Energia Social'}
+                                {axis === 'ritmo' && 'Ritmo'}
+                                {axis === 'estrutura' && 'Estrutura'}
+                              </label>
+                              <span className="text-sm font-semibold text-gray-900">{score}</span>
+                            </div>
+                            <div className="w-full bg-gray-200 rounded-full h-2">
+                              <div
+                                className="bg-green-500 h-2 rounded-full"
+                                style={{ width: `${Math.min((score / 50) * 100, 100)}%` }}
+                              />
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Gaps */}
+                    {piAssessment.gaps && (
+                      <div>
+                        <h4 className="font-semibold text-gray-900 mb-3">Gaps (Diferenças)</h4>
+                        <div className="grid grid-cols-2 gap-4">
+                          {Object.entries(piAssessment.gaps).map(([axis, gap]) => (
+                            <div key={axis} className="space-y-1">
+                              <div className="flex justify-between items-center">
+                                <label className="text-sm font-medium text-gray-700 capitalize">
+                                  {axis === 'direcao' && 'Direção'}
+                                  {axis === 'energia_social' && 'Energia Social'}
+                                  {axis === 'ritmo' && 'Ritmo'}
+                                  {axis === 'estrutura' && 'Estrutura'}
+                                </label>
+                                <span className="text-sm font-semibold text-gray-900">{Math.abs(gap as number)}</span>
+                              </div>
+                              <div className="w-full bg-gray-200 rounded-full h-2">
+                                <div
+                                  className={(gap as number) > 0 ? 'bg-red-500' : 'bg-yellow-500'}
+                                  style={{
+                                    width: `${Math.min((Math.abs(gap as number) / 50) * 100, 100)}%`,
+                                    height: '100%',
+                                    borderRadius: '9999px',
+                                  }}
+                                />
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {piAssessment.completed_at && (
+                      <p className="text-xs text-gray-400">
+                        Concluído em {formatDate(piAssessment.completed_at)}
+                      </p>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
             <Card>
               <div className="p-4 border-b border-gray-200">
                 <h3 className="font-semibold text-gray-900 flex items-center gap-2">

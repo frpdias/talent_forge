@@ -176,18 +176,27 @@ def create_disc_response(assessment_id: str, payload: dict, user=Depends(get_cur
 def create_color_assessment(payload: dict, user=Depends(get_current_user)):
     candidate_user_id = payload.get("candidate_user_id")
     if not candidate_user_id:
+        print("[ERRO] candidate_user_id ausente no payload de create_color_assessment")
         raise HTTPException(status_code=400, detail="candidate_user_id is required")
-    resp = (
-        supabase.table("color_assessments")
-        .insert(
-            {
-                "candidate_user_id": candidate_user_id,
-                "status": payload.get("status", "draft"),
-            }
+    try:
+        resp = (
+            supabase.table("color_assessments")
+            .insert(
+                {
+                    "candidate_user_id": candidate_user_id,
+                    "status": payload.get("status", "draft"),
+                }
+            )
+            .execute()
         )
-        .execute()
-    )
-    return {"data": resp.data}
+        if not resp.data:
+            print(f"[ERRO] Falha ao criar color_assessment para user {candidate_user_id}: {resp}")
+            raise HTTPException(status_code=500, detail="Erro ao criar assessment. Tente novamente.")
+        print(f"[OK] Assessment criado: {resp.data}")
+        return {"data": resp.data}
+    except Exception as e:
+        print(f"[EXCEPTION] Erro inesperado ao criar assessment: {e}")
+        raise HTTPException(status_code=500, detail="Erro inesperado ao criar assessment.")
 
 
 @app.post("/v1/disc/assessments")
@@ -271,24 +280,72 @@ def create_color_response_public(assessment_id: str, payload: dict):
     question_id = payload.get("questionId") or payload.get("question_id")
     selected_color = payload.get("selectedColor") or payload.get("selected_color")
     if not selected_color or not question_id:
+        print(f"[ERRO] selectedColor/questionId ausentes no payload: {payload}")
         raise HTTPException(status_code=400, detail="selectedColor and questionId are required")
-    resp = (
-        supabase.table("color_responses")
-        .insert(
-            {
-                "assessment_id": assessment_id,
-                "question_id": question_id,
-                "selected_color": selected_color,
-            }
+    # Verifica se assessment existe
+    assessment = supabase.table("color_assessments").select("id").eq("id", assessment_id).single().execute()
+    if not assessment.data:
+        print(f"[ERRO] Assessment {assessment_id} não encontrado ao tentar salvar resposta.")
+        raise HTTPException(status_code=404, detail="Assessment não encontrado.")
+    try:
+        resp = (
+            supabase.table("color_responses")
+            .insert(
+                {
+                    "assessment_id": assessment_id,
+                    "question_id": question_id,
+                    "selected_color": selected_color,
+                }
+            )
+            .execute()
         )
-        .execute()
-    )
-    return {"data": resp.data}
+        if not resp.data:
+            print(f"[ERRO] Falha ao salvar resposta: {resp}")
+            raise HTTPException(status_code=500, detail="Erro ao salvar resposta. Tente novamente.")
+        print(f"[OK] Resposta salva: {resp.data}")
+        return {"data": resp.data}
+    except Exception as e:
+        print(f"[EXCEPTION] Erro inesperado ao salvar resposta: {e}")
+        raise HTTPException(status_code=500, detail="Erro inesperado ao salvar resposta.")
 
 
 @app.post("/color-assessments/{assessment_id}/complete")
 def finalize_color_assessment_public(assessment_id: str):
-    supabase.table("color_assessments").update({"status": "completed"}).eq("id", assessment_id).execute()
+    # Buscar todas as respostas desse assessment
+    resp_answers = (
+        supabase.table("color_responses")
+        .select("selected_color")
+        .eq("assessment_id", assessment_id)
+        .execute()
+    )
+    answers = resp_answers.data or []
+    if not answers:
+        print(f"[ERRO] Nenhuma resposta encontrada para assessment {assessment_id}")
+        raise HTTPException(status_code=400, detail="Nenhuma resposta encontrada para este assessment.")
+
+    # Contar ocorrências de cada cor
+    from collections import Counter
+    color_counts = Counter([a.get("selected_color") for a in answers if a.get("selected_color")])
+    if not color_counts:
+        print(f"[ERRO] Nenhuma cor válida encontrada nas respostas do assessment {assessment_id}")
+        raise HTTPException(status_code=400, detail="Respostas inválidas para este assessment.")
+
+    # Calcular scores (quantidade de cada cor)
+    scores = dict(color_counts)
+    # Ordenar por maior score
+    order = sorted(scores, key=scores.get, reverse=True)
+    primary_color = order[0] if order else None
+    secondary_color = order[1] if len(order) > 1 else None
+
+    # Atualizar assessment com scores, cor primária/secundária e status
+    supabase.table("color_assessments").update({
+        "scores": scores,
+        "primary_color": primary_color,
+        "secondary_color": secondary_color,
+        "status": "completed"
+    }).eq("id", assessment_id).execute()
+
+    # Buscar e retornar dados atualizados
     resp = (
         supabase.table("color_assessments")
         .select("scores,primary_color,secondary_color,status")

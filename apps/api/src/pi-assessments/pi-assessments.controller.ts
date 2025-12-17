@@ -78,4 +78,13 @@ export class PiAssessmentsController {
     const accessToken = (req as any).accessToken;
     return this.piAssessmentsService.latestByUser(userId, accessToken);
   }
+
+  @Get('candidate/:candidateUserId/latest')
+  latestByCandidate(
+    @Param('candidateUserId') candidateUserId: string,
+    @Req() req: Request,
+  ) {
+    const accessToken = (req as any).accessToken;
+    return this.piAssessmentsService.latestByUser(candidateUserId, accessToken);
+  }
 }

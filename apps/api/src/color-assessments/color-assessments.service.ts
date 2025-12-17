@@ -167,6 +167,7 @@ export class ColorAssessmentsService {
       .from('color_assessments')
       .select('*')
       .eq('candidate_user_id', userId)
+      .eq('status', 'completed')
       .order('created_at', { ascending: false })
       .limit(1)
       .single();

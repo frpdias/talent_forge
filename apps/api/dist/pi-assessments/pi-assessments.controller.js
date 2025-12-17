@@ -52,6 +52,10 @@ let PiAssessmentsController = class PiAssessmentsController {
         const accessToken = req.accessToken;
         return this.piAssessmentsService.latestByUser(userId, accessToken);
     }
+    latestByCandidate(candidateUserId, req) {
+        const accessToken = req.accessToken;
+        return this.piAssessmentsService.latestByUser(candidateUserId, accessToken);
+    }
 };
 exports.PiAssessmentsController = PiAssessmentsController;
 __decorate([
@@ -109,6 +113,14 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", void 0)
 ], PiAssessmentsController.prototype, "latest", null);
+__decorate([
+    (0, common_1.Get)('candidate/:candidateUserId/latest'),
+    __param(0, (0, common_1.Param)('candidateUserId')),
+    __param(1, (0, common_1.Req)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:returntype", void 0)
+], PiAssessmentsController.prototype, "latestByCandidate", null);
 exports.PiAssessmentsController = PiAssessmentsController = __decorate([
     (0, common_1.Controller)('pi-assessments'),
     __metadata("design:paramtypes", [pi_assessments_service_1.PiAssessmentsService])

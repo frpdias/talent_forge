@@ -34,18 +34,13 @@ function RegisterContent() {
       setError('Você precisa aceitar os termos de uso.');
       return;
     }
-    
     setLoading(true);
     setError('');
-
     try {
       const supabase = createClient();
-      
-      // Verificar se as variáveis de ambiente estão configuradas
       if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
         throw new Error('Configuração do Supabase não encontrada. Configure as variáveis de ambiente.');
       }
-      
       const { data, error: authError } = await supabase.auth.signUp({
         email,
         password,
@@ -57,18 +52,15 @@ function RegisterContent() {
           emailRedirectTo: `${window.location.origin}/auth/callback?type=${userType}`,
         },
       });
-
       if (authError) {
         console.error('Supabase Auth Error:', authError);
         throw authError;
       }
-
-      // Create user_profile record if user was created
+      // Criação do perfil do usuário
       if (data.user && !data.user.identities?.length) {
-        // User already exists, no need to create profile
+        // Usuário já existe, não criar perfil duplicado
         console.log('User already exists, skipping profile creation');
       } else if (data.user) {
-        // Create user_profile for the new user
         const { error: profileError } = await supabase
           .from('user_profiles')
           .insert({
@@ -78,19 +70,16 @@ function RegisterContent() {
             email_verified: false,
             onboarding_completed: false,
           });
-
         if (profileError) {
-          console.error('Error creating user profile:', profileError);
-          // Don't throw - user auth was successful, profile can be created later
+          console.error('Erro ao criar perfil do usuário:', profileError);
+          setError('Conta criada, mas houve erro ao criar o perfil. Tente novamente ou entre em contato com o suporte.');
+          return;
         }
       }
-      
       console.log('Signup success:', data);
       setSuccess(true);
     } catch (err: any) {
       console.error('Registration error:', err);
-      
-      // Mapear mensagens de erro do Supabase para português
       const errorMessages: Record<string, string> = {
         'Failed to fetch': 'Erro de conexão. Verifique sua internet e tente novamente.',
         'User already registered': 'Este email já está cadastrado. Tente fazer login.',
@@ -100,16 +89,13 @@ function RegisterContent() {
         'Email address cannot be used as it is not authorized': 'Este domínio de email não é permitido.',
         'email_address_invalid': 'Este email não é válido. Use um email real.',
       };
-      
       const errorCode = err.error_code || err.code || '';
       const errorMessage = err.message || '';
-      
-      const friendlyMessage = 
-        errorMessages[errorCode] || 
-        errorMessages[errorMessage] || 
-        errorMessage || 
+      const friendlyMessage =
+        errorMessages[errorCode] ||
+        errorMessages[errorMessage] ||
+        errorMessage ||
         'Erro ao criar conta. Tente novamente.';
-      
       setError(friendlyMessage);
     } finally {
       setLoading(false);

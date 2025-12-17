@@ -13,7 +13,7 @@ async function bootstrap() {
     logger: ['error', 'warn', 'log'],
   });
 
-  app.setGlobalPrefix('api/v1');
+  // Remove global prefix for Vercel - routes are used directly
   app.enableCors({ origin: true, credentials: true });
 
   await app.init();

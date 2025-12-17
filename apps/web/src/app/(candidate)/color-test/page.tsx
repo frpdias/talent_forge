@@ -14,6 +14,13 @@ interface Option {
   text: string;
 }
 
+interface ColorResult {
+  scores: Record<ColorCode, number>;
+  primary: ColorCode;
+  secondary: ColorCode;
+  order: ColorCode[];
+}
+
 interface Question {
   id: string;
   prompt: string;
@@ -22,50 +29,43 @@ interface Question {
 
 const colorProfiles: Record<ColorCode, { label: string; description: string }> = {
   azul: {
-    label: 'Azul — Mental Físico',
-    description:
-      'Lógica, princípios, visão de longo prazo, comunicação estruturada, ritmo progressivo e foco em coerência.',
+    label: 'Azul',
+    description: 'Perfil analítico, metódico e orientado a detalhes. Valoriza precisão e qualidade.',
   },
   rosa: {
-    label: 'Rosa — Emocional Mental',
-    description:
-      'Movimento, desafio, inovação, intensidade, comunicação direta e ritmo acelerado orientado a ideias.',
+    label: 'Rosa',
+    description: 'Perfil relacional, empático e colaborativo. Valoriza harmonia e conexões humanas.',
   },
   amarelo: {
-    label: 'Amarelo — Emocional Físico',
-    description:
-      'Conexão humana, empatia, harmonia, alta expressividade, necessidade de diálogo e processamento verbal.',
+    label: 'Amarelo',
+    description: 'Perfil criativo, entusiasta e comunicativo. Valoriza inovação e reconhecimento.',
   },
   verde: {
-    label: 'Verde — Físico Emocional',
-    description:
-      'Continuidade, estabilidade, integração de contextos, valorização do passado, ritmo orgânico e aversão à pressa.',
+    label: 'Verde',
+    description: 'Perfil estável, paciente e confiável. Valoriza segurança e consistência.',
   },
   branco: {
-    label: 'Branco — Físico Mental',
-    description:
-      'Propósito, estrutura, pragmatismo, organização sistêmica, foco em eficiência, padrões e execução consistente.',
+    label: 'Branco',
+    description: 'Perfil adaptável, diplomático e flexível. Valoriza equilíbrio e versatilidade.',
   },
 };
 
-export default function ColorDynamicsTestPage() {
-  const router = useRouter();
-  const supabase = useMemo(() => createClient(), []);
-
-  const [assessmentId, setAssessmentId] = useState<string | null>(null);
-  const [token, setToken] = useState<string | null>(null);
-  const [userId, setUserId] = useState<string | null>(null);
+export default function ColorTestPage() {
   const [questions, setQuestions] = useState<Question[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<string, ColorCode>>({});
-  const [result, setResult] = useState<{ scores: Record<ColorCode, number>; primary: ColorCode; secondary: ColorCode; order: ColorCode[] } | null>(null);
+  const [assessmentId, setAssessmentId] = useState<string | null>(null);
+  const [token, setToken] = useState<string | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [result, setResult] = useState<ColorResult | null>(null);
+  const router = useRouter();
+  const supabase = createClient();
 
   const handlePrint = () => {
-    if (typeof window !== 'undefined') {
-      window.print();
-    }
+    window.print();
   };
 
   useEffect(() => {
@@ -84,15 +84,15 @@ export default function ColorDynamicsTestPage() {
         // Perguntas
         const questionData = await colorApi.listQuestions(session.access_token);
         const questionItems = (questionData as any)?.items ?? questionData;
-        const mapped: Question[] = (Array.isArray(questionItems) ? questionItems : []).map((q) => ({
+        const mapped: Question[] = (Array.isArray(questionItems) ? questionItems : []).map((q: any) => ({
           id: q.id,
           prompt: q.prompt,
           options: [
-            { code: 'azul', text: q.option_azul },
-            { code: 'rosa', text: q.option_rosa },
-            { code: 'amarelo', text: q.option_amarelo },
-            { code: 'verde', text: q.option_verde },
-            { code: 'branco', text: q.option_branco },
+            { code: 'azul' as ColorCode, text: q.option_azul },
+            { code: 'rosa' as ColorCode, text: q.option_rosa },
+            { code: 'amarelo' as ColorCode, text: q.option_amarelo },
+            { code: 'verde' as ColorCode, text: q.option_verde },
+            { code: 'branco' as ColorCode, text: q.option_branco },
           ],
         }));
         setQuestions(mapped);
@@ -118,36 +118,55 @@ export default function ColorDynamicsTestPage() {
   const progress = questions.length ? Math.round((totalAnswered / questions.length) * 100) : 0;
 
   const handleSelect = async (color: ColorCode) => {
-    if (!currentQuestion || !assessmentId || !token) return;
-    setAnswers((prev) => ({ ...prev, [currentQuestion.id]: color }));
+    if (!currentQuestion || !assessmentId || !token || saving) return;
+    setSaving(true);
+    const newAnswers = { ...answers, [currentQuestion.id]: color };
+    setAnswers(newAnswers);
     try {
-      await colorApi.submitResponse(assessmentId, currentQuestion.id, color, token);
+      console.log('[ColorTest] Salvando resposta:', { assessmentId, questionId: currentQuestion.id, color });
+      const resp = await colorApi.submitResponse(assessmentId, currentQuestion.id, color, token);
+      console.log('[ColorTest] Resposta salva com sucesso:', resp);
+      
+      // Verifica se é a última pergunta
+      if (currentIndex < questions.length - 1) {
+        // Avança automaticamente para a próxima pergunta
+        setCurrentIndex((prev) => prev + 1);
+      } else {
+        // É a última pergunta, finaliza o teste automaticamente
+        console.log('[ColorTest] Última pergunta respondida, finalizando teste...');
+        setSaving(false);
+        await finalizeTest(newAnswers);
+        return;
+      }
     } catch (err: any) {
       console.error('Erro ao salvar resposta:', err?.message || err);
       setError(err?.message || 'Erro ao salvar resposta');
+    } finally {
+      setSaving(false);
     }
   };
 
-  const goNext = () => {
-    if (currentIndex < questions.length - 1) {
-      setCurrentIndex((prev) => prev + 1);
+  const finalizeTest = async (finalAnswers?: Record<string, ColorCode>) => {
+    if (!assessmentId || !token) {
+      console.error('[ColorTest] Não é possível finalizar: assessmentId ou token ausente');
+      return;
     }
-  };
-
-  const goPrev = () => {
-    if (currentIndex > 0) {
-      setCurrentIndex((prev) => prev - 1);
-    }
-  };
-
-  const computeResult = async () => {
-    if (!assessmentId || !token) return;
-    if (Object.keys(answers).length !== questions.length) {
-      alert('Responda todas as perguntas antes de finalizar.');
+    const answersToCheck = finalAnswers || answers;
+    console.log('[ColorTest] Verificando respostas:', { 
+      totalRespostas: Object.keys(answersToCheck).length, 
+      totalPerguntas: questions.length 
+    });
+    
+    // Permitir finalização se tiver pelo menos 80% das respostas ou se for chamado pela última pergunta
+    if (Object.keys(answersToCheck).length < questions.length * 0.8 && !finalAnswers) {
+      alert(`Responda mais perguntas antes de finalizar. (${Object.keys(answersToCheck).length}/${questions.length})`);
       return;
     }
     try {
+      setSaving(true);
+      console.log('[ColorTest] Finalizando teste...', { assessmentId });
       const res = await colorApi.finalize(assessmentId, token);
+      console.log('[ColorTest] Resultado da finalização:', res);
       const resData = (res as any)?.data ?? res;
       const scores = (resData as any)?.scores as Record<ColorCode, number> | undefined;
       if (!scores) {
@@ -163,8 +182,12 @@ export default function ColorDynamicsTestPage() {
     } catch (err: any) {
       console.error('Erro ao finalizar teste:', err?.message || err);
       setError(err?.message || 'Erro ao finalizar teste');
+    } finally {
+      setSaving(false);
     }
   };
+
+  // Removido: goNext e goPrev (avanço automático)
 
   const resetTest = () => {
     setAnswers({});
@@ -172,10 +195,10 @@ export default function ColorDynamicsTestPage() {
     setResult(null);
   };
 
-  if (loading) {
+  if (loading || saving) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-950 text-white">
-        Carregando teste das cores...
+        {loading ? 'Carregando teste das cores...' : 'Salvando resposta...'}
       </div>
     );
   }
@@ -187,6 +210,14 @@ export default function ColorDynamicsTestPage() {
           <CardTitle className="text-white mb-2">Erro</CardTitle>
           <p className="text-slate-200">{error}</p>
         </Card>
+      </div>
+    );
+  }
+
+  if (!currentQuestion && !result) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-950 text-white">
+        Carregando perguntas...
       </div>
     );
   }
@@ -212,6 +243,7 @@ export default function ColorDynamicsTestPage() {
             </p>
           </div>
           <div className="flex flex-col gap-3 w-full md:w-auto">
+
             <Button
               variant="ghost"
               onClick={() => router.push('/candidate')}
@@ -220,26 +252,18 @@ export default function ColorDynamicsTestPage() {
               <LogOut className="h-4 w-4" />
               Sair
             </Button>
-            <div className="grid grid-cols-2 gap-3 w-full">
-              <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                <div className="text-xs uppercase tracking-wide text-slate-300">Progresso</div>
-                <div className="mt-2 flex items-baseline gap-1">
-                  <span className="text-2xl font-bold text-white">{progress}%</span>
-                  <span className="text-slate-400 text-sm">completo</span>
-                </div>
-                <Progress value={progress} className="mt-3 h-2 bg-white/10" />
-              </div>
-              <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                <div className="text-xs uppercase tracking-wide text-slate-300">Perguntas</div>
-                <div className="mt-2 flex items-baseline gap-1">
-                  <span className="text-2xl font-bold text-white">{currentIndex + 1}</span>
-                  <span className="text-slate-400 text-sm">de {questions.length}</span>
-                </div>
-                <div className="mt-3 flex items-center gap-2 text-sm text-slate-200">
-                  <Activity className="h-4 w-4 text-emerald-300" />
-                  Responda de forma instintiva
-                </div>
-              </div>
+            {/* Botão Voltar removido pois navegação manual não é mais necessária */}
+            <Progress value={progress} className="mt-3 h-2 bg-white/10" />
+          </div>
+          <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+            <div className="text-xs uppercase tracking-wide text-slate-300">Perguntas</div>
+            <div className="mt-2 flex items-baseline gap-1">
+              <span className="text-2xl font-bold text-white">{currentIndex + 1}</span>
+              <span className="text-slate-400 text-sm">de {questions.length}</span>
+            </div>
+            <div className="mt-3 flex items-center gap-2 text-sm text-slate-200">
+              <Activity className="h-4 w-4 text-emerald-300" />
+              Responda de forma instintiva
             </div>
           </div>
         </div>
@@ -379,29 +403,13 @@ export default function ColorDynamicsTestPage() {
                   {Math.max(1, Math.ceil((questions.length - totalAnswered) * 0.3))} min
                 </div>
                 <div className="flex gap-3">
-                  <Button
-                    variant="outline"
-                    onClick={goPrev}
-                    disabled={currentIndex === 0}
-                    className="border-white/30 text-white hover:border-white hover:bg-white/10"
-                  >
-                    Voltar
-                  </Button>
-                  {currentIndex === questions.length - 1 ? (
+                  {totalAnswered >= questions.length && (
                     <Button
-                      onClick={computeResult}
-                      disabled={totalAnswered !== questions.length}
-                      className="bg-emerald-500 hover:bg-emerald-600 text-white"
+                      onClick={() => finalizeTest()}
+                      className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                      disabled={saving}
                     >
-                      Finalizar teste
-                    </Button>
-                  ) : (
-                    <Button
-                      onClick={goNext}
-                      className="bg-blue-500 hover:bg-blue-600 text-white"
-                      disabled={answers[currentQuestion.id] === undefined}
-                    >
-                      Próxima
+                      {saving ? 'Finalizando...' : 'Finalizar Teste'}
                     </Button>
                   )}
                 </div>

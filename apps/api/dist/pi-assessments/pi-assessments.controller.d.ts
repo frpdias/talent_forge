@@ -25,4 +25,5 @@ export declare class PiAssessmentsController {
         gaps: Record<string, number>;
     }>;
     latest(req: Request): Promise<any>;
+    latestByCandidate(candidateUserId: string, req: Request): Promise<any>;
 }

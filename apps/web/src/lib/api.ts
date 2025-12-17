@@ -292,4 +292,6 @@ export const piApi = {
     }),
   latest: (token: string) =>
     apiFetch('/pi-assessments/latest', { token }),
+  latestByCandidate: (candidateUserId: string, token: string) =>
+    apiFetch(`/pi-assessments/candidate/${candidateUserId}/latest`, { token }),
 };
