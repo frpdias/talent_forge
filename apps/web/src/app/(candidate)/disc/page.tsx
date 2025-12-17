@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Activity, Sparkles, Shield, Target, ArrowLeft, ArrowRight, LogOut } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
+import { useAuth } from '@/lib/auth';
 
 interface DISCQuestion {
   id: string;
@@ -27,6 +28,7 @@ const DEFAULT_ORG_ID = '00000000-0000-0000-0000-000000000000';
 
 export default function DISCAssessmentPage() {
   const router = useRouter();
+  const { signOut } = useAuth();
   const [questions, setQuestions] = useState<DISCQuestion[]>([]);
   const [questionSequence, setQuestionSequence] = useState<DISCQuestion[]>([]);
   const [responses, setResponses] = useState<UserResponse[]>([]);
@@ -201,8 +203,9 @@ export default function DISCAssessmentPage() {
     }
   };
 
-  const handleExit = () => {
-    router.push('/candidate');
+  const handleExit = async () => {
+    await signOut();
+    router.push('/login');
   };
 
   const handleNext = () => {

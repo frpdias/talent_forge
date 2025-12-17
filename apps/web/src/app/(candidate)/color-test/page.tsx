@@ -6,6 +6,7 @@ import { Button, Card, CardContent, CardHeader, CardTitle, Progress } from '@/co
 import { Activity, LogOut, Sparkles } from 'lucide-react';
 import { colorApi } from '@/lib/api';
 import { createClient } from '@/lib/supabase/client';
+import { useAuth } from '@/lib/auth';
 
 type ColorCode = 'azul' | 'rosa' | 'amarelo' | 'verde' | 'branco';
 
@@ -62,6 +63,7 @@ export default function ColorTestPage() {
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<ColorResult | null>(null);
   const router = useRouter();
+  const { signOut } = useAuth();
   const supabase = createClient();
 
   const handlePrint = () => {
@@ -246,7 +248,10 @@ export default function ColorTestPage() {
 
             <Button
               variant="ghost"
-              onClick={() => router.push('/candidate')}
+              onClick={async () => {
+                await signOut();
+                router.push('/login');
+              }}
               className="border border-white/40 bg-transparent text-white hover:border-white hover:bg-white/10 hover:text-white flex items-center justify-center gap-2"
             >
               <LogOut className="h-4 w-4" />
