@@ -2,7 +2,10 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
+import { createBrowserClient } from '@supabase/ssr';
+import { UserAvatar } from '@/components/UserAvatar';
+import { NotificationCenter } from '@/components/notifications/NotificationCenter';
 import { 
   LayoutDashboard, 
   Briefcase, 
@@ -43,10 +46,25 @@ const bottomNavItems = [
 
 export default function RecruiterLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
+  const supabase = createBrowserClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  );
+
+  const handleLogout = async () => {
+    try {
+      await supabase.auth.signOut();
+      router.push('/login');
+    } catch (error) {
+      console.error('Error logging out:', error);
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-[#FAFAF8]">
+    <div className="min-h-screen bg-white">
       {/* Mobile Sidebar Overlay */}
       {sidebarOpen && (
         <div 
@@ -56,16 +74,14 @@ export default function RecruiterLayout({ children }: { children: React.ReactNod
       )}
 
       {/* Sidebar */}
-      <aside className={`fixed left-0 top-0 h-full bg-white border-r border-[#E5E5DC] z-50 transition-transform duration-300 w-70 sm:w-64 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
-        <div className="p-4 sm:p-6 border-b border-[#E5E5DC]">
-          <div className="flex items-center justify-between">
-            <Link href="/dashboard" className="flex items-center space-x-2 sm:space-x-3">
-              <div className="w-9 h-9 sm:w-10 sm:h-10 bg-[#141042] rounded-xl flex items-center justify-center">
-                <span className="text-white font-bold text-base sm:text-lg">FO</span>
-              </div>
-              <div>
-                <span className="text-base sm:text-lg font-semibold text-[#141042]">TalentForge</span>
-                <span className="block text-[10px] sm:text-xs text-[#666666]">Recrutador</span>
+      <aside className={`fixed left-0 top-0 h-full bg-white border-r border-[#E5E5DC] z-50 transition-transform duration-300 w-64 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
+        <div className="p-4 sm:p-6 flex items-center">
+          <div className="flex items-center justify-between w-full">
+            <Link href="/dashboard" className="flex items-center space-x-3">
+              <UserAvatar size="md" />
+              <div className="flex flex-col">
+                <span className="text-[#1F4ED8] font-semibold text-base tracking-tight">TALENT</span>
+                <span className="text-[#F97316] font-bold text-base tracking-wider">FORGE</span>
               </div>
             </Link>
             <button 
@@ -111,7 +127,10 @@ export default function RecruiterLayout({ children }: { children: React.ReactNod
         </div>
 
         <div className="absolute bottom-4 left-3 right-3 sm:left-4 sm:right-4">
-          <button className="flex items-center space-x-3 px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl text-[#666666] hover:bg-[#F5F5F0] hover:text-[#141042] transition-all w-full">
+          <button 
+            onClick={handleLogout}
+            className="flex items-center space-x-3 px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl text-[#666666] hover:bg-[#F5F5F0] hover:text-[#141042] transition-all w-full"
+          >
             <LogOut className="w-5 h-5" />
             <span className="font-medium text-sm sm:text-base">Sair</span>
           </button>
@@ -119,10 +138,10 @@ export default function RecruiterLayout({ children }: { children: React.ReactNod
       </aside>
 
       {/* Main Content */}
-      <div className="lg:ml-64">
+      <div className="lg:ml-0 min-h-screen bg-white">
         {/* Header */}
-        <header className="sticky top-0 z-30 bg-white/80 backdrop-blur-lg border-b border-[#E5E5DC]">
-          <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4">
+        <header className="sticky top-0 z-30 bg-white border-b border-[#E5E5DC]">
+          <div className="flex items-center justify-between px-4 sm:px-6 lg:px-8 py-3 sm:py-4">
             <div className="flex items-center space-x-3 sm:space-x-4">
               <button 
                 onClick={() => setSidebarOpen(!sidebarOpen)}
@@ -136,10 +155,7 @@ export default function RecruiterLayout({ children }: { children: React.ReactNod
               </div>
             </div>
             <div className="flex items-center space-x-2 sm:space-x-4">
-              <button className="relative p-2 text-[#666666] hover:text-[#141042] hover:bg-[#F5F5F0] rounded-lg transition-colors">
-                <Bell className="w-5 h-5" />
-                <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-[#141042] rounded-full" />
-              </button>
+              <NotificationCenter />
               <div className="flex items-center space-x-2 sm:space-x-3 pl-2 sm:pl-4 border-l border-[#E5E5DC]">
                 <div className="w-8 h-8 sm:w-9 sm:h-9 bg-[#D9D9C6] rounded-xl flex items-center justify-center text-[#453931] font-medium text-sm">
                   R
@@ -154,7 +170,7 @@ export default function RecruiterLayout({ children }: { children: React.ReactNod
           </div>
         </header>
 
-        <main className="p-4 sm:p-6 pb-24 lg:pb-6">
+        <main className="pb-24 lg:pb-6">
           {children}
         </main>
       </div>

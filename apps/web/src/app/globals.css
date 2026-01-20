@@ -1,30 +1,30 @@
 @import "tailwindcss";
 
-/* FO Consulting Brand Colors */
+/* FARTECH Brand Colors */
 :root {
   /* Primary - Azul Escuro */
-  --fo-primary: #141042;
-  --fo-primary-light: #1e1860;
-  --fo-primary-dark: #0c0a2a;
+  --fartech-primary: #141042;
+  --fartech-primary-light: #1e1860;
+  --fartech-primary-dark: #0c0a2a;
   
   /* Neutrals */
-  --fo-gray: #666666;
-  --fo-gray-light: #888888;
-  --fo-gray-dark: #444444;
+  --fartech-gray: #666666;
+  --fartech-gray-light: #888888;
+  --fartech-gray-dark: #444444;
   
   /* Accent - Bege */
-  --fo-beige: #D9D9C6;
-  --fo-beige-light: #E8E8DA;
-  --fo-beige-dark: #C5C5B0;
+  --fartech-beige: #D9D9C6;
+  --fartech-beige-light: #E8E8DA;
+  --fartech-beige-dark: #C5C5B0;
   
   /* Brown */
-  --fo-brown: #453931;
-  --fo-brown-light: #5a4b41;
-  --fo-brown-dark: #342b25;
+  --fartech-brown: #453931;
+  --fartech-brown-light: #5a4b41;
+  --fartech-brown-dark: #342b25;
   
   /* Base */
-  --fo-black: #000000;
-  --fo-white: #FFFFFF;
+  --fartech-black: #000000;
+  --fartech-white: #FFFFFF;
   
   /* Semantic */
   --background: #FAFAF8;
@@ -42,20 +42,20 @@
 
 @theme inline {
   /* Colors */
-  --color-fo-primary: var(--fo-primary);
-  --color-fo-primary-light: var(--fo-primary-light);
-  --color-fo-primary-dark: var(--fo-primary-dark);
-  --color-fo-gray: var(--fo-gray);
-  --color-fo-gray-light: var(--fo-gray-light);
-  --color-fo-gray-dark: var(--fo-gray-dark);
-  --color-fo-beige: var(--fo-beige);
-  --color-fo-beige-light: var(--fo-beige-light);
-  --color-fo-beige-dark: var(--fo-beige-dark);
-  --color-fo-brown: var(--fo-brown);
-  --color-fo-brown-light: var(--fo-brown-light);
-  --color-fo-brown-dark: var(--fo-brown-dark);
-  --color-fo-black: var(--fo-black);
-  --color-fo-white: var(--fo-white);
+  --color-fartech-primary: var(--fartech-primary);
+  --color-fartech-primary-light: var(--fartech-primary-light);
+  --color-fartech-primary-dark: var(--fartech-primary-dark);
+  --color-fartech-gray: var(--fartech-gray);
+  --color-fartech-gray-light: var(--fartech-gray-light);
+  --color-fartech-gray-dark: var(--fartech-gray-dark);
+  --color-fartech-beige: var(--fartech-beige);
+  --color-fartech-beige-light: var(--fartech-beige-light);
+  --color-fartech-beige-dark: var(--fartech-beige-dark);
+  --color-fartech-brown: var(--fartech-brown);
+  --color-fartech-brown-light: var(--fartech-brown-light);
+  --color-fartech-brown-dark: var(--fartech-brown-dark);
+  --color-fartech-black: var(--fartech-black);
+  --color-fartech-white: var(--fartech-white);
   
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -63,7 +63,7 @@
   --color-muted-foreground: var(--muted-foreground);
   --color-border: var(--border);
   
-  --font-sans: var(--font-geist-sans), -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, sans-serif;
+  --font-sans: 'Montserrat', var(--font-geist-sans), -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, sans-serif;
   --font-mono: var(--font-geist-mono), 'SF Mono', Monaco, 'Cascadia Code', monospace;
 }
 

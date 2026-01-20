@@ -58,73 +58,130 @@ ALTER TABLE color_questions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE color_assessments ENABLE ROW LEVEL SECURITY;
 ALTER TABLE color_responses ENABLE ROW LEVEL SECURITY;
 
--- Policies: leitura pública autenticada das perguntas
-CREATE POLICY color_questions_read_authenticated
-  ON color_questions
-  FOR SELECT
-  TO authenticated
-  USING (active = TRUE);
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies
+    WHERE schemaname = 'public'
+      AND tablename = 'color_questions'
+      AND policyname = 'color_questions_read_authenticated'
+  ) THEN
+    CREATE POLICY color_questions_read_authenticated
+      ON color_questions
+      FOR SELECT
+      TO authenticated
+      USING (active = TRUE);
+  END IF;
+END $$;
 
 -- Policies: o próprio usuário pode gerenciar seus assessments
-CREATE POLICY color_assessments_self_select
-  ON color_assessments
-  FOR SELECT
-  TO authenticated
-  USING (candidate_user_id = auth.uid());
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies
+    WHERE schemaname = 'public'
+      AND tablename = 'color_assessments'
+      AND policyname = 'color_assessments_self_select'
+  ) THEN
+    CREATE POLICY color_assessments_self_select
+      ON color_assessments
+      FOR SELECT
+      TO authenticated
+      USING (candidate_user_id = auth.uid());
+  END IF;
 
-CREATE POLICY color_assessments_self_insert
-  ON color_assessments
-  FOR INSERT
-  TO authenticated
-  WITH CHECK (candidate_user_id = auth.uid());
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies
+    WHERE schemaname = 'public'
+      AND tablename = 'color_assessments'
+      AND policyname = 'color_assessments_self_insert'
+  ) THEN
+    CREATE POLICY color_assessments_self_insert
+      ON color_assessments
+      FOR INSERT
+      TO authenticated
+      WITH CHECK (candidate_user_id = auth.uid());
+  END IF;
 
-CREATE POLICY color_assessments_self_update
-  ON color_assessments
-  FOR UPDATE
-  TO authenticated
-  USING (candidate_user_id = auth.uid())
-  WITH CHECK (candidate_user_id = auth.uid());
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies
+    WHERE schemaname = 'public'
+      AND tablename = 'color_assessments'
+      AND policyname = 'color_assessments_self_update'
+  ) THEN
+    CREATE POLICY color_assessments_self_update
+      ON color_assessments
+      FOR UPDATE
+      TO authenticated
+      USING (candidate_user_id = auth.uid())
+      WITH CHECK (candidate_user_id = auth.uid());
+  END IF;
+END $$;
 
 -- Policies: respostas vinculadas a assessments do próprio usuário
-CREATE POLICY color_responses_self_select
-  ON color_responses
-  FOR SELECT
-  TO authenticated
-  USING (
-    EXISTS (
-      SELECT 1 FROM color_assessments ca
-      WHERE ca.id = color_responses.assessment_id
-        AND ca.candidate_user_id = auth.uid()
-    )
-  );
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies
+    WHERE schemaname = 'public'
+      AND tablename = 'color_responses'
+      AND policyname = 'color_responses_self_select'
+  ) THEN
+    CREATE POLICY color_responses_self_select
+      ON color_responses
+      FOR SELECT
+      TO authenticated
+      USING (
+        EXISTS (
+          SELECT 1 FROM color_assessments ca
+          WHERE ca.id = color_responses.assessment_id
+            AND ca.candidate_user_id = auth.uid()
+        )
+      );
+  END IF;
 
-CREATE POLICY color_responses_self_insert
-  ON color_responses
-  FOR INSERT
-  TO authenticated
-  WITH CHECK (
-    EXISTS (
-      SELECT 1 FROM color_assessments ca
-      WHERE ca.id = assessment_id
-        AND ca.candidate_user_id = auth.uid()
-    )
-  );
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies
+    WHERE schemaname = 'public'
+      AND tablename = 'color_responses'
+      AND policyname = 'color_responses_self_insert'
+  ) THEN
+    CREATE POLICY color_responses_self_insert
+      ON color_responses
+      FOR INSERT
+      TO authenticated
+      WITH CHECK (
+        EXISTS (
+          SELECT 1 FROM color_assessments ca
+          WHERE ca.id = assessment_id
+            AND ca.candidate_user_id = auth.uid()
+        )
+      );
+  END IF;
 
-CREATE POLICY color_responses_self_update
-  ON color_responses
-  FOR UPDATE
-  TO authenticated
-  USING (
-    EXISTS (
-      SELECT 1 FROM color_assessments ca
-      WHERE ca.id = color_responses.assessment_id
-        AND ca.candidate_user_id = auth.uid()
-    )
-  )
-  WITH CHECK (
-    EXISTS (
-      SELECT 1 FROM color_assessments ca
-      WHERE ca.id = color_responses.assessment_id
-        AND ca.candidate_user_id = auth.uid()
-    )
-  );
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies
+    WHERE schemaname = 'public'
+      AND tablename = 'color_responses'
+      AND policyname = 'color_responses_self_update'
+  ) THEN
+    CREATE POLICY color_responses_self_update
+      ON color_responses
+      FOR UPDATE
+      TO authenticated
+      USING (
+        EXISTS (
+          SELECT 1 FROM color_assessments ca
+          WHERE ca.id = color_responses.assessment_id
+            AND ca.candidate_user_id = auth.uid()
+        )
+      )
+      WITH CHECK (
+        EXISTS (
+          SELECT 1 FROM color_assessments ca
+          WHERE ca.id = color_responses.assessment_id
+            AND ca.candidate_user_id = auth.uid()
+        )
+      );
+  END IF;
+END $$;

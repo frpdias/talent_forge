@@ -225,21 +225,21 @@ export default function ColorTestPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-50">
-      <div className="absolute inset-0 opacity-30 pointer-events-none">
-        <div className="absolute -top-40 -left-32 h-96 w-96 rounded-full bg-blue-500 blur-3xl" />
-        <div className="absolute -bottom-32 -right-24 h-96 w-96 rounded-full bg-purple-500 blur-3xl" />
+    <div className="min-h-screen bg-[#0c0a2a] text-slate-50">
+      <div className="absolute inset-0 opacity-20 pointer-events-none">
+        <div className="absolute -top-40 -left-32 h-96 w-96 rounded-full bg-[#1e1860] blur-3xl" />
+        <div className="absolute -bottom-32 -right-24 h-96 w-96 rounded-full bg-[#453931] blur-3xl" />
       </div>
 
       <div className="relative max-w-6xl mx-auto px-4 py-10 space-y-8">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div className="space-y-2">
-            <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-sm font-semibold text-white backdrop-blur">
-              <Sparkles className="h-4 w-4 text-amber-300" />
+            <div className="inline-flex items-center gap-2 rounded-full bg-[#D9D9C6]/20 px-3 py-1 text-sm font-semibold text-[#D9D9C6] backdrop-blur border border-[#D9D9C6]/30">
+              <Sparkles className="h-4 w-4 text-[#D9D9C6]" />
               Teste das Cores (100 perguntas)
             </div>
             <h1 className="text-3xl font-bold tracking-tight text-white">Mapa de Cores Predominantes</h1>
-            <p className="text-slate-200/80">
+            <p className="text-[#D9D9C6]/90">
               Escolha a alternativa que mais representa seu comportamento em cada situação. Linguagem corporativa,
               orientada a ritmo, decisão, comunicação e propósito.
             </p>
@@ -252,53 +252,53 @@ export default function ColorTestPage() {
                 await signOut();
                 router.push('/login');
               }}
-              className="border border-white/40 bg-transparent text-white hover:border-white hover:bg-white/10 hover:text-white flex items-center justify-center gap-2"
+              className="border border-[#D9D9C6]/40 bg-transparent text-[#D9D9C6] hover:border-[#D9D9C6] hover:bg-[#D9D9C6]/10 hover:text-white flex items-center justify-center gap-2"
             >
               <LogOut className="h-4 w-4" />
               Sair
             </Button>
             {/* Botão Voltar removido pois navegação manual não é mais necessária */}
-            <Progress value={progress} className="mt-3 h-2 bg-white/10" />
+            <Progress value={progress} className="mt-3 h-2 bg-[#141042]/50" />
           </div>
-          <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-            <div className="text-xs uppercase tracking-wide text-slate-300">Perguntas</div>
+          <div className="rounded-2xl border border-[#D9D9C6]/20 bg-[#141042]/30 p-4">
+            <div className="text-xs uppercase tracking-wide text-[#D9D9C6]/70">Perguntas</div>
             <div className="mt-2 flex items-baseline gap-1">
               <span className="text-2xl font-bold text-white">{currentIndex + 1}</span>
-              <span className="text-slate-400 text-sm">de {questions.length}</span>
+              <span className="text-[#D9D9C6]/70 text-sm">de {questions.length}</span>
             </div>
-            <div className="mt-3 flex items-center gap-2 text-sm text-slate-200">
-              <Activity className="h-4 w-4 text-emerald-300" />
+            <div className="mt-3 flex items-center gap-2 text-sm text-[#D9D9C6]">
+              <Activity className="h-4 w-4 text-[#D9D9C6]" />
               Responda de forma instintiva
             </div>
           </div>
         </div>
 
         {result ? (
-          <Card className="border border-white/10 bg-white/5 backdrop-blur">
+          <Card className="border border-[#D9D9C6]/20 bg-[#141042]/50 backdrop-blur">
             <CardHeader>
               <CardTitle className="text-white">Relatório do Teste das Cores</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="rounded-2xl border border-white/10 bg-white/5 p-4 text-white">
+              <div className="rounded-2xl border border-[#D9D9C6]/20 bg-[#1e1860]/30 p-4 text-white">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                   <div>
-                    <p className="text-sm text-white/70">Cor predominante</p>
+                    <p className="text-sm text-[#D9D9C6]/70">Cor predominante</p>
                     <p className="text-2xl font-bold">{colorProfiles[result.primary].label}</p>
-                    <p className="text-sm text-white/80">
+                    <p className="text-sm text-[#D9D9C6]">
                       Secundária: {colorProfiles[result.secondary].label}
                     </p>
                   </div>
                   <div className="flex gap-3">
                     <Button
                       onClick={handlePrint}
-                      className="bg-white text-slate-900 hover:bg-white/90"
+                      className="bg-[#D9D9C6] text-[#141042] hover:bg-[#E8E8DA]"
                     >
                       Imprimir
                     </Button>
                     <Button
                       variant="outline"
                       onClick={handlePrint}
-                      className="border-white/60 text-white hover:border-white hover:bg-white/10"
+                      className="border-[#D9D9C6]/60 text-[#D9D9C6] hover:border-[#D9D9C6] hover:bg-[#D9D9C6]/10"
                     >
                       Baixar PDF
                     </Button>
@@ -310,33 +310,33 @@ export default function ColorTestPage() {
                 {result.order.map((code) => (
                   <div
                     key={code}
-                    className="rounded-xl border border-white/10 bg-white/5 p-4 text-white/90 shadow-sm"
+                    className="rounded-xl border border-[#D9D9C6]/20 bg-[#1e1860]/20 p-4 text-white/90 shadow-sm hover:border-[#D9D9C6]/40 transition-colors"
                     title={colorProfiles[code].description}
                   >
                     <div className="flex items-center justify-between mb-2">
                       <p className="font-semibold">{colorProfiles[code].label}</p>
-                      <span className="text-sm text-white/70">
+                      <span className="text-sm text-[#D9D9C6]/70">
                         {result.scores[code]} / {questions.length}
                       </span>
                     </div>
-                    <div className="h-2 rounded-full bg-white/10 overflow-hidden mb-2">
+                    <div className="h-2 rounded-full bg-[#141042]/50 overflow-hidden mb-2">
                       <div
-                        className="h-full rounded-full bg-white/70"
+                        className="h-full rounded-full bg-[#D9D9C6]"
                         style={{ width: `${Math.min((result.scores[code] / questions.length) * 100, 100)}%` }}
                       />
                     </div>
-                    <p className="text-sm text-white/80">{colorProfiles[code].description}</p>
+                    <p className="text-sm text-[#D9D9C6]">{colorProfiles[code].description}</p>
                   </div>
                 ))}
               </div>
               <div className="flex flex-wrap gap-3">
-                <Button onClick={resetTest} className="bg-blue-600 hover:bg-blue-700 text-white">
+                <Button onClick={resetTest} className="bg-[#1e1860] hover:bg-[#141042] text-white border border-[#D9D9C6]/30">
                   Refazer teste
                 </Button>
                 <Button
                   variant="outline"
                   onClick={() => router.push('/candidate')}
-                  className="border-white/40 text-white hover:border-white hover:bg-white/10"
+                  className="border-[#D9D9C6]/40 text-[#D9D9C6] hover:border-[#D9D9C6] hover:bg-[#D9D9C6]/10"
                 >
                   Voltar ao dashboard
                 </Button>
@@ -344,42 +344,42 @@ export default function ColorTestPage() {
             </CardContent>
           </Card>
         ) : (
-          <Card className="border border-white/10 bg-white/5 backdrop-blur">
+          <Card className="border border-[#D9D9C6]/20 bg-[#141042]/50 backdrop-blur">
             <CardHeader className="space-y-3">
               <CardTitle className="text-2xl font-semibold text-white">Pergunta {currentIndex + 1}</CardTitle>
-              <p className="text-base text-slate-200">{currentQuestion.prompt}</p>
+              <p className="text-base text-[#D9D9C6]">{currentQuestion.prompt}</p>
             </CardHeader>
             <CardContent className="grid gap-4 sm:grid-cols-2">
               {currentQuestion.options.map(({ code, text }) => {
                 const selected = answers[currentQuestion.id] === code;
                 const colorBg =
                   code === 'azul'
-                    ? 'from-blue-500/60 to-blue-600/80'
+                    ? 'from-[#1e1860]/60 to-[#141042]/80'
                     : code === 'rosa'
-                      ? 'from-rose-400/60 to-rose-500/80'
+                      ? 'from-[#5a4b41]/60 to-[#453931]/80'
                       : code === 'amarelo'
-                        ? 'from-amber-400/60 to-amber-500/80'
+                        ? 'from-[#D9D9C6]/60 to-[#C5C5B0]/80'
                         : code === 'verde'
-                          ? 'from-emerald-400/60 to-emerald-500/80'
-                          : 'from-slate-200/60 to-slate-300/80';
+                          ? 'from-[#666666]/60 to-[#444444]/80'
+                          : 'from-[#888888]/60 to-[#666666]/80';
                 const borderColor =
                   code === 'azul'
-                    ? 'border-blue-300/50'
+                    ? 'border-[#1e1860]/50'
                     : code === 'rosa'
-                      ? 'border-rose-300/50'
+                      ? 'border-[#453931]/50'
                       : code === 'amarelo'
-                        ? 'border-amber-300/50'
+                        ? 'border-[#D9D9C6]/50'
                         : code === 'verde'
-                          ? 'border-emerald-300/50'
-                          : 'border-slate-300/60';
+                          ? 'border-[#666666]/50'
+                          : 'border-[#888888]/60';
                 return (
                   <button
                     key={code}
                     onClick={() => handleSelect(code)}
                     className={`group relative overflow-hidden rounded-2xl border px-4 py-5 text-left transition duration-200 ${
                       selected
-                        ? `${borderColor} bg-white/10`
-                        : 'border-white/10 bg-white/5 hover:border-white/30 hover:bg-white/10'
+                        ? `${borderColor} bg-[#1e1860]/30`
+                        : 'border-[#D9D9C6]/10 bg-[#141042]/30 hover:border-[#D9D9C6]/30 hover:bg-[#1e1860]/20'
                     }`}
                   >
                     <div
@@ -401,9 +401,9 @@ export default function ColorTestPage() {
 
         {!result && (
           <div className="sticky bottom-4">
-            <div className="rounded-2xl border border-white/10 bg-white/10 backdrop-blur px-4 py-3 shadow-2xl">
+            <div className="rounded-2xl border border-[#D9D9C6]/20 bg-[#141042]/80 backdrop-blur px-4 py-3 shadow-2xl">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <div className="text-sm text-slate-200">
+                <div className="text-sm text-[#D9D9C6]">
                   {totalAnswered} de {questions.length} respondidas • Tempo estimado restante: ~
                   {Math.max(1, Math.ceil((questions.length - totalAnswered) * 0.3))} min
                 </div>
@@ -411,7 +411,7 @@ export default function ColorTestPage() {
                   {totalAnswered >= questions.length && (
                     <Button
                       onClick={() => finalizeTest()}
-                      className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                      className="bg-[#D9D9C6] hover:bg-[#E8E8DA] text-[#141042]"
                       disabled={saving}
                     >
                       {saving ? 'Finalizando...' : 'Finalizar Teste'}

@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { Mail, Lock, Eye, EyeOff, Building2, UserCircle, Check } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
+import { UserAvatar } from '@/components/UserAvatar';
 
 export default function RegisterPage() {
   return (
@@ -41,6 +42,13 @@ function RegisterContent() {
       if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
         throw new Error('Configuração do Supabase não encontrada. Configure as variáveis de ambiente.');
       }
+      
+      console.log('📝 Registrando usuário com:', {
+        email,
+        user_type: userType,
+        full_name: fullName
+      });
+      
       const { data, error: authError } = await supabase.auth.signUp({
         email,
         password,
@@ -52,30 +60,17 @@ function RegisterContent() {
           emailRedirectTo: `${window.location.origin}/auth/callback?type=${userType}`,
         },
       });
+      
+      console.log('✅ SignUp result:', data);
+      console.log('❌ SignUp error:', authError);
+      
       if (authError) {
         console.error('Supabase Auth Error:', authError);
         throw authError;
       }
-      // Criação do perfil do usuário
-      if (data.user && !data.user.identities?.length) {
-        // Usuário já existe, não criar perfil duplicado
-        console.log('User already exists, skipping profile creation');
-      } else if (data.user) {
-        const { error: profileError } = await supabase
-          .from('user_profiles')
-          .insert({
-            id: data.user.id,
-            user_type: userType,
-            full_name: fullName || email,
-            email_verified: false,
-            onboarding_completed: false,
-          });
-        if (profileError) {
-          console.error('Erro ao criar perfil do usuário:', profileError);
-          setError('Conta criada, mas houve erro ao criar o perfil. Tente novamente ou entre em contato com o suporte.');
-          return;
-        }
-      }
+      // Perfil do usuário será criado via trigger no banco (handle_new_user)
+      // Não inserir manualmente para evitar conflitos com RLS/policies.
+      // Se necessário, faremos o enriquecimento do perfil após confirmação de email.
       console.log('Signup success:', data);
       setSuccess(true);
     } catch (err: any) {
@@ -88,6 +83,7 @@ function RegisterContent() {
         'Signup requires a valid password': 'Por favor, digite uma senha válida.',
         'Email address cannot be used as it is not authorized': 'Este domínio de email não é permitido.',
         'email_address_invalid': 'Este email não é válido. Use um email real.',
+        'Database error saving new user': 'Erro interno ao criar usuário. Vou corrigir as policies e tentar novamente.',
       };
       const errorCode = err.error_code || err.code || '';
       const errorMessage = err.message || '';
@@ -144,11 +140,12 @@ function RegisterContent() {
           <div className="absolute bottom-1/3 left-1/4 w-48 md:w-64 h-48 md:h-64 bg-[#D9D9C6] rounded-full blur-3xl" />
         </div>
         <div className="relative z-10 flex flex-col justify-between p-8 lg:p-12 w-full">
-          <Link href="/" className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center">
-              <span className="text-[#141042] font-bold text-xl">FO</span>
+          <Link href="/" className="flex items-center space-x-4">
+            <UserAvatar size="xl" className="bg-white" />
+            <div className="flex flex-col">
+              <span className="text-[#1F4ED8] font-semibold text-2xl tracking-tight">TALENT</span>
+              <span className="text-[#F97316] font-bold text-2xl tracking-wider">FORGE</span>
             </div>
-            <span className="text-xl lg:text-2xl font-semibold text-white">TalentForge</span>
           </Link>
           
           <div className="max-w-md">
@@ -165,7 +162,7 @@ function RegisterContent() {
           </div>
           
           <p className="text-white/40 text-xs lg:text-sm">
-            © 2025 FO Consulting. Todos os direitos reservados.
+            © 2025 FARTECH. Todos os direitos reservados.
           </p>
         </div>
       </div>
@@ -175,17 +172,18 @@ function RegisterContent() {
         <div className="w-full max-w-md py-4 sm:py-0">
           {/* Mobile Logo */}
           <div className="lg:hidden text-center mb-6 sm:mb-8">
-            <Link href="/" className="inline-flex items-center space-x-2 sm:space-x-3">
-              <div className="w-9 h-9 sm:w-10 sm:h-10 bg-[#141042] rounded-xl flex items-center justify-center">
-                <span className="text-white font-bold text-lg sm:text-xl">FO</span>
+            <Link href="/" className="inline-flex items-center space-x-3 justify-center">
+              <UserAvatar size="lg" />
+              <div className="flex flex-col items-start">
+                <span className="text-[#1F4ED8] font-semibold text-xl tracking-tight">TALENT</span>
+                <span className="text-[#F97316] font-bold text-xl tracking-wider">FORGE</span>
               </div>
-              <span className="text-xl sm:text-2xl font-semibold text-[#141042]">TalentForge</span>
             </Link>
           </div>
 
           <div className="mb-6 sm:mb-8">
             <h2 className="text-2xl sm:text-3xl font-semibold text-[#141042] mb-2">Criar conta</h2>
-            <p className="text-sm sm:text-base text-[#666666]">
+            <p className="text-sm sm:text-base text-[#333333]">
               Já tem uma conta?{' '}
               <Link href="/login" className="text-[#141042] font-medium hover:underline">
                 Fazer login
@@ -195,7 +193,7 @@ function RegisterContent() {
 
           {/* Full name */}
           <div className="mb-4 sm:mb-5">
-            <label className="block text-xs sm:text-sm font-medium text-[#141042] mb-1.5">
+            <label className="block text-xs sm:text-sm font-medium text-[#333333] mb-1.5">
               Nome completo
             </label>
             <input
@@ -203,13 +201,13 @@ function RegisterContent() {
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
               placeholder="Digite seu nome completo"
-              className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-[#E5E5DC] rounded-xl text-sm sm:text-base outline-none focus:border-[#141042] focus:ring-2 focus:ring-[#141042]/10"
+              className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-[#E5E5DC] rounded-xl text-sm sm:text-base text-[#141042] outline-none focus:border-[#141042] focus:ring-2 focus:ring-[#141042]/10"
             />
           </div>
 
           {/* User Type Selection */}
           <div className="mb-6 sm:mb-8">
-            <label className="block text-xs sm:text-sm font-medium text-[#141042] mb-2 sm:mb-3">Eu sou...</label>
+            <label className="block text-xs sm:text-sm font-medium text-[#333333] mb-2 sm:mb-3">Eu sou...</label>
             <div className="grid grid-cols-2 gap-3 sm:gap-4">
               <button
                 type="button"
@@ -220,8 +218,8 @@ function RegisterContent() {
                     : 'border-[#E5E5DC] hover:border-[#141042]/30'
                 }`}
               >
-                <Building2 className={`w-5 h-5 sm:w-6 sm:h-6 mx-auto mb-1.5 sm:mb-2 ${userType === 'recruiter' ? 'text-[#141042]' : 'text-[#666666]'}`} />
-                <span className={`block text-xs sm:text-sm font-medium ${userType === 'recruiter' ? 'text-[#141042]' : 'text-[#666666]'}`}>
+                <Building2 className={`w-5 h-5 sm:w-6 sm:h-6 mx-auto mb-1.5 sm:mb-2 ${userType === 'recruiter' ? 'text-[#141042]' : 'text-[#333333]'}`} />
+                <span className={`block text-xs sm:text-sm font-medium ${userType === 'recruiter' ? 'text-[#141042]' : 'text-[#333333]'}`}>
                   Recrutador
                 </span>
               </button>
@@ -234,8 +232,8 @@ function RegisterContent() {
                     : 'border-[#E5E5DC] hover:border-[#141042]/30'
                 }`}
               >
-                <UserCircle className={`w-5 h-5 sm:w-6 sm:h-6 mx-auto mb-1.5 sm:mb-2 ${userType === 'candidate' ? 'text-[#141042]' : 'text-[#666666]'}`} />
-                <span className={`block text-xs sm:text-sm font-medium ${userType === 'candidate' ? 'text-[#141042]' : 'text-[#666666]'}`}>
+                <UserCircle className={`w-5 h-5 sm:w-6 sm:h-6 mx-auto mb-1.5 sm:mb-2 ${userType === 'candidate' ? 'text-[#141042]' : 'text-[#333333]'}`} />
+                <span className={`block text-xs sm:text-sm font-medium ${userType === 'candidate' ? 'text-[#141042]' : 'text-[#333333]'}`}>
                   Candidato
                 </span>
               </button>
@@ -267,16 +265,16 @@ function RegisterContent() {
               <div className="w-full border-t border-[#E5E5DC]" />
             </div>
             <div className="relative flex justify-center text-xs sm:text-sm">
-              <span className="px-4 bg-[#FAFAF8] text-[#666666]">ou</span>
+              <span className="px-4 bg-[#FAFAF8] text-[#333333]">ou</span>
             </div>
           </div>
 
           {/* Email Form */}
           <form onSubmit={handleRegister} className="space-y-4 sm:space-y-5">
             <div>
-              <label className="block text-xs sm:text-sm font-medium text-[#141042] mb-1.5 sm:mb-2">Email</label>
+              <label className="block text-xs sm:text-sm font-medium text-[#333333] mb-1.5 sm:mb-2">Email</label>
               <div className="relative">
-                <Mail className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-[#666666]" />
+                <Mail className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-[#333333]" />
                 <input
                   type="email"
                   value={email}
@@ -289,9 +287,9 @@ function RegisterContent() {
             </div>
 
             <div>
-              <label className="block text-xs sm:text-sm font-medium text-[#141042] mb-1.5 sm:mb-2">Senha</label>
+              <label className="block text-xs sm:text-sm font-medium text-[#333333] mb-1.5 sm:mb-2">Senha</label>
               <div className="relative">
-                <Lock className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-[#666666]" />
+                <Lock className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-[#333333]" />
                 <input
                   type={showPassword ? 'text' : 'password'}
                   value={password}
@@ -304,7 +302,7 @@ function RegisterContent() {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 sm:right-4 top-1/2 -translate-y-1/2 text-[#666666] hover:text-[#141042]"
+                  className="absolute right-3 sm:right-4 top-1/2 -translate-y-1/2 text-[#333333] hover:text-[#141042]"
                 >
                   {showPassword ? <EyeOff className="w-4 h-4 sm:w-5 sm:h-5" /> : <Eye className="w-4 h-4 sm:w-5 sm:h-5" />}
                 </button>
@@ -318,7 +316,7 @@ function RegisterContent() {
                 onChange={(e) => setAcceptTerms(e.target.checked)}
                 className="w-4 h-4 mt-0.5 rounded border-[#E5E5DC] text-[#141042] focus:ring-[#141042]" 
               />
-              <span className="text-xs sm:text-sm text-[#666666]">
+              <span className="text-xs sm:text-sm text-[#333333]">
                 Li e aceito os{' '}
                 <a href="/terms" className="text-[#141042] font-medium hover:underline">Termos de Uso</a>
                 {' '}e a{' '}

@@ -87,126 +87,182 @@ ALTER TABLE pi_situational_questions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE pi_descriptor_responses ENABLE ROW LEVEL SECURITY;
 ALTER TABLE pi_situational_responses ENABLE ROW LEVEL SECURITY;
 
--- Policies: leitura autenticada dos bancos de perguntas
-CREATE POLICY pi_descriptors_read_authenticated
-  ON pi_descriptors
-  FOR SELECT
-  TO authenticated
-  USING (active = TRUE);
+-- Policies: leitura autenticada dos bancos de perguntas (idempotente)
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies WHERE policyname = 'pi_descriptors_read_authenticated'
+  ) THEN
+    CREATE POLICY pi_descriptors_read_authenticated
+      ON pi_descriptors
+      FOR SELECT
+      TO authenticated
+      USING (active = TRUE);
+  END IF;
 
-CREATE POLICY pi_situational_questions_read_authenticated
-  ON pi_situational_questions
-  FOR SELECT
-  TO authenticated
-  USING (active = TRUE);
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies WHERE policyname = 'pi_situational_questions_read_authenticated'
+  ) THEN
+    CREATE POLICY pi_situational_questions_read_authenticated
+      ON pi_situational_questions
+      FOR SELECT
+      TO authenticated
+      USING (active = TRUE);
+  END IF;
+END $$;
 
--- Policies: o próprio usuário gerencia seus assessments
-CREATE POLICY pi_assessments_self_select
-  ON pi_assessments
-  FOR SELECT
-  TO authenticated
-  USING (candidate_user_id = auth.uid());
+-- Policies: o próprio usuário gerencia seus assessments (idempotente)
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies WHERE policyname = 'pi_assessments_self_select'
+  ) THEN
+    CREATE POLICY pi_assessments_self_select
+      ON pi_assessments
+      FOR SELECT
+      TO authenticated
+      USING (candidate_user_id = auth.uid());
+  END IF;
 
-CREATE POLICY pi_assessments_self_insert
-  ON pi_assessments
-  FOR INSERT
-  TO authenticated
-  WITH CHECK (candidate_user_id = auth.uid());
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies WHERE policyname = 'pi_assessments_self_insert'
+  ) THEN
+    CREATE POLICY pi_assessments_self_insert
+      ON pi_assessments
+      FOR INSERT
+      TO authenticated
+      WITH CHECK (candidate_user_id = auth.uid());
+  END IF;
 
-CREATE POLICY pi_assessments_self_update
-  ON pi_assessments
-  FOR UPDATE
-  TO authenticated
-  USING (candidate_user_id = auth.uid())
-  WITH CHECK (candidate_user_id = auth.uid());
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies WHERE policyname = 'pi_assessments_self_update'
+  ) THEN
+    CREATE POLICY pi_assessments_self_update
+      ON pi_assessments
+      FOR UPDATE
+      TO authenticated
+      USING (candidate_user_id = auth.uid())
+      WITH CHECK (candidate_user_id = auth.uid());
+  END IF;
+END $$;
 
--- Policies: respostas de descritores
-CREATE POLICY pi_descriptor_responses_self_select
-  ON pi_descriptor_responses
-  FOR SELECT
-  TO authenticated
-  USING (
-    EXISTS (
-      SELECT 1 FROM pi_assessments pa
-      WHERE pa.id = pi_descriptor_responses.assessment_id
-        AND pa.candidate_user_id = auth.uid()
-    )
-  );
+-- Policies: respostas de descritores (idempotente)
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies WHERE policyname = 'pi_descriptor_responses_self_select'
+  ) THEN
+    CREATE POLICY pi_descriptor_responses_self_select
+      ON pi_descriptor_responses
+      FOR SELECT
+      TO authenticated
+      USING (
+        EXISTS (
+          SELECT 1 FROM pi_assessments pa
+          WHERE pa.id = pi_descriptor_responses.assessment_id
+            AND pa.candidate_user_id = auth.uid()
+        )
+      );
+  END IF;
 
-CREATE POLICY pi_descriptor_responses_self_insert
-  ON pi_descriptor_responses
-  FOR INSERT
-  TO authenticated
-  WITH CHECK (
-    EXISTS (
-      SELECT 1 FROM pi_assessments pa
-      WHERE pa.id = assessment_id
-        AND pa.candidate_user_id = auth.uid()
-    )
-  );
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies WHERE policyname = 'pi_descriptor_responses_self_insert'
+  ) THEN
+    CREATE POLICY pi_descriptor_responses_self_insert
+      ON pi_descriptor_responses
+      FOR INSERT
+      TO authenticated
+      WITH CHECK (
+        EXISTS (
+          SELECT 1 FROM pi_assessments pa
+          WHERE pa.id = assessment_id
+            AND pa.candidate_user_id = auth.uid()
+        )
+      );
+  END IF;
 
-CREATE POLICY pi_descriptor_responses_self_update
-  ON pi_descriptor_responses
-  FOR UPDATE
-  TO authenticated
-  USING (
-    EXISTS (
-      SELECT 1 FROM pi_assessments pa
-      WHERE pa.id = pi_descriptor_responses.assessment_id
-        AND pa.candidate_user_id = auth.uid()
-    )
-  )
-  WITH CHECK (
-    EXISTS (
-      SELECT 1 FROM pi_assessments pa
-      WHERE pa.id = pi_descriptor_responses.assessment_id
-        AND pa.candidate_user_id = auth.uid()
-    )
-  );
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies WHERE policyname = 'pi_descriptor_responses_self_update'
+  ) THEN
+    CREATE POLICY pi_descriptor_responses_self_update
+      ON pi_descriptor_responses
+      FOR UPDATE
+      TO authenticated
+      USING (
+        EXISTS (
+          SELECT 1 FROM pi_assessments pa
+          WHERE pa.id = pi_descriptor_responses.assessment_id
+            AND pa.candidate_user_id = auth.uid()
+        )
+      )
+      WITH CHECK (
+        EXISTS (
+          SELECT 1 FROM pi_assessments pa
+          WHERE pa.id = pi_descriptor_responses.assessment_id
+            AND pa.candidate_user_id = auth.uid()
+        )
+      );
+  END IF;
+END $$;
 
--- Policies: respostas situacionais
-CREATE POLICY pi_situational_responses_self_select
-  ON pi_situational_responses
-  FOR SELECT
-  TO authenticated
-  USING (
-    EXISTS (
-      SELECT 1 FROM pi_assessments pa
-      WHERE pa.id = pi_situational_responses.assessment_id
-        AND pa.candidate_user_id = auth.uid()
-    )
-  );
+-- Policies: respostas situacionais (idempotente)
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies WHERE policyname = 'pi_situational_responses_self_select'
+  ) THEN
+    CREATE POLICY pi_situational_responses_self_select
+      ON pi_situational_responses
+      FOR SELECT
+      TO authenticated
+      USING (
+        EXISTS (
+          SELECT 1 FROM pi_assessments pa
+          WHERE pa.id = pi_situational_responses.assessment_id
+            AND pa.candidate_user_id = auth.uid()
+        )
+      );
+  END IF;
 
-CREATE POLICY pi_situational_responses_self_insert
-  ON pi_situational_responses
-  FOR INSERT
-  TO authenticated
-  WITH CHECK (
-    EXISTS (
-      SELECT 1 FROM pi_assessments pa
-      WHERE pa.id = assessment_id
-        AND pa.candidate_user_id = auth.uid()
-    )
-  );
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies WHERE policyname = 'pi_situational_responses_self_insert'
+  ) THEN
+    CREATE POLICY pi_situational_responses_self_insert
+      ON pi_situational_responses
+      FOR INSERT
+      TO authenticated
+      WITH CHECK (
+        EXISTS (
+          SELECT 1 FROM pi_assessments pa
+          WHERE pa.id = assessment_id
+            AND pa.candidate_user_id = auth.uid()
+        )
+      );
+  END IF;
 
-CREATE POLICY pi_situational_responses_self_update
-  ON pi_situational_responses
-  FOR UPDATE
-  TO authenticated
-  USING (
-    EXISTS (
-      SELECT 1 FROM pi_assessments pa
-      WHERE pa.id = pi_situational_responses.assessment_id
-        AND pa.candidate_user_id = auth.uid()
-    )
-  )
-  WITH CHECK (
-    EXISTS (
-      SELECT 1 FROM pi_assessments pa
-      WHERE pa.id = pi_situational_responses.assessment_id
-        AND pa.candidate_user_id = auth.uid()
-    )
-  );
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies WHERE policyname = 'pi_situational_responses_self_update'
+  ) THEN
+    CREATE POLICY pi_situational_responses_self_update
+      ON pi_situational_responses
+      FOR UPDATE
+      TO authenticated
+      USING (
+        EXISTS (
+          SELECT 1 FROM pi_assessments pa
+          WHERE pa.id = pi_situational_responses.assessment_id
+            AND pa.candidate_user_id = auth.uid()
+        )
+      )
+      WITH CHECK (
+        EXISTS (
+          SELECT 1 FROM pi_assessments pa
+          WHERE pa.id = pi_situational_responses.assessment_id
+            AND pa.candidate_user_id = auth.uid()
+        )
+      );
+  END IF;
+END $$;
 
 -- Seed: descritores (20)
 INSERT INTO pi_descriptors (descriptor, axis, position) VALUES

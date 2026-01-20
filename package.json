@@ -17,7 +17,8 @@
     "lint": "npm run lint -w tf-api && npm run lint -w tf-web",
     "test": "npm run test -w tf-api",
     "db:migrate": "supabase db push",
-    "db:reset": "supabase db reset"
+    "db:reset": "supabase db reset",
+    "cleanup:deployments": "node scripts/cleanup-vercel-deployments.js"
   },
   "dependencies": {
     "@supabase/ssr": "0.5.2",

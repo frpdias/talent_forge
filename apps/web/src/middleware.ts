@@ -58,10 +58,29 @@ export async function middleware(request: NextRequest) {
 
   // If authenticated, handle route protection
   if (user) {
+    // Get user profile to check user type
+    const { data: profile } = await supabase
+      .from('user_profiles')
+      .select('user_type')
+      .eq('id', user.id)
+      .single();
+
+    // Get user_type from profile or user metadata
+    const userType = profile?.user_type || user.user_metadata?.user_type;
+    
+    console.log('[MIDDLEWARE] User:', user.email, '| Profile user_type:', profile?.user_type, '| Metadata user_type:', user.user_metadata?.user_type, '| Final userType:', userType);
+
     // Redirect authenticated users away from auth pages
     if (pathname === '/login' || pathname === '/register') {
       const url = request.nextUrl.clone();
-      url.pathname = '/candidate'; // Redirect to candidate area by default
+      // Redirect based on user type
+      if (userType === 'recruiter' || userType === 'admin') {
+        console.log('[MIDDLEWARE] Redirecionando recrutador/admin para /dashboard');
+        url.pathname = '/dashboard';
+      } else {
+        console.log('[MIDDLEWARE] Redirecionando candidato para /candidate');
+        url.pathname = '/candidate';
+      }
       return NextResponse.redirect(url);
     }
   }

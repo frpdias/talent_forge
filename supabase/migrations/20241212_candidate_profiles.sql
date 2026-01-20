@@ -82,56 +82,133 @@ alter table candidate_education enable row level security;
 alter table candidate_experience enable row level security;
 
 -- RLS Policies for candidate_profiles
-create policy candidate_profiles_select on candidate_profiles
-  for select using (user_id = auth.uid());
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies WHERE schemaname = 'public' AND tablename = 'candidate_profiles' AND policyname = 'candidate_profiles_select'
+  ) THEN
+    CREATE POLICY candidate_profiles_select ON candidate_profiles
+      FOR SELECT USING (user_id = auth.uid());
+  END IF;
+END $$;
   
-create policy candidate_profiles_insert on candidate_profiles
-  for insert with check (user_id = auth.uid());
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies WHERE schemaname = 'public' AND tablename = 'candidate_profiles' AND policyname = 'candidate_profiles_insert'
+  ) THEN
+    CREATE POLICY candidate_profiles_insert ON candidate_profiles
+      FOR INSERT WITH CHECK (user_id = auth.uid());
+  END IF;
+END $$;
   
-create policy candidate_profiles_update on candidate_profiles
-  for update using (user_id = auth.uid());
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies WHERE schemaname = 'public' AND tablename = 'candidate_profiles' AND policyname = 'candidate_profiles_update'
+  ) THEN
+    CREATE POLICY candidate_profiles_update ON candidate_profiles
+      FOR UPDATE USING (user_id = auth.uid());
+  END IF;
+END $$;
 
 -- RLS Policies for candidate_education
-create policy candidate_education_select on candidate_education
-  for select using (
-    candidate_profile_id in (select id from candidate_profiles where user_id = auth.uid())
-  );
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies WHERE schemaname = 'public' AND tablename = 'candidate_education' AND policyname = 'candidate_education_select'
+  ) THEN
+    CREATE POLICY candidate_education_select ON candidate_education
+      FOR SELECT USING (
+        candidate_profile_id IN (SELECT id FROM candidate_profiles WHERE user_id = auth.uid())
+      );
+  END IF;
+END $$;
   
-create policy candidate_education_insert on candidate_education
-  for insert with check (
-    candidate_profile_id in (select id from candidate_profiles where user_id = auth.uid())
-  );
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies WHERE schemaname = 'public' AND tablename = 'candidate_education' AND policyname = 'candidate_education_insert'
+  ) THEN
+    CREATE POLICY candidate_education_insert ON candidate_education
+      FOR INSERT WITH CHECK (
+        candidate_profile_id IN (SELECT id FROM candidate_profiles WHERE user_id = auth.uid())
+      );
+  END IF;
+END $$;
   
-create policy candidate_education_update on candidate_education
-  for update using (
-    candidate_profile_id in (select id from candidate_profiles where user_id = auth.uid())
-  );
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies WHERE schemaname = 'public' AND tablename = 'candidate_education' AND policyname = 'candidate_education_update'
+  ) THEN
+    CREATE POLICY candidate_education_update ON candidate_education
+      FOR UPDATE USING (
+        candidate_profile_id IN (SELECT id FROM candidate_profiles WHERE user_id = auth.uid())
+      );
+  END IF;
+END $$;
   
-create policy candidate_education_delete on candidate_education
-  for delete using (
-    candidate_profile_id in (select id from candidate_profiles where user_id = auth.uid())
-  );
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies WHERE schemaname = 'public' AND tablename = 'candidate_education' AND policyname = 'candidate_education_delete'
+  ) THEN
+    CREATE POLICY candidate_education_delete ON candidate_education
+      FOR DELETE USING (
+        candidate_profile_id IN (SELECT id FROM candidate_profiles WHERE user_id = auth.uid())
+      );
+  END IF;
+END $$;
 
 -- RLS Policies for candidate_experience
-create policy candidate_experience_select on candidate_experience
-  for select using (
-    candidate_profile_id in (select id from candidate_profiles where user_id = auth.uid())
-  );
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies WHERE schemaname = 'public' AND tablename = 'candidate_experience' AND policyname = 'candidate_experience_select'
+  ) THEN
+    CREATE POLICY candidate_experience_select ON candidate_experience
+      FOR SELECT USING (
+        candidate_profile_id IN (SELECT id FROM candidate_profiles WHERE user_id = auth.uid())
+      );
+  END IF;
+END $$;
   
-create policy candidate_experience_insert on candidate_experience
-  for insert with check (
-    candidate_profile_id in (select id from candidate_profiles where user_id = auth.uid())
-  );
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies WHERE schemaname = 'public' AND tablename = 'candidate_experience' AND policyname = 'candidate_experience_insert'
+  ) THEN
+    CREATE POLICY candidate_experience_insert ON candidate_experience
+      FOR INSERT WITH CHECK (
+        candidate_profile_id IN (SELECT id FROM candidate_profiles WHERE user_id = auth.uid())
+      );
+  END IF;
+END $$;
   
-create policy candidate_experience_update on candidate_experience
-  for update using (
-    candidate_profile_id in (select id from candidate_profiles where user_id = auth.uid())
-  );
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies WHERE schemaname = 'public' AND tablename = 'candidate_experience' AND policyname = 'candidate_experience_update'
+  ) THEN
+    CREATE POLICY candidate_experience_update ON candidate_experience
+      FOR UPDATE USING (
+        candidate_profile_id IN (SELECT id FROM candidate_profiles WHERE user_id = auth.uid())
+      );
+  END IF;
+END $$;
   
-create policy candidate_experience_delete on candidate_experience
-  for delete using (
-    candidate_profile_id in (select id from candidate_profiles where user_id = auth.uid())
-  );
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies WHERE schemaname = 'public' AND tablename = 'candidate_experience' AND policyname = 'candidate_experience_delete'
+  ) THEN
+    CREATE POLICY candidate_experience_delete ON candidate_experience
+      FOR DELETE USING (
+        candidate_profile_id IN (SELECT id FROM candidate_profiles WHERE user_id = auth.uid())
+      );
+  END IF;
+END $$;
 
 -- Function to update updated_at timestamp
 create or replace function update_updated_at_column()
@@ -143,17 +220,41 @@ end;
 $$ language plpgsql;
 
 -- Triggers for updated_at
-create trigger update_candidate_profiles_updated_at
-  before update on candidate_profiles
-  for each row execute function update_updated_at_column();
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_trigger t JOIN pg_class c ON t.tgrelid = c.oid
+    WHERE t.tgname = 'update_candidate_profiles_updated_at' AND c.relname = 'candidate_profiles'
+  ) THEN
+    CREATE TRIGGER update_candidate_profiles_updated_at
+      BEFORE UPDATE ON candidate_profiles
+      FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+  END IF;
+END $$;
 
-create trigger update_candidate_education_updated_at
-  before update on candidate_education
-  for each row execute function update_updated_at_column();
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_trigger t JOIN pg_class c ON t.tgrelid = c.oid
+    WHERE t.tgname = 'update_candidate_education_updated_at' AND c.relname = 'candidate_education'
+  ) THEN
+    CREATE TRIGGER update_candidate_education_updated_at
+      BEFORE UPDATE ON candidate_education
+      FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+  END IF;
+END $$;
 
-create trigger update_candidate_experience_updated_at
-  before update on candidate_experience
-  for each row execute function update_updated_at_column();
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_trigger t JOIN pg_class c ON t.tgrelid = c.oid
+    WHERE t.tgname = 'update_candidate_experience_updated_at' AND c.relname = 'candidate_experience'
+  ) THEN
+    CREATE TRIGGER update_candidate_experience_updated_at
+      BEFORE UPDATE ON candidate_experience
+      FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+  END IF;
+END $$;
 
 -- Storage bucket for resumes (run this in Supabase Dashboard SQL Editor)
 -- insert into storage.buckets (id, name, public) values ('resumes', 'resumes', false);

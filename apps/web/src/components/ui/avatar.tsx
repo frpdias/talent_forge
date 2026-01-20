@@ -1,13 +1,15 @@
+import * as React from 'react';
 import { cn, getInitials } from '@/lib/utils';
 
 interface AvatarProps {
-  name: string;
+  name?: string;
   src?: string;
   size?: 'sm' | 'md' | 'lg';
   className?: string;
+  children?: React.ReactNode;
 }
 
-export function Avatar({ name, src, size = 'md', className }: AvatarProps) {
+export function Avatar({ name, src, size = 'md', className, children }: AvatarProps) {
   const sizes = {
     sm: 'h-8 w-8 text-xs',
     md: 'h-10 w-10 text-sm',
@@ -18,9 +20,17 @@ export function Avatar({ name, src, size = 'md', className }: AvatarProps) {
     return (
       <img
         src={src}
-        alt={name}
+        alt={name || ''}
         className={cn('rounded-full object-cover', sizes[size], className)}
       />
+    );
+  }
+
+  if (children) {
+    return (
+      <div className={cn('rounded-full', sizes[size], className)}>
+        {children}
+      </div>
     );
   }
 
@@ -32,7 +42,15 @@ export function Avatar({ name, src, size = 'md', className }: AvatarProps) {
         className
       )}
     >
-      {getInitials(name)}
+      {name && getInitials(name)}
+    </div>
+  );
+}
+
+export function AvatarFallback({ children, className }: { children: React.ReactNode; className?: string }) {
+  return (
+    <div className={cn('rounded-full flex items-center justify-center font-medium w-full h-full', className)}>
+      {children}
     </div>
   );
 }

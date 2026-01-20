@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Mail, Lock, Eye, EyeOff, ArrowRight } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
+import { UserAvatar } from '@/components/UserAvatar';
 
 export default function LoginPage() {
   return (
@@ -38,30 +39,23 @@ function LoginContent() {
 
       if (authError) throw authError;
 
-      // Check if user is candidate by looking at candidate_profiles
-      console.log('🔍 Buscando candidate_profiles para:', data.user.id);
-      const { data: candidateProfile, error: profileError } = await supabase
-        .from('candidate_profiles')
-        .select('id, onboarding_completed')
-        .eq('user_id', data.user.id)
-        .single();
-
-      console.log('📋 Resultado da busca:', candidateProfile);
-      console.log('❌ Erro na busca:', profileError);
-
-      // Default to candidate flow
-      if (!candidateProfile) {
-        // New candidate - go to onboarding
-        console.log('➡️ Novo candidato - redirecionando para onboarding');
-        router.push('/onboarding');
-      } else if (candidateProfile.onboarding_completed) {
-        // Completed onboarding - go to dashboard
-        console.log('✅ Onboarding completo - redirecionando para /candidate');
-        router.push('/candidate');
+      console.log('✅ Login successful:', data.user.email);
+      console.log('🔄 Redirecting to middleware for proper routing...');
+      
+      // Small delay to ensure session is persisted
+      await new Promise(resolve => setTimeout(resolve, 200));
+      
+      // Redirect based on metadata (middleware will handle the final routing)
+      const userType = data.user.user_metadata?.user_type || 'candidate';
+      
+      if (userType === 'recruiter' || userType === 'admin') {
+        console.log('📌 Recruiter detected - redirecting to /dashboard');
+        router.push('/dashboard');
+        router.refresh(); // Force middleware to run
       } else {
-        // Incomplete onboarding - go to onboarding
-        console.log('⏳ Onboarding incompleto - redirecionando para onboarding');
-        router.push('/onboarding');
+        console.log('📌 Candidate detected - redirecting to /candidate');
+        router.push('/candidate');
+        router.refresh(); // Force middleware to run
       }
     } catch (err: any) {
       setError(err.message || 'Erro ao fazer login. Verifique suas credenciais.');
@@ -90,11 +84,12 @@ function LoginContent() {
           <div className="absolute bottom-1/4 right-1/4 w-48 md:w-64 h-48 md:h-64 bg-[#D9D9C6] rounded-full blur-3xl" />
         </div>
         <div className="relative z-10 flex flex-col justify-between p-8 lg:p-12 w-full">
-          <Link href="/" className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center">
-              <span className="text-[#141042] font-bold text-xl">FO</span>
+          <Link href="/" className="flex items-center space-x-4">
+            <UserAvatar size="xl" className="bg-white" />
+            <div className="flex flex-col">
+              <span className="text-[#1F4ED8] font-semibold text-2xl tracking-tight">TALENT</span>
+              <span className="text-[#F97316] font-bold text-2xl tracking-wider">FORGE</span>
             </div>
-            <span className="text-xl lg:text-2xl font-semibold text-white">TalentForge</span>
           </Link>
           
           <div className="max-w-md">
@@ -107,7 +102,7 @@ function LoginContent() {
           </div>
           
           <p className="text-white/40 text-xs lg:text-sm">
-            © 2025 FO Consulting. Todos os direitos reservados.
+            © 2025 FARTECH. Todos os direitos reservados.
           </p>
         </div>
       </div>
@@ -117,11 +112,12 @@ function LoginContent() {
         <div className="w-full max-w-md">
           {/* Mobile Logo */}
           <div className="lg:hidden text-center mb-8 sm:mb-10">
-            <Link href="/" className="inline-flex items-center space-x-2 sm:space-x-3">
-              <div className="w-9 h-9 sm:w-10 sm:h-10 bg-[#141042] rounded-xl flex items-center justify-center">
-                <span className="text-white font-bold text-lg sm:text-xl">FO</span>
+            <Link href="/" className="inline-flex items-center space-x-3 justify-center">
+              <UserAvatar size="lg" />
+              <div className="flex flex-col items-start">
+                <span className="text-[#1F4ED8] font-semibold text-xl tracking-tight">TALENT</span>
+                <span className="text-[#F97316] font-bold text-xl tracking-wider">FORGE</span>
               </div>
-              <span className="text-xl sm:text-2xl font-semibold text-[#141042]">TalentForge</span>
             </Link>
           </div>
 

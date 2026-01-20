@@ -39,19 +39,13 @@ function AuthContent() {
     const actualUserType = session.user.user_metadata?.user_type || userType;
 
     if (actualUserType === 'candidate') {
-      const { data: profile } = await supabase
-        .from('candidate_profiles')
-        .select('onboarding_completed')
-        .eq('user_id', session.user.id)
-        .single();
-
-      if (!profile || !profile.onboarding_completed) {
-        router.push('/onboarding');
-      } else {
-        router.push('/candidate');
-      }
+      // New candidate after registration - go to onboarding
+      console.log('✅ Novo candidato registrado - redirecionando para /cadastro');
+      router.push('/cadastro');
     } else {
-      router.push('/admin');
+      // Recruiter/admin - go to dashboard
+      console.log('✅ Recrutador registrado - redirecionando para /dashboard');
+      router.push('/dashboard');
     }
   }, [router, userType]);
 

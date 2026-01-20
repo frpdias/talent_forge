@@ -1,0 +1,473 @@
+{
+  "name": "Atendimento Fartech WhatsApp - Menu (AvisaAPI + OpenAI)",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "9ceb1031-ac6e-4d54-94ef-b0379f00a307",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -16,
+        -16
+      ],
+      "id": "16ccdf2f-07c4-44df-b6e4-b96a87ae8f0c",
+      "name": "Webhook",
+      "webhookId": "9ceb1031-ac6e-4d54-94ef-b0379f00a307"
+    },
+    {
+      "parameters": {
+        "functionCode": "const inputData = $input.first().json;\n\ntry {\n  const raw = inputData.body?.jsonData;\n\n  if (!raw) {\n    return {\n      from: \"ERRO\",\n      text: \"Falha: body.jsonData não existe\",\n    };\n  }\n\n  const obj = typeof raw === \"string\" ? JSON.parse(raw) : raw;\n\n  // 1) Preferir SenderAlt (telefone real). Se não existir, usar Sender.\n  const senderAlt = obj?.event?.Info?.SenderAlt || \"\";\n  const sender = obj?.event?.Info?.Sender || \"\";\n  const chosenSender = senderAlt || sender;\n\n  // 2) Limpar para ficar só números\n  const cleanNumber = chosenSender.includes(\"@\")\n    ? chosenSender.split(\"@\")[0]\n    : chosenSender;\n\n  // 3) Texto da mensagem (no seu payload está aqui)\n  const text =\n    obj?.event?.Message?.conversation ||\n    obj?.event?.Message?.extendedTextMessage?.text ||\n    \"\";\n\n  return {\n    from: cleanNumber,\n    text: text,\n  };\n} catch (e) {\n  return {\n    from: \"ERRO\",\n    text: \"Falha na normalização: \" + e.message,\n  };\n}\n"
+      },
+      "id": "c3fdcf5d-2e43-4147-9e99-b696d9b897bc",
+      "name": "Normalizar Dados WhatsApp",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        272,
+        -16
+      ]
+    },
+    {
+      "parameters": {
+        "amount": 1.5,
+        "unit": "seconds"
+      },
+      "id": "f7c5c3de-3e0f-4e3a-9b6d-22b4b7f6c7a1",
+      "name": "Digitando Menu (1.5s)",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1,
+      "position": [
+        1280,
+        176
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "const now = new Date();\n// Ajuste de fuso horário para Brasília (UTC-3)\nconst hora = now.getUTCHours() - 3;\nconst dia = now.getDay(); // 0=Domingo, 6=Sábado\n\nconst emHorarioComercial = (dia >= 1 && dia <= 5 && hora >= 8 && hora < 18);\n\nreturn [{\n  emHorarioComercial\n}];"
+      },
+      "id": "2f9efac7-f5d4-41a1-8230-ecfd25a6198c",
+      "name": "Verificar Horário Comercial",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        608,
+        -176
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{$json[\"emHorarioComercial\"]}}",
+              "value2": true
+            }
+          ]
+        }
+      },
+      "id": "23621ee1-24d6-45dc-8964-f8b374c748ce",
+      "name": "IF - Dentro do Horário?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        864,
+        -176
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "const mensagem = `Olá! 👋\n\nVocê entrou em contato com o *Atendimento Fartech*.\n\nEstamos fora do nosso horário de atendimento (segunda a sexta, das 8h às 18h).\n\nRegistramos sua mensagem e retornaremos assim que estivermos online.\n\nSe for algo urgente (pedido bloqueado, pagamento duplicado, entrega em risco, conta comprometida), responda com *URGENTE* na primeira linha.\n\nObrigado pela compreensão.`;\n\nconst from = $items(\"Normalizar Dados WhatsApp\")[0].json.from;\n\nreturn [{\n  from,\n  resposta: mensagem\n}];"
+      },
+      "id": "52c0f7ad-01c3-4ab7-a142-f82b752d7b45",
+      "name": "Mensagem Fora do Horário",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        1120,
+        -272
+      ]
+    },
+    {
+      "parameters": {
+        "requestMethod": "POST",
+        "url": "https://www.avisaapi.com.br/api/actions/sendMessage",
+        "jsonParameters": true,
+        "options": {
+          "bodyContentType": "json"
+        },
+        "bodyParametersJson": "={{ { \"number\": $items(\"Normalizar Dados WhatsApp\")[0].json.from, \"message\": $json.resposta } }}",
+        "headerParametersUi": {
+          "parameter": [
+            {
+              "name": "Authorization",
+              "value": "Bearer 6CSmnzPkmLpPlL6h37J6aHluA9VvUS8f5FqVW9QsVgqmPggEwTvbmJH1PcoJ"
+            }
+          ]
+        }
+      },
+      "id": "66df7054-01dc-4ab2-a75f-78a2ca434f81",
+      "name": "AvisaAPI - Enviar Off-Hour",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [
+        1392,
+        -272
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "const { from } = $json;\nconst rawText = $json.text || \"\";\nconst clean = String(rawText).trim();\nconst isNumero = /^(?:[1-6])$/.test(clean);\n\nlet modo = 'menu';\nlet area = null;\n\nif (isNumero) {\n    modo = 'triagem';\n    switch (clean) {\n        case '1': area = 'Pedido em andamento'; break;\n        case '2': area = 'Trocas e devoluções'; break;\n        case '3': area = 'Pagamentos e reembolsos'; break;\n        case '4': area = 'Entregas e rastreamento'; break;\n        case '5': area = 'Conta e segurança'; break;\n        case '6': area = 'Lojas parceiras / sellers'; break;\n    }\n}\n\nreturn {\n    from,\n    text: rawText,\n    clean,\n    modo,\n    area\n};"
+      },
+      "id": "b59b2009-198c-4236-8a68-e1e57c54a003",
+      "name": "Analisar Mensagem (Menu ou Área)",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        608,
+        48
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{$json[\"modo\"]}}",
+              "value2": "triagem"
+            }
+          ]
+        }
+      },
+      "id": "b2b3b90b-ca75-4568-a291-ba9b58afda32",
+      "name": "IF - Menu ou Triagem?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        864,
+        48
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "const { from } = $json;\n\nconst mensagem = `Olá! 👋\nVocê está falando com o suporte da *Fartech*. Escolha uma opção digitando apenas o número correspondente:\n\n1️⃣ Pedido em andamento\n2️⃣ Trocas e devoluções\n3️⃣ Pagamentos e reembolsos\n4️⃣ Entregas e rastreamento\n5️⃣ Conta e segurança\n6️⃣ Lojas parceiras / sellers\n\nDigite apenas o número da opção desejada.`;\n\nreturn [{\n  from,\n  resposta: mensagem\n}];"
+      },
+      "id": "3a6d2cf2-7de7-4fd6-a91c-0a429ed8bce7",
+      "name": "Mensagem Menu Fartech",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        1120,
+        176
+      ]
+    },
+    {
+      "parameters": {
+        "requestMethod": "POST",
+        "url": "https://www.avisaapi.com.br/api/actions/sendMessage",
+        "options": {
+          "bodyContentType": "json"
+        },
+        "bodyParametersUi": {
+          "parameter": [
+            {
+              "name": "message",
+              "value": "={{ $json.resposta }}"
+            },
+            {
+              "name": "number",
+              "value": "={{ $('Normalizar Dados WhatsApp').item.json.from }}"
+            }
+          ]
+        },
+        "headerParametersUi": {
+          "parameter": [
+            {
+              "name": "Authorization",
+              "value": "Bearer 6CSmnzPkmLpPlL6h37J6aHluA9VvUS8f5FqVW9QsVgqmPggEwTvbmJH1PcoJ"
+            }
+          ]
+        }
+      },
+      "id": "7728f447-b48d-4e0d-84e3-0792b45b5aba",
+      "name": "AvisaAPI - Enviar Menu",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [
+        1392,
+        176
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "const { from, area } = $json;\n\nconst prompt = `Você é o assistente virtual da *Fartech*, e-commerce premium. Responda em português (Brasil) por WhatsApp.\n\nRegras:\n- Seja breve, cordial e profissional.\n- Não prometa prazos que não consiga garantir.\n- Faça 3 a 4 perguntas objetivas para entender o caso.\n- Se houver sinais de risco (pagamento duplicado, cobrança incorreta, acesso suspeito, entrega crítica), avise que priorizaremos.\n- Não peça dados sensíveis completos (CPF inteiro, cartão). Apenas dados mínimos (nº do pedido, e-mail da conta, CEP aproximado).\n\nÁrea escolhida: ${area}.\n\nGere uma mensagem única para o cliente seguindo:\n1) Cumprimente e confirme que é o suporte Fartech.\n2) Reafirme a categoria (${area}).\n3) Faça 3-4 perguntas claras sobre o caso.\n4) Diga que um especialista dará continuidade pelo WhatsApp/e-mail.\n\nResponda apenas com a mensagem pronta para enviar.`;\n\nreturn [{\n  from,\n  area,\n  prompt\n}];"
+      },
+      "id": "a053aa56-7a78-4c31-9b6b-86fbf3ad204e",
+      "name": "Montar Prompt por Área",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        1120,
+        -48
+      ]
+    },
+    {
+      "parameters": {
+        "prompt": "={{ $json.prompt }}",
+        "options": {},
+        "requestOptions": {}
+      },
+      "id": "be5be40f-28d2-4f45-9166-b5d2601b2b44",
+      "name": "OpenAI - Resposta Fartech",
+      "type": "n8n-nodes-base.openAi",
+      "typeVersion": 1,
+      "position": [
+        1392,
+        -48
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "d7rVqaE5YHL2vdEP",
+          "name": "OpenAi account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "functionCode": "const from = $items(\"Montar Prompt por Área\")[0].json.from;\nlet resposta = $json.text;\n\nif (!resposta || resposta.trim() === \"\") {\n    resposta = \"No momento não consegui gerar uma resposta automática. Por favor, tente novamente em instantes ou aguarde nosso suporte humano.\";\n}\n\nreturn [{\n    from,\n    resposta\n}];"
+      },
+      "id": "bc757d2f-425b-414f-8513-e2ef68f58165",
+      "name": "Extrair Texto IA",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        1648,
+        -48
+      ]
+    },
+    {
+      "parameters": {
+        "amount": 1.5,
+        "unit": "seconds"
+      },
+      "id": "8fb8e7db-227b-4f1f-8f72-5d6229de8c2b",
+      "name": "Digitando IA (1.5s)",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1,
+      "position": [
+        1760,
+        -48
+      ]
+    },
+    {
+      "parameters": {
+        "requestMethod": "POST",
+        "url": "https://www.avisaapi.com.br/api/actions/sendMessage",
+        "options": {
+          "bodyContentType": "json"
+        },
+        "bodyParametersUi": {
+          "parameter": [
+            {
+              "name": "number",
+              "value": "={{ $('Normalizar Dados WhatsApp').item.json.from }}"
+            },
+            {
+              "name": "message",
+              "value": "={{ $json.resposta }}"
+            }
+          ]
+        },
+        "headerParametersUi": {
+          "parameter": [
+            {
+              "name": "Authorization",
+              "value": "Bearer 6CSmnzPkmLpPlL6h37J6aHluA9VvUS8f5FqVW9QsVgqmPggEwTvbmJH1PcoJ"
+            }
+          ]
+        }
+      },
+      "id": "98e8129a-392a-41c9-93c9-2aba955fffbc",
+      "name": "AvisaAPI - Enviar Resposta IA",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [
+        1904,
+        -48
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Normalizar Dados WhatsApp": {
+      "main": [
+        [
+          {
+            "node": "Analisar Mensagem (Menu ou Área)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Verificar Horário Comercial": {
+      "main": [
+        [
+          {
+            "node": "IF - Dentro do Horário?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF - Dentro do Horário?": {
+      "main": [
+        [
+          {
+            "node": "Analisar Mensagem (Menu ou Área)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Mensagem Fora do Horário",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mensagem Fora do Horário": {
+      "main": [
+        [
+          {
+            "node": "AvisaAPI - Enviar Off-Hour",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Analisar Mensagem (Menu ou Área)": {
+      "main": [
+        [
+          {
+            "node": "IF - Menu ou Triagem?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF - Menu ou Triagem?": {
+      "main": [
+        [
+          {
+            "node": "Montar Prompt por Área",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Mensagem Menu Fartech",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mensagem Menu Fartech": {
+      "main": [
+        [
+          {
+            "node": "Digitando Menu (1.5s)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Digitando Menu (1.5s)": {
+      "main": [
+        [
+          {
+            "node": "AvisaAPI - Enviar Menu",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Montar Prompt por Área": {
+      "main": [
+        [
+          {
+            "node": "OpenAI - Resposta Fartech",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI - Resposta Fartech": {
+      "main": [
+        [
+          {
+            "node": "Extrair Texto IA",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extrair Texto IA": {
+      "main": [
+        [
+          {
+            "node": "Digitando IA (1.5s)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Digitando IA (1.5s)": {
+      "main": [
+        [
+          {
+            "node": "AvisaAPI - Enviar Resposta IA",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Normalizar Dados WhatsApp",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "d71fc925-31f4-424e-b0a2-164f6210e4ac",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "fe442074841fd0be12a3a7547169839578b296f07131836006afc834405235b9"
+  },
+  "id": "HrKLrAZaknqbHCwG",
+  "tags": []
+}

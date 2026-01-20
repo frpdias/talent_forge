@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { persist, createJSONStorage } from 'zustand/middleware';
 
 interface Organization {
   id: string;
@@ -26,6 +26,18 @@ export const useOrgStore = create<OrgStore>()(
     }),
     {
       name: 'talentforge-org',
+      storage: createJSONStorage(() => {
+        // Safe storage for SSR - return a no-op storage on server
+        if (typeof window === 'undefined') {
+          return {
+            getItem: () => null,
+            setItem: () => {},
+            removeItem: () => {},
+          };
+        }
+        return localStorage;
+      }),
+      skipHydration: true,
     }
   )
 );

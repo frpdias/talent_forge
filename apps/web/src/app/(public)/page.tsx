@@ -16,8 +16,10 @@ import {
   Shield,
   Clock,
   Menu,
-  X
+  X,
+  LogIn
 } from 'lucide-react';
+import { UserAvatar } from '@/components/UserAvatar';
 
 export default function LandingPage() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -25,15 +27,16 @@ export default function LandingPage() {
   return (
     <div className="min-h-screen bg-[#FAFAF8]">
       {/* Header - Stripe/Apple Style */}
-      <header className="fixed top-0 left-0 right-0 z-50 glass border-b border-[#E5E5DC]">
+      <header className="fixed top-0 left-0 right-0 z-50 glass">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
+          <div className="flex items-center justify-between h-24">
             {/* Logo */}
-            <Link href="/" className="flex items-center space-x-2 sm:space-x-3">
-              <div className="w-8 h-8 sm:w-9 sm:h-9 bg-[#141042] rounded-xl flex items-center justify-center">
-                <span className="text-white font-bold text-base sm:text-lg">FO</span>
+            <Link href="/" className="flex items-center space-x-3">
+              <UserAvatar size="lg" />
+              <div className="flex flex-col">
+                <span className="text-[#1F4ED8] font-semibold text-xl tracking-tight">TALENT</span>
+                <span className="text-[#F97316] font-bold text-xl tracking-wider">FORGE</span>
               </div>
-              <span className="text-lg sm:text-xl font-semibold text-[#141042] tracking-tight">TalentForge</span>
             </Link>
             
             {/* Navigation - Desktop */}
@@ -50,12 +53,13 @@ export default function LandingPage() {
             </nav>
             
             {/* CTA - Desktop */}
-            <div className="hidden sm:flex items-center space-x-4">
+            <div className="hidden sm:flex items-center space-x-3">
               <Link 
                 href="/login" 
-                className="text-[#141042] hover:text-[#666666] transition-colors text-sm font-medium"
+                className="flex items-center space-x-2 px-4 py-2 text-[#141042] hover:bg-[#F5F5F0] rounded-lg transition-colors text-sm font-medium"
               >
-                Entrar
+                <LogIn className="w-4 h-4" />
+                <span>Login Recrutador</span>
               </Link>
               <Link 
                 href="/register" 
@@ -103,9 +107,10 @@ export default function LandingPage() {
               <div className="pt-4 border-t border-[#E5E5DC] space-y-3">
                 <Link 
                   href="/login"
-                  className="block w-full py-3 text-center text-[#141042] font-medium border border-[#E5E5DC] rounded-xl"
+                  className="flex items-center justify-center space-x-2 w-full py-3 text-[#141042] font-medium border border-[#E5E5DC] rounded-xl"
                 >
-                  Entrar
+                  <LogIn className="w-4 h-4" />
+                  <span>Login Recrutador</span>
                 </Link>
                 <Link 
                   href="/register"
@@ -146,7 +151,7 @@ export default function LandingPage() {
             </p>
             
             {/* CTAs */}
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 mb-10 sm:mb-16 px-4 sm:px-0">
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 mb-4 sm:mb-6 px-4 sm:px-0">
               <Link 
                 href="/register?type=recruiter"
                 className="w-full sm:w-auto bg-[#141042] hover:bg-[#1e1860] text-white px-6 sm:px-8 py-3.5 sm:py-4 rounded-xl sm:rounded-2xl font-medium text-fluid-base transition-all flex items-center justify-center space-x-2 sm:space-x-3 glow-hover"
@@ -162,6 +167,16 @@ export default function LandingPage() {
                 <UserCircle className="w-4 h-4 sm:w-5 sm:h-5" />
                 <span>Sou Candidato</span>
               </Link>
+            </div>
+            
+            {/* Login Link */}
+            <div className="text-center mb-10 sm:mb-16 px-4 sm:px-0">
+              <p className="text-sm sm:text-base text-[#666666]">
+                Já tem uma conta?{' '}
+                <Link href="/login" className="text-[#141042] font-semibold hover:underline">
+                  Fazer login
+                </Link>
+              </p>
             </div>
             
             {/* Trust Indicators */}
@@ -437,11 +452,12 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 sm:gap-12 mb-8 sm:mb-12">
             <div className="col-span-2 md:col-span-1">
-              <div className="flex items-center space-x-2 sm:space-x-3 mb-4 sm:mb-6">
-                <div className="w-8 h-8 sm:w-9 sm:h-9 bg-white rounded-xl flex items-center justify-center">
-                  <span className="text-[#141042] font-bold text-base sm:text-lg">FO</span>
+              <div className="mb-4 sm:mb-6 flex items-center space-x-3">
+                <UserAvatar size="lg" className="bg-white" />
+                <div className="flex flex-col">
+                  <span className="text-[#1F4ED8] font-semibold text-xl tracking-tight">TALENT</span>
+                  <span className="text-[#F97316] font-bold text-xl tracking-wider">FORGE</span>
                 </div>
-                <span className="text-lg sm:text-xl font-semibold text-white">TalentForge</span>
               </div>
               <p className="text-white/60 text-fluid-xs leading-relaxed">
                 Plataforma de recrutamento inteligente para empresas modernas.
@@ -479,7 +495,7 @@ export default function LandingPage() {
           
           <div className="pt-6 sm:pt-8 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4 sm:gap-0">
             <p className="text-white/40 text-fluid-xs text-center sm:text-left">
-              © 2025 FO Consulting. Todos os direitos reservados.
+              © 2025 FARTECH. Todos os direitos reservados.
             </p>
             <div className="flex items-center space-x-4 sm:space-x-6">
               <a href="#" className="text-white/40 hover:text-white transition-colors text-fluid-xs">

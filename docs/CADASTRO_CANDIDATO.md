@@ -507,4 +507,4 @@ Para dúvidas ou problemas:
 
 ---
 
-**Desenvolvido com ❤️ para TalentForge - FO Consulting**
+**Desenvolvido com ❤️ para TalentForge - FARTECH**

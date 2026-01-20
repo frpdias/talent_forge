@@ -16,6 +16,7 @@ import {
   Bell,
   ChevronDown
 } from 'lucide-react';
+import { UserAvatar } from '@/components/UserAvatar';
 
 const navItems = [
   { href: '/admin', label: 'Dashboard', icon: LayoutDashboard },
@@ -42,15 +43,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
       {/* Sidebar */}
       <aside className={`fixed left-0 top-0 h-full bg-white border-r border-[#E5E5DC] z-50 transition-transform duration-300 w-70 sm:w-64 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
-        <div className="p-4 sm:p-6 border-b border-[#E5E5DC]">
-          <div className="flex items-center justify-between">
-            <Link href="/admin" className="flex items-center space-x-2 sm:space-x-3">
-              <div className="w-9 h-9 sm:w-10 sm:h-10 bg-[#141042] rounded-xl flex items-center justify-center">
-                <span className="text-white font-bold text-base sm:text-lg">FO</span>
-              </div>
-              <div>
-                <span className="text-base sm:text-lg font-semibold text-[#141042]">TalentForge</span>
-                <span className="block text-[10px] sm:text-xs text-[#666666]">Admin Panel</span>
+        <div className="p-4 sm:p-6 flex items-center">
+          <div className="flex items-center justify-between w-full">
+            <Link href="/admin" className="flex items-center space-x-3">
+              <UserAvatar size="md" />
+              <div className="flex flex-col">
+                <span className="text-[#1F4ED8] font-semibold text-base tracking-tight">TALENT</span>
+                <span className="text-[#F97316] font-bold text-base tracking-wider">FORGE</span>
               </div>
             </Link>
             <button 

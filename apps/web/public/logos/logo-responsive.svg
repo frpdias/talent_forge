@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg 
+  xmlns="http://www.w3.org/2000/svg" 
+  viewBox="0 0 1536 1024"
+  preserveAspectRatio="xMidYMid meet"
+  class="logo-responsive"
+>
+  <style>
+    .logo-responsive {
+      width: auto;
+      height: 100%;
+      max-width: 100%;
+    }
+  </style>
+  
+  <!-- A imagem PNG será embedada aqui -->
+  <image 
+    href="logo-original.png" 
+    width="1536" 
+    height="1024"
+    preserveAspectRatio="xMidYMid meet"
+  />
+</svg>

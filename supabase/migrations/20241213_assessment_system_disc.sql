@@ -3,13 +3,34 @@
 -- Description: Tables for assessment system with DISC personality test
 
 -- Assessment types enum
-CREATE TYPE assessment_type AS ENUM ('disc', 'mbti', 'big_five', 'technical', 'custom');
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_type WHERE typname = 'assessment_type'
+  ) THEN
+    CREATE TYPE assessment_type AS ENUM ('disc', 'mbti', 'big_five', 'technical', 'custom');
+  END IF;
+END $$;
 
 -- Assessment status enum
-CREATE TYPE assessment_status AS ENUM ('draft', 'in_progress', 'completed', 'reviewed');
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_type WHERE typname = 'assessment_status'
+  ) THEN
+    CREATE TYPE assessment_status AS ENUM ('draft', 'in_progress', 'completed', 'reviewed');
+  END IF;
+END $$;
 
 -- DISC profile types
-CREATE TYPE disc_profile AS ENUM ('D', 'I', 'S', 'C', 'DD', 'DI', 'DS', 'DC', 'ID', 'II', 'IS', 'IC', 'SD', 'SI', 'SS', 'SC', 'CD', 'CI', 'CS', 'CC');
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_type WHERE typname = 'disc_profile'
+  ) THEN
+    CREATE TYPE disc_profile AS ENUM ('D', 'I', 'S', 'C', 'DD', 'DI', 'DS', 'DC', 'ID', 'II', 'IS', 'IC', 'SD', 'SI', 'SS', 'SC', 'CD', 'CI', 'CS', 'CC');
+  END IF;
+END $$;
 
 -- Main assessments table
 CREATE TABLE IF NOT EXISTS assessments (
@@ -150,79 +171,141 @@ ALTER TABLE disc_responses ENABLE ROW LEVEL SECURITY;
 ALTER TABLE assessment_invitations ENABLE ROW LEVEL SECURITY;
 
 -- Assessments RLS
-CREATE POLICY "Candidates can view own assessments" ON assessments
-  FOR SELECT USING (candidate_user_id = auth.uid());
-
-CREATE POLICY "Candidates can update own assessments" ON assessments
-  FOR UPDATE USING (candidate_user_id = auth.uid());
-
-CREATE POLICY "Recruiters can view assessments for their candidates" ON assessments
-  FOR SELECT USING (
-    EXISTS (
-      SELECT 1 FROM candidates c 
-      JOIN organizations org ON c.owner_org_id = org.id
-      JOIN org_members om ON org.id = om.org_id
-      WHERE c.id = assessments.candidate_id AND om.user_id = auth.uid()
-    )
-  );
 
 -- DISC Assessments RLS
-CREATE POLICY "Users can view own DISC results" ON disc_assessments
-  FOR SELECT USING (
-    assessment_id IN (
-      SELECT id FROM assessments WHERE candidate_user_id = auth.uid()
-    )
-  );
-
-CREATE POLICY "Recruiters can view DISC results" ON disc_assessments
-  FOR SELECT USING (
-    EXISTS (
-      SELECT 1 FROM assessments a
-      WHERE a.id = disc_assessments.assessment_id AND
-      EXISTS (
-        SELECT 1 FROM candidates c 
-        JOIN organizations org ON c.owner_org_id = org.id
-        JOIN org_members om ON org.id = om.org_id
-        WHERE c.id = a.candidate_id AND om.user_id = auth.uid()
-      )
-    )
-  );
 
 -- DISC Questions RLS (public read)
-CREATE POLICY "Anyone can read DISC questions" ON disc_questions
-  FOR SELECT USING (active = TRUE);
 
 -- DISC Responses RLS
-CREATE POLICY "Candidates can create own responses" ON disc_responses
-  FOR INSERT WITH CHECK (
-    assessment_id IN (
-      SELECT id FROM assessments WHERE candidate_user_id = auth.uid()
-    )
-  );
-
-CREATE POLICY "Candidates can read own responses" ON disc_responses
-  FOR SELECT USING (
-    assessment_id IN (
-      SELECT id FROM assessments WHERE candidate_user_id = auth.uid()
-    )
-  );
 
 -- Assessment Invitations RLS
-CREATE POLICY "Recruiters can manage invitations" ON assessment_invitations
-  FOR ALL USING (invited_by = auth.uid());
 
 -- Triggers for updated_at
-CREATE TRIGGER update_assessments_updated_at
-  BEFORE UPDATE ON assessments
-  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies WHERE schemaname = current_schema() AND policyname = 'Candidates can view own assessments'
+  ) THEN
+    CREATE POLICY "Candidates can view own assessments" ON assessments
+      FOR SELECT USING (candidate_user_id = auth.uid());
+  END IF;
 
-CREATE TRIGGER update_disc_assessments_updated_at
-  BEFORE UPDATE ON disc_assessments
-  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies WHERE schemaname = current_schema() AND policyname = 'Candidates can update own assessments'
+  ) THEN
+    CREATE POLICY "Candidates can update own assessments" ON assessments
+      FOR UPDATE USING (candidate_user_id = auth.uid());
+  END IF;
 
-CREATE TRIGGER update_disc_questions_updated_at
-  BEFORE UPDATE ON disc_questions
-  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies WHERE schemaname = current_schema() AND policyname = 'Recruiters can view assessments for their candidates'
+  ) THEN
+    CREATE POLICY "Recruiters can view assessments for their candidates" ON assessments
+      FOR SELECT USING (
+        EXISTS (
+          SELECT 1 FROM candidates c 
+          JOIN organizations org ON c.owner_org_id = org.id
+          JOIN org_members om ON org.id = om.org_id
+          WHERE c.id = assessments.candidate_id AND om.user_id = auth.uid()
+        )
+      );
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies WHERE schemaname = current_schema() AND policyname = 'Users can view own DISC results'
+  ) THEN
+    CREATE POLICY "Users can view own DISC results" ON disc_assessments
+      FOR SELECT USING (
+        assessment_id IN (
+          SELECT id FROM assessments WHERE candidate_user_id = auth.uid()
+        )
+      );
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies WHERE schemaname = current_schema() AND policyname = 'Recruiters can view DISC results'
+  ) THEN
+    CREATE POLICY "Recruiters can view DISC results" ON disc_assessments
+      FOR SELECT USING (
+        EXISTS (
+          SELECT 1 FROM assessments a
+          WHERE a.id = disc_assessments.assessment_id AND
+          EXISTS (
+            SELECT 1 FROM candidates c 
+            JOIN organizations org ON c.owner_org_id = org.id
+            JOIN org_members om ON org.id = om.org_id
+            WHERE c.id = a.candidate_id AND om.user_id = auth.uid()
+          )
+        )
+      );
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies WHERE schemaname = current_schema() AND policyname = 'Anyone can read DISC questions'
+  ) THEN
+    CREATE POLICY "Anyone can read DISC questions" ON disc_questions
+      FOR SELECT USING (active = TRUE);
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies WHERE schemaname = current_schema() AND policyname = 'Candidates can create own responses'
+  ) THEN
+    CREATE POLICY "Candidates can create own responses" ON disc_responses
+      FOR INSERT WITH CHECK (
+        assessment_id IN (
+          SELECT id FROM assessments WHERE candidate_user_id = auth.uid()
+        )
+      );
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies WHERE schemaname = current_schema() AND policyname = 'Candidates can read own responses'
+  ) THEN
+    CREATE POLICY "Candidates can read own responses" ON disc_responses
+      FOR SELECT USING (
+        assessment_id IN (
+          SELECT id FROM assessments WHERE candidate_user_id = auth.uid()
+        )
+      );
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies WHERE schemaname = current_schema() AND policyname = 'Recruiters can manage invitations'
+  ) THEN
+    CREATE POLICY "Recruiters can manage invitations" ON assessment_invitations
+      FOR ALL USING (invited_by = auth.uid());
+  END IF;
+END $$;
+
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_trigger t JOIN pg_class c ON t.tgrelid = c.oid
+    WHERE t.tgname = 'update_assessments_updated_at' AND c.relname = 'assessments'
+  ) THEN
+    CREATE TRIGGER update_assessments_updated_at
+      BEFORE UPDATE ON assessments
+      FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_trigger t JOIN pg_class c ON t.tgrelid = c.oid
+    WHERE t.tgname = 'update_disc_assessments_updated_at' AND c.relname = 'disc_assessments'
+  ) THEN
+    CREATE TRIGGER update_disc_assessments_updated_at
+      BEFORE UPDATE ON disc_assessments
+      FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_trigger t JOIN pg_class c ON t.tgrelid = c.oid
+    WHERE t.tgname = 'update_disc_questions_updated_at' AND c.relname = 'disc_questions'
+  ) THEN
+    CREATE TRIGGER update_disc_questions_updated_at
+      BEFORE UPDATE ON disc_questions
+      FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+  END IF;
+END $$;
 
 -- Seed initial DISC questions (24 classic DISC questions)
 INSERT INTO disc_questions (question_number, description, option_d, option_i, option_s, option_c) VALUES
