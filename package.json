@@ -20,6 +20,9 @@
     "db:reset": "supabase db reset",
     "cleanup:deployments": "node scripts/cleanup-vercel-deployments.js"
   },
+  "engines": {
+    "node": ">=20.0.0"
+  },
   "dependencies": {
     "@supabase/ssr": "0.5.2",
     "@supabase/supabase-js": "2.46.2"
