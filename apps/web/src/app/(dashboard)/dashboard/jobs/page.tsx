@@ -29,20 +29,20 @@ interface Job {
   type: string;
   salary_min?: number;
   salary_max?: number;
-  status: 'draft' | 'active' | 'closed';
+  status: 'open' | 'on_hold' | 'closed';
   applications_count?: number;
   created_at: string;
 }
 
 const statusColors = {
-  draft: 'bg-gray-100 text-gray-700',
-  active: 'bg-green-100 text-green-700',
+  open: 'bg-green-100 text-green-700',
+  on_hold: 'bg-yellow-100 text-yellow-700',
   closed: 'bg-red-100 text-red-700',
 };
 
 const statusLabels = {
-  draft: 'Rascunho',
-  active: 'Ativa',
+  open: 'Ativa',
+  on_hold: 'Rascunho',
   closed: 'Fechada',
 };
 
@@ -144,8 +144,8 @@ export default function JobsPage() {
                   className="px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#141042]"
                 >
                   <option value="all">Todas</option>
-                  <option value="draft">Rascunhos</option>
-                  <option value="active">Ativas</option>
+                  <option value="on_hold">Rascunhos</option>
+                  <option value="open">Ativas</option>
                   <option value="closed">Fechadas</option>
                 </select>
               </div>

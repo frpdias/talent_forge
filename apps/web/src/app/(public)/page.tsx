@@ -28,7 +28,7 @@ export default function LandingPage() {
     <div className="min-h-screen bg-[#FAFAF8]">
       {/* Header - Stripe/Apple Style */}
       <header className="fixed top-0 left-0 right-0 z-50 glass">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="w-full px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-24">
             {/* Logo */}
             <Link href="/" className="flex items-center space-x-3">
@@ -129,8 +129,8 @@ export default function LandingPage() {
         {/* Subtle Background Gradient */}
         <div className="absolute inset-0 bg-linear-to-b from-[#D9D9C6]/20 via-transparent to-transparent" />
         
-        <div className="max-w-7xl mx-auto relative">
-          <div className="text-center max-w-4xl mx-auto">
+        <div className="w-full relative">
+          <div className="text-center max-w-7xl mx-auto">
             {/* Badge */}
             <div className="inline-flex items-center space-x-2 bg-[#141042]/5 border border-[#141042]/10 rounded-full px-3 sm:px-4 py-1.5 sm:py-2 mb-6 sm:mb-8">
               <Sparkles className="w-3 h-3 sm:w-4 sm:h-4 text-[#141042]" />
@@ -213,7 +213,7 @@ export default function LandingPage() {
 
       {/* Features Section */}
       <section id="features" className="section-fluid px-4 sm:px-6 lg:px-8 bg-white">
-        <div className="max-w-7xl mx-auto">
+        <div className="w-full">
           <div className="text-center mb-10 sm:mb-16">
             <h2 className="text-fluid-h2 font-semibold text-[#141042] tracking-tight mb-3 sm:mb-4">
               Tudo que você precisa
@@ -282,7 +282,7 @@ export default function LandingPage() {
 
       {/* How It Works - Stripe Style Steps */}
       <section id="how-it-works" className="section-fluid px-4 sm:px-6 lg:px-8 bg-[#141042]">
-        <div className="max-w-7xl mx-auto">
+        <div className="w-full">
           <div className="text-center mb-10 sm:mb-16">
             <h2 className="text-fluid-h2 font-semibold text-white tracking-tight mb-3 sm:mb-4">
               Simples de usar
@@ -325,7 +325,7 @@ export default function LandingPage() {
 
       {/* Pricing Section */}
       <section id="pricing" className="section-fluid px-4 sm:px-6 lg:px-8 bg-[#FAFAF8]">
-        <div className="max-w-7xl mx-auto">
+        <div className="w-full">
           <div className="text-center mb-10 sm:mb-16">
             <h2 className="text-fluid-h2 font-semibold text-[#141042] tracking-tight mb-3 sm:mb-4">
               Planos para cada momento
@@ -335,7 +335,7 @@ export default function LandingPage() {
             </p>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8 max-w-5xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8 w-full">
             {[
               {
                 name: 'Starter',
@@ -449,7 +449,7 @@ export default function LandingPage() {
 
       {/* Footer */}
       <footer className="py-12 sm:py-16 px-4 sm:px-6 lg:px-8 bg-[#141042]">
-        <div className="max-w-7xl mx-auto">
+        <div className="w-full">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 sm:gap-12 mb-8 sm:mb-12">
             <div className="col-span-2 md:col-span-1">
               <div className="mb-4 sm:mb-6 flex items-center space-x-3">
@@ -507,6 +507,11 @@ export default function LandingPage() {
               <a href="#" className="text-white/40 hover:text-white transition-colors text-fluid-xs">
                 Instagram
               </a>
+              <img 
+                src="https://fjudsjzfnysaztcwlwgm.supabase.co/storage/v1/object/public/LOGOS/TALENT%20FORGE%201.png" 
+                alt="Talent Forge" 
+                className="h-48 w-auto object-contain ml-4 sm:ml-6 opacity-25 hover:opacity-100 hover:grayscale-0 transition-all duration-500 grayscale"
+              />
             </div>
           </div>
         </div>

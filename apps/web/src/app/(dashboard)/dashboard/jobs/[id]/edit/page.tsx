@@ -1,8 +1,8 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { ArrowLeft, Save, Eye } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { useParams, useRouter } from 'next/navigation';
+import { ArrowLeft, Save } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -34,9 +34,13 @@ interface JobFormData {
   status: 'open' | 'on_hold' | 'closed';
 }
 
-export default function NewJobPage() {
+export default function EditJobPage() {
+  const params = useParams();
   const router = useRouter();
-  const [loading, setLoading] = useState(false);
+  const jobId = params.id as string;
+
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [marketSalary, setMarketSalary] = useState<{ min: number; max: number } | null>(null);
   const [formData, setFormData] = useState<JobFormData>({
     title: '',
@@ -57,25 +61,49 @@ export default function NewJobPage() {
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   );
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
+  useEffect(() => {
+    if (jobId) {
+      loadJob();
+    }
+  }, [jobId]);
+
+  async function loadJob() {
     try {
       setLoading(true);
-
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Not authenticated');
-
-      // Get user's organization
-      const { data: member } = await supabase
-        .from('org_members')
-        .select('org_id')
-        .eq('user_id', user.id)
+      const { data, error } = await supabase
+        .from('jobs')
+        .select('*')
+        .eq('id', jobId)
         .single();
 
-      if (!member?.org_id) {
-        throw new Error('Organization not found');
-      }
+      if (error) throw error;
+
+      setFormData({
+        title: data.title || '',
+        cbo_code: data.cbo_code || '',
+        department: data.department || '',
+        location: data.location || '',
+        type: data.type || 'full-time',
+        salary_min: data.salary_min?.toString() || '',
+        salary_max: data.salary_max?.toString() || '',
+        description: data.description || '',
+        requirements: data.requirements || '',
+        benefits: data.benefits || '',
+        status: data.status || 'on_hold',
+      });
+    } catch (error) {
+      console.error('Error loading job:', error);
+      router.push('/dashboard/jobs');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    try {
+      setSaving(true);
 
       const jobData = {
         title: formData.title,
@@ -89,38 +117,43 @@ export default function NewJobPage() {
         requirements: formData.requirements,
         benefits: formData.benefits,
         status: formData.status,
-        org_id: member.org_id,
       };
 
       const { error } = await supabase
         .from('jobs')
-        .insert([jobData]);
+        .update(jobData)
+        .eq('id', jobId);
 
       if (error) throw error;
 
-      router.push('/dashboard/jobs');
+      router.push(`/dashboard/jobs/${jobId}`);
     } catch (error: any) {
-      console.error('Error creating job:', error);
-      alert(error.message || 'Erro ao criar vaga');
+      console.error('Error updating job:', error);
+      alert(error.message || 'Erro ao atualizar vaga');
     } finally {
-      setLoading(false);
+      setSaving(false);
     }
   };
 
-  const handleChange = (
-    field: keyof JobFormData,
-    value: string
-  ) => {
+  const handleChange = (field: keyof JobFormData, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#FAFAF8] flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-4 border-gray-200 border-t-[#141042]" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#FAFAF8]">
       <DashboardHeader
-        title="Nova Vaga"
-        subtitle="Crie uma nova oportunidade de trabalho"
+        title="Editar Vaga"
+        subtitle={formData.title}
         actions={
-          <Link href="/dashboard/jobs">
+          <Link href={`/dashboard/jobs/${jobId}`}>
             <Button variant="outline">
               <ArrowLeft className="h-4 w-4 mr-2" />
               Voltar
@@ -150,79 +183,67 @@ export default function NewJobPage() {
               </div>
 
               <div>
-                <Label className="text-black">Ocupação Oficial (CBO)</Label>
-                <CboSelector 
+                <Label className="text-black">Ocupação (CBO)</Label>
+                <CboSelector
                   value={formData.cbo_code}
-                  onChange={(code, title, salary) => {
-                      handleChange('cbo_code', code);
-                      if (salary) {
-                        setMarketSalary(salary);
-                        // Opcional: pré-preencher
-                        if (!formData.salary_min) handleChange('salary_min', salary.min.toString());
-                        if (!formData.salary_max) handleChange('salary_max', salary.max.toString());
-                      } else {
-                        setMarketSalary(null);
-                      }
+                  onChange={(code, salaryMin, salaryMax) => {
+                    handleChange('cbo_code', code);
+                    if (salaryMin && salaryMax) {
+                      setMarketSalary({ min: Number(salaryMin), max: Number(salaryMax) });
+                    }
                   }}
-                  placeholder="Busque por cargo (ex: 'Desenvolvedor')"
                 />
-                <p className="text-xs text-muted-foreground mt-1">
-                  A ocupação define a média salarial de mercado e facilita o match.
-                </p>
+                {marketSalary && (
+                  <p className="text-xs text-gray-500 mt-1">
+                    💡 Salário de mercado sugerido: R$ {marketSalary.min.toLocaleString()} - R$ {marketSalary.max.toLocaleString()}
+                  </p>
+                )}
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="department" className="text-black">Departamento *</Label>
+                  <Label htmlFor="department" className="text-black">Departamento</Label>
                   <Input
                     id="department"
                     className="text-black"
-                    required
                     value={formData.department}
                     onChange={(e) => handleChange('department', e.target.value)}
                     placeholder="Ex: Tecnologia"
                   />
                 </div>
-
                 <div>
-                  <Label htmlFor="location" className="text-black">Localização *</Label>
+                  <Label htmlFor="location" className="text-black">Localização</Label>
                   <Input
                     id="location"
                     className="text-black"
-                    required
                     value={formData.location}
                     onChange={(e) => handleChange('location', e.target.value)}
-                    placeholder="Ex: São Paulo - SP (Remoto)"
+                    placeholder="Ex: São Paulo, SP"
                   />
                 </div>
               </div>
 
-              <div>
-                <Label htmlFor="type" className="text-black">Tipo de Contratação *</Label>
-                <Select
-                  value={formData.type}
-                  onValueChange={(value) => handleChange('type', value)}
-                  className="text-black"
-                  options={[
-                    { value: 'full-time', label: 'Tempo Integral' },
-                    { value: 'part-time', label: 'Meio Período' },
-                    { value: 'contract', label: 'Contrato' },
-                    { value: 'temporary', label: 'Temporário' },
-                    { value: 'internship', label: 'Estágio' },
-                  ]}
-                />
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div>
-                  <div className="flex justify-between items-center mb-1">
-                    <Label htmlFor="salary_min" className="text-black">Salário Mínimo Ofertado (R$)</Label>
-                    {marketSalary && (
-                      <span className="text-[10px] bg-green-100 text-green-800 px-2 py-0.5 rounded-full">
-                         Ref. CBO: R$ {marketSalary.min.toLocaleString('pt-BR')}
-                      </span>
-                    )}
-                  </div>
+                  <Label htmlFor="type" className="text-black">Tipo de Contrato</Label>
+                  <Select
+                    value={formData.type}
+                    onValueChange={(value) => handleChange('type', value)}
+                  >
+                    <SelectTrigger className="text-black">
+                      <SelectValue placeholder="Selecione" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="full-time">CLT</SelectItem>
+                      <SelectItem value="part-time">Meio Período</SelectItem>
+                      <SelectItem value="contract">PJ</SelectItem>
+                      <SelectItem value="internship">Estágio</SelectItem>
+                      <SelectItem value="temporary">Temporário</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label htmlFor="salary_min" className="text-black">Salário Mínimo</Label>
                   <Input
                     id="salary_min"
                     type="number"
@@ -232,16 +253,8 @@ export default function NewJobPage() {
                     placeholder="Ex: 5000"
                   />
                 </div>
-
                 <div>
-                   <div className="flex justify-between items-center mb-1">
-                    <Label htmlFor="salary_max" className="text-black">Salário Máximo Ofertado (R$)</Label>
-                    {marketSalary && (
-                      <span className="text-[10px] bg-green-100 text-green-800 px-2 py-0.5 rounded-full">
-                         Ref. CBO: R$ {marketSalary.max.toLocaleString('pt-BR')}
-                      </span>
-                    )}
-                  </div>
+                  <Label htmlFor="salary_max" className="text-black">Salário Máximo</Label>
                   <Input
                     id="salary_max"
                     type="number"
@@ -260,44 +273,43 @@ export default function NewJobPage() {
             <CardHeader>
               <CardTitle className="text-black">Descrição da Vaga</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <Label htmlFor="description" className="text-black">Descrição *</Label>
-                <Textarea
-                  id="description"
-                  required
-                  rows={6}
-                  className="text-black"
-                  value={formData.description}
-                  onChange={(e) => handleChange('description', e.target.value)}
-                  placeholder="Descreva as responsabilidades e atividades do cargo..."
-                />
-              </div>
+            <CardContent>
+              <Textarea
+                className="min-h-[150px] text-black"
+                value={formData.description}
+                onChange={(e) => handleChange('description', e.target.value)}
+                placeholder="Descreva as responsabilidades e atividades da vaga..."
+              />
+            </CardContent>
+          </Card>
 
-              <div>
-                <Label htmlFor="requirements" className="text-black">Requisitos *</Label>
-                <Textarea
-                  id="requirements"
-                  required
-                  rows={6}
-                  className="text-black"
-                  value={formData.requirements}
-                  onChange={(e) => handleChange('requirements', e.target.value)}
-                  placeholder="Liste os requisitos necessários (um por linha)..."
-                />
-              </div>
+          {/* Requirements */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-black">Requisitos</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Textarea
+                className="min-h-[150px] text-black"
+                value={formData.requirements}
+                onChange={(e) => handleChange('requirements', e.target.value)}
+                placeholder="Liste os requisitos necessários para a vaga..."
+              />
+            </CardContent>
+          </Card>
 
-              <div>
-                <Label htmlFor="benefits" className="text-black">Benefícios</Label>
-                <Textarea
-                  id="benefits"
-                  rows={4}
-                  className="text-black"
-                  value={formData.benefits}
-                  onChange={(e) => handleChange('benefits', e.target.value)}
-                  placeholder="Liste os benefícios oferecidos (um por linha)..."
-                />
-              </div>
+          {/* Benefits */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-black">Benefícios</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Textarea
+                className="min-h-[100px] text-black"
+                value={formData.benefits}
+                onChange={(e) => handleChange('benefits', e.target.value)}
+                placeholder="Liste os benefícios oferecidos..."
+              />
             </CardContent>
           </Card>
 
@@ -318,11 +330,11 @@ export default function NewJobPage() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="on_hold">Rascunho</SelectItem>
-                    <SelectItem value="open">Publicar Vaga</SelectItem>
+                    <SelectItem value="open">Publicada</SelectItem>
                     <SelectItem value="closed">Encerrada</SelectItem>
                   </SelectContent>
                 </Select>
-                <p className="text-sm text-black mt-2">
+                <p className="text-sm text-gray-500 mt-2">
                   Vagas rascunho não são visíveis para candidatos
                 </p>
               </div>
@@ -331,18 +343,18 @@ export default function NewJobPage() {
 
           {/* Actions */}
           <div className="flex justify-end gap-4">
-            <Link href="/dashboard/jobs">
+            <Link href={`/dashboard/jobs/${jobId}`}>
               <Button type="button" variant="outline">
                 Cancelar
               </Button>
             </Link>
-            <Button type="submit" disabled={loading}>
-              {loading ? (
+            <Button type="submit" disabled={saving}>
+              {saving ? (
                 <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent" />
               ) : (
                 <>
                   <Save className="h-4 w-4 mr-2" />
-                  Salvar Vaga
+                  Salvar Alterações
                 </>
               )}
             </Button>

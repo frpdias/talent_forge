@@ -1,5 +1,28 @@
 # 🚀 Deploy no Vercel - TalentForge
 
+> **Última atualização**: Janeiro 2026
+
+## 📋 Checklist Pré-Deploy
+
+### Verificações Obrigatórias
+
+- [ ] Build local funciona sem erros (`npm run build`)
+- [ ] Variáveis de ambiente configuradas no Vercel
+- [ ] Banco de dados Supabase configurado e acessível
+- [ ] Migrations do Supabase aplicadas
+- [ ] Dados de seed inseridos (CBO, etc.)
+
+### Status do Build Atual
+
+```
+✅ Build: SUCESSO
+✅ Rotas: 36 páginas
+✅ Middleware: Funcionando
+✅ Tamanho total: ~150kB First Load JS
+```
+
+---
+
 ## 📋 Pré-requisitos
 
 - Conta no [Vercel](https://vercel.com)
@@ -8,7 +31,45 @@
 
 ---
 
-## 🔧 Deploy da API (Backend)
+## 🌐 Deploy do Frontend (Web) - RECOMENDADO PRIMEIRO
+
+### 1. Criar Novo Projeto no Vercel
+
+1. Acesse [vercel.com/new](https://vercel.com/new)
+2. Selecione o repositório do projeto
+3. Configure:
+   - **Framework Preset**: Next.js
+   - **Root Directory**: `apps/web`
+   - **Build Command**: `npm run build`
+   - **Output Directory**: `.next`
+   - **Install Command**: `npm install`
+
+### 2. Configurar Variáveis de Ambiente
+
+No painel do Vercel, vá em **Settings** > **Environment Variables** e adicione:
+
+```bash
+# Supabase (obrigatório)
+NEXT_PUBLIC_SUPABASE_URL=https://fjudsjzfnysaztcwlwgm.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=sua-public-anon-key
+
+# Aplicação
+NEXT_PUBLIC_APP_URL=https://seu-projeto.vercel.app
+NEXT_PUBLIC_APP_NAME=Talent Forge
+```
+
+### 3. Deploy
+
+Clique em **Deploy** e aguarde. O frontend estará disponível em:
+```
+https://seu-projeto.vercel.app
+```
+
+---
+
+## 🔧 Deploy da API (Backend) - OPCIONAL
+
+> ⚠️ **NOTA**: O frontend já se conecta diretamente ao Supabase, então a API NestJS é opcional para funcionalidades básicas.
 
 ### 1. Criar Novo Projeto no Vercel
 
@@ -60,41 +121,6 @@ https://seu-projeto-api.vercel.app/api/v1
 Documentação Swagger:
 ```
 https://seu-projeto-api.vercel.app/docs
-```
-
----
-
-## 🌐 Deploy do Frontend (Web)
-
-### 1. Criar Novo Projeto no Vercel
-
-1. Acesse [vercel.com/new](https://vercel.com/new)
-2. Selecione o mesmo repositório
-3. Configure:
-   - **Framework Preset**: Next.js
-   - **Root Directory**: `apps/web`
-   - **Build Command**: `npm run build`
-   - **Output Directory**: `.next`
-   - **Install Command**: `npm install`
-
-### 2. Configurar Variáveis de Ambiente
-
-No painel do Vercel, adicione:
-
-```bash
-# Supabase (obrigatório - apenas public keys)
-NEXT_PUBLIC_SUPABASE_URL=https://seu-projeto.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=sua-public-anon-key
-
-# API URL (opcional - se quiser chamar a API do backend)
-NEXT_PUBLIC_API_URL=https://seu-projeto-api.vercel.app/api/v1
-```
-
-### 3. Deploy
-
-Clique em **Deploy**. O frontend estará disponível em:
-```
-https://seu-projeto.vercel.app
 ```
 
 ---
