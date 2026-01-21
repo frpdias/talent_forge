@@ -173,13 +173,13 @@ export default function PipelinePage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#FAFAF8]">
+    <div className="min-h-full">
       <DashboardHeader
         title="Pipeline de Recrutamento"
         subtitle="Gerencie o status das candidaturas"
       />
 
-      <div className="p-4 sm:p-6">
+      <div className="pl-0 pr-6 py-6">
         {/* Filters */}
         <Card className="mb-6">
           <CardContent className="p-4">

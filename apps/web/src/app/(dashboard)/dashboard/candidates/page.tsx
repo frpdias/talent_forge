@@ -145,13 +145,13 @@ export default function CandidatesPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#FAFAF8]">
+    <div className="min-h-full">
       <DashboardHeader
         title="Candidatos"
         subtitle="Gerencie seu banco de talentos"
       />
 
-      <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
+      <div className="pl-0 pr-6 py-6 space-y-5">
         {/* Filters */}
         <Card>
           <CardContent className="p-4">

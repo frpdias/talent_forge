@@ -3,25 +3,32 @@ import { cn } from '@/lib/utils';
 interface BadgeProps {
   children: React.ReactNode;
   variant?: 'default' | 'success' | 'warning' | 'danger' | 'info' | 'secondary' | 'outline';
+  size?: 'sm' | 'md';
   className?: string;
 }
 
-export function Badge({ children, variant = 'default', className }: BadgeProps) {
+export function Badge({ children, variant = 'default', size = 'sm', className }: BadgeProps) {
   const variants = {
-    default: 'bg-gray-100 text-gray-800',
-    success: 'bg-green-100 text-green-800',
-    warning: 'bg-yellow-100 text-yellow-800',
-    danger: 'bg-red-100 text-red-800',
-    info: 'bg-blue-100 text-blue-800',
-    secondary: 'bg-gray-200 text-gray-700',
-    outline: 'bg-transparent border border-gray-300 text-gray-700',
+    default: 'bg-[var(--tf-gray-100)] text-[var(--tf-gray-700)]',
+    success: 'bg-[var(--tf-success-subtle)] text-[var(--tf-success)]',
+    warning: 'bg-[var(--tf-warning-subtle)] text-[var(--tf-warning)]',
+    danger: 'bg-[var(--tf-error-subtle)] text-[var(--tf-error)]',
+    info: 'bg-[var(--tf-accent-subtle)] text-[var(--tf-accent)]',
+    secondary: 'bg-[var(--tf-gray-200)] text-[var(--tf-gray-600)]',
+    outline: 'bg-transparent border border-[var(--border)] text-[var(--tf-gray-600)]',
+  };
+
+  const sizes = {
+    sm: 'px-2 py-0.5 text-[11px]',
+    md: 'px-2.5 py-1 text-xs',
   };
 
   return (
     <span
       className={cn(
-        'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium',
+        'inline-flex items-center font-medium rounded-md whitespace-nowrap',
         variants[variant],
+        sizes[size],
         className
       )}
     >

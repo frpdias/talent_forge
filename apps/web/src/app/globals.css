@@ -1,84 +1,130 @@
 @import "tailwindcss";
 
-/* FARTECH Brand Colors */
+/* ============================================
+   TALENT FORGE - Enterprise Design System
+   Corporate Senior Level Styling
+   ============================================ */
+
 :root {
-  /* Primary - Azul Escuro */
-  --fartech-primary: #141042;
-  --fartech-primary-light: #1e1860;
-  --fartech-primary-dark: #0c0a2a;
+  /* Primary Brand - Deep Navy (Confiança & Profissionalismo) */
+  --tf-primary: #0F172A;
+  --tf-primary-hover: #1E293B;
+  --tf-primary-active: #334155;
+  --tf-primary-light: #475569;
   
-  /* Neutrals */
-  --fartech-gray: #666666;
-  --fartech-gray-light: #888888;
-  --fartech-gray-dark: #444444;
+  /* Secondary - Refined Slate */
+  --tf-secondary: #64748B;
+  --tf-secondary-hover: #475569;
+  --tf-secondary-light: #94A3B8;
   
-  /* Accent - Bege */
-  --fartech-beige: #D9D9C6;
-  --fartech-beige-light: #E8E8DA;
-  --fartech-beige-dark: #C5C5B0;
+  /* Accent - Premium Blue */
+  --tf-accent: #2563EB;
+  --tf-accent-hover: #1D4ED8;
+  --tf-accent-light: #3B82F6;
+  --tf-accent-subtle: #EFF6FF;
   
-  /* Brown */
-  --fartech-brown: #453931;
-  --fartech-brown-light: #5a4b41;
-  --fartech-brown-dark: #342b25;
+  /* Success - Corporate Green */
+  --tf-success: #059669;
+  --tf-success-light: #10B981;
+  --tf-success-subtle: #ECFDF5;
   
-  /* Base */
-  --fartech-black: #000000;
-  --fartech-white: #FFFFFF;
+  /* Warning - Professional Amber */
+  --tf-warning: #D97706;
+  --tf-warning-light: #F59E0B;
+  --tf-warning-subtle: #FFFBEB;
   
-  /* Semantic */
-  --background: #FAFAF8;
-  --foreground: #141042;
-  --muted: #F5F5F0;
-  --muted-foreground: #666666;
-  --border: #E5E5DC;
-  --ring: #141042;
+  /* Error - Refined Red */
+  --tf-error: #DC2626;
+  --tf-error-light: #EF4444;
+  --tf-error-subtle: #FEF2F2;
   
-  /* Success/Warning/Error */
-  --success: #10B981;
-  --warning: #F59E0B;
-  --error: #EF4444;
+  /* Neutrals - Clean Grays */
+  --tf-gray-50: #F8FAFC;
+  --tf-gray-100: #F1F5F9;
+  --tf-gray-200: #E2E8F0;
+  --tf-gray-300: #CBD5E1;
+  --tf-gray-400: #94A3B8;
+  --tf-gray-500: #64748B;
+  --tf-gray-600: #475569;
+  --tf-gray-700: #334155;
+  --tf-gray-800: #1E293B;
+  --tf-gray-900: #0F172A;
+  
+  /* Backgrounds */
+  --background: #FFFFFF;
+  --background-subtle: #F8FAFC;
+  --background-muted: #F1F5F9;
+  --foreground: #0F172A;
+  --foreground-muted: #64748B;
+  
+  /* Borders & Dividers */
+  --border: #E2E8F0;
+  --border-hover: #CBD5E1;
+  --divider: #F1F5F9;
+  
+  /* Shadows */
+  --shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+  
+  /* Ring */
+  --ring: #2563EB;
+  --ring-offset: #FFFFFF;
+  
+  /* Legacy compatibility */
+  --fartech-primary: var(--tf-primary);
+  --fartech-primary-light: var(--tf-primary-hover);
+  --muted: var(--background-muted);
+  --muted-foreground: var(--foreground-muted);
+  
+  /* Radius */
+  --radius-sm: 0.375rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
 }
 
 @theme inline {
-  /* Colors */
-  --color-fartech-primary: var(--fartech-primary);
-  --color-fartech-primary-light: var(--fartech-primary-light);
-  --color-fartech-primary-dark: var(--fartech-primary-dark);
-  --color-fartech-gray: var(--fartech-gray);
-  --color-fartech-gray-light: var(--fartech-gray-light);
-  --color-fartech-gray-dark: var(--fartech-gray-dark);
-  --color-fartech-beige: var(--fartech-beige);
-  --color-fartech-beige-light: var(--fartech-beige-light);
-  --color-fartech-beige-dark: var(--fartech-beige-dark);
-  --color-fartech-brown: var(--fartech-brown);
-  --color-fartech-brown-light: var(--fartech-brown-light);
-  --color-fartech-brown-dark: var(--fartech-brown-dark);
-  --color-fartech-black: var(--fartech-black);
-  --color-fartech-white: var(--fartech-white);
+  /* Design Tokens */
+  --color-tf-primary: var(--tf-primary);
+  --color-tf-primary-hover: var(--tf-primary-hover);
+  --color-tf-accent: var(--tf-accent);
+  --color-tf-accent-hover: var(--tf-accent-hover);
+  --color-tf-accent-subtle: var(--tf-accent-subtle);
+  --color-tf-success: var(--tf-success);
+  --color-tf-success-subtle: var(--tf-success-subtle);
+  --color-tf-warning: var(--tf-warning);
+  --color-tf-warning-subtle: var(--tf-warning-subtle);
+  --color-tf-error: var(--tf-error);
+  --color-tf-error-subtle: var(--tf-error-subtle);
+  
+  --color-gray-50: var(--tf-gray-50);
+  --color-gray-100: var(--tf-gray-100);
+  --color-gray-200: var(--tf-gray-200);
+  --color-gray-300: var(--tf-gray-300);
+  --color-gray-400: var(--tf-gray-400);
+  --color-gray-500: var(--tf-gray-500);
+  --color-gray-600: var(--tf-gray-600);
+  --color-gray-700: var(--tf-gray-700);
+  --color-gray-800: var(--tf-gray-800);
+  --color-gray-900: var(--tf-gray-900);
   
   --color-background: var(--background);
+  --color-background-subtle: var(--background-subtle);
   --color-foreground: var(--foreground);
-  --color-muted: var(--muted);
-  --color-muted-foreground: var(--muted-foreground);
+  --color-foreground-muted: var(--foreground-muted);
   --color-border: var(--border);
   
-  --font-sans: 'Montserrat', var(--font-geist-sans), -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, sans-serif;
+  --font-sans: 'Inter', var(--font-geist-sans), -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, sans-serif;
   --font-mono: var(--font-geist-mono), 'SF Mono', Monaco, 'Cascadia Code', monospace;
 }
 
-/* Dark Mode */
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0A0A12;
-    --foreground: #FAFAF8;
-    --muted: #1A1A24;
-    --muted-foreground: #A0A0A0;
-    --border: #2A2A3A;
-  }
-}
+/* ============================================
+   BASE STYLES - Enterprise Foundation
+   ============================================ */
 
-/* Base Styles - Stripe/Apple Inspired */
 * {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -86,8 +132,7 @@
 
 html {
   scroll-behavior: smooth;
-  /* Base font size that scales with viewport - 25% larger */
-  font-size: clamp(17.5px, 1.09rem + 0.3vw, 20px);
+  font-size: 16px;
 }
 
 body {
@@ -95,84 +140,96 @@ body {
   color: var(--foreground);
   font-family: var(--font-sans), Arial, Helvetica, sans-serif;
   line-height: 1.6;
-  letter-spacing: -0.01em;
-  font-size: clamp(1.09rem, 1rem + 0.5vw, 1.25rem);
+  letter-spacing: -0.011em;
+  font-size: 0.9375rem; /* 15px - optimal readability */
 }
 
-/* Fluid Typography Scale - 25% larger */
+/* ============================================
+   TYPOGRAPHY - Corporate Scale
+   ============================================ */
+
 h1 {
-  font-size: clamp(2.5rem, 1.875rem + 3.75vw, 5.625rem);
-  letter-spacing: -0.03em;
+  font-size: 2rem;
+  letter-spacing: -0.025em;
   font-weight: 600;
-  line-height: 1.1;
+  line-height: 1.2;
+  color: var(--foreground);
 }
 
 h2 {
-  font-size: clamp(1.875rem, 1.5rem + 2.5vw, 3.75rem);
-  letter-spacing: -0.03em;
-  font-weight: 600;
-  line-height: 1.15;
-}
-
-h3 {
-  font-size: clamp(1.5625rem, 1.25rem + 1.56vw, 2.5rem);
-  letter-spacing: -0.02em;
-  font-weight: 600;
-  line-height: 1.2;
-}
-
-h4 {
-  font-size: clamp(1.4rem, 1.19rem + 0.94vw, 1.875rem);
+  font-size: 1.5rem;
   letter-spacing: -0.02em;
   font-weight: 600;
   line-height: 1.25;
+  color: var(--foreground);
+}
+
+h3 {
+  font-size: 1.25rem;
+  letter-spacing: -0.015em;
+  font-weight: 600;
+  line-height: 1.3;
+  color: var(--foreground);
+}
+
+h4 {
+  font-size: 1.125rem;
+  letter-spacing: -0.01em;
+  font-weight: 600;
+  line-height: 1.35;
+  color: var(--foreground);
 }
 
 h5 {
-  font-size: clamp(1.25rem, 1.125rem + 0.625vw, 1.5625rem);
-  letter-spacing: -0.01em;
-  font-weight: 600;
-  line-height: 1.3;
-}
-
-h6 {
-  font-size: clamp(1.09rem, 1.0625rem + 0.31vw, 1.25rem);
+  font-size: 1rem;
   letter-spacing: -0.01em;
   font-weight: 600;
   line-height: 1.4;
+  color: var(--foreground);
 }
 
-/* Paragraph and text sizes - 25% larger */
+h6 {
+  font-size: 0.875rem;
+  letter-spacing: 0;
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--foreground);
+}
+
 p {
-  font-size: clamp(1.09rem, 1rem + 0.5vw, 1.4rem);
-  line-height: 1.7;
+  font-size: 0.9375rem;
+  line-height: 1.65;
+  color: var(--foreground-muted);
 }
 
-/* Small text */
-small, .text-small {
-  font-size: clamp(0.9375rem, 0.875rem + 0.31vw, 1.09rem);
+small, .text-sm {
+  font-size: 0.8125rem;
 }
 
-/* Large text */
-.text-large {
-  font-size: clamp(1.4rem, 1.25rem + 0.625vw, 1.875rem);
+.text-xs {
+  font-size: 0.75rem;
 }
 
-/* Extra large display text */
-.text-display {
-  font-size: clamp(3.125rem, 2.5rem + 5vw, 7.5rem);
-  letter-spacing: -0.04em;
-  line-height: 1;
+.text-lg {
+  font-size: 1.125rem;
+}
+
+.text-xl {
+  font-size: 1.25rem;
+}
+
+.text-2xl {
+  font-size: 1.5rem;
 }
 
 /* Smooth Transitions */
 a, button {
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.15s ease-out;
 }
 
-/* Focus States - Apple Style */
+/* Focus States - Modern */
 :focus-visible {
-  outline: 2px solid var(--fo-primary);
+  outline: 2px solid var(--tf-accent);
   outline-offset: 2px;
 }
 
@@ -198,18 +255,12 @@ a, button {
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--fo-gray-dark);
+  background: #9CA3AF;
 }
 
 /* Custom Utilities */
 .glass {
   background: rgba(255, 255, 255, 0.7);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-}
-
-.glass-dark {
-  background: rgba(10, 10, 18, 0.8);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
 }

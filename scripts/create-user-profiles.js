@@ -1,9 +1,17 @@
 #!/usr/bin/env node
 const https = require('https');
 
-const SUPABASE_URL = 'https://fjudsjzfnysaztcwlwgm.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZqdWRzanpmbnlzYXp0Y3dsd2dtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU0NDA3NjAsImV4cCI6MjA4MDExNjc2MH0.RVfvnu7Cp9X5wXefvXtwOu20hSsR4B6mGkypssMtUyE';
-const POSTGRES_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZqdWRzanpmbnlzYXp0Y3dsd2dtIiwicm9sZSI6InBvc3RncmVzIiwiaWF0IjoxNzY0NTQwNzYwLCJleHAiOjIwODAxMTY3NjB9.b0nW-hF_2h3KJ9qL8mN4pQ5rS6tU7vW8xY9zAb1cD2e'; // Service role key needed
+// IMPORTANTE: Configure estas variáveis de ambiente antes de executar
+// Execute: export SUPABASE_URL=xxx && export SUPABASE_ANON_KEY=xxx && export SUPABASE_SERVICE_KEY=xxx
+const SUPABASE_URL = process.env.SUPABASE_URL;
+const SUPABASE_KEY = process.env.SUPABASE_ANON_KEY;
+const POSTGRES_KEY = process.env.SUPABASE_SERVICE_KEY;
+
+if (!SUPABASE_URL || !SUPABASE_KEY || !POSTGRES_KEY) {
+  console.error('❌ Erro: Variáveis de ambiente não configuradas!');
+  console.error('   Configure: SUPABASE_URL, SUPABASE_ANON_KEY, SUPABASE_SERVICE_KEY');
+  process.exit(1);
+}
 
 const sql = `
 -- Create user_type enum

@@ -35,10 +35,10 @@ interface Job {
 }
 
 const statusColors = {
-  open: 'bg-green-100 text-green-700',
-  on_hold: 'bg-yellow-100 text-yellow-700',
-  closed: 'bg-red-100 text-red-700',
-};
+  open: 'success',
+  on_hold: 'warning',
+  closed: 'danger',
+} as const;
 
 const statusLabels = {
   open: 'Ativa',
@@ -108,40 +108,52 @@ export default function JobsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#FAFAF8]">
-      <DashboardHeader
-        title="Vagas"
-        subtitle="Gerencie suas oportunidades de trabalho"
-        actions={
-          <Link href="/dashboard/jobs/new">
-            <Button>
-              <Plus className="h-4 w-4 mr-2" />
-              Nova Vaga
-            </Button>
-          </Link>
-        }
-      />
+    <div className="min-h-full">
+      {/* Page Header */}
+      <div className="bg-white border-b border-[var(--border)]">
+        <div className="pl-0 pr-6 py-6">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-xs font-medium text-[var(--tf-accent)] uppercase tracking-wider mb-1">
+                Gestão
+              </p>
+              <h1 className="text-2xl font-semibold text-[var(--foreground)]">
+                Vagas
+              </h1>
+              <p className="text-sm text-[var(--foreground-muted)] mt-1">
+                Gerencie suas oportunidades de trabalho
+              </p>
+            </div>
+            <Link href="/dashboard/jobs/new">
+              <Button>
+                <Plus className="h-4 w-4" />
+                Nova Vaga
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </div>
 
-      <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
+      <div className="pl-0 pr-6 py-6 space-y-5">
         {/* Filters */}
         <Card>
           <CardContent className="p-4">
             <div className="flex flex-col sm:flex-row gap-4">
               <div className="flex-1 relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--tf-gray-400)]" />
                 <input
                   type="text"
                   placeholder="Buscar vagas..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#141042]"
+                  className="w-full pl-10 pr-4 py-2.5 text-sm border border-[var(--border)] rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-[var(--tf-accent)] focus:border-[var(--tf-accent)] transition-all"
                 />
               </div>
               <div className="flex gap-2">
                 <select
                   value={statusFilter}
                   onChange={(e) => setStatusFilter(e.target.value)}
-                  className="px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#141042]"
+                  className="px-4 py-2.5 text-sm border border-[var(--border)] rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-[var(--tf-accent)] focus:border-[var(--tf-accent)]"
                 >
                   <option value="all">Todas</option>
                   <option value="on_hold">Rascunhos</option>
@@ -155,17 +167,19 @@ export default function JobsPage() {
 
         {/* Jobs List */}
         {loading ? (
-          <div className="text-center py-12">
-            <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-gray-200 border-t-[#141042]" />
+          <div className="flex items-center justify-center py-12">
+            <div className="w-6 h-6 border-2 border-[var(--tf-accent)] border-t-transparent rounded-full animate-spin" />
           </div>
         ) : filteredJobs.length === 0 ? (
           <Card>
             <CardContent className="p-12 text-center">
-              <Briefcase className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+              <div className="w-12 h-12 bg-[var(--tf-gray-100)] rounded-full flex items-center justify-center mx-auto mb-4">
+                <Briefcase className="h-6 w-6 text-[var(--tf-gray-400)]" />
+              </div>
+              <h3 className="text-base font-semibold text-[var(--foreground)] mb-2">
                 Nenhuma vaga encontrada
               </h3>
-              <p className="text-gray-500 mb-6">
+              <p className="text-sm text-[var(--foreground-muted)] mb-6">
                 {searchQuery
                   ? 'Tente ajustar seus filtros de busca'
                   : 'Comece criando sua primeira vaga'}
@@ -173,7 +187,7 @@ export default function JobsPage() {
               {!searchQuery && (
                 <Link href="/dashboard/jobs/new">
                   <Button>
-                    <Plus className="h-4 w-4 mr-2" />
+                    <Plus className="h-4 w-4" />
                     Criar Vaga
                   </Button>
                 </Link>
@@ -183,60 +197,54 @@ export default function JobsPage() {
         ) : (
           <div className="grid gap-4">
             {filteredJobs.map((job) => (
-              <Card key={job.id} className="hover:shadow-md transition-shadow">
-                <CardContent className="p-6">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-start gap-4">
-                        <div className="p-3 bg-[#141042] rounded-lg">
-                          <Briefcase className="h-6 w-6 text-white" />
+              <Card key={job.id} hover>
+                <CardContent className="p-5">
+                  <div className="flex items-start gap-4">
+                    <div className="p-2.5 bg-[var(--tf-accent-subtle)] rounded-lg shrink-0">
+                      <Briefcase className="h-5 w-5 text-[var(--tf-accent)]" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-start justify-between gap-4 mb-3">
+                        <div>
+                          <h3 className="text-base font-semibold text-[var(--foreground)] mb-0.5">
+                            {job.title}
+                          </h3>
+                          <p className="text-sm text-[var(--foreground-muted)]">{job.department}</p>
                         </div>
-                        <div className="flex-1">
-                          <div className="flex items-start justify-between mb-2">
-                            <div>
-                              <h3 className="text-lg font-semibold text-gray-900 mb-1">
-                                {job.title}
-                              </h3>
-                              <p className="text-sm text-gray-500">{job.department}</p>
-                            </div>
-                            <Badge className={statusColors[job.status]}>
-                              {statusLabels[job.status]}
-                            </Badge>
-                          </div>
+                        <Badge variant={statusColors[job.status]}>
+                          {statusLabels[job.status]}
+                        </Badge>
+                      </div>
 
-                          <div className="flex flex-wrap gap-4 mt-4 text-sm text-gray-600">
-                            <div className="flex items-center gap-1">
-                              <MapPin className="h-4 w-4" />
-                              <span>{job.location}</span>
-                            </div>
-                            <div className="flex items-center gap-1">
-                              <DollarSign className="h-4 w-4" />
-                              <span>{formatSalary(job.salary_min, job.salary_max)}</span>
-                            </div>
-                            <div className="flex items-center gap-1">
-                              <Clock className="h-4 w-4" />
-                              <span>{job.type}</span>
-                            </div>
-                            <div className="flex items-center gap-1">
-                              <Users className="h-4 w-4" />
-                              <span>{job.applications_count || 0} candidaturas</span>
-                            </div>
-                          </div>
-
-                          <div className="mt-4 pt-4 border-t border-gray-100 flex items-center justify-between">
-                            <span className="text-xs text-gray-400">
-                              Criada em {formatDate(job.created_at)}
-                            </span>
-                            <div className="flex gap-2">
-                              <Link href={`/dashboard/jobs/${job.id}`}>
-                                <Button variant="outline" size="sm">
-                                  <Eye className="h-4 w-4 mr-2" />
-                                  Ver Detalhes
-                                </Button>
-                              </Link>
-                            </div>
-                          </div>
+                      <div className="flex flex-wrap gap-4 text-sm text-[var(--foreground-muted)]">
+                        <div className="flex items-center gap-1.5">
+                          <MapPin className="h-3.5 w-3.5" />
+                          <span>{job.location}</span>
                         </div>
+                        <div className="flex items-center gap-1.5">
+                          <DollarSign className="h-3.5 w-3.5" />
+                          <span>{formatSalary(job.salary_min, job.salary_max)}</span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <Clock className="h-3.5 w-3.5" />
+                          <span>{job.type}</span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <Users className="h-3.5 w-3.5" />
+                          <span>{job.applications_count || 0} candidaturas</span>
+                        </div>
+                      </div>
+
+                      <div className="mt-4 pt-4 border-t border-[var(--divider)] flex items-center justify-between">
+                        <span className="text-xs text-[var(--tf-gray-400)]">
+                          Criada em {formatDate(job.created_at)}
+                        </span>
+                        <Link href={`/dashboard/jobs/${job.id}`}>
+                          <Button variant="outline" size="sm">
+                            <Eye className="h-3.5 w-3.5" />
+                            Ver Detalhes
+                          </Button>
+                        </Link>
                       </div>
                     </div>
                   </div>

@@ -1,9 +1,18 @@
 #!/usr/bin/env node
 
 // Script para verificar dados do usuário no Supabase
-const email = 'frpdias@icloud.com';
-const supabaseUrl = 'https://fjudsjzfnysaztcwlwgm.supabase.co';
-const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZqdWRzanpmbnlzYXp0Y3dsd2dtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ1NDA3NjAsImV4cCI6MjA4MDExNjc2MH0.RVfvnu7Cp9X5wXefvXtwOu20hSsR4B6mGkypssMtUyE';
+// IMPORTANTE: Configure as variáveis de ambiente antes de executar
+// Execute: export SUPABASE_URL=xxx && export SUPABASE_ANON_KEY=xxx
+
+const email = process.argv[2] || 'frpdias@icloud.com';
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseAnonKey = process.env.SUPABASE_ANON_KEY;
+
+if (!supabaseUrl || !supabaseAnonKey) {
+  console.error('❌ Erro: Variáveis de ambiente não configuradas!');
+  console.error('   Configure: SUPABASE_URL, SUPABASE_ANON_KEY');
+  process.exit(1);
+}
 
 async function checkUser() {
   console.log(`\n🔍 Procurando usuário: ${email}\n`);
