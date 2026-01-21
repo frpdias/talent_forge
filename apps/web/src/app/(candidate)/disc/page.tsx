@@ -113,8 +113,7 @@ export default function DISCAssessmentPage() {
           return;
         }
 
-      // Criar assessment vinculado ao candidato e ao usuário atual
-        // Criar assessment
+        // Criar assessment vinculado ao candidato e ao usuário atual
         const { error: assessmentError } = await supabase
           .from('assessments')
           .insert({
@@ -122,7 +121,7 @@ export default function DISCAssessmentPage() {
             candidate_user_id: user.id,
             assessment_type: 'disc',
             status: 'in_progress',
-            title: 'Teste DISC'
+            title: 'Teste DISC',
           });
 
         if (assessmentError) {
@@ -150,11 +149,11 @@ export default function DISCAssessmentPage() {
           return;
         }
 
-      setAssessmentId(latestAssessment.id);
-      setLoading(false);
-    } catch (err: any) {
-      console.error('Erro ao inicializar DISC:', err);
-      const message = err?.message || 'Erro inesperado ao iniciar a avaliação.';
+        setAssessmentId(latestAssessment.id);
+        setLoading(false);
+      } catch (err: any) {
+        console.error('Erro ao inicializar DISC:', err);
+        const message = err?.message || 'Erro inesperado ao iniciar a avaliação.';
         setLoadError(message);
         alert(message);
         setLoading(false);
