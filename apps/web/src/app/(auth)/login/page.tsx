@@ -43,19 +43,28 @@ function LoginContent() {
       console.log('🔄 Redirecting to middleware for proper routing...');
       
       // Small delay to ensure session is persisted
-      await new Promise(resolve => setTimeout(resolve, 200));
+      await new Promise(resolve => setTimeout(resolve, 500));
       
-      // Redirect based on metadata (middleware will handle the final routing)
-      const userType = data.user.user_metadata?.user_type || 'candidate';
+      // Fetch user profile to get accurate user_type
+      const { data: profile } = await supabase
+        .from('user_profiles')
+        .select('user_type')
+        .eq('id', data.user.id)
+        .single();
+      
+      // Redirect based on user_type from profile or metadata
+      const userType = profile?.user_type || data.user.user_metadata?.user_type || 'candidate';
+      
+      console.log('📊 User Type:', userType);
+      console.log('📊 Profile:', profile);
+      console.log('📊 Metadata:', data.user.user_metadata);
       
       if (userType === 'recruiter' || userType === 'admin') {
-        console.log('📌 Recruiter detected - redirecting to /dashboard');
-        router.push('/dashboard');
-        router.refresh(); // Force middleware to run
+        console.log('📌 Recruiter/Admin detected - redirecting to /dashboard');
+        window.location.href = '/dashboard';
       } else {
         console.log('📌 Candidate detected - redirecting to /candidate');
-        router.push('/candidate');
-        router.refresh(); // Force middleware to run
+        window.location.href = '/candidate';
       }
     } catch (err: any) {
       setError(err.message || 'Erro ao fazer login. Verifique suas credenciais.');

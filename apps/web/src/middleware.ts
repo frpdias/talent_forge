@@ -42,11 +42,12 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Public routes that don't require authentication
-  const publicRoutes = ['/', '/login', '/register', '/auth/callback', '/assessment'];
+  const publicRoutes = ['/', '/login', '/register', '/auth/callback', '/assessment', '/jobs', '/onboarding'];
   const isPublicRoute = publicRoutes.some(route =>
     pathname === route ||
     pathname.startsWith('/auth/') ||
-    pathname.startsWith('/assessment')
+    pathname.startsWith('/assessment') ||
+    pathname.startsWith('/jobs/')
   );
 
   // If not authenticated and trying to access protected route
@@ -66,7 +67,7 @@ export async function middleware(request: NextRequest) {
       .single();
 
     // Get user_type from profile or user metadata
-    const userType = profile?.user_type || user.user_metadata?.user_type;
+    const userType = profile?.user_type || user.user_metadata?.user_type || 'candidate';
     
     console.log('[MIDDLEWARE] User:', user.email, '| Profile user_type:', profile?.user_type, '| Metadata user_type:', user.user_metadata?.user_type, '| Final userType:', userType);
 
@@ -82,6 +83,26 @@ export async function middleware(request: NextRequest) {
         url.pathname = '/candidate';
       }
       return NextResponse.redirect(url);
+    }
+
+    // Protect recruiter/admin routes - only allow access for recruiter/admin users
+    if (pathname.startsWith('/dashboard') || pathname.startsWith('/admin')) {
+      if (userType !== 'recruiter' && userType !== 'admin') {
+        console.log('[MIDDLEWARE] Bloqueando acesso de candidato a área administrativa');
+        const url = request.nextUrl.clone();
+        url.pathname = '/candidate';
+        return NextResponse.redirect(url);
+      }
+    }
+
+    // Protect candidate routes - only allow access for candidate users
+    if (pathname.startsWith('/candidate') || pathname.startsWith('/cadastro')) {
+      if (userType === 'recruiter' || userType === 'admin') {
+        console.log('[MIDDLEWARE] Bloqueando acesso de recrutador/admin a área do candidato');
+        const url = request.nextUrl.clone();
+        url.pathname = '/dashboard';
+        return NextResponse.redirect(url);
+      }
     }
   }
 

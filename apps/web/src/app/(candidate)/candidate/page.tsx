@@ -74,6 +74,9 @@ export default function CandidateDashboard() {
   const [colorResult, setColorResult] = useState<any>(null);
   const [colorLoading, setColorLoading] = useState(false);
   const [colorError, setColorError] = useState<string | null>(null);
+  const [piResult, setPiResult] = useState<any>(null);
+  const [piLoading, setPiLoading] = useState(false);
+  const [piError, setPiError] = useState<string | null>(null);
 
   const discProfileSummary: Record<string, string> = {
     D: 'Foco em resultados, decisão rápida e assertividade.',
@@ -250,6 +253,54 @@ export default function CandidateDashboard() {
     loadColor();
   }, []);
 
+  useEffect(() => {
+    const loadPI = async () => {
+      try {
+        setPiLoading(true);
+        setPiError(null);
+        const supabase = createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        
+        if (!user?.id) {
+          setPiError('Usuário não identificado');
+          setPiLoading(false);
+          return;
+        }
+        
+        // Buscar PI Assessment completado mais recente
+        const { data: piData, error: piError } = await supabase
+          .from('pi_assessments')
+          .select('*')
+          .eq('candidate_user_id', user.id)
+          .eq('status', 'completed')
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        
+        if (piError) {
+          console.error('[CandidateDash] PI error:', piError);
+          setPiError(piError.message);
+          setPiLoading(false);
+          return;
+        }
+        
+        if (piData) {
+          console.log('[CandidateDash] PI encontrado:', piData);
+          setPiResult(piData);
+        } else {
+          console.log('[CandidateDash] Nenhum PI completado encontrado');
+          setPiResult(null);
+        }
+      } catch (err: any) {
+        console.error('Erro ao carregar PI:', err?.message || err);
+        setPiError(err?.message || 'Erro ao carregar PI');
+      } finally {
+        setPiLoading(false);
+      }
+    };
+    loadPI();
+  }, []);
+
   return (
     <div className="space-y-4 sm:space-y-6 lg:space-y-8 pb-16 lg:pb-0">
       {/* DISC Test Banner */}
@@ -301,11 +352,11 @@ export default function CandidateDashboard() {
       <div className="bg-[#141042] rounded-xl sm:rounded-2xl p-4 sm:p-6 lg:p-8 relative overflow-hidden">
         <div className="absolute right-0 top-0 w-32 sm:w-64 h-32 sm:h-64 bg-white/5 rounded-full blur-3xl" />
         <div className="relative">
-          <h2 className="text-lg sm:text-xl lg:text-2xl font-semibold text-white mb-1 sm:mb-2">
+          <h2 className="text-lg sm:text-xl lg:text-2xl font-semibold !text-white mb-1 sm:mb-2">
             Olá, {displayName}! 👋
           </h2>
-          <p className="text-white/60 text-sm sm:text-base">
-            Você tem <span className="text-[#D9D9C6] font-medium">3 novas vagas</span> compatíveis com seu perfil.
+          <p className="!text-white/80 text-sm sm:text-base">
+            Você tem <span className="!text-white font-semibold">3 novas vagas</span> compatíveis com seu perfil.
           </p>
         </div>
       </div>
@@ -483,6 +534,117 @@ export default function CandidateDashboard() {
           {!colorLoading && !colorResult && !colorError && (
             <p className="text-sm text-[#666]">
               Ainda não encontramos seu perfil de cores. Faça o teste para gerar seu mapa de cores predominantes.
+            </p>
+          )}
+        </div>
+      </div>
+
+      {/* Perfil PI (Predictive Index) */}
+      <div className="relative overflow-visible rounded-2xl border border-[#E5E5DC] bg-white/90 p-4 sm:p-6 lg:p-7 shadow-[0_12px_40px_-28px_rgba(20,16,66,0.5)]">
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute -top-20 -left-10 h-40 w-40 rounded-full bg-indigo-200/50 blur-3xl" />
+          <div className="absolute -bottom-16 -right-8 h-32 w-32 rounded-full bg-violet-200/40 blur-3xl" />
+        </div>
+
+        <div className="relative flex flex-col gap-3">
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-400 to-violet-500 text-white flex items-center justify-center shadow-inner text-2xl font-extrabold">
+                🧠
+              </div>
+              <div>
+                <p className="text-xs uppercase tracking-wide text-purple-700/80 font-semibold">Perfil PI</p>
+              </div>
+            </div>
+            <button
+              className="text-xs sm:text-sm font-semibold text-purple-700 hover:underline"
+              onClick={() => router.push('/pi-test')}
+            >
+              Ver/Refazer teste
+            </button>
+          </div>
+
+          {piLoading && <p className="text-sm text-[#666]">Carregando seu perfil...</p>}
+          {!piLoading && piError && (
+            <p className="text-sm text-red-600">Erro ao carregar perfil PI: {piError}</p>
+          )}
+
+          {!piLoading && piResult && (
+            <>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mt-1">
+                {[
+                  { 
+                    label: 'Direção', 
+                    score: piResult.scores_adapted?.direcao || piResult.scores_natural?.direcao || 0, 
+                    color: 'from-amber-400/80 to-amber-600/90',
+                    description: 'Influência e controle sobre o ambiente'
+                  },
+                  { 
+                    label: 'Energia Social', 
+                    score: piResult.scores_adapted?.energia_social || piResult.scores_natural?.energia_social || 0, 
+                    color: 'from-rose-400/80 to-rose-600/90',
+                    description: 'Expressividade e interação social'
+                  },
+                  { 
+                    label: 'Ritmo', 
+                    score: piResult.scores_adapted?.ritmo || piResult.scores_natural?.ritmo || 0, 
+                    color: 'from-emerald-400/80 to-emerald-600/90',
+                    description: 'Velocidade e aceleração no trabalho'
+                  },
+                  { 
+                    label: 'Estrutura', 
+                    score: piResult.scores_adapted?.estrutura || piResult.scores_natural?.estrutura || 0, 
+                    color: 'from-blue-400/80 to-blue-600/90',
+                    description: 'Organização e conformidade'
+                  },
+                ].map((item) => {
+                  // Normalizar o score para porcentagem (assumindo que scores variam de -10 a +10)
+                  const normalizedScore = Math.round(((item.score + 10) / 20) * 100);
+                  return (
+                    <div
+                      key={item.label}
+                      className="relative group p-3 rounded-xl bg-[#F7F7F2] border border-[#EFEFE7]"
+                      title={`${item.label}: ${item.description}`}
+                    >
+                      <div className="flex items-center justify-between mb-2">
+                        <p className="text-sm font-semibold text-[#444]">{item.label}</p>
+                        <span className="text-xs text-[#666]">{item.score > 0 ? '+' : ''}{item.score}</span>
+                      </div>
+                      <div className="h-2 rounded-full bg-[#E5E5DC] overflow-hidden">
+                        <div
+                          className={`h-full rounded-full bg-gradient-to-r ${item.color}`}
+                          style={{ width: `${normalizedScore}%` }}
+                        />
+                      </div>
+                      <div className="pointer-events-none absolute z-10 left-0 right-0 -top-3 transform -translate-y-full opacity-0 scale-95 group-hover:opacity-100 group-hover:scale-100 transition">
+                        <div className="rounded-lg bg-white text-gray-900 text-xs p-3 shadow-lg border border-gray-200">
+                          <p className="font-semibold text-gray-900 mb-1">{item.label}</p>
+                          <p className="text-gray-700 leading-snug">{item.description}</p>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+              <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                <p className="text-[#2E2E2E] leading-relaxed">
+                  <span className="font-semibold">Perfil Natural:</span> Como você age naturalmente
+                </p>
+                <p className="text-[#2E2E2E] leading-relaxed">
+                  <span className="font-semibold">Perfil Adaptado:</span> Como você se adapta ao contexto
+                </p>
+              </div>
+              {piResult.gaps && (
+                <p className="text-sm text-[#666] leading-relaxed mt-2">
+                  💡 Diferenças entre perfis indicam áreas de adaptação comportamental no ambiente de trabalho.
+                </p>
+              )}
+            </>
+          )}
+
+          {!piLoading && !piResult && !piError && (
+            <p className="text-sm text-[#666]">
+              Ainda não encontramos seu perfil PI. Faça o teste para gerar sua análise preditiva de comportamento.
             </p>
           )}
         </div>
