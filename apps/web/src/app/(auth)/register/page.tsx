@@ -35,6 +35,20 @@ function RegisterContent() {
       setError('Você precisa aceitar os termos de uso.');
       return;
     }
+    const normalizedEmail = email.trim().toLowerCase();
+    const normalizedName = fullName.trim();
+    if (!normalizedEmail) {
+      setError('Informe um email válido.');
+      return;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
+      setError('Email inválido. Verifique o formato do email.');
+      return;
+    }
+    if (!normalizedName) {
+      setError('Informe seu nome completo.');
+      return;
+    }
     setLoading(true);
     setError('');
     try {
@@ -44,18 +58,18 @@ function RegisterContent() {
       }
       
       console.log('📝 Registrando usuário com:', {
-        email,
+        email: normalizedEmail,
         user_type: userType,
-        full_name: fullName
+        full_name: normalizedName
       });
       
       const { data, error: authError } = await supabase.auth.signUp({
-        email,
+        email: normalizedEmail,
         password,
         options: {
           data: {
             user_type: userType,
-            full_name: fullName,
+            full_name: normalizedName,
           },
           emailRedirectTo: `${window.location.origin}/auth/callback?type=${userType}`,
         },

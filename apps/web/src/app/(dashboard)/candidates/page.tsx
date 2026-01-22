@@ -1,13 +1,12 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { Header } from '@/components/layout';
 import { Card, CardContent, Badge, Button, Input, Avatar } from '@/components/ui';
 import { useOrgStore } from '@/lib/store';
-import { candidatesApi } from '@/lib/api';
-import { useAuth } from '@/lib/auth';
 import { formatDate } from '@/lib/utils';
+import { createClient } from '@/lib/supabase/client';
 import {
   Plus,
   Search,
@@ -32,27 +31,122 @@ interface Candidate {
 
 export default function CandidatesPage() {
   const { currentOrg } = useOrgStore();
-  const { session } = useAuth();
   const [candidates, setCandidates] = useState<Candidate[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const [debugInfo, setDebugInfo] = useState<string | null>(null);
+  const supabase = useMemo(() => createClient(), []);
 
   useEffect(() => {
-    if (currentOrg?.id && session?.access_token) {
-      loadCandidates();
-    }
-  }, [currentOrg?.id, session?.access_token, search]);
+    void loadCandidates();
+  }, [currentOrg?.id, search]);
 
   const loadCandidates = async () => {
     try {
       setLoading(true);
-      const params: { search?: string } = {};
-      if (search) params.search = search;
-      
-      const data = await candidatesApi.list(session!.access_token, currentOrg!.id, params);
-      setCandidates((data as any).data || []);
+      setDebugInfo(null);
+      const { data: userData } = await supabase.auth.getUser();
+      const user = userData?.user;
+      if (!user) {
+        setDebugInfo('Sem usuário autenticado.');
+        setCandidates([]);
+        return;
+      }
+
+      let orgId = currentOrg?.id || null;
+      if (!orgId) {
+        const { data: orgMembership } = await supabase
+          .from('org_members')
+          .select('org_id')
+          .eq('user_id', user.id)
+          .limit(1)
+          .maybeSingle();
+        orgId = orgMembership?.org_id || null;
+      }
+
+      if (!orgId) {
+        setDebugInfo(`Sem organização vinculada para o usuário ${user.email || user.id}.`);
+        setCandidates([]);
+        return;
+      }
+
+      const { data: candidateRows, error } = await supabase
+        .from('candidates')
+        .select('id, full_name, email, phone, location, current_title, tags, created_at, created_by')
+        .eq('owner_org_id', orgId)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        setDebugInfo(`Erro ao buscar candidates por org_id: ${error.message}`);
+        throw error;
+      }
+
+      let resolvedCandidates = candidateRows || [];
+
+      if (resolvedCandidates.length === 0) {
+        const { data: fallbackRows } = await supabase
+          .from('candidates')
+          .select('id, full_name, email, phone, location, current_title, tags, created_at, created_by')
+          .eq('created_by', user.id)
+          .order('created_at', { ascending: false });
+        resolvedCandidates = fallbackRows || [];
+      }
+
+      if (resolvedCandidates.length === 0) {
+        setDebugInfo(
+          `Org ${orgId} sem candidates por owner_org_id; fallback por created_by também vazio.`
+        );
+      } else {
+        setDebugInfo(
+          `Org ${orgId}. Candidates encontrados: ${resolvedCandidates.length}.`
+        );
+      }
+
+      const candidateIds = resolvedCandidates.map((candidate) => candidate.id);
+      let applicationCounts: Record<string, number> = {};
+
+      if (candidateIds.length > 0) {
+        const { data: applications } = await supabase
+          .from('applications')
+          .select('candidate_id')
+          .in('candidate_id', candidateIds);
+
+        (applications || []).forEach((app: { candidate_id: string }) => {
+          applicationCounts[app.candidate_id] = (applicationCounts[app.candidate_id] || 0) + 1;
+        });
+      }
+
+      const normalizedSearch = search.trim().toLowerCase();
+
+      const mappedCandidates = resolvedCandidates
+        .map((candidate) => ({
+          id: candidate.id,
+          name: candidate.full_name,
+          email: candidate.email,
+          phone: candidate.phone || undefined,
+          location: candidate.location || undefined,
+          headline: candidate.current_title || undefined,
+          tags: candidate.tags || undefined,
+          createdAt: candidate.created_at,
+          applicationCount: applicationCounts[candidate.id] || 0,
+        }))
+        .filter((candidate) => {
+          if (!normalizedSearch) return true;
+          const haystack = [
+            candidate.name,
+            candidate.email,
+            candidate.headline || '',
+            ...(candidate.tags || []),
+          ]
+            .join(' ')
+            .toLowerCase();
+          return haystack.includes(normalizedSearch);
+        });
+
+      setCandidates(mappedCandidates);
     } catch (error) {
       console.error('Failed to load candidates:', error);
+      setCandidates([]);
     } finally {
       setLoading(false);
     }
@@ -74,6 +168,11 @@ export default function CandidatesPage() {
       />
 
       <div className="p-6">
+        {debugInfo && (
+          <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-2 text-xs text-amber-700">
+            {debugInfo}
+          </div>
+        )}
         {/* Search */}
         <div className="flex gap-4 mb-6">
           <div className="flex-1 relative">

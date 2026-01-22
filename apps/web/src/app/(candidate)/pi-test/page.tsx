@@ -210,57 +210,55 @@ export default function PiTestPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-950 text-white">
-        Carregando TF-PI...
+      <div className="min-h-screen flex items-center justify-center bg-[#FAFAF8] text-[#141042]">
+        <div className="text-center">
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-[#141042]"></div>
+          <p className="mt-4 text-sm text-[#666666]">Carregando TF-PI...</p>
+        </div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-950 text-white">
-        <div className="bg-white/5 border border-white/10 rounded-xl p-6 text-center max-w-lg">
-          <h2 className="text-lg font-semibold mb-2">Erro</h2>
-          <p className="text-slate-200">{error}</p>
+      <div className="min-h-screen flex items-center justify-center bg-[#FAFAF8] p-4">
+        <div className="bg-white border border-[#E5E5DC] rounded-xl p-6 text-center max-w-lg shadow-sm">
+          <h2 className="text-lg font-semibold mb-2 text-[#141042]">Erro</h2>
+          <p className="text-sm text-[#666666]">{error}</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-50">
-      <div className="absolute inset-0 opacity-30 pointer-events-none">
-        <div className="absolute -top-40 -left-32 h-96 w-96 rounded-full bg-amber-400 blur-3xl" />
-        <div className="absolute -bottom-32 -right-24 h-96 w-96 rounded-full bg-blue-500 blur-3xl" />
-      </div>
-
+    <div className="min-h-screen bg-[#FAFAF8] text-[#141042]">
       <div className="relative max-w-6xl mx-auto px-4 py-10 space-y-8">
         <div className="flex items-center justify-between">
-          <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-sm font-semibold text-white backdrop-blur">
-            <Sparkles className="h-4 w-4 text-amber-300" />
+          <div className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-1 text-xs font-semibold text-[#141042] border border-[#E5E5DC]">
+            <Sparkles className="h-4 w-4 text-[#F97316]" />
             TF-PI — Drives Comportamentais & Sustentabilidade do Papel
           </div>
           <button
-            className="text-sm text-white/80 hover:text-white inline-flex items-center gap-2"
+            className="text-sm text-[#666666] hover:text-[#141042] inline-flex items-center gap-2"
             onClick={() => router.back()}
           >
             <ArrowLeft className="w-4 h-4" /> Voltar
           </button>
         </div>
 
-        <div className="bg-white/5 border border-white/10 rounded-2xl p-6 space-y-4">
+        <div className="bg-white border border-[#E5E5DC] rounded-2xl p-6 space-y-4 shadow-sm">
           <div className="flex flex-wrap gap-3">
-            <span className="px-3 py-1 rounded-full bg-white/10 text-white text-xs font-semibold">
+            <span className="px-3 py-1 rounded-full bg-[#F5F5F0] text-[#141042] text-[11px] font-semibold">
               Bloco A — Perfil Natural
             </span>
-            <span className="px-3 py-1 rounded-full bg-white/10 text-white text-xs font-semibold">
+            <span className="px-3 py-1 rounded-full bg-[#F5F5F0] text-[#141042] text-[11px] font-semibold">
               Bloco B — Perfil Adaptado ao Papel
             </span>
-            <span className="px-3 py-1 rounded-full bg-white/10 text-white text-xs font-semibold">
+            <span className="px-3 py-1 rounded-full bg-[#F5F5F0] text-[#141042] text-[11px] font-semibold">
               Gap = esforço para sustentar o papel
             </span>
           </div>
-          <p className="text-sm text-slate-200 leading-relaxed">
+          <p className="text-sm text-[#666666] leading-relaxed">
             O TF-PI mede quatro eixos contínuos (Direção, Energia Social, Ritmo, Estrutura) em dois momentos:
             seu estilo natural e o que o papel exige. Complete os dois blocos de descritores e, depois, as
             30 situações forçadas (duas rodadas: Natural e Adaptado).
@@ -270,11 +268,11 @@ export default function PiTestPage() {
         {phase === 'natural-descritores' || phase === 'adaptado-descritores' ? (
           <div className="space-y-6">
             <div className="flex items-center justify-between">
-              <h2 className="text-xl font-semibold text-white flex items-center gap-2">
+              <h2 className="text-xl font-semibold text-[#141042] flex items-center gap-2">
                 <ClipboardCheck className="w-5 h-5" />
                 Lista de descritores — {phase === 'natural-descritores' ? 'Perfil Natural' : 'Perfil Adaptado ao Papel'}
               </h2>
-              <span className="text-sm text-white/70">
+              <span className="text-sm text-[#666666]">
                 Marque todos que se aplicam {phase === 'natural-descritores' ? 'a você no dia a dia' : 'ao papel atual'}
               </span>
             </div>
@@ -294,12 +292,12 @@ export default function PiTestPage() {
                     }
                     className={`text-left rounded-xl border px-3 py-3 transition-all ${
                       active
-                        ? 'bg-white text-slate-900 border-white shadow-lg'
-                        : 'bg-slate-900/50 border-white/10 text-white hover:border-white/30'
+                        ? 'bg-[#F5F5F0] text-[#141042] border-[#141042]/20'
+                        : 'bg-white border-[#E5E5DC] text-[#141042] hover:border-[#141042]/40'
                     }`}
                   >
                     <p className="text-sm font-semibold">{d.descriptor}</p>
-                    <p className="text-xs text-slate-300 mt-1">{axisMeta[d.axis].label}</p>
+                    <p className="text-xs text-[#999999] mt-1">{axisMeta[d.axis].label}</p>
                   </button>
                 );
               })}
@@ -308,7 +306,7 @@ export default function PiTestPage() {
               <button
                 disabled={!descriptorsDone(phase === 'natural-descritores' ? 'natural' : 'adaptado')}
                 onClick={nextPhase}
-                className="inline-flex items-center gap-2 bg-white text-slate-900 px-5 py-2 rounded-lg font-semibold disabled:opacity-50"
+                className="inline-flex items-center gap-2 bg-[#141042] text-white px-5 py-2 rounded-lg font-semibold disabled:opacity-50"
               >
                 Continuar <ArrowRight className="w-4 h-4" />
               </button>
@@ -319,18 +317,18 @@ export default function PiTestPage() {
         {phase === 'natural-situacional' || phase === 'adaptado-situacional' ? (
           <div className="space-y-6">
             <div className="flex items-center justify-between">
-              <h2 className="text-xl font-semibold text-white flex items-center gap-2">
+              <h2 className="text-xl font-semibold text-[#141042] flex items-center gap-2">
                 <Target className="w-5 h-5" />
                 Situações forçadas — {phase === 'natural-situacional' ? 'Perfil Natural' : 'Perfil Adaptado ao Papel'}
               </h2>
-              <span className="text-sm text-white/70">
+              <span className="text-sm text-[#666666]">
                 Questão {currentIndex + 1} / {questionsList.length}
               </span>
             </div>
 
             {currentQuestion && (
-              <div className="bg-white/5 border border-white/10 rounded-2xl p-5 space-y-4">
-                <p className="text-lg font-semibold text-white">{currentQuestion.prompt}</p>
+              <div className="bg-white border border-[#E5E5DC] rounded-2xl p-5 space-y-4 shadow-sm">
+                <p className="text-lg font-semibold text-[#141042]">{currentQuestion.prompt}</p>
                 <div className="grid sm:grid-cols-2 gap-3">
                   {[
                     { text: currentQuestion.option_a, axis: currentQuestion.option_a_axis },
@@ -345,12 +343,12 @@ export default function PiTestPage() {
                         onClick={() => handleSituationalSelect(opt.axis)}
                         className={`text-left rounded-xl border px-4 py-3 transition-all ${
                           selected
-                            ? 'bg-white text-slate-900 border-white shadow-lg'
-                            : 'bg-slate-900/40 border-white/10 text-white hover:border-white/40'
+                            ? 'bg-[#F5F5F0] text-[#141042] border-[#141042]/20'
+                            : 'bg-white border-[#E5E5DC] text-[#141042] hover:border-[#141042]/40'
                         }`}
                       >
-                        <div className="flex items-center gap-2 text-xs uppercase tracking-wide text-white/70 mb-1">
-                          <span className="w-5 h-5 rounded-full bg-white/10 flex items-center justify-center">
+                        <div className="flex items-center gap-2 text-[11px] uppercase tracking-wide text-[#999999] mb-1">
+                          <span className="w-5 h-5 rounded-full bg-[#F5F5F0] flex items-center justify-center">
                             {String.fromCharCode(65 + idx)}
                           </span>
                           {axisMeta[opt.axis].label}
@@ -365,14 +363,14 @@ export default function PiTestPage() {
                   <button
                     onClick={() => setCurrentIndex((i) => Math.max(0, i - 1))}
                     disabled={currentIndex === 0}
-                    className="inline-flex items-center gap-2 text-white/80 hover:text-white disabled:opacity-40"
+                    className="inline-flex items-center gap-2 text-[#666666] hover:text-[#141042] disabled:opacity-40"
                   >
                     <ArrowLeft className="w-4 h-4" /> Voltar
                   </button>
                   <div className="flex items-center gap-3">
-                    <div className="w-48 h-2 bg-white/10 rounded-full overflow-hidden">
+                    <div className="w-48 h-2 bg-[#F5F5F0] rounded-full overflow-hidden">
                       <div
-                        className="h-full bg-gradient-to-r from-amber-400 to-blue-500"
+                        className="h-full bg-linear-to-r from-[#F97316] to-[#1F4ED8]"
                         style={{
                           width: `${Math.round(((currentIndex + 1) / questions.length) * 100)}%`,
                         }}
@@ -381,7 +379,7 @@ export default function PiTestPage() {
                     {phase === 'natural-situacional' ? (
                       <button
                         onClick={() => setCurrentIndex((i) => Math.min(questions.length - 1, i + 1))}
-                        className="inline-flex items-center gap-2 bg-white text-slate-900 px-4 py-2 rounded-lg font-semibold"
+                        className="inline-flex items-center gap-2 bg-[#1F4ED8] text-white px-4 py-2 rounded-lg font-semibold"
                       >
                         Próxima <ArrowRight className="w-4 h-4" />
                       </button>
@@ -389,14 +387,14 @@ export default function PiTestPage() {
                       <div className="flex items-center gap-2">
                         <button
                           onClick={() => setCurrentIndex((i) => Math.min(questions.length - 1, i + 1))}
-                          className="inline-flex items-center gap-2 bg-white text-slate-900 px-4 py-2 rounded-lg font-semibold"
+                          className="inline-flex items-center gap-2 bg-[#1F4ED8] text-white px-4 py-2 rounded-lg font-semibold"
                         >
                           Próxima <ArrowRight className="w-4 h-4" />
                         </button>
                         {situationalDone('adaptado') && (
                           <button
                             onClick={finalize}
-                            className="inline-flex items-center gap-2 bg-emerald-400 text-slate-900 px-4 py-2 rounded-lg font-semibold"
+                            className="inline-flex items-center gap-2 bg-[#141042] text-white px-4 py-2 rounded-lg font-semibold"
                           >
                             Finalizar
                           </button>
@@ -414,7 +412,7 @@ export default function PiTestPage() {
                         setCurrentBlock('adaptado');
                         setCurrentIndex(0);
                       }}
-                      className="inline-flex items-center gap-2 bg-white text-slate-900 px-5 py-2 rounded-lg font-semibold"
+                      className="inline-flex items-center gap-2 bg-[#141042] text-white px-5 py-2 rounded-lg font-semibold"
                     >
                       Ir para Bloco Adaptado <ArrowRight className="w-4 h-4" />
                     </button>
@@ -428,20 +426,20 @@ export default function PiTestPage() {
         {phase === 'resultado' && result && (
           <div className="space-y-6">
             <div className="flex items-center justify-between">
-              <h2 className="text-xl font-semibold text-white flex items-center gap-2">
+              <h2 className="text-xl font-semibold text-[#141042] flex items-center gap-2">
                 <Activity className="w-5 h-5" />
                 Relatório TF-PI — Drives Comportamentais e Sustentabilidade
               </h2>
               <div className="flex items-center gap-2">
                 <button
                   onClick={handlePrint}
-                  className="inline-flex items-center gap-2 bg-white text-slate-900 px-4 py-2 rounded-lg font-semibold"
+                  className="inline-flex items-center gap-2 bg-[#141042] text-white px-4 py-2 rounded-lg font-semibold"
                 >
                   <Printer className="w-4 h-4" /> Imprimir/PDF
                 </button>
                 <button
                   onClick={() => router.push('/candidate')}
-                  className="inline-flex items-center gap-2 text-white/80 hover:text-white"
+                  className="inline-flex items-center gap-2 text-[#666666] hover:text-[#141042]"
                 >
                   <FileText className="w-4 h-4" /> Voltar ao painel
                 </button>
@@ -450,38 +448,38 @@ export default function PiTestPage() {
 
             <div className="grid md:grid-cols-2 gap-4">
               {(Object.keys(axisMeta) as Axis[]).map((axis) => (
-                <div key={axis} className="bg-white/5 border border-white/10 rounded-xl p-4 space-y-3">
+                <div key={axis} className="bg-white border border-[#E5E5DC] rounded-xl p-4 space-y-3 shadow-sm">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm text-white/70">{axisMeta[axis].left}</p>
-                      <p className="text-lg font-semibold text-white">{axisMeta[axis].label}</p>
-                      <p className="text-sm text-white/70">{axisMeta[axis].right}</p>
+                      <p className="text-sm text-[#999999]">{axisMeta[axis].left}</p>
+                      <p className="text-lg font-semibold text-[#141042]">{axisMeta[axis].label}</p>
+                      <p className="text-sm text-[#999999]">{axisMeta[axis].right}</p>
                     </div>
-                    <div className="text-right text-sm text-white/80">
-                      <div>Natural: <span className="font-semibold text-white">{result.scores_natural[axis]}</span></div>
-                      <div>Adaptado: <span className="font-semibold text-white">{result.scores_adapted[axis]}</span></div>
-                      <div>Gap: <span className="font-semibold text-amber-200">{result.gaps[axis]}</span></div>
+                    <div className="text-right text-sm text-[#666666]">
+                      <div>Natural: <span className="font-semibold text-[#141042]">{result.scores_natural[axis]}</span></div>
+                      <div>Adaptado: <span className="font-semibold text-[#141042]">{result.scores_adapted[axis]}</span></div>
+                      <div>Gap: <span className="font-semibold text-[#F97316]">{result.gaps[axis]}</span></div>
                     </div>
                   </div>
                   <div className="space-y-2">
-                    <div className="text-xs text-white/70">Natural</div>
-                    <div className="h-2 rounded-full bg-white/10 overflow-hidden">
+                    <div className="text-xs text-[#999999]">Natural</div>
+                    <div className="h-2 rounded-full bg-[#F5F5F0] overflow-hidden">
                       <div
-                        className={`h-full bg-gradient-to-r ${axisMeta[axis].color}`}
+                        className={`h-full bg-linear-to-r ${axisMeta[axis].color}`}
                         style={{ width: `${Math.min(result.scores_natural[axis], 100)}%` }}
                       />
                     </div>
-                    <div className="text-xs text-white/70">Adaptado</div>
-                    <div className="h-2 rounded-full bg-white/10 overflow-hidden">
+                    <div className="text-xs text-[#999999]">Adaptado</div>
+                    <div className="h-2 rounded-full bg-[#F5F5F0] overflow-hidden">
                       <div
-                        className={`h-full bg-gradient-to-r ${axisMeta[axis].color}`}
+                        className={`h-full bg-linear-to-r ${axisMeta[axis].color}`}
                         style={{ width: `${Math.min(result.scores_adapted[axis], 100)}%` }}
                       />
                     </div>
-                    <div className="text-xs text-white/70">Gap / Esforço</div>
-                    <div className="h-2 rounded-full bg-white/10 overflow-hidden">
+                    <div className="text-xs text-[#999999]">Gap / Esforço</div>
+                    <div className="h-2 rounded-full bg-[#F5F5F0] overflow-hidden">
                       <div
-                        className="h-full bg-gradient-to-r from-amber-300 to-red-500"
+                        className="h-full bg-linear-to-r from-[#F97316] to-[#EF4444]"
                         style={{ width: `${Math.min(result.gaps[axis] * 3, 100)}%` }}
                       />
                     </div>
@@ -490,7 +488,7 @@ export default function PiTestPage() {
               ))}
             </div>
 
-            <div className="bg-white/5 border border-white/10 rounded-xl p-4 text-sm text-white/80 space-y-2">
+            <div className="bg-white border border-[#E5E5DC] rounded-xl p-4 text-sm text-[#666666] space-y-2 shadow-sm">
               <p>
                 Interpretação rápida: gaps de 0–10 sugerem papel sustentável; 11–25 exigem atenção e ajustes no contexto;
                 26+ indicam esforço alto e risco de desgaste. Combine esta leitura com o Teste das Cores para entender
@@ -499,6 +497,13 @@ export default function PiTestPage() {
             </div>
           </div>
         )}
+      </div>
+      <div className="fixed bottom-4 right-4 z-30">
+        <img
+          src="https://fjudsjzfnysaztcwlwgm.supabase.co/storage/v1/object/public/LOGOS/LOGO4.png"
+          alt="Talent Forge"
+          className="h-16 w-auto opacity-70"
+        />
       </div>
     </div>
   );

@@ -297,6 +297,8 @@ export default function DISCAssessmentPage() {
         .update({
           normalized_score: overallScore,
           traits: traitsPayload,
+          status: 'completed',
+          completed_at: new Date().toISOString(),
         })
         .eq('id', assessmentId);
 
@@ -315,10 +317,10 @@ export default function DISCAssessmentPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
+      <div className="flex items-center justify-center min-h-screen bg-[#FAFAF8]">
         <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-          <p className="mt-4 text-gray-600">Carregando avaliação...</p>
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-[#141042]"></div>
+          <p className="mt-4 text-sm text-[#666666]">Carregando avaliação...</p>
         </div>
       </div>
     );
@@ -326,15 +328,15 @@ export default function DISCAssessmentPage() {
 
   if (questions.length === 0 || questionSequence.length === 0) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Card>
+      <div className="flex items-center justify-center min-h-screen bg-[#FAFAF8] p-4">
+        <Card className="border border-[#E5E5DC] bg-white shadow-sm">
           <CardHeader>
-            <CardTitle>Erro</CardTitle>
+            <CardTitle className="text-[#141042]">Erro</CardTitle>
           </CardHeader>
           <CardContent>
-            <p>Não foi possível carregar as perguntas da avaliação</p>
+            <p className="text-sm text-[#666666]">Não foi possível carregar as perguntas da avaliação</p>
             {loadError && (
-              <p className="text-sm text-red-600 mt-2 break-words">
+              <p className="text-xs text-red-600 mt-2 wrap-break-word">
                 Detalhes: {loadError}
               </p>
             )}
@@ -349,22 +351,17 @@ export default function DISCAssessmentPage() {
   const currentResponse = responses.find(r => r.questionId === currentQ.id);
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-50">
-      <div className="absolute inset-0 opacity-30 pointer-events-none">
-        <div className="absolute -top-40 -left-32 h-96 w-96 rounded-full bg-purple-500 blur-3xl" />
-        <div className="absolute -bottom-32 -right-24 h-96 w-96 rounded-full bg-blue-500 blur-3xl" />
-      </div>
-
+    <div className="min-h-screen bg-[#FAFAF8] text-[#141042]">
       <div className="relative max-w-5xl mx-auto px-4 py-10 space-y-8">
         {/* Header */}
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div className="space-y-2">
-            <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-sm font-semibold text-white backdrop-blur">
-              <Sparkles className="h-4 w-4 text-amber-300" />
+            <div className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-1 text-xs font-semibold text-[#141042] border border-[#E5E5DC]">
+              <Sparkles className="h-4 w-4 text-[#F97316]" />
               Avaliação DISC
             </div>
-            <h1 className="text-3xl font-bold tracking-tight text-white">Seu raio-x comportamental</h1>
-            <p className="text-slate-200/80">
+            <h1 className="text-3xl font-bold tracking-tight text-[#141042]">Seu raio-x comportamental</h1>
+            <p className="text-sm text-[#666666]">
               Escolha a alternativa que mais representa seu estilo. Leva cerca de 5 minutos.
             </p>
           </div>
@@ -372,30 +369,30 @@ export default function DISCAssessmentPage() {
             <Button
               variant="ghost"
               onClick={handleExit}
-              className="border border-white/40 bg-transparent text-white hover:border-white hover:bg-white/10 hover:text-white flex items-center justify-center gap-2"
+              className="border border-[#E5E5DC] bg-white text-[#141042] hover:border-[#141042] hover:bg-[#F5F5F0] flex items-center justify-center gap-2"
             >
-              <LogOut className="h-4 w-4" />
+              <LogOut className="h-4 w-4 text-[#141042]" />
               Sair do teste
             </Button>
             <div className="grid grid-cols-2 gap-3 w-full">
-              <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                <div className="text-xs uppercase tracking-wide text-slate-300">Progresso</div>
+              <div className="rounded-2xl border border-[#E5E5DC] bg-white p-4">
+                <div className="text-[11px] uppercase tracking-wide text-[#999999]">Progresso</div>
                 <div className="mt-2 flex items-baseline gap-1">
-                  <span className="text-2xl font-bold text-white">{Math.round(progress)}%</span>
-                  <span className="text-slate-400 text-sm">completo</span>
+                  <span className="text-2xl font-bold text-[#141042]">{Math.round(progress)}%</span>
+                  <span className="text-xs text-[#999999]">completo</span>
                 </div>
-                <Progress value={progress} className="mt-3 h-2 bg-white/10" />
+                <Progress value={progress} className="mt-3 h-2 bg-[#F5F5F0]" />
               </div>
-              <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                <div className="text-xs uppercase tracking-wide text-slate-300">Perguntas</div>
+              <div className="rounded-2xl border border-[#E5E5DC] bg-white p-4">
+                <div className="text-[11px] uppercase tracking-wide text-[#999999]">Perguntas</div>
                 <div className="mt-2 flex items-baseline gap-1">
-                  <span className="text-2xl font-bold text-white">
+                  <span className="text-2xl font-bold text-[#141042]">
                     {currentQuestion + 1}
                   </span>
-                  <span className="text-slate-400 text-sm">de {questions.length}</span>
+                  <span className="text-xs text-[#999999]">de {questions.length}</span>
                 </div>
-                <div className="mt-3 flex items-center gap-2 text-sm text-slate-200">
-                  <Activity className="h-4 w-4 text-emerald-300" />
+                <div className="mt-3 flex items-center gap-2 text-xs text-[#666666]">
+                  <Activity className="h-4 w-4 text-[#1F4ED8]" />
                   Responda de forma instintiva
                 </div>
               </div>
@@ -404,34 +401,34 @@ export default function DISCAssessmentPage() {
         </div>
 
         {/* Question + options */}
-        <Card className="border border-white/10 bg-white/5 backdrop-blur">
+        <Card className="border border-[#E5E5DC] bg-white shadow-sm">
           <CardHeader className="space-y-3">
-            <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-white">
-              <Shield className="h-4 w-4 text-cyan-300" />
+            <div className="inline-flex items-center gap-2 rounded-full bg-[#F5F5F0] px-3 py-1 text-[11px] font-semibold text-[#141042]">
+              <Shield className="h-4 w-4 text-[#1F4ED8]" />
               Pergunta {currentQuestion + 1}
             </div>
-            <CardTitle className="text-2xl font-semibold text-white">{currentQ.description}</CardTitle>
-            <CardDescription className="text-base text-slate-200">
+            <CardTitle className="text-2xl font-semibold text-[#141042]">{currentQ.description}</CardTitle>
+            <CardDescription className="text-sm text-[#666666]">
               Selecione a alternativa mais próxima do seu comportamento natural.
             </CardDescription>
           </CardHeader>
           <CardContent className="grid gap-4 sm:grid-cols-2">
             {[
-              { option: 'D', text: currentQ.option_d, color: 'from-red-500/60 to-red-600/80', border: 'border-red-400/40' },
-              { option: 'I', text: currentQ.option_i, color: 'from-amber-400/60 to-amber-500/80', border: 'border-amber-300/50' },
-              { option: 'S', text: currentQ.option_s, color: 'from-emerald-400/60 to-emerald-500/80', border: 'border-emerald-300/50' },
-              { option: 'C', text: currentQ.option_c, color: 'from-sky-400/60 to-sky-500/80', border: 'border-sky-300/50' },
+              { option: 'D', text: currentQ.option_d, color: 'from-red-500/10 to-red-500/20', border: 'border-red-200' },
+              { option: 'I', text: currentQ.option_i, color: 'from-amber-500/10 to-amber-500/20', border: 'border-amber-200' },
+              { option: 'S', text: currentQ.option_s, color: 'from-emerald-500/10 to-emerald-500/20', border: 'border-emerald-200' },
+              { option: 'C', text: currentQ.option_c, color: 'from-blue-500/10 to-blue-500/20', border: 'border-blue-200' },
             ].map(({ option, text, color, border }) => {
               const selected = currentResponse?.selected === option;
               return (
                 <button
                   key={option}
                   onClick={() => handleSelectOption(option as 'D' | 'I' | 'S' | 'C')}
-                  className={`group relative overflow-hidden rounded-2xl border px-4 py-5 text-left transition duration-200 ${selected ? `${border} bg-white/10` : 'border-white/10 bg-white/5 hover:border-white/30 hover:bg-white/10'}`}
+                  className={`group relative overflow-hidden rounded-2xl border px-4 py-5 text-left transition duration-200 ${selected ? `${border} bg-[#F5F5F0]` : 'border-[#E5E5DC] bg-white hover:border-[#141042]/40 hover:bg-[#FAFAF8]'}`}
                 >
-                  <div className={`absolute inset-0 opacity-0 transition-opacity duration-200 group-hover:opacity-20 ${selected ? 'opacity-30' : ''} bg-gradient-to-br ${color}`} />
+                  <div className={`absolute inset-0 opacity-0 transition-opacity duration-200 group-hover:opacity-100 ${selected ? 'opacity-100' : ''} bg-linear-to-br ${color}`} />
                   <div className="relative">
-                    <p className="text-sm font-semibold text-white leading-relaxed drop-shadow-sm">
+                    <p className="text-sm font-semibold text-[#141042] leading-relaxed">
                       {text}
                     </p>
                   </div>
@@ -443,9 +440,9 @@ export default function DISCAssessmentPage() {
 
         {/* Navigation sticky */}
         <div className="sticky bottom-4">
-          <div className="rounded-2xl border border-white/10 bg-white/10 backdrop-blur px-4 py-3 shadow-2xl">
+          <div className="rounded-2xl border border-[#E5E5DC] bg-white/90 backdrop-blur px-4 py-3 shadow-sm">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <div className="text-sm text-slate-200">
+              <div className="text-xs text-[#666666]">
                 {responses.length} de {questions.length} respondidas • Tempo estimado restante: ~{Math.max(1, Math.ceil((questions.length - responses.length) * 0.3))} min
               </div>
               <div className="flex gap-3">
@@ -453,16 +450,16 @@ export default function DISCAssessmentPage() {
                   variant="outline"
                   onClick={handlePrevious}
                   disabled={currentQuestion === 0}
-                  className="border-white/30 text-white hover:border-white hover:bg-white/10"
+                  className="border-[#E5E5DC] text-[#141042] hover:border-[#141042] hover:bg-[#F5F5F0]"
                 >
-                  <ArrowLeft className="h-4 w-4 mr-2" />
+                  <ArrowLeft className="h-4 w-4 mr-2 text-[#141042]" />
                   Anterior
                 </Button>
                 {currentQuestion === questions.length - 1 ? (
                   <Button
                     onClick={handleSubmit}
                     disabled={responses.length !== questions.length || submitting}
-                    className="bg-emerald-500 hover:bg-emerald-600 text-white"
+                    className="bg-[#141042] hover:bg-[#1f1a66] text-white"
                   >
                     {submitting ? 'Enviando...' : 'Finalizar avaliação'}
                     <Sparkles className="h-4 w-4 ml-2" />
@@ -470,7 +467,7 @@ export default function DISCAssessmentPage() {
                 ) : (
                   <Button
                     onClick={handleNext}
-                    className="bg-blue-500 hover:bg-blue-600 text-white"
+                    className="bg-[#1F4ED8] hover:bg-[#1b43b9] text-white"
                     disabled={!currentResponse}
                   >
                     Próxima
@@ -481,6 +478,13 @@ export default function DISCAssessmentPage() {
             </div>
           </div>
         </div>
+      </div>
+      <div className="fixed bottom-4 right-4 z-30">
+        <img
+          src="https://fjudsjzfnysaztcwlwgm.supabase.co/storage/v1/object/public/LOGOS/LOGO4.png"
+          alt="Talent Forge"
+          className="h-16 w-auto opacity-70"
+        />
       </div>
     </div>
   );

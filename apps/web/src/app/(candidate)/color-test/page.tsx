@@ -199,18 +199,23 @@ export default function ColorTestPage() {
 
   if (loading || saving) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-950 text-white">
-        {loading ? 'Carregando teste das cores...' : 'Salvando resposta...'}
+      <div className="min-h-screen flex items-center justify-center bg-[#FAFAF8] text-[#141042]">
+        <div className="text-center">
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-[#141042]"></div>
+          <p className="mt-4 text-sm text-[#666666]">
+            {loading ? 'Carregando teste das cores...' : 'Salvando resposta...'}
+          </p>
+        </div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-950 text-white">
-        <Card className="bg-white/5 border-white/10 p-6 text-center">
-          <CardTitle className="text-white mb-2">Erro</CardTitle>
-          <p className="text-slate-200">{error}</p>
+      <div className="min-h-screen flex items-center justify-center bg-[#FAFAF8] p-4">
+        <Card className="border border-[#E5E5DC] bg-white p-6 text-center shadow-sm">
+          <CardTitle className="text-[#141042] mb-2">Erro</CardTitle>
+          <p className="text-sm text-[#666666]">{error}</p>
         </Card>
       </div>
     );
@@ -218,28 +223,23 @@ export default function ColorTestPage() {
 
   if (!currentQuestion && !result) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-950 text-white">
+      <div className="min-h-screen flex items-center justify-center bg-[#FAFAF8] text-[#666666]">
         Carregando perguntas...
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#0c0a2a] text-slate-50">
-      <div className="absolute inset-0 opacity-20 pointer-events-none">
-        <div className="absolute -top-40 -left-32 h-96 w-96 rounded-full bg-[#1e1860] blur-3xl" />
-        <div className="absolute -bottom-32 -right-24 h-96 w-96 rounded-full bg-[#453931] blur-3xl" />
-      </div>
-
+    <div className="min-h-screen bg-[#FAFAF8] text-[#141042]">
       <div className="relative max-w-6xl mx-auto px-4 py-10 space-y-8">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div className="space-y-2">
-            <div className="inline-flex items-center gap-2 rounded-full bg-[#D9D9C6]/20 px-3 py-1 text-sm font-semibold text-[#D9D9C6] backdrop-blur border border-[#D9D9C6]/30">
-              <Sparkles className="h-4 w-4 text-[#D9D9C6]" />
+            <div className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-1 text-xs font-semibold text-[#141042] border border-[#E5E5DC]">
+              <Sparkles className="h-4 w-4 text-[#F97316]" />
               Teste das Cores (100 perguntas)
             </div>
-            <h1 className="text-3xl font-bold tracking-tight text-white">Mapa de Cores Predominantes</h1>
-            <p className="text-[#D9D9C6]/90">
+            <h1 className="text-3xl font-bold tracking-tight text-[#141042]">Mapa de Cores Predominantes</h1>
+            <p className="text-sm text-[#666666]">
               Escolha a alternativa que mais representa seu comportamento em cada situação. Linguagem corporativa,
               orientada a ritmo, decisão, comunicação e propósito.
             </p>
@@ -252,53 +252,53 @@ export default function ColorTestPage() {
                 await signOut();
                 router.push('/login');
               }}
-              className="border border-[#D9D9C6]/40 bg-transparent text-[#D9D9C6] hover:border-[#D9D9C6] hover:bg-[#D9D9C6]/10 hover:text-white flex items-center justify-center gap-2"
+              className="border border-[#E5E5DC] bg-white text-[#141042] hover:border-[#141042] hover:bg-[#F5F5F0] flex items-center justify-center gap-2"
             >
-              <LogOut className="h-4 w-4" />
+              <LogOut className="h-4 w-4 text-[#141042]" />
               Sair
             </Button>
             {/* Botão Voltar removido pois navegação manual não é mais necessária */}
-            <Progress value={progress} className="mt-3 h-2 bg-[#141042]/50" />
+            <Progress value={progress} className="mt-3 h-2 bg-[#F5F5F0]" />
           </div>
-          <div className="rounded-2xl border border-[#D9D9C6]/20 bg-[#141042]/30 p-4">
-            <div className="text-xs uppercase tracking-wide text-[#D9D9C6]/70">Perguntas</div>
+          <div className="rounded-2xl border border-[#E5E5DC] bg-white p-4">
+            <div className="text-[11px] uppercase tracking-wide text-[#999999]">Perguntas</div>
             <div className="mt-2 flex items-baseline gap-1">
-              <span className="text-2xl font-bold text-white">{currentIndex + 1}</span>
-              <span className="text-[#D9D9C6]/70 text-sm">de {questions.length}</span>
+              <span className="text-2xl font-bold text-[#141042]">{currentIndex + 1}</span>
+              <span className="text-[#999999] text-xs">de {questions.length}</span>
             </div>
-            <div className="mt-3 flex items-center gap-2 text-sm text-[#D9D9C6]">
-              <Activity className="h-4 w-4 text-[#D9D9C6]" />
+            <div className="mt-3 flex items-center gap-2 text-xs text-[#666666]">
+              <Activity className="h-4 w-4 text-[#1F4ED8]" />
               Responda de forma instintiva
             </div>
           </div>
         </div>
 
         {result ? (
-          <Card className="border border-[#D9D9C6]/20 bg-[#141042]/50 backdrop-blur">
+          <Card className="border border-[#E5E5DC] bg-white shadow-sm">
             <CardHeader>
-              <CardTitle className="text-white">Relatório do Teste das Cores</CardTitle>
+              <CardTitle className="text-[#141042]">Relatório do Teste das Cores</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="rounded-2xl border border-[#D9D9C6]/20 bg-[#1e1860]/30 p-4 text-white">
+              <div className="rounded-2xl border border-[#E5E5DC] bg-[#FAFAF8] p-4 text-[#141042]">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                   <div>
-                    <p className="text-sm text-[#D9D9C6]/70">Cor predominante</p>
+                    <p className="text-xs text-[#999999]">Cor predominante</p>
                     <p className="text-2xl font-bold">{colorProfiles[result.primary].label}</p>
-                    <p className="text-sm text-[#D9D9C6]">
+                    <p className="text-sm text-[#666666]">
                       Secundária: {colorProfiles[result.secondary].label}
                     </p>
                   </div>
                   <div className="flex gap-3">
                     <Button
                       onClick={handlePrint}
-                      className="bg-[#D9D9C6] text-[#141042] hover:bg-[#E8E8DA]"
+                      className="bg-[#141042] text-white hover:bg-[#1f1a66]"
                     >
                       Imprimir
                     </Button>
                     <Button
                       variant="outline"
                       onClick={handlePrint}
-                      className="border-[#D9D9C6]/60 text-[#D9D9C6] hover:border-[#D9D9C6] hover:bg-[#D9D9C6]/10"
+                      className="border-[#E5E5DC] text-[#141042] hover:border-[#141042] hover:bg-[#F5F5F0]"
                     >
                       Baixar PDF
                     </Button>
@@ -310,33 +310,33 @@ export default function ColorTestPage() {
                 {result.order.map((code) => (
                   <div
                     key={code}
-                    className="rounded-xl border border-[#D9D9C6]/20 bg-[#1e1860]/20 p-4 text-white/90 shadow-sm hover:border-[#D9D9C6]/40 transition-colors"
+                    className="rounded-xl border border-[#E5E5DC] bg-white p-4 text-[#141042] shadow-sm hover:border-[#141042]/40 transition-colors"
                     title={colorProfiles[code].description}
                   >
                     <div className="flex items-center justify-between mb-2">
                       <p className="font-semibold">{colorProfiles[code].label}</p>
-                      <span className="text-sm text-[#D9D9C6]/70">
+                      <span className="text-xs text-[#999999]">
                         {result.scores[code]} / {questions.length}
                       </span>
                     </div>
-                    <div className="h-2 rounded-full bg-[#141042]/50 overflow-hidden mb-2">
+                    <div className="h-2 rounded-full bg-[#F5F5F0] overflow-hidden mb-2">
                       <div
-                        className="h-full rounded-full bg-[#D9D9C6]"
+                        className="h-full rounded-full bg-[#141042]"
                         style={{ width: `${Math.min((result.scores[code] / questions.length) * 100, 100)}%` }}
                       />
                     </div>
-                    <p className="text-sm text-[#D9D9C6]">{colorProfiles[code].description}</p>
+                    <p className="text-sm text-[#666666]">{colorProfiles[code].description}</p>
                   </div>
                 ))}
               </div>
               <div className="flex flex-wrap gap-3">
-                <Button onClick={resetTest} className="bg-[#1e1860] hover:bg-[#141042] text-white border border-[#D9D9C6]/30">
+                <Button onClick={resetTest} className="bg-[#141042] hover:bg-[#1f1a66] text-white">
                   Refazer teste
                 </Button>
                 <Button
                   variant="outline"
                   onClick={() => router.push('/candidate')}
-                  className="border-[#D9D9C6]/40 text-[#D9D9C6] hover:border-[#D9D9C6] hover:bg-[#D9D9C6]/10"
+                  className="border-[#E5E5DC] text-[#141042] hover:border-[#141042] hover:bg-[#F5F5F0]"
                 >
                   Voltar ao dashboard
                 </Button>
@@ -344,51 +344,51 @@ export default function ColorTestPage() {
             </CardContent>
           </Card>
         ) : (
-          <Card className="border border-[#D9D9C6]/20 bg-[#141042]/50 backdrop-blur">
+          <Card className="border border-[#E5E5DC] bg-white shadow-sm">
             <CardHeader className="space-y-3">
-              <CardTitle className="text-2xl font-semibold text-white">Pergunta {currentIndex + 1}</CardTitle>
-              <p className="text-base text-[#D9D9C6]">{currentQuestion.prompt}</p>
+              <CardTitle className="text-2xl font-semibold text-[#141042]">Pergunta {currentIndex + 1}</CardTitle>
+              <p className="text-sm text-[#666666]">{currentQuestion.prompt}</p>
             </CardHeader>
             <CardContent className="grid gap-4 sm:grid-cols-2">
               {currentQuestion.options.map(({ code, text }) => {
                 const selected = answers[currentQuestion.id] === code;
                 const colorBg =
                   code === 'azul'
-                    ? 'from-[#1e1860]/60 to-[#141042]/80'
+                    ? 'from-blue-500/10 to-blue-500/20'
                     : code === 'rosa'
-                      ? 'from-[#5a4b41]/60 to-[#453931]/80'
+                      ? 'from-pink-500/10 to-pink-500/20'
                       : code === 'amarelo'
-                        ? 'from-[#D9D9C6]/60 to-[#C5C5B0]/80'
+                        ? 'from-amber-500/10 to-amber-500/20'
                         : code === 'verde'
-                          ? 'from-[#666666]/60 to-[#444444]/80'
-                          : 'from-[#888888]/60 to-[#666666]/80';
+                          ? 'from-emerald-500/10 to-emerald-500/20'
+                          : 'from-gray-400/10 to-gray-400/20';
                 const borderColor =
                   code === 'azul'
-                    ? 'border-[#1e1860]/50'
+                    ? 'border-blue-200'
                     : code === 'rosa'
-                      ? 'border-[#453931]/50'
+                      ? 'border-pink-200'
                       : code === 'amarelo'
-                        ? 'border-[#D9D9C6]/50'
+                        ? 'border-amber-200'
                         : code === 'verde'
-                          ? 'border-[#666666]/50'
-                          : 'border-[#888888]/60';
+                          ? 'border-emerald-200'
+                          : 'border-gray-200';
                 return (
                   <button
                     key={code}
                     onClick={() => handleSelect(code)}
                     className={`group relative overflow-hidden rounded-2xl border px-4 py-5 text-left transition duration-200 ${
                       selected
-                        ? `${borderColor} bg-[#1e1860]/30`
-                        : 'border-[#D9D9C6]/10 bg-[#141042]/30 hover:border-[#D9D9C6]/30 hover:bg-[#1e1860]/20'
+                        ? `${borderColor} bg-[#F5F5F0]`
+                        : 'border-[#E5E5DC] bg-white hover:border-[#141042]/40 hover:bg-[#FAFAF8]'
                     }`}
                   >
                     <div
-                      className={`absolute inset-0 opacity-0 transition-opacity duration-200 group-hover:opacity-20 ${
-                        selected ? 'opacity-30' : ''
-                      } bg-gradient-to-br ${colorBg}`}
+                      className={`absolute inset-0 opacity-0 transition-opacity duration-200 group-hover:opacity-100 ${
+                        selected ? 'opacity-100' : ''
+                      } bg-linear-to-br ${colorBg}`}
                     />
                     <div className="relative">
-                      <p className="text-xs sm:text-sm font-semibold text-white leading-relaxed drop-shadow-sm">
+                      <p className="text-xs sm:text-sm font-semibold text-[#141042] leading-relaxed">
                         {text}
                       </p>
                     </div>
@@ -401,9 +401,9 @@ export default function ColorTestPage() {
 
         {!result && (
           <div className="sticky bottom-4">
-            <div className="rounded-2xl border border-[#D9D9C6]/20 bg-[#141042]/80 backdrop-blur px-4 py-3 shadow-2xl">
+            <div className="rounded-2xl border border-[#E5E5DC] bg-white/90 backdrop-blur px-4 py-3 shadow-sm">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <div className="text-sm text-[#D9D9C6]">
+                <div className="text-xs text-[#666666]">
                   {totalAnswered} de {questions.length} respondidas • Tempo estimado restante: ~
                   {Math.max(1, Math.ceil((questions.length - totalAnswered) * 0.3))} min
                 </div>
@@ -411,7 +411,7 @@ export default function ColorTestPage() {
                   {totalAnswered >= questions.length && (
                     <Button
                       onClick={() => finalizeTest()}
-                      className="bg-[#D9D9C6] hover:bg-[#E8E8DA] text-[#141042]"
+                      className="bg-[#141042] hover:bg-[#1f1a66] text-white"
                       disabled={saving}
                     >
                       {saving ? 'Finalizando...' : 'Finalizar Teste'}
@@ -422,6 +422,13 @@ export default function ColorTestPage() {
             </div>
           </div>
         )}
+      </div>
+      <div className="fixed bottom-4 right-4 z-30">
+        <img
+          src="https://fjudsjzfnysaztcwlwgm.supabase.co/storage/v1/object/public/LOGOS/LOGO4.png"
+          alt="Talent Forge"
+          className="h-16 w-auto opacity-70"
+        />
       </div>
     </div>
   );

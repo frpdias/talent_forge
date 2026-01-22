@@ -31,29 +31,31 @@ interface Candidate {
   phone?: string;
   location?: string;
   headline?: string;
+  cpf?: string | null;
+  linkedin_url?: string | null;
+  salary_expectation?: number | null;
+  availability_date?: string | null;
+  tags?: string[] | null;
   experience_years?: number;
   skills?: string[];
   education?: string;
   work_experience?: string;
   bio?: string;
+  resume_url?: string | null;
+  resume_filename?: string | null;
 }
 
 interface Note {
   id: string;
-  content: string;
+  note: string;
   created_at: string;
-  created_by: string;
+  author_id: string;
 }
 
 interface ColorResult {
   primary_color: string;
   secondary_color: string;
-  scores: {
-    vermelho: number;
-    amarelo: number;
-    verde: number;
-    azul: number;
-  };
+  scores: Record<string, number>;
 }
 
 interface DISCResult {
@@ -101,6 +103,8 @@ export default function CandidateDetailPage() {
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   );
 
+  const colorScoreOrder = ['azul', 'rosa', 'amarelo', 'verde', 'branco', 'vermelho'];
+
   useEffect(() => {
     loadData();
   }, [candidateId]);
@@ -110,16 +114,153 @@ export default function CandidateDetailPage() {
       setLoading(true);
 
       // Get candidate profile
-      const { data: candidateData } = await supabase
-        .from('candidate_profiles')
-        .select('*')
+      const { data: candidateRow } = await supabase
+        .from('candidates')
+        .select('id, user_id, full_name, email, phone, location, current_title, created_at, linkedin_url, salary_expectation, availability_date, tags')
         .eq('id', candidateId)
-        .single();
+        .maybeSingle();
 
-      if (candidateData) {
-        setCandidate(candidateData);
-        setEditedCandidate(candidateData);
+      if (!candidateRow) {
+        setCandidate(null);
+        return;
       }
+
+      const baseCandidate: Candidate = {
+        id: candidateRow.id,
+        full_name: candidateRow.full_name || 'Candidato',
+        email: candidateRow.email || '',
+        phone: candidateRow.phone || undefined,
+        location: candidateRow.location || undefined,
+        headline: candidateRow.current_title || undefined,
+        linkedin_url: candidateRow.linkedin_url || null,
+        salary_expectation: candidateRow.salary_expectation ?? null,
+        availability_date: candidateRow.availability_date ?? null,
+        tags: candidateRow.tags || null,
+        resume_url: null,
+        resume_filename: null,
+      };
+
+      let profileData: Candidate | null = null;
+      if (candidateRow.user_id) {
+        const { data: profileByUser } = await supabase
+          .from('candidate_profiles')
+          .select('*')
+          .eq('user_id', candidateRow.user_id)
+          .maybeSingle();
+        profileData = (profileByUser as Candidate | null) ?? null;
+      }
+
+      if (!profileData && candidateRow.email) {
+        const { data: profileByEmail } = await supabase
+          .from('candidate_profiles')
+          .select('*')
+          .eq('email', candidateRow.email)
+          .maybeSingle();
+        profileData = (profileByEmail as Candidate | null) ?? null;
+      }
+
+      const profileId = (profileData as any)?.id ?? null;
+
+      let educationText: string | undefined;
+      let experienceText: string | undefined;
+      let experienceYears: number | undefined;
+
+      if (profileId) {
+        const [eduResult, expResult] = await Promise.all([
+          supabase
+            .from('candidate_education')
+            .select('degree_level, course_name, institution, start_year, end_year, is_current')
+            .eq('candidate_profile_id', profileId)
+            .order('start_year', { ascending: true }),
+          supabase
+            .from('candidate_experience')
+            .select('company_name, job_title, start_date, end_date, is_current, description')
+            .eq('candidate_profile_id', profileId)
+            .order('start_date', { ascending: true }),
+        ]);
+
+        const degreeLabelMap: Record<string, string> = {
+          ensino_fundamental: 'Ensino Fundamental',
+          ensino_medio: 'Ensino Médio',
+          tecnico: 'Técnico',
+          graduacao: 'Graduação',
+          pos_graduacao: 'Pós-Graduação',
+          mestrado: 'Mestrado',
+          doutorado: 'Doutorado',
+          mba: 'MBA',
+        };
+
+        const educations = eduResult.data || [];
+        if (educations.length > 0) {
+          educationText = educations
+            .map((edu) => {
+              const degree = degreeLabelMap[edu.degree_level] || edu.degree_level;
+              const period = edu.is_current
+                ? `${edu.start_year || ''} - Atual`
+                : `${edu.start_year || ''}${edu.end_year ? ` - ${edu.end_year}` : ''}`;
+              return `${degree} em ${edu.course_name} - ${edu.institution}${period.trim() ? ` (${period})` : ''}`;
+            })
+            .join('\n');
+        }
+
+        const experiences = expResult.data || [];
+        if (experiences.length > 0) {
+          experienceText = experiences
+            .map((exp) => {
+              const start = exp.start_date
+                ? new Date(exp.start_date).toLocaleDateString('pt-BR', { year: 'numeric', month: 'short' })
+                : '';
+              const end = exp.is_current
+                ? 'Atual'
+                : exp.end_date
+                  ? new Date(exp.end_date).toLocaleDateString('pt-BR', { year: 'numeric', month: 'short' })
+                  : '';
+              const period = start || end ? ` (${[start, end].filter(Boolean).join(' - ')})` : '';
+              const description = exp.description ? `\n${exp.description}` : '';
+              return `${exp.job_title} @ ${exp.company_name}${period}${description}`;
+            })
+            .join('\n\n');
+
+          const startDates = experiences
+            .map((exp) => (exp.start_date ? new Date(exp.start_date) : null))
+            .filter(Boolean) as Date[];
+          const endDates = experiences
+            .map((exp) => (exp.is_current || !exp.end_date ? new Date() : new Date(exp.end_date)))
+            .filter(Boolean) as Date[];
+          if (startDates.length > 0 && endDates.length > 0) {
+            const minStart = new Date(Math.min(...startDates.map((d) => d.getTime())));
+            const maxEnd = new Date(Math.max(...endDates.map((d) => d.getTime())));
+            const months = (maxEnd.getFullYear() - minStart.getFullYear()) * 12 + (maxEnd.getMonth() - minStart.getMonth());
+            experienceYears = Math.max(0, Math.floor(months / 12));
+          }
+        }
+      }
+
+      const mergedCandidate: Candidate = {
+        ...baseCandidate,
+        ...(profileData || {}),
+        full_name: profileData?.full_name || baseCandidate.full_name,
+        email: profileData?.email || baseCandidate.email,
+        phone: profileData?.phone || baseCandidate.phone,
+        location: (profileData as any)?.city
+          ? `${(profileData as any).city}${(profileData as any).state ? `, ${(profileData as any).state}` : ''}`
+          : baseCandidate.location,
+        headline: (profileData as any)?.current_title || baseCandidate.headline,
+        cpf: (profileData as any)?.cpf || null,
+        education: educationText,
+        work_experience: experienceText,
+        experience_years: experienceYears,
+        resume_url: (profileData as any)?.resume_url || baseCandidate.resume_url,
+      };
+
+      setCandidate(mergedCandidate);
+      setEditedCandidate(mergedCandidate);
+
+      const candidateUserIds = Array.from(
+        new Set(
+          [candidateRow.user_id, (profileData as any)?.user_id].filter(Boolean) as string[]
+        )
+      );
 
       // Get notes
       const { data: notesData } = await supabase
@@ -132,77 +273,202 @@ export default function CandidateDetailPage() {
         setNotes(notesData);
       }
 
-      // Get Color assessment
-      const { data: colorData } = await supabase
-        .from('color_assessments')
-        .select('*, color_assessment_results(*)')
+      const { data: assessmentUserIds } = await supabase
+        .from('assessments')
+        .select('candidate_user_id')
         .eq('candidate_id', candidateId)
-        .eq('status', 'completed')
-        .order('completed_at', { ascending: false })
-        .limit(1)
-        .single();
+        .not('candidate_user_id', 'is', null);
 
-      if (colorData?.color_assessment_results) {
-        const result = colorData.color_assessment_results as any;
-        setColorResult({
-          primary_color: result.primary_color,
-          secondary_color: result.secondary_color,
-          scores: {
-            vermelho: result.red_score || 0,
-            amarelo: result.yellow_score || 0,
-            verde: result.green_score || 0,
-            azul: result.blue_score || 0,
-          },
-        });
+      const resolvedUserIds = Array.from(
+        new Set([
+          ...candidateUserIds,
+          ...((assessmentUserIds || []).map((row: any) => row.candidate_user_id).filter(Boolean) as string[]),
+        ])
+      );
+
+      const candidateIds = new Set<string>([candidateId]);
+      if (mergedCandidate?.email) {
+        const { data: candidatesByEmail } = await supabase
+          .from('candidates')
+          .select('id')
+          .ilike('email', mergedCandidate.email)
+          .limit(10);
+        (candidatesByEmail || []).forEach((row) => candidateIds.add(row.id));
       }
 
-      // Get DISC assessment (from color_assessment_results if it has DISC data)
-      const { data: discData } = await supabase
-        .from('color_assessment_results')
-        .select('*')
-        .eq('candidate_id', candidateId)
-        .not('dominance_score', 'is', null)
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .single();
+      if (resolvedUserIds.length > 0) {
+        const normalizeColorScores = (rawScores: Record<string, any>) => {
+          const map: Record<string, number> = {};
+          const toNumber = (value: any) => {
+            if (typeof value === 'number') return value;
+            if (typeof value === 'string') {
+              const parsed = Number(value.replace(',', '.'));
+              return Number.isFinite(parsed) ? parsed : 0;
+            }
+            return 0;
+          };
 
-      if (discData) {
-        setDiscResult({
-          dominance_score: discData.dominance_score || 0,
-          influence_score: discData.influence_score || 0,
-          steadiness_score: discData.steadiness_score || 0,
-          conscientiousness_score: discData.conscientiousness_score || 0,
-          primary_profile: discData.primary_profile || '',
-          description: discData.description || '',
-        });
-      }
+          colorScoreOrder.forEach((key) => {
+            const lowerKey = key.toLowerCase();
+            map[lowerKey] = toNumber(rawScores?.[lowerKey] ?? rawScores?.[key] ?? 0);
+          });
 
-      // Get PI assessment
-      const { data: piData } = await supabase
-        .from('pi_assessments')
-        .select('*, pi_assessment_results(*)')
-        .eq('candidate_id', candidateId)
-        .eq('status', 'completed')
-        .order('completed_at', { ascending: false })
-        .limit(1)
-        .single();
+          const total = Object.values(map).reduce((sum, value) => sum + value, 0);
+          if (total > 0) {
+            if (total >= 90 && total <= 110) {
+              return map;
+            }
+            const normalized: Record<string, number> = {};
+            Object.entries(map).forEach(([key, value]) => {
+              normalized[key] = Math.round((value / total) * 100);
+            });
+            return normalized;
+          }
 
-      if (piData?.pi_assessment_results) {
-        const result = piData.pi_assessment_results as any;
-        setPiResult({
-          natural_profile: {
-            direção: result.natural_direcao || 0,
-            energia_social: result.natural_energia_social || 0,
-            ritmo: result.natural_ritmo || 0,
-            estrutura: result.natural_estrutura || 0,
-          },
-          adapted_profile: {
-            direção: result.adapted_direcao || 0,
-            energia_social: result.adapted_energia_social || 0,
-            ritmo: result.adapted_ritmo || 0,
-            estrutura: result.adapted_estrutura || 0,
-          },
-        });
+          return map;
+        };
+
+        // Get Color assessment
+        const { data: colorData } = await supabase
+          .from('color_assessments')
+          .select('id, primary_color, secondary_color, scores, completed_at')
+          .in('candidate_user_id', resolvedUserIds)
+          .eq('status', 'completed')
+          .order('completed_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        if (colorData) {
+          let scores = normalizeColorScores((colorData.scores as Record<string, number> | null) || {});
+
+          const hasScores = Object.values(scores).some((value) => value > 0);
+          if (!hasScores && colorData.id) {
+            const { data: colorResponses } = await supabase
+              .from('color_responses')
+              .select('selected_color')
+              .eq('assessment_id', colorData.id);
+
+            if (colorResponses && colorResponses.length > 0) {
+              const counts: Record<string, number> = {};
+              colorResponses.forEach((response: { selected_color: string }) => {
+                const key = response.selected_color?.toLowerCase?.();
+                if (!key) return;
+                counts[key] = (counts[key] || 0) + 1;
+              });
+              scores = normalizeColorScores(counts);
+            }
+          }
+
+          const orderedScores = Object.entries(scores)
+            .map(([color, value]) => ({ color, value }))
+            .sort((a, b) => b.value - a.value);
+          const derivedPrimary = orderedScores[0]?.color || '';
+          const derivedSecondary = orderedScores[1]?.color || '';
+
+          const normalizedPrimary = (colorData.primary_color || '').toLowerCase();
+          const normalizedSecondary = (colorData.secondary_color || '').toLowerCase();
+
+          const primaryColor = derivedPrimary && derivedPrimary !== normalizedPrimary
+            ? derivedPrimary
+            : normalizedPrimary;
+
+          const secondaryColor = derivedSecondary && derivedSecondary !== normalizedSecondary
+            ? derivedSecondary
+            : normalizedSecondary;
+
+          setColorResult({
+            primary_color: primaryColor,
+            secondary_color: secondaryColor,
+            scores,
+          });
+        }
+
+        // Get DISC assessment
+        const candidateIdsList = Array.from(candidateIds);
+        const discFilters = [
+          candidateIdsList.length > 0 ? `candidate_id.in.(${candidateIdsList.join(',')})` : '',
+          resolvedUserIds.length > 0 ? `candidate_user_id.in.(${resolvedUserIds.join(',')})` : '',
+        ].filter(Boolean).join(',');
+
+        const { data: discAssessmentRows } = await supabase
+          .from('assessments')
+          .select('id, traits, status, completed_at')
+          .or(discFilters)
+          .eq('assessment_type', 'disc')
+          .order('completed_at', { ascending: false })
+          .limit(5);
+
+        const discAssessmentIds = (discAssessmentRows || []).map((row) => row.id);
+        let discPayload = null as any;
+
+        if (discAssessmentIds.length > 0) {
+          const { data: discRows } = await supabase
+            .from('disc_assessments')
+            .select('assessment_id, dominance_score, influence_score, steadiness_score, conscientiousness_score, primary_profile, description')
+            .in('assessment_id', discAssessmentIds);
+
+          const discMap = new Map((discRows || []).map((row) => [row.assessment_id, row]));
+          for (const assessment of discAssessmentRows || []) {
+            const candidateDisc = discMap.get(assessment.id);
+            if (candidateDisc) {
+              discPayload = candidateDisc;
+              break;
+            }
+          }
+        }
+
+        if (discPayload) {
+          setDiscResult({
+            dominance_score: discPayload.dominance_score || 0,
+            influence_score: discPayload.influence_score || 0,
+            steadiness_score: discPayload.steadiness_score || 0,
+            conscientiousness_score: discPayload.conscientiousness_score || 0,
+            primary_profile: discPayload.primary_profile || '',
+            description: discPayload.description || '',
+          });
+        } else {
+          const fallbackAssessment = (discAssessmentRows || [])[0];
+          if (fallbackAssessment?.traits?.disc) {
+            const discTraits = fallbackAssessment.traits.disc;
+            setDiscResult({
+              dominance_score: Number(discTraits.D ?? discTraits.dominance_score ?? 0),
+              influence_score: Number(discTraits.I ?? discTraits.influence_score ?? 0),
+              steadiness_score: Number(discTraits.S ?? discTraits.steadiness_score ?? 0),
+              conscientiousness_score: Number(discTraits.C ?? discTraits.conscientiousness_score ?? 0),
+              primary_profile: discTraits.primary ?? discTraits.primary_profile ?? '',
+              description: discTraits.description ?? '',
+            });
+          }
+        }
+
+        // Get PI assessment
+        const { data: piData } = await supabase
+          .from('pi_assessments')
+          .select('scores_natural, scores_adapted, completed_at')
+          .in('candidate_user_id', resolvedUserIds)
+          .eq('status', 'completed')
+          .order('completed_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        if (piData) {
+          const natural = (piData.scores_natural as Record<string, number> | null) || {};
+          const adapted = (piData.scores_adapted as Record<string, number> | null) || {};
+          setPiResult({
+            natural_profile: {
+              direção: natural.direcao || 0,
+              energia_social: natural.energia_social || 0,
+              ritmo: natural.ritmo || 0,
+              estrutura: natural.estrutura || 0,
+            },
+            adapted_profile: {
+              direção: adapted.direcao || 0,
+              energia_social: adapted.energia_social || 0,
+              ritmo: adapted.ritmo || 0,
+              estrutura: adapted.estrutura || 0,
+            },
+          });
+        }
       }
     } catch (error) {
       console.error('Error loading data:', error);
@@ -210,6 +476,103 @@ export default function CandidateDetailPage() {
       setLoading(false);
     }
   }
+
+  const formatCpf = (value?: string | null) => {
+    if (!value) return '-';
+    const digits = value.replace(/\D/g, '').slice(0, 11);
+    if (digits.length !== 11) return value;
+    return digits.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+  };
+
+  const formatCurrency = (value?: number | null) => {
+    if (value === undefined || value === null) return '-';
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL',
+      maximumFractionDigits: 0,
+    }).format(value);
+  };
+
+  const getDiscSummary = (result: DISCResult) => {
+    const scores = [
+      { label: 'D', value: result.dominance_score },
+      { label: 'I', value: result.influence_score },
+      { label: 'S', value: result.steadiness_score },
+      { label: 'C', value: result.conscientiousness_score },
+    ].sort((a, b) => b.value - a.value);
+
+    const top = scores[0];
+    const second = scores[1];
+
+    const labelMap: Record<string, string> = {
+      D: 'Dominância',
+      I: 'Influência',
+      S: 'Estabilidade',
+      C: 'Consciência',
+    };
+
+    const topLabel = labelMap[top.label] || top.label;
+    const secondLabel = labelMap[second.label] || second.label;
+
+    return `Perfil ${result.primary_profile}. Predomínio em ${topLabel} (${top.value}%), seguido por ${secondLabel} (${second.value}%).`;
+  };
+
+  const getColorSummary = (result: ColorResult) => {
+    const labelMap: Record<string, string> = {
+      vermelho: 'Vermelho',
+      amarelo: 'Amarelo',
+      verde: 'Verde',
+      azul: 'Azul',
+      rosa: 'Rosa',
+      branco: 'Branco',
+    };
+
+    const entries = Object.entries(result.scores || {})
+      .map(([color, value]) => ({
+        color,
+        label: labelMap[color.toLowerCase()] || color,
+        value,
+      }))
+      .sort((a, b) => b.value - a.value);
+
+    const primary = entries[0];
+    const secondary = entries[1];
+
+    if (!primary) return 'Sem pontuações registradas.';
+
+    return `Perfil primário ${labelMap[result.primary_color?.toLowerCase?.()] || result.primary_color}. ` +
+      `Destaque em ${primary.label} (${primary.value}%)` +
+      (secondary ? ` e ${secondary.label} (${secondary.value}%).` : '.');
+  };
+
+  const getPiSummary = (result: PIResult) => {
+    const normalize = (value: number) => Number.isFinite(value) ? value : 0;
+
+    const naturalScores = Object.entries(result.natural_profile).map(([axis, value]) => ({
+      axis,
+      value: normalize(value),
+    }));
+
+    const adaptedScores = Object.entries(result.adapted_profile).map(([axis, value]) => ({
+      axis,
+      value: normalize(value),
+    }));
+
+    const naturalTop = [...naturalScores].sort((a, b) => b.value - a.value)[0];
+    const adaptedTop = [...adaptedScores].sort((a, b) => b.value - a.value)[0];
+
+    const axisLabelMap: Record<string, string> = {
+      direção: 'Direção',
+      energia_social: 'Energia Social',
+      ritmo: 'Ritmo',
+      estrutura: 'Estrutura',
+    };
+
+    const naturalLabel = axisLabelMap[naturalTop.axis] || naturalTop.axis;
+    const adaptedLabel = axisLabelMap[adaptedTop.axis] || adaptedTop.axis;
+
+    return `Natural: ${naturalLabel} (${naturalTop.value}). Adaptado: ${adaptedLabel} (${adaptedTop.value}).`;
+  };
 
   async function handleSaveProfile() {
     try {
@@ -241,8 +604,8 @@ export default function CandidateDetailPage() {
         .insert([
           {
             candidate_id: candidateId,
-            content: newNote,
-            created_by: user.id,
+            note: newNote,
+            author_id: user.id,
           },
         ])
         .select()
@@ -284,8 +647,10 @@ export default function CandidateDetailPage() {
       amarelo: { bg: 'bg-yellow-100', text: 'text-yellow-700', name: 'Amarelo (Comunicador)' },
       verde: { bg: 'bg-green-100', text: 'text-green-700', name: 'Verde (Planejador)' },
       azul: { bg: 'bg-blue-100', text: 'text-blue-700', name: 'Azul (Analítico)' },
+      rosa: { bg: 'bg-pink-100', text: 'text-pink-700', name: 'Rosa' },
+      branco: { bg: 'bg-gray-100', text: 'text-gray-700', name: 'Branco' },
     };
-    const colorInfo = colorMap[color.toLowerCase()] || colorMap.vermelho;
+    const colorInfo = colorMap[color?.toLowerCase?.() || ''] || colorMap.vermelho;
     return (
       <Badge className={`${colorInfo.bg} ${colorInfo.text}`}>
         {colorInfo.name}
@@ -419,6 +784,11 @@ export default function CandidateDetailPage() {
                 </div>
 
                 <div>
+                  <Label>CPF</Label>
+                  <p className="text-lg">{formatCpf(candidate.cpf)}</p>
+                </div>
+
+                <div>
                   <Label>Localização</Label>
                   {editMode ? (
                     <Input
@@ -439,6 +809,51 @@ export default function CandidateDetailPage() {
                     />
                   ) : (
                     <p className="text-lg">{candidate.headline || '-'}</p>
+                  )}
+                </div>
+
+                <div>
+                  <Label>LinkedIn</Label>
+                  {candidate.linkedin_url ? (
+                    <a
+                      href={candidate.linkedin_url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-[#141042] hover:underline"
+                    >
+                      {candidate.linkedin_url}
+                    </a>
+                  ) : (
+                    <p className="text-lg">-</p>
+                  )}
+                </div>
+
+                <div>
+                  <Label>Pretensão Salarial</Label>
+                  <p className="text-lg">{formatCurrency(candidate.salary_expectation)}</p>
+                </div>
+
+                <div>
+                  <Label>Disponibilidade</Label>
+                  <p className="text-lg">
+                    {candidate.availability_date
+                      ? new Date(candidate.availability_date).toLocaleDateString('pt-BR')
+                      : '-'}
+                  </p>
+                </div>
+
+                <div className="md:col-span-2">
+                  <Label>Tags</Label>
+                  {candidate.tags && candidate.tags.length > 0 ? (
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      {candidate.tags.map((tag) => (
+                        <Badge key={tag} variant="default">
+                          {tag}
+                        </Badge>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-lg">-</p>
                   )}
                 </div>
 
@@ -493,6 +908,23 @@ export default function CandidateDetailPage() {
                     <p className="text-gray-700 whitespace-pre-line">{candidate.work_experience || '-'}</p>
                   )}
                 </div>
+
+                <div className="md:col-span-2">
+                  <Label>Currículo</Label>
+                  {candidate.resume_url ? (
+                    <a
+                      href={candidate.resume_url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center gap-2 text-[#141042] hover:underline"
+                    >
+                      <FileText className="h-4 w-4" />
+                      {candidate.resume_filename || 'Ver currículo'}
+                    </a>
+                  ) : (
+                    <p className="text-gray-700">-</p>
+                  )}
+                </div>
               </CardContent>
             </Card>
           </div>
@@ -511,28 +943,47 @@ export default function CandidateDetailPage() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="mb-6">
-                    <Label className="mb-2 block">Perfil Primário</Label>
-                    {getColorBadge(colorResult.primary_color)}
-                    {colorResult.secondary_color && (
-                      <>
-                        <Label className="mb-2 block mt-4">Perfil Secundário</Label>
-                        {getColorBadge(colorResult.secondary_color)}
-                      </>
-                    )}
+                  <div className="mb-6 rounded-lg border border-blue-100 bg-blue-50 px-4 py-3 text-sm text-blue-900">
+                    <strong>Resumo:</strong> {getColorSummary(colorResult)}
                   </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <Label className="mb-2 block">Perfil Primário</Label>
+                      {getColorBadge(colorResult.primary_color)}
+                      {colorResult.secondary_color && (
+                        <>
+                          <Label className="mb-2 block mt-4">Perfil Secundário</Label>
+                          {getColorBadge(colorResult.secondary_color)}
+                        </>
+                      )}
+                    </div>
 
-                  <div className="space-y-4">
-                    <Label>Distribuição de Cores</Label>
-                    {Object.entries(colorResult.scores).map(([color, score]) => (
-                      <div key={color}>
-                        <div className="flex justify-between mb-2">
-                          <span className="capitalize font-medium">{color}</span>
-                          <span className="text-sm font-bold">{score}%</span>
-                        </div>
-                        <Progress value={score} className="h-3" />
+                    <div>
+                      <Label className="mb-4 block">Distribuição de Cores</Label>
+                      <div className="space-y-4">
+                        {colorScoreOrder.map((color) => {
+                          const score = colorResult.scores[color] ?? 0;
+                          const colorLabelMap: Record<string, string> = {
+                            vermelho: 'Vermelho',
+                            amarelo: 'Amarelo',
+                            verde: 'Verde',
+                            azul: 'Azul',
+                            rosa: 'Rosa',
+                            branco: 'Branco',
+                          };
+                          const label = colorLabelMap[color.toLowerCase()] || color;
+                          return (
+                            <div key={color}>
+                              <div className="flex justify-between mb-2">
+                                <span className="capitalize font-medium">{label}</span>
+                                <span className="text-sm font-bold">{score}%</span>
+                              </div>
+                              <Progress value={score} className="h-3" />
+                            </div>
+                          );
+                        })}
                       </div>
-                    ))}
+                    </div>
                   </div>
                 </CardContent>
               </Card>
@@ -548,30 +999,37 @@ export default function CandidateDetailPage() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="mb-6">
-                    <Label className="mb-2 block">Perfil Primário</Label>
-                    <Badge className="bg-purple-100 text-purple-700 text-lg px-4 py-2">
-                      {discResult.primary_profile}
-                    </Badge>
-                    <p className="text-gray-700 mt-3">{discResult.description}</p>
+                  <div className="mb-6 rounded-lg border border-purple-100 bg-purple-50 px-4 py-3 text-sm text-purple-900">
+                    <strong>Resumo:</strong> {getDiscSummary(discResult)}
                   </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <Label className="mb-2 block">Perfil Primário</Label>
+                      <Badge className="bg-purple-100 text-purple-700 text-lg px-4 py-2">
+                        {discResult.primary_profile}
+                      </Badge>
+                      <p className="text-gray-700 mt-3">{discResult.description}</p>
+                    </div>
 
-                  <div className="space-y-4">
-                    <Label>Distribuição DISC</Label>
-                    {[
-                      { label: 'Dominância (D)', score: discResult.dominance_score, color: 'bg-red-500' },
-                      { label: 'Influência (I)', score: discResult.influence_score, color: 'bg-yellow-500' },
-                      { label: 'Estabilidade (S)', score: discResult.steadiness_score, color: 'bg-green-500' },
-                      { label: 'Consciência (C)', score: discResult.conscientiousness_score, color: 'bg-blue-500' },
-                    ].map(({ label, score }) => (
-                      <div key={label}>
-                        <div className="flex justify-between mb-2">
-                          <span className="font-medium">{label}</span>
-                          <span className="text-sm font-bold">{score}%</span>
-                        </div>
-                        <Progress value={score} className="h-3" />
+                    <div>
+                      <Label className="mb-4 block">Distribuição DISC</Label>
+                      <div className="space-y-4">
+                        {[
+                          { label: 'Dominância (D)', score: discResult.dominance_score },
+                          { label: 'Influência (I)', score: discResult.influence_score },
+                          { label: 'Estabilidade (S)', score: discResult.steadiness_score },
+                          { label: 'Consciência (C)', score: discResult.conscientiousness_score },
+                        ].map(({ label, score }) => (
+                          <div key={label}>
+                            <div className="flex justify-between mb-2">
+                              <span className="font-medium">{label}</span>
+                              <span className="text-sm font-bold">{score}%</span>
+                            </div>
+                            <Progress value={score} className="h-3" />
+                          </div>
+                        ))}
                       </div>
-                    ))}
+                    </div>
                   </div>
                 </CardContent>
               </Card>
@@ -587,6 +1045,9 @@ export default function CandidateDetailPage() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
+                  <div className="mb-6 rounded-lg border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
+                    <strong>Resumo:</strong> {getPiSummary(piResult)}
+                  </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                       <Label className="mb-4 block text-lg">Perfil Natural</Label>
@@ -632,6 +1093,14 @@ export default function CandidateDetailPage() {
                   <p className="text-gray-500">
                     O candidato ainda não completou nenhuma avaliação comportamental
                   </p>
+                </CardContent>
+              </Card>
+            )}
+
+            {!colorResult && !discResult && !piResult && (
+              <Card>
+                <CardContent className="py-10 text-center text-gray-600">
+                  Nenhum resultado de teste encontrado para este candidato.
                 </CardContent>
               </Card>
             )}
@@ -690,7 +1159,7 @@ export default function CandidateDetailPage() {
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
-                      <p className="text-gray-700 whitespace-pre-line">{note.content}</p>
+                      <p className="text-gray-700 whitespace-pre-line">{note.note}</p>
                     </CardContent>
                   </Card>
                 ))}

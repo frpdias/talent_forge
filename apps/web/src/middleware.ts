@@ -59,17 +59,10 @@ export async function middleware(request: NextRequest) {
 
   // If authenticated, handle route protection
   if (user) {
-    // Get user profile to check user type
-    const { data: profile } = await supabase
-      .from('user_profiles')
-      .select('user_type')
-      .eq('id', user.id)
-      .single();
-
-    // Get user_type from profile or user metadata
-    const userType = profile?.user_type || user.user_metadata?.user_type || 'candidate';
+    // Get user_type from user metadata (canonical model)
+    const userType = user.user_metadata?.user_type || 'candidate';
     
-    console.log('[MIDDLEWARE] User:', user.email, '| Profile user_type:', profile?.user_type, '| Metadata user_type:', user.user_metadata?.user_type, '| Final userType:', userType);
+    console.log('[MIDDLEWARE] User:', user.email, '| Metadata user_type:', user.user_metadata?.user_type, '| Final userType:', userType);
 
     // Redirect authenticated users away from auth pages
     if (pathname === '/login' || pathname === '/register') {

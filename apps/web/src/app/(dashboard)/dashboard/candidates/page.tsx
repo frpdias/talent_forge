@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import Link from 'next/link';
 import { 
   Users, 
@@ -10,25 +10,35 @@ import {
   MapPin,
   Calendar,
   Award,
-  Eye
+  Eye,
+  Link2,
+  Banknote,
+  IdCard,
+  GraduationCap
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { DashboardHeader } from '@/components/DashboardHeader';
-import { createBrowserClient } from '@supabase/ssr';
+import { createClient } from '@/lib/supabase/client';
 
 interface Candidate {
   id: string;
+  profile_id?: string | null;
   full_name: string;
   email: string;
   phone?: string;
   location?: string;
   headline?: string;
-  experience_years?: number;
   assessment_completed: boolean;
   created_at: string;
+  linkedin_url?: string;
+  salary_expectation?: number;
+  availability_date?: string | null;
+  tags?: string[];
+  cpf?: string;
+  degree_level?: string;
 }
 
 export default function CandidatesPage() {
@@ -36,11 +46,7 @@ export default function CandidatesPage() {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterAssessment, setFilterAssessment] = useState<string>('all');
-
-  const supabase = createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  );
+  const supabase = useMemo(() => createClient(), []);
 
   useEffect(() => {
     loadCandidates();
@@ -53,67 +59,129 @@ export default function CandidatesPage() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      // Get user's organization
-      const { data: profile } = await supabase
-        .from('user_profiles')
-        .select('organization_id')
-        .eq('id', user.id)
-        .single();
+      let orgId: string | null = null;
+      const { data: orgMembership } = await supabase
+        .from('org_members')
+        .select('org_id')
+        .eq('user_id', user.id)
+        .limit(1)
+        .maybeSingle();
+      orgId = orgMembership?.org_id || null;
 
-      if (!profile?.organization_id) return;
+      if (!orgId) {
+        setCandidates([]);
+        return;
+      }
 
-      // Get candidates from applications
-      let query = supabase
-        .from('applications')
-        .select(`
-          candidate_id,
-          candidate_profiles!inner(
-            id,
-            full_name,
-            email,
-            phone,
-            location,
-            headline,
-            experience_years,
-            created_at
-          ),
-          jobs!inner(organization_id)
-        `)
-        .eq('jobs.organization_id', profile.organization_id);
-
-      const { data: applications, error } = await query;
+      const { data: candidateRows, error } = await supabase
+        .from('candidates')
+        .select('id, user_id, full_name, email, phone, location, current_title, created_at, created_by, linkedin_url, salary_expectation, availability_date, tags')
+        .eq('owner_org_id', orgId)
+        .order('created_at', { ascending: false });
 
       if (error) throw error;
 
-      // Get unique candidates
-      const uniqueCandidates = new Map();
-      
-      for (const app of applications || []) {
-        const candidate = (app as any).candidate_profiles;
-        if (!uniqueCandidates.has(candidate.id)) {
-          // Check if candidate has completed assessments
-          const { data: assessments } = await supabase
-            .from('color_assessments')
-            .select('id')
-            .eq('candidate_id', candidate.id)
-            .eq('status', 'completed')
-            .limit(1);
-
-          uniqueCandidates.set(candidate.id, {
-            id: candidate.id,
-            full_name: candidate.full_name,
-            email: candidate.email,
-            phone: candidate.phone,
-            location: candidate.location,
-            headline: candidate.headline,
-            experience_years: candidate.experience_years,
-            assessment_completed: (assessments?.length || 0) > 0,
-            created_at: candidate.created_at,
-          });
-        }
+      let resolvedCandidates = candidateRows || [];
+      if (resolvedCandidates.length === 0) {
+        const { data: fallbackRows } = await supabase
+          .from('candidates')
+          .select('id, user_id, full_name, email, phone, location, current_title, created_at, created_by, linkedin_url, salary_expectation, availability_date, tags')
+          .eq('created_by', user.id)
+          .order('created_at', { ascending: false });
+        resolvedCandidates = fallbackRows || [];
       }
 
-      let candidatesList = Array.from(uniqueCandidates.values());
+      const candidateIds = resolvedCandidates.map((candidate) => candidate.id);
+      const userIds = resolvedCandidates.map((candidate) => candidate.user_id).filter(Boolean);
+      const emails = resolvedCandidates.map((candidate) => candidate.email).filter(Boolean);
+      let completedAssessmentIds = new Set<string>();
+      if (candidateIds.length > 0) {
+        const { data: assessments } = await supabase
+          .from('assessments')
+          .select('candidate_id, status')
+          .in('candidate_id', candidateIds)
+          .in('status', ['completed', 'reviewed']);
+
+        (assessments || []).forEach((assessment: { candidate_id: string }) => {
+          completedAssessmentIds.add(assessment.candidate_id);
+        });
+      }
+
+      const profileMap = new Map<string, { id: string; user_id: string | null; email: string | null; cpf: string | null }>();
+      if (userIds.length > 0) {
+        const { data: profilesByUser } = await supabase
+          .from('candidate_profiles')
+          .select('id, user_id, email, cpf')
+          .in('user_id', userIds as string[]);
+        (profilesByUser || []).forEach((profile: any) => {
+          profileMap.set(profile.user_id, profile);
+          if (profile.email) profileMap.set(profile.email, profile);
+        });
+      }
+
+      if (profileMap.size === 0 && emails.length > 0) {
+        const { data: profilesByEmail } = await supabase
+          .from('candidate_profiles')
+          .select('id, user_id, email, cpf')
+          .in('email', emails as string[]);
+        (profilesByEmail || []).forEach((profile: any) => {
+          if (profile.user_id) profileMap.set(profile.user_id, profile);
+          if (profile.email) profileMap.set(profile.email, profile);
+        });
+      }
+
+      const profileIds = Array.from(new Set(
+        Array.from(profileMap.values()).map((profile) => profile.id)
+      ));
+      const educationMap = new Map<string, string>();
+
+      if (profileIds.length > 0) {
+        const { data: educations } = await supabase
+          .from('candidate_education')
+          .select('candidate_profile_id, degree_level, end_year, is_current')
+          .in('candidate_profile_id', profileIds);
+
+        (educations || []).forEach((edu: any) => {
+          const existing = educationMap.get(edu.candidate_profile_id);
+          if (!existing) {
+            educationMap.set(edu.candidate_profile_id, edu.degree_level);
+            return;
+          }
+
+          if (edu.is_current) {
+            educationMap.set(edu.candidate_profile_id, edu.degree_level);
+            return;
+          }
+
+          const currentValue = educationMap.get(edu.candidate_profile_id);
+          if (!currentValue) {
+            educationMap.set(edu.candidate_profile_id, edu.degree_level);
+          }
+        });
+      }
+
+      let candidatesList = resolvedCandidates.map((candidate) => {
+        const profile = profileMap.get(candidate.user_id) || profileMap.get(candidate.email);
+        const degreeLevel = profile?.id ? educationMap.get(profile.id) : undefined;
+
+        return {
+          id: candidate.id,
+          profile_id: profile?.id ?? null,
+          full_name: candidate.full_name,
+          email: candidate.email,
+          phone: candidate.phone || undefined,
+          location: candidate.location || undefined,
+          headline: candidate.current_title || undefined,
+          assessment_completed: completedAssessmentIds.has(candidate.id),
+          created_at: candidate.created_at,
+          linkedin_url: candidate.linkedin_url || undefined,
+          salary_expectation: candidate.salary_expectation ?? undefined,
+          availability_date: candidate.availability_date ?? null,
+          tags: candidate.tags || undefined,
+          cpf: profile?.cpf || undefined,
+          degree_level: degreeLevel,
+        };
+      });
 
       // Apply assessment filter
       if (filterAssessment === 'completed') {
@@ -133,7 +201,8 @@ export default function CandidatesPage() {
   const filteredCandidates = candidates.filter(candidate =>
     candidate.full_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     candidate.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    candidate.headline?.toLowerCase().includes(searchQuery.toLowerCase())
+    candidate.headline?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    candidate.tags?.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
   const formatDate = (date: string) => {
@@ -142,6 +211,33 @@ export default function CandidatesPage() {
       month: 'short',
       year: 'numeric',
     });
+  };
+
+  const formatCurrency = (value?: number) => {
+    if (value === undefined || value === null) return null;
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL',
+      maximumFractionDigits: 0,
+    }).format(value);
+  };
+
+  const formatCpf = (value?: string) => {
+    if (!value) return null;
+    const digits = value.replace(/\D/g, '').slice(0, 11);
+    if (digits.length !== 11) return value;
+    return digits.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+  };
+
+  const degreeLabels: Record<string, string> = {
+    ensino_fundamental: 'Ensino fundamental',
+    ensino_medio: 'Ensino médio',
+    tecnico: 'Técnico',
+    graduacao: 'Graduação',
+    pos_graduacao: 'Pós-graduação',
+    mestrado: 'Mestrado',
+    doutorado: 'Doutorado',
+    mba: 'MBA',
   };
 
   return (
@@ -251,6 +347,25 @@ export default function CandidatesPage() {
                             <span>{candidate.location}</span>
                           </div>
                         )}
+                        {candidate.cpf && (
+                          <div className="flex items-center gap-2">
+                            <IdCard className="h-4 w-4" />
+                            <span>{formatCpf(candidate.cpf)}</span>
+                          </div>
+                        )}
+                        {candidate.linkedin_url && (
+                          <div className="flex items-center gap-2">
+                            <Link2 className="h-4 w-4" />
+                            <a
+                              href={candidate.linkedin_url}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="text-[#141042] hover:underline truncate"
+                            >
+                              LinkedIn
+                            </a>
+                          </div>
+                        )}
                         <div className="flex items-center gap-2">
                           <Calendar className="h-4 w-4" />
                           <span>Desde {formatDate(candidate.created_at)}</span>
@@ -258,9 +373,33 @@ export default function CandidatesPage() {
                       </div>
 
                       <div className="mt-4 pt-4 border-t border-gray-100 flex items-center justify-between">
-                        <div className="text-sm text-gray-500">
-                          {candidate.experience_years && (
-                            <span>{candidate.experience_years} anos de experiência</span>
+                        <div className="flex flex-wrap items-center gap-3 text-sm text-gray-500">
+                          {candidate.degree_level && (
+                            <span className="inline-flex items-center gap-2">
+                              <GraduationCap className="h-4 w-4" />
+                              {degreeLabels[candidate.degree_level] || candidate.degree_level}
+                            </span>
+                          )}
+                          {candidate.salary_expectation !== undefined && (
+                            <span className="inline-flex items-center gap-2">
+                              <Banknote className="h-4 w-4" />
+                              {formatCurrency(candidate.salary_expectation)}
+                            </span>
+                          )}
+                          {candidate.availability_date && (
+                            <span className="inline-flex items-center gap-2">
+                              <Calendar className="h-4 w-4" />
+                              Disponível em {formatDate(candidate.availability_date)}
+                            </span>
+                          )}
+                          {candidate.tags && candidate.tags.length > 0 && (
+                            <div className="flex flex-wrap gap-2">
+                              {candidate.tags.slice(0, 3).map((tag) => (
+                                <Badge key={tag} variant="default" className="text-xs">
+                                  {tag}
+                                </Badge>
+                              ))}
+                            </div>
                           )}
                         </div>
                         <div className="flex gap-2">

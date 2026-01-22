@@ -13,6 +13,7 @@ import {
   Search
 } from 'lucide-react';
 import { createBrowserClient } from '@supabase/ssr';
+import { applicationsApi } from '@/lib/api';
 
 interface Application {
   id: string;
@@ -31,20 +32,34 @@ interface Column {
   applications: Application[];
 }
 
-const PIPELINE_STAGES = [
-  { id: 'new', title: 'Novas', color: 'bg-blue-50 border-blue-200' },
-  { id: 'screening', title: 'Triagem', color: 'bg-yellow-50 border-yellow-200' },
-  { id: 'interview', title: 'Entrevista', color: 'bg-purple-50 border-purple-200' },
-  { id: 'offer', title: 'Proposta', color: 'bg-green-50 border-green-200' },
+const STATUS_COLUMNS = [
+  { id: 'applied', title: 'Novas', color: 'bg-blue-50 border-blue-200' },
+  { id: 'in_process', title: 'Em Processo', color: 'bg-yellow-50 border-yellow-200' },
   { id: 'hired', title: 'Contratado', color: 'bg-emerald-50 border-emerald-200' },
+  { id: 'rejected', title: 'Rejeitado', color: 'bg-red-50 border-red-200' },
+];
+
+const STAGE_COLORS = [
+  'bg-blue-50 border-blue-200',
+  'bg-yellow-50 border-yellow-200',
+  'bg-purple-50 border-purple-200',
+  'bg-green-50 border-green-200',
+  'bg-emerald-50 border-emerald-200',
+  'bg-pink-50 border-pink-200',
+  'bg-indigo-50 border-indigo-200',
 ];
 
 export default function PipelinePage() {
   const [columns, setColumns] = useState<Column[]>(
-    PIPELINE_STAGES.map(stage => ({ ...stage, applications: [] }))
+    STATUS_COLUMNS.map(stage => ({ ...stage, applications: [] }))
   );
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const [useStageColumns, setUseStageColumns] = useState(false);
+  const [applicationsCache, setApplicationsCache] = useState<any[]>([]);
+  const [stageDefinitions, setStageDefinitions] = useState<any[]>([]);
+  const [sessionToken, setSessionToken] = useState<string | null>(null);
+  const [orgId, setOrgId] = useState<string | null>(null);
 
   const supabase = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -55,57 +70,120 @@ export default function PipelinePage() {
     loadApplications();
   }, []);
 
+  useEffect(() => {
+    buildColumns();
+  }, [applicationsCache, stageDefinitions, searchQuery, useStageColumns]);
+
   async function loadApplications() {
     try {
       setLoading(true);
 
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData?.session?.access_token || null;
 
       // Get user's organization
-      const { data: profile } = await supabase
-        .from('user_profiles')
-        .select('organization_id')
-        .eq('id', user.id)
-        .single();
+      const { data: orgMembership } = await supabase
+        .from('org_members')
+        .select('org_id')
+        .eq('user_id', user?.id)
+        .limit(1)
+        .maybeSingle();
 
-      if (!profile?.organization_id) return;
+      const resolvedOrgId = orgMembership?.org_id || null;
+      console.log('🔍 [Pipeline] Debug:', { userId: user?.id, orgId: resolvedOrgId, hasToken: !!token });
+      
+      if (!token || !resolvedOrgId) {
+        console.error('❌ [Pipeline] Sem token ou orgId');
+        return;
+      }
 
-      // Load applications for the organization
-      const { data: applications, error } = await supabase
-        .from('applications')
-        .select(`
-          *,
-          jobs!inner(title, organization_id),
-          candidate_profiles!inner(full_name, email)
-        `)
-        .eq('jobs.organization_id', profile.organization_id)
-        .order('created_at', { ascending: false });
+      setSessionToken(token);
+      setOrgId(resolvedOrgId);
 
-      if (error) throw error;
+      const applications = await applicationsApi.list(token, resolvedOrgId);
+      console.log('✅ [Pipeline] Aplicações retornadas da API:', applications);
 
-      // Group applications by stage
-      const newColumns = PIPELINE_STAGES.map(stage => ({
-        ...stage,
-        applications: (applications || [])
-          .filter((app: any) => app.status === stage.id)
-          .map((app: any) => ({
-            id: app.id,
-            candidate_name: app.candidate_profiles.full_name,
-            candidate_email: app.candidate_profiles.email,
-            job_title: app.jobs.title,
-            status: app.status,
-            rating: app.rating,
-            applied_at: app.created_at,
-          })),
+      const normalizedApplications = (applications as any || []).map((app: any) => ({
+        id: app.id,
+        candidate_name: app.candidate?.fullName || 'Candidato',
+        candidate_email: app.candidate?.email || '-',
+        job_title: app.job?.title || '-',
+        status: app.status,
+        rating: app.score || app.rating,
+        applied_at: app.createdAt,
+        current_stage_id: app.currentStageId || null,
+        current_stage: app.currentStage || null,
       }));
 
-      setColumns(newColumns);
+      console.log('📊 [Pipeline] Aplicações normalizadas:', normalizedApplications.length, normalizedApplications);
+
+      const stages = normalizedApplications
+        .map((app: any) => app.current_stage)
+        .filter(Boolean)
+        .reduce((acc: any[], stage: any) => {
+          if (!acc.find((item) => item.id === stage.id)) acc.push(stage);
+          return acc;
+        }, [])
+        .sort((a: any, b: any) => a.position - b.position);
+
+      setApplicationsCache(normalizedApplications);
+      setStageDefinitions(stages);
+      setUseStageColumns(stages.length > 0);
+      setUseStageColumns(Boolean(stages && stages.length > 0));
     } catch (error) {
       console.error('Error loading applications:', error);
     } finally {
       setLoading(false);
     }
+  }
+
+  function buildColumns() {
+    const filteredApplications = searchQuery.trim()
+      ? applicationsCache.filter((app: any) =>
+          `${app.candidate_name} ${app.candidate_email} ${app.job_title}`
+            .toLowerCase()
+            .includes(searchQuery.toLowerCase())
+        )
+      : applicationsCache;
+
+    if (useStageColumns && stageDefinitions.length > 0) {
+      const sortedStages = [...stageDefinitions].sort((a: any, b: any) => a.position - b.position);
+      const newColumns = sortedStages.map((stage: any, index: number) => ({
+        id: stage.id,
+        title: stage.name,
+        color: STAGE_COLORS[index % STAGE_COLORS.length],
+        applications: filteredApplications
+          .filter((app: any) => app.current_stage_id === stage.id)
+          .map((app: any) => ({
+            id: app.id,
+            candidate_name: app.candidate_name,
+            candidate_email: app.candidate_email,
+            job_title: app.job_title,
+            status: app.status,
+            rating: app.rating,
+            applied_at: app.applied_at,
+          })),
+      }));
+      setColumns(newColumns);
+      return;
+    }
+
+    const fallbackColumns = STATUS_COLUMNS.map(stage => ({
+      ...stage,
+      applications: filteredApplications
+        .filter((app: any) => app.status === stage.id)
+        .map((app: any) => ({
+          id: app.id,
+          candidate_name: app.candidate_name,
+          candidate_email: app.candidate_email,
+          job_title: app.job_title,
+          status: app.status,
+          rating: app.rating,
+          applied_at: app.applied_at,
+        })),
+    }));
+    setColumns(fallbackColumns);
   }
 
   const handleDragEnd = async (result: any) => {
@@ -158,10 +236,23 @@ export default function PipelinePage() {
       setColumns(newColumns);
 
       // Update status in database
-      await supabase
-        .from('applications')
-        .update({ status: destination.droppableId })
-        .eq('id', movedApp.id);
+      if (!sessionToken || !orgId) return;
+
+      if (useStageColumns) {
+        await applicationsApi.updateStage(
+          movedApp.id,
+          { toStageId: destination.droppableId },
+          sessionToken,
+          orgId
+        );
+      } else {
+        await applicationsApi.updateStage(
+          movedApp.id,
+          { toStageId: destination.droppableId, status: destination.droppableId },
+          sessionToken,
+          orgId
+        );
+      }
     }
   };
 

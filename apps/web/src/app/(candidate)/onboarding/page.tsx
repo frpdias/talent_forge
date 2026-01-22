@@ -142,44 +142,45 @@ export default function CandidateOnboarding() {
     setUserId(user.id);
     setPersonalData(prev => ({ ...prev, email: user.email || '' }));
 
-    // Check if candidate profile already exists
-    const { data: profile } = await supabase
+    const profileEmail = (user.email || '').trim().toLowerCase();
+
+    // Check if candidate profile already exists (user_id or email)
+    const { data: profileList, error: profileLookupError } = await supabase
       .from('candidate_profiles')
       .select('*')
-      .eq('user_id', user.id)
-      .single();
+      .or(profileEmail ? `user_id.eq.${user.id},email.eq.${profileEmail}` : `user_id.eq.${user.id}`)
+      .order('updated_at', { ascending: false })
+      .order('created_at', { ascending: false })
+      .limit(1);
+
+    if (profileLookupError) {
+      console.error('Erro ao buscar profile:', profileLookupError);
+    }
+
+    const profile = (profileList && profileList.length > 0) ? profileList[0] : null;
 
     if (profile) {
       setProfileId(profile.id);
-      
-      if (profile.onboarding_completed) {
-        router.push('/candidate');
-        return;
-      }
 
       // Load saved data
       setCurrentStep(profile.onboarding_step || 1);
-      if (profile.full_name) {
-        setPersonalData({
-          fullName: profile.full_name || '',
-          cpf: profile.cpf || '',
-          email: profile.email || user.email || '',
-          phone: profile.phone || '',
-          birthDate: profile.birth_date || '',
-          city: profile.city || '',
-          state: profile.state || '',
-        });
-      }
+      setPersonalData({
+        fullName: profile.full_name || '',
+        cpf: profile.cpf || '',
+        email: profile.email || user.email || '',
+        phone: profile.phone || '',
+        birthDate: profile.birth_date || '',
+        city: profile.city || '',
+        state: profile.state || '',
+      });
       
-      if (profile.current_title) {
-        setProfessionalData({
-          currentTitle: profile.current_title || '',
-          areaOfExpertise: profile.area_of_expertise || '',
-          seniorityLevel: profile.seniority_level || '',
-          salaryExpectation: profile.salary_expectation ? profile.salary_expectation.toString() : '',
-          employmentTypes: Array.isArray(profile.employment_type) ? profile.employment_type : [],
-        });
-      }
+      setProfessionalData({
+        currentTitle: profile.current_title || '',
+        areaOfExpertise: profile.area_of_expertise || '',
+        seniorityLevel: profile.seniority_level || '',
+        salaryExpectation: profile.salary_expectation ? profile.salary_expectation.toString() : '',
+        employmentTypes: Array.isArray(profile.employment_type) ? profile.employment_type : [],
+      });
 
       // Load education
       const { data: eduData } = await supabase
@@ -353,25 +354,46 @@ export default function CandidateOnboarding() {
 
     setLoading(true);
     const supabase = createClient();
+    const resolvedEmail = (personalData.email || '').trim().toLowerCase();
 
     try {
       let currentProfileId = profileId;
 
       // Create or update profile
       if (!profileId) {
-        const { data: newProfile, error: profileError } = await supabase
+        const { data: existingProfiles, error: existingProfilesError } = await supabase
           .from('candidate_profiles')
-          .insert({
-            user_id: userId,
-            onboarding_step: currentStep,
-            onboarding_completed: false,
-          })
-          .select()
-          .single();
+          .select('id')
+          .or(resolvedEmail ? `user_id.eq.${userId},email.eq.${resolvedEmail}` : `user_id.eq.${userId}`)
+          .order('updated_at', { ascending: false })
+          .order('created_at', { ascending: false })
+          .limit(1);
 
-        if (profileError) throw profileError;
-        currentProfileId = newProfile.id;
-        setProfileId(newProfile.id);
+        if (existingProfilesError) {
+          console.error('Erro ao localizar profile existente:', existingProfilesError);
+        }
+
+        const existingProfile = existingProfiles && existingProfiles.length > 0 ? existingProfiles[0] : null;
+
+        if (existingProfile) {
+          currentProfileId = existingProfile.id;
+          setProfileId(existingProfile.id);
+        } else {
+          const { data: newProfile, error: profileError } = await supabase
+            .from('candidate_profiles')
+            .insert({
+              user_id: userId,
+              onboarding_step: currentStep,
+              onboarding_completed: false,
+              email: resolvedEmail || null,
+            })
+            .select()
+            .single();
+
+          if (profileError) throw profileError;
+          currentProfileId = newProfile.id;
+          setProfileId(newProfile.id);
+        }
       }
 
       // Save based on current step
@@ -415,10 +437,11 @@ export default function CandidateOnboarding() {
         );
 
         // Delete existing education
-        await supabase
+        const { error: deleteEduError } = await supabase
           .from('candidate_education')
           .delete()
           .eq('candidate_profile_id', currentProfileId);
+        if (deleteEduError) throw deleteEduError;
 
         // Insert new education
         if (validEducations.length > 0) {
@@ -449,10 +472,11 @@ export default function CandidateOnboarding() {
         );
 
         // Delete existing experience
-        await supabase
+        const { error: deleteExpError } = await supabase
           .from('candidate_experience')
           .delete()
           .eq('candidate_profile_id', currentProfileId);
+        if (deleteExpError) throw deleteExpError;
 
         // Insert new experience
         if (validExperiences.length > 0) {
@@ -480,10 +504,16 @@ export default function CandidateOnboarding() {
       setLoading(false);
       return true;
     } catch (err: any) {
-      console.error('Save error:', err);
+      console.error('Save error:', {
+        message: err?.message,
+        details: err?.details,
+        hint: err?.hint,
+        code: err?.code,
+        raw: err,
+      });
       // Don't show error to user if table doesn't exist (migration not applied yet)
-      if (!err.message?.includes('candidate_profiles')) {
-        setError(err.message || 'Erro ao salvar dados');
+      if (!err?.message?.includes('candidate_profiles')) {
+        setError(err?.message || err?.details || 'Erro ao salvar dados');
       }
       setLoading(false);
       return false;
@@ -495,9 +525,13 @@ export default function CandidateOnboarding() {
     
     // Try to save, but continue even if it fails (for when migration is not yet applied)
     try {
-      await saveStep();
+      const saved = await saveStep();
+      if (!saved) {
+        return;
+      }
     } catch (err) {
       console.warn('Save failed, but continuing to next step:', err);
+      return;
     }
     
     if (currentStep < 5) {

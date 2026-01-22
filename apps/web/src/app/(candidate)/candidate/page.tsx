@@ -101,6 +101,53 @@ export default function CandidateDashboard() {
     branco: 'Branco',
   };
 
+  const calculateDiscFromResponses = (responses: { selected_option: string }[]): DiscResult => {
+    const scores = { D: 0, I: 0, S: 0, C: 0 } as Record<string, number>;
+
+    responses.forEach((response) => {
+      const selected = response.selected_option as keyof typeof scores;
+      if (scores[selected] !== undefined) {
+        scores[selected] += 1;
+      }
+    });
+
+    const total = responses.length || 1;
+    const normalized = {
+      D: Math.round((scores.D / total) * 100),
+      I: Math.round((scores.I / total) * 100),
+      S: Math.round((scores.S / total) * 100),
+      C: Math.round((scores.C / total) * 100),
+    };
+
+    let primary: keyof typeof normalized = 'D';
+    let primaryScore = normalized.D;
+    (['I', 'S', 'C'] as Array<keyof typeof normalized>).forEach((profile) => {
+      if (normalized[profile] > primaryScore) {
+        primary = profile;
+        primaryScore = normalized[profile];
+      }
+    });
+
+    let secondary: keyof typeof normalized = 'D';
+    let secondaryScore = normalized.D;
+    (['I', 'S', 'C'] as Array<keyof typeof normalized>).forEach((profile) => {
+      if (profile !== primary && normalized[profile] > secondaryScore) {
+        secondary = profile;
+        secondaryScore = normalized[profile];
+      }
+    });
+
+    return {
+      primary_profile: primary,
+      secondary_profile: secondary,
+      dominance_score: normalized.D,
+      influence_score: normalized.I,
+      steadiness_score: normalized.S,
+      conscientiousness_score: normalized.C,
+      description: null,
+    };
+  };
+
   const getDiscColors = (profile?: string | null) => {
     switch (profile) {
       case 'D':
@@ -156,35 +203,43 @@ export default function CandidateDashboard() {
 
         setDiscLoading(true);
         setDiscError(null);
-        // Busca o DISC mais recente do usuário logado
-        const { data: latestAssessment, error: latestError } = await supabase
-          .from('assessments')
-          .select('id')
-          .eq('candidate_user_id', user.id)
-          .order('created_at', { ascending: false })
-          .limit(1)
-          .maybeSingle();
 
-        if (latestError) {
-          console.error('Erro ao buscar assessment DISC:', latestError.message);
-          setDiscError(latestError.message);
-        }
-
-        if (latestAssessment?.id) {
-          const { data: disc, error: discFetchError } = await supabase
-            .from('disc_assessments')
-            .select('*')
-            .eq('assessment_id', latestAssessment.id)
+        try {
+          const { data: latestAssessment, error: latestError } = await supabase
+            .from('assessments')
+            .select('id, traits, assessment_type, status')
+            .eq('candidate_user_id', user.id)
+            .eq('assessment_type', 'disc')
+            .eq('status', 'completed')
+            .order('created_at', { ascending: false })
+            .limit(1)
             .maybeSingle();
 
-          if (disc) {
-            setDiscResult(disc as unknown as DiscResult);
-          } else if (discFetchError) {
-            console.error('Erro ao buscar disc_assessments:', discFetchError.message);
-            setDiscError(discFetchError.message);
+          if (latestError) {
+            console.error('Erro ao buscar assessment DISC:', latestError.message);
+            setDiscError(latestError.message);
           }
+
+          const discTraits = (latestAssessment as any)?.traits?.disc;
+          if (discTraits) {
+            setDiscResult({
+              primary_profile: discTraits.primary ?? discTraits.primary_profile ?? '',
+              secondary_profile: discTraits.secondary ?? discTraits.secondary_profile ?? null,
+              dominance_score: Number(discTraits.D ?? discTraits.dominance_score ?? 0),
+              influence_score: Number(discTraits.I ?? discTraits.influence_score ?? 0),
+              steadiness_score: Number(discTraits.S ?? discTraits.steadiness_score ?? 0),
+              conscientiousness_score: Number(discTraits.C ?? discTraits.conscientiousness_score ?? 0),
+              description: discTraits.description ?? null,
+            });
+          } else {
+            setDiscResult(null);
+          }
+        } catch (error: any) {
+          console.error('Erro ao buscar assessment DISC:', error?.message || error);
+          setDiscError(error?.message || 'Erro ao buscar assessment DISC');
+        } finally {
+          setDiscLoading(false);
         }
-        setDiscLoading(false);
       }
     };
     loadUser();
@@ -304,7 +359,7 @@ export default function CandidateDashboard() {
   return (
     <div className="space-y-4 sm:space-y-6 lg:space-y-8 pb-16 lg:pb-0">
       {/* DISC Test Banner */}
-      <div className="bg-gradient-to-r from-purple-600 to-blue-600 rounded-xl sm:rounded-2xl p-4 sm:p-6 lg:p-8 relative overflow-hidden cursor-pointer hover:shadow-xl transition-shadow" onClick={() => router.push('/disc')}>
+      <div className="bg-linear-to-r from-purple-600 to-blue-600 rounded-xl sm:rounded-2xl p-4 sm:p-6 lg:p-8 relative overflow-hidden cursor-pointer hover:shadow-xl transition-shadow" onClick={() => router.push('/disc')}>
         <div className="absolute right-0 top-0 w-32 sm:w-64 h-32 sm:h-64 bg-white/10 rounded-full blur-3xl" />
         <div className="relative flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           <div className="flex-1">
@@ -318,7 +373,7 @@ export default function CandidateDashboard() {
           </div>
           <div className="flex flex-wrap gap-3 items-center justify-end">
             <button
-              className="flex-1 basis-0 min-w-[140px] text-center bg-white text-purple-600 px-6 py-2.5 rounded-lg font-medium hover:bg-white/90 transition-colors text-sm sm:text-base"
+              className="flex-1 basis-0 min-w-35 text-center bg-white text-purple-600 px-6 py-2.5 rounded-lg font-medium hover:bg-white/90 transition-colors text-sm sm:text-base"
               onClick={(e) => {
                 e.stopPropagation();
                 router.push('/disc');
@@ -327,7 +382,7 @@ export default function CandidateDashboard() {
               DISC
             </button>
             <button
-              className="flex-1 basis-0 min-w-[140px] text-center bg-white/90 text-[#141042] px-6 py-2.5 rounded-lg font-medium hover:bg-white transition-colors text-sm sm:text-base border border-white/40"
+              className="flex-1 basis-0 min-w-35 text-center bg-white/90 text-[#141042] px-6 py-2.5 rounded-lg font-medium hover:bg-white transition-colors text-sm sm:text-base border border-white/40"
               onClick={(e) => {
                 e.stopPropagation();
                 router.push('/color-test');
@@ -336,7 +391,7 @@ export default function CandidateDashboard() {
               Cores
             </button>
             <button
-              className="flex-1 basis-0 min-w-[140px] text-center bg-white/90 text-[#141042] px-6 py-2.5 rounded-lg font-medium hover:bg-white transition-colors text-sm sm:text-base border border-white/40"
+              className="flex-1 basis-0 min-w-35 text-center bg-white/90 text-[#141042] px-6 py-2.5 rounded-lg font-medium hover:bg-white transition-colors text-sm sm:text-base border border-white/40"
               onClick={(e) => {
                 e.stopPropagation();
                 router.push('/pi-test');
@@ -352,11 +407,11 @@ export default function CandidateDashboard() {
       <div className="bg-[#141042] rounded-xl sm:rounded-2xl p-4 sm:p-6 lg:p-8 relative overflow-hidden">
         <div className="absolute right-0 top-0 w-32 sm:w-64 h-32 sm:h-64 bg-white/5 rounded-full blur-3xl" />
         <div className="relative">
-          <h2 className="text-lg sm:text-xl lg:text-2xl font-semibold !text-white mb-1 sm:mb-2">
+          <h2 className="text-lg sm:text-xl lg:text-2xl font-semibold text-white! mb-1 sm:mb-2">
             Olá, {displayName}! 👋
           </h2>
-          <p className="!text-white/80 text-sm sm:text-base">
-            Você tem <span className="!text-white font-semibold">3 novas vagas</span> compatíveis com seu perfil.
+          <p className="text-white/80! text-sm sm:text-base">
+            Você tem <span className="text-white! font-semibold">3 novas vagas</span> compatíveis com seu perfil.
           </p>
         </div>
       </div>
@@ -374,7 +429,7 @@ export default function CandidateDashboard() {
               {(() => {
                 const colors = getDiscColors(discResult?.primary_profile);
                 return (
-                  <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${colors.bg} ${colors.text} flex items-center justify-center shadow-inner text-2xl font-extrabold`}>
+                  <div className={`w-12 h-12 rounded-xl bg-linear-to-br ${colors.bg} ${colors.text} flex items-center justify-center shadow-inner text-2xl font-extrabold`}>
                     {discResult ? discResult.primary_profile : <Sparkles className="w-6 h-6" />}
                   </div>
                 );
@@ -418,7 +473,7 @@ export default function CandidateDashboard() {
                     </div>
                     <div className="h-2 rounded-full bg-[#E5E5DC] overflow-hidden">
                       <div
-                        className={`h-full rounded-full bg-gradient-to-r ${item.color}`}
+                          className={`h-full rounded-full bg-linear-to-r ${item.color}`}
                         style={{ width: `${Math.min(item.score, 100)}%` }}
                       />
                     </div>
@@ -458,8 +513,8 @@ export default function CandidateDashboard() {
         <div className="relative flex flex-col gap-3">
           <div className="flex items-start justify-between gap-3">
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-300 to-blue-300 text-[#141042] flex items-center justify-center shadow-inner text-2xl font-extrabold">
-                🎯
+              <div className="w-12 h-12 rounded-xl bg-linear-to-br from-amber-300 to-blue-300 text-[#141042] flex items-center justify-center shadow-inner text-2xl font-extrabold">
+                👔
               </div>
               <div>
                 <p className="text-xs uppercase tracking-wide text-purple-700/80 font-semibold">Perfil Cores</p>
@@ -502,7 +557,7 @@ export default function CandidateDashboard() {
                       </div>
                       <div className="h-2 rounded-full bg-[#E5E5DC] overflow-hidden">
                         <div
-                          className={`h-full rounded-full bg-gradient-to-r ${item.colorClasses}`}
+                          className={`h-full rounded-full bg-linear-to-r ${item.colorClasses}`}
                           style={{ width: `${Math.min(val, 80)}%` }}
                         />
                       </div>
@@ -549,8 +604,8 @@ export default function CandidateDashboard() {
         <div className="relative flex flex-col gap-3">
           <div className="flex items-start justify-between gap-3">
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-400 to-violet-500 text-white flex items-center justify-center shadow-inner text-2xl font-extrabold">
-                🧠
+              <div className="w-12 h-12 rounded-xl bg-linear-to-br from-indigo-400 to-violet-500 text-white flex items-center justify-center shadow-inner text-2xl font-extrabold">
+                📈
               </div>
               <div>
                 <p className="text-xs uppercase tracking-wide text-purple-700/80 font-semibold">Perfil PI</p>
@@ -612,7 +667,7 @@ export default function CandidateDashboard() {
                       </div>
                       <div className="h-2 rounded-full bg-[#E5E5DC] overflow-hidden">
                         <div
-                          className={`h-full rounded-full bg-gradient-to-r ${item.color}`}
+                          className={`h-full rounded-full bg-linear-to-r ${item.color}`}
                           style={{ width: `${normalizedScore}%` }}
                         />
                       </div>
@@ -779,7 +834,11 @@ export default function CandidateDashboard() {
                 <span className="text-[#666666]">Upload do currículo</span>
               </div>
             </div>
-            <button className="w-full mt-3 sm:mt-4 py-2 sm:py-2.5 bg-[#F5F5F0] hover:bg-[#E5E5DC] text-[#141042] font-medium rounded-lg sm:rounded-xl transition-colors text-xs sm:text-sm">
+            <button
+              type="button"
+              onClick={() => router.push('/onboarding')}
+              className="w-full mt-3 sm:mt-4 py-2 sm:py-2.5 bg-[#F5F5F0] hover:bg-[#E5E5DC] text-[#141042] font-medium rounded-lg sm:rounded-xl transition-colors text-xs sm:text-sm"
+            >
               Completar agora
             </button>
           </div>

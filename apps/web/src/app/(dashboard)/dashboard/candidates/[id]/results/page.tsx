@@ -10,6 +10,7 @@ import { createClient } from '@/lib/supabase/client';
 
 interface Candidate {
   id: string;
+  user_id?: string | null;
   full_name: string;
   email: string;
   current_title: string;
@@ -24,6 +25,7 @@ interface Assessment {
   assessment_type: string;
   status: string;
   completed_at: string;
+  traits?: any;
 }
 
 interface DISCResult {
@@ -72,19 +74,52 @@ export default function CandidateResultsPage() {
         setCandidate(candidateData);
       }
 
+      let resolvedCandidateUserId: string | null = candidateData?.user_id ?? null;
+      if (!resolvedCandidateUserId && candidateData?.email) {
+        const { data: profileByEmail } = await supabase
+          .from('candidate_profiles')
+          .select('user_id')
+          .eq('email', candidateData.email)
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        resolvedCandidateUserId = profileByEmail?.user_id ?? null;
+      }
+
+      const candidateIds = new Set<string>([candidateId]);
+      if (candidateData?.email) {
+        const { data: candidatesByEmail } = await supabase
+          .from('candidates')
+          .select('id')
+          .ilike('email', candidateData.email)
+          .limit(10);
+        (candidatesByEmail || []).forEach((row) => candidateIds.add(row.id));
+      }
+
       // Get assessments
       const { data: assessmentData } = await supabase
         .from('assessments')
         .select('*')
-        .eq('candidate_id', candidateId);
+        .or(
+          (() => {
+            const ids = Array.from(candidateIds);
+            const idFilter = ids.length > 0 ? `candidate_id.in.(${ids.join(',')})` : '';
+            const userFilter = resolvedCandidateUserId ? `candidate_user_id.eq.${resolvedCandidateUserId}` : '';
+            return [idFilter, userFilter].filter(Boolean).join(',');
+          })()
+        );
 
       if (assessmentData) {
         setAssessments(assessmentData);
 
         // Get DISC results if available
-        const discAssessment = assessmentData.find(
-          a => a.assessment_type === 'disc' && a.status === 'completed'
-        );
+        const discAssessment = assessmentData
+          .filter(a => a.assessment_type === 'disc' && a.status === 'completed')
+          .sort((a, b) => {
+            const aTime = a.completed_at ? new Date(a.completed_at).getTime() : 0;
+            const bTime = b.completed_at ? new Date(b.completed_at).getTime() : 0;
+            return bTime - aTime;
+          })[0];
 
         if (discAssessment) {
           const { data: discData } = await supabase
@@ -95,6 +130,23 @@ export default function CandidateResultsPage() {
 
           if (discData) {
             setDiscResult(discData as DISCResult);
+          } else {
+            const discTraits = (discAssessment as any)?.traits?.disc;
+            if (discTraits) {
+              setDiscResult({
+                dominance_score: Number(discTraits.D ?? discTraits.dominance_score ?? 0),
+                influence_score: Number(discTraits.I ?? discTraits.influence_score ?? 0),
+                steadiness_score: Number(discTraits.S ?? discTraits.steadiness_score ?? 0),
+                conscientiousness_score: Number(discTraits.C ?? discTraits.conscientiousness_score ?? 0),
+                primary_profile: discTraits.primary ?? discTraits.primary_profile ?? '',
+                secondary_profile: discTraits.secondary ?? discTraits.secondary_profile ?? '',
+                description: discTraits.description ?? '',
+                strengths: discTraits.strengths ?? [],
+                challenges: discTraits.challenges ?? [],
+                work_style: discTraits.work_style ?? '',
+                communication_style: discTraits.communication_style ?? '',
+              });
+            }
           }
         }
       }
