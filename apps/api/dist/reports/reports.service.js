@@ -99,16 +99,17 @@ let ReportsService = class ReportsService {
             .from('assessments')
             .select(`
         id,
-        normalized_score,
+        status,
+        assessment_type,
         raw_score,
+        normalized_score,
         traits,
-        assessment_kind,
         created_at,
         candidates!inner (id, owner_org_id),
         jobs (id, title)
       `)
             .eq('candidates.owner_org_id', orgId)
-            .not('normalized_score', 'is', null);
+            .eq('status', 'completed');
         if (jobId) {
             queryBuilder = queryBuilder.eq('job_id', jobId);
         }
@@ -120,95 +121,27 @@ let ReportsService = class ReportsService {
             return {
                 totalAssessments: 0,
                 completedAssessments: 0,
-                averageScore: 0,
-                medianScore: 0,
-                scoreDistribution: [],
-                traitAverages: null,
+                byType: {},
+                recentAssessments: [],
             };
         }
-        const scores = assessments
-            .map((a) => a.normalized_score)
-            .sort((a, b) => a - b);
-        const avgScore = Math.round(scores.reduce((a, b) => a + b, 0) / scores.length);
-        const medianScore = scores[Math.floor(scores.length / 2)];
-        const scoreDistribution = [
-            { range: '0-20', count: 0, percentage: 0 },
-            { range: '21-40', count: 0, percentage: 0 },
-            { range: '41-60', count: 0, percentage: 0 },
-            { range: '61-80', count: 0, percentage: 0 },
-            { range: '81-100', count: 0, percentage: 0 },
-        ];
-        for (const score of scores) {
-            if (score <= 20)
-                scoreDistribution[0].count++;
-            else if (score <= 40)
-                scoreDistribution[1].count++;
-            else if (score <= 60)
-                scoreDistribution[2].count++;
-            else if (score <= 80)
-                scoreDistribution[3].count++;
-            else
-                scoreDistribution[4].count++;
+        const byType = {};
+        for (const a of assessments) {
+            const type = a.assessment_type || 'unknown';
+            byType[type] = (byType[type] || 0) + 1;
         }
-        for (const bucket of scoreDistribution) {
-            bucket.percentage = Math.round((bucket.count / scores.length) * 100);
-        }
-        const traitSums = {
-            bigFive: {
-                openness: 0,
-                conscientiousness: 0,
-                extraversion: 0,
-                agreeableness: 0,
-                neuroticism: 0,
-            },
-            disc: { dominance: 0, influence: 0, steadiness: 0, conscientiousness: 0 },
-        };
-        let traitCount = 0;
-        for (const assessment of assessments) {
-            if (assessment.traits) {
-                traitCount++;
-                const traits = assessment.traits;
-                if (traits.bigFive) {
-                    traitSums.bigFive.openness += traits.bigFive.openness || 0;
-                    traitSums.bigFive.conscientiousness +=
-                        traits.bigFive.conscientiousness || 0;
-                    traitSums.bigFive.extraversion += traits.bigFive.extraversion || 0;
-                    traitSums.bigFive.agreeableness += traits.bigFive.agreeableness || 0;
-                    traitSums.bigFive.neuroticism += traits.bigFive.neuroticism || 0;
-                }
-                if (traits.disc) {
-                    traitSums.disc.dominance += traits.disc.dominance || 0;
-                    traitSums.disc.influence += traits.disc.influence || 0;
-                    traitSums.disc.steadiness += traits.disc.steadiness || 0;
-                    traitSums.disc.conscientiousness +=
-                        traits.disc.conscientiousness || 0;
-                }
-            }
-        }
-        const traitAverages = traitCount > 0
-            ? {
-                bigFive: {
-                    openness: Math.round(traitSums.bigFive.openness / traitCount),
-                    conscientiousness: Math.round(traitSums.bigFive.conscientiousness / traitCount),
-                    extraversion: Math.round(traitSums.bigFive.extraversion / traitCount),
-                    agreeableness: Math.round(traitSums.bigFive.agreeableness / traitCount),
-                    neuroticism: Math.round(traitSums.bigFive.neuroticism / traitCount),
-                },
-                disc: {
-                    dominance: Math.round(traitSums.disc.dominance / traitCount),
-                    influence: Math.round(traitSums.disc.influence / traitCount),
-                    steadiness: Math.round(traitSums.disc.steadiness / traitCount),
-                    conscientiousness: Math.round(traitSums.disc.conscientiousness / traitCount),
-                },
-            }
-            : null;
+        const recentAssessments = assessments.slice(0, 10).map((a) => ({
+            id: a.id,
+            type: a.assessment_type,
+            status: a.status,
+            createdAt: a.created_at,
+            job: a.jobs,
+        }));
         return {
             totalAssessments: assessments.length,
-            completedAssessments: scores.length,
-            averageScore: avgScore,
-            medianScore,
-            scoreDistribution,
-            traitAverages,
+            completedAssessments: assessments.filter((a) => a.status === 'completed').length,
+            byType,
+            recentAssessments,
         };
     }
     async getDashboardStats(orgId) {

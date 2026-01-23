@@ -2,7 +2,14 @@
 -- Adds support for three user levels: admin, recruiter, candidate
 
 -- User type enum
-CREATE TYPE user_type AS ENUM ('admin', 'recruiter', 'candidate');
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_type WHERE typname = 'user_type'
+  ) THEN
+    CREATE TYPE user_type AS ENUM ('admin', 'recruiter', 'candidate');
+  END IF;
+END $$;
 
 -- User profiles table - extends auth.users with app-specific data
 CREATE TABLE IF NOT EXISTS user_profiles (
@@ -84,19 +91,34 @@ CREATE INDEX IF NOT EXISTS invitations_email_idx ON invitations(email);
 -- RLS Policies for user_profiles
 ALTER TABLE user_profiles ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Users can view own profile" ON user_profiles
-  FOR SELECT USING (auth.uid() = id);
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies WHERE schemaname = current_schema() AND policyname = 'Users can view own profile'
+  ) THEN
+    CREATE POLICY "Users can view own profile" ON user_profiles
+      FOR SELECT USING (auth.uid() = id);
+  END IF;
 
-CREATE POLICY "Users can update own profile" ON user_profiles
-  FOR UPDATE USING (auth.uid() = id);
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies WHERE schemaname = current_schema() AND policyname = 'Users can update own profile'
+  ) THEN
+    CREATE POLICY "Users can update own profile" ON user_profiles
+      FOR UPDATE USING (auth.uid() = id);
+  END IF;
 
-CREATE POLICY "Admins can view all profiles" ON user_profiles
-  FOR SELECT USING (
-    EXISTS (
-      SELECT 1 FROM user_profiles up 
-      WHERE up.id = auth.uid() AND up.user_type = 'admin'
-    )
-  );
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies WHERE schemaname = current_schema() AND policyname = 'Admins can view all profiles'
+  ) THEN
+    CREATE POLICY "Admins can view all profiles" ON user_profiles
+      FOR SELECT USING (
+        EXISTS (
+          SELECT 1 FROM user_profiles up 
+          WHERE up.id = auth.uid() AND up.user_type = 'admin'
+        )
+      );
+  END IF;
+END $$;
 
 -- RLS for candidate_saved_jobs
 ALTER TABLE candidate_saved_jobs ENABLE ROW LEVEL SECURITY;

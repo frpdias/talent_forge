@@ -20,6 +20,7 @@ const assessments_module_1 = require("./assessments/assessments.module");
 const reports_module_1 = require("./reports/reports.module");
 const color_assessments_module_1 = require("./color-assessments/color-assessments.module");
 const pi_assessments_module_1 = require("./pi-assessments/pi-assessments.module");
+const iam_module_1 = require("./iam/iam.module");
 const supabase_auth_guard_1 = require("./auth/guards/supabase-auth.guard");
 let AppModule = class AppModule {
 };
@@ -41,6 +42,7 @@ exports.AppModule = AppModule = __decorate([
             reports_module_1.ReportsModule,
             color_assessments_module_1.ColorAssessmentsModule,
             pi_assessments_module_1.PiAssessmentsModule,
+            iam_module_1.IamModule,
         ],
         providers: [
             {

@@ -46,7 +46,7 @@ let CandidatesService = class CandidatesService {
             .from('candidates')
             .select(`
         *,
-        assessments (id, normalized_score, assessment_kind)
+        assessments (id, status, assessment_type)
       `)
             .eq('owner_org_id', orgId)
             .order('created_at', { ascending: false });

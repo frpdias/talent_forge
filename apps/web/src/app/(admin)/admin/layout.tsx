@@ -1,8 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { 
   LayoutDashboard, 
   Users, 
@@ -14,22 +14,87 @@ import {
   Menu,
   X,
   Bell,
-  ChevronDown
+  ChevronDown,
+  Key,
+  FileText,
+  AlertTriangle,
+  Lock,
+  Loader2,
+  UserPlus,
+  Building
 } from 'lucide-react';
 import { UserAvatar } from '@/components/UserAvatar';
+import { createClient } from '@/lib/supabase/client';
+import Image from 'next/image';
 
 const navItems = [
   { href: '/admin', label: 'Dashboard', icon: LayoutDashboard },
+  { href: '/admin/tenants', label: 'Tenants', icon: Building2 },
   { href: '/admin/users', label: 'Usuários', icon: Users },
-  { href: '/admin/organizations', label: 'Organizações', icon: Building2 },
-  { href: '/admin/analytics', label: 'Analytics', icon: BarChart3 },
+  { href: '/admin/create-user', label: 'Criar Usuário', icon: UserPlus },
+  { href: '/admin/companies', label: 'Empresas', icon: Building },
   { href: '/admin/security', label: 'Segurança', icon: Shield },
+  { href: '/admin/roles', label: 'Roles & Permissões', icon: Lock },
+  { href: '/admin/audit-logs', label: 'Audit Logs', icon: FileText },
+  { href: '/admin/security-events', label: 'Eventos de Segurança', icon: AlertTriangle },
+  { href: '/admin/api-keys', label: 'API Keys', icon: Key },
   { href: '/admin/settings', label: 'Configurações', icon: Settings },
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState<{ email: string; full_name: string } | null>(null);
+
+  useEffect(() => {
+    async function checkAdminAccess() {
+      const supabase = createClient();
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        router.push('/login');
+        return;
+      }
+
+      // Verificar se é admin
+      const { data: profile } = await supabase
+        .from('user_profiles')
+        .select('user_type, full_name, email')
+        .eq('id', session.user.id)
+        .single();
+
+      if (!profile || profile.user_type !== 'admin') {
+        // Não é admin - redirecionar para dashboard ou login
+        console.log('⛔ Acesso negado: usuário não é admin');
+        router.push('/dashboard');
+        return;
+      }
+
+      setUser({ email: profile.email, full_name: profile.full_name });
+      setLoading(false);
+    }
+
+    checkAdminAccess();
+  }, [router]);
+
+  const handleLogout = async () => {
+    const supabase = createClient();
+    await supabase.auth.signOut();
+    router.push('/login');
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#FAFAF8] flex items-center justify-center">
+        <div className="flex flex-col items-center space-y-4">
+          <Loader2 className="w-8 h-8 text-[#141042] animate-spin" />
+          <p className="text-[#666666]">Verificando permissões...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#FAFAF8]">
@@ -82,8 +147,24 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           })}
         </nav>
 
-        <div className="absolute bottom-4 left-3 right-3 sm:left-4 sm:right-4">
-          <button className="flex items-center space-x-3 px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl text-[#666666] hover:bg-[#F5F5F0] hover:text-[#141042] transition-all w-full">
+        <div className="absolute bottom-0 left-0 right-0 p-3 sm:p-4 space-y-3">
+          {/* Logo no rodapé */}
+          <div className="flex items-center justify-center px-3 sm:px-4 py-3 border-t border-[#E5E5DC]">
+            <Image 
+              src="https://fjudsjzfnysaztcwlwgm.supabase.co/storage/v1/object/public/LOGOS/LOGO4.png"
+              alt="TalentForge"
+              width={140}
+              height={40}
+              className="opacity-60 hover:opacity-100 transition-opacity"
+              priority
+            />
+          </div>
+
+          {/* Botão de sair */}
+          <button 
+            onClick={handleLogout}
+            className="flex items-center space-x-3 px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl text-[#666666] hover:bg-[#F5F5F0] hover:text-[#141042] transition-all w-full"
+          >
             <LogOut className="w-5 h-5" />
             <span className="font-medium text-sm sm:text-base">Sair</span>
           </button>
@@ -111,11 +192,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               </button>
               <div className="flex items-center space-x-2 sm:space-x-3 pl-2 sm:pl-4 border-l border-[#E5E5DC]">
                 <div className="w-8 h-8 sm:w-9 sm:h-9 bg-[#141042] rounded-xl flex items-center justify-center text-white font-medium text-sm">
-                  A
+                  {user?.full_name?.charAt(0) || 'A'}
                 </div>
                 <div className="hidden sm:block">
-                  <p className="text-sm font-medium text-[#141042]">Admin</p>
-                  <p className="text-xs text-[#666666]">Administrador</p>
+                  <p className="text-sm font-medium text-[#141042]">{user?.full_name || 'Admin'}</p>
+                  <p className="text-xs text-[#666666]">{user?.email || 'Administrador'}</p>
                 </div>
                 <ChevronDown className="w-4 h-4 text-[#666666] hidden sm:block" />
               </div>

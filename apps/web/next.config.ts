@@ -5,6 +5,15 @@ const nextConfig: NextConfig = {
   eslint: {
     ignoreDuringBuilds: true,
   },
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'fjudsjzfnysaztcwlwgm.supabase.co',
+        pathname: '/storage/v1/object/public/**',
+      },
+    ],
+  },
   // outputFileTracingRoot: path.join(__dirname, "../../"),
 };
 

@@ -48,28 +48,14 @@ export declare class ReportsService {
     getAssessmentsReport(orgId: string, jobId?: string): Promise<{
         totalAssessments: number;
         completedAssessments: number;
-        averageScore: number;
-        medianScore: any;
-        scoreDistribution: {
-            range: string;
-            count: number;
-            percentage: number;
+        byType: Record<string, number>;
+        recentAssessments: {
+            id: any;
+            type: any;
+            status: any;
+            createdAt: any;
+            job: any;
         }[];
-        traitAverages: {
-            bigFive: {
-                openness: number;
-                conscientiousness: number;
-                extraversion: number;
-                agreeableness: number;
-                neuroticism: number;
-            };
-            disc: {
-                dominance: number;
-                influence: number;
-                steadiness: number;
-                conscientiousness: number;
-            };
-        } | null;
     }>;
     getDashboardStats(orgId: string): Promise<{
         stats: {

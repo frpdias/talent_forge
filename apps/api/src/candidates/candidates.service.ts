@@ -46,7 +46,7 @@ export class CandidatesService {
       .select(
         `
         *,
-        assessments (id, normalized_score, assessment_kind)
+        assessments (id, status, assessment_type)
       `,
       )
       .eq('owner_org_id', orgId)

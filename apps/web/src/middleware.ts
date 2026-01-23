@@ -68,8 +68,11 @@ export async function middleware(request: NextRequest) {
     if (pathname === '/login' || pathname === '/register') {
       const url = request.nextUrl.clone();
       // Redirect based on user type
-      if (userType === 'recruiter' || userType === 'admin') {
-        console.log('[MIDDLEWARE] Redirecionando recrutador/admin para /dashboard');
+      if (userType === 'admin') {
+        console.log('[MIDDLEWARE] Redirecionando admin para /admin');
+        url.pathname = '/admin';
+      } else if (userType === 'recruiter') {
+        console.log('[MIDDLEWARE] Redirecionando recrutador para /dashboard');
         url.pathname = '/dashboard';
       } else {
         console.log('[MIDDLEWARE] Redirecionando candidato para /candidate');
@@ -78,10 +81,20 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(url);
     }
 
-    // Protect recruiter/admin routes - only allow access for recruiter/admin users
-    if (pathname.startsWith('/dashboard') || pathname.startsWith('/admin')) {
+    // Protect admin routes - only allow access for admin users
+    if (pathname.startsWith('/admin')) {
+      if (userType !== 'admin') {
+        console.log('[MIDDLEWARE] Bloqueando acesso não-admin a área administrativa');
+        const url = request.nextUrl.clone();
+        url.pathname = userType === 'recruiter' ? '/dashboard' : '/candidate';
+        return NextResponse.redirect(url);
+      }
+    }
+
+    // Protect recruiter routes - allow recruiter and admin
+    if (pathname.startsWith('/dashboard')) {
       if (userType !== 'recruiter' && userType !== 'admin') {
-        console.log('[MIDDLEWARE] Bloqueando acesso de candidato a área administrativa');
+        console.log('[MIDDLEWARE] Bloqueando acesso de candidato a área do recrutador');
         const url = request.nextUrl.clone();
         url.pathname = '/candidate';
         return NextResponse.redirect(url);
@@ -110,7 +123,8 @@ export const config = {
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
      * - public files (images, etc)
+     * - api routes (handled separately)
      */
-    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    '/((?!_next/static|_next/image|favicon.ico|api/|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 };
