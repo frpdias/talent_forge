@@ -163,5 +163,5 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_candidate_profiles_user
 COMMENT ON INDEX idx_audit_logs_actor_date IS 'Otimiza queries de audit logs por usuário';
 COMMENT ON INDEX idx_security_events_severity_date IS 'Otimiza queries de eventos críticos';
 COMMENT ON INDEX idx_user_activity_user_action_date IS 'Otimiza tracking de atividades';
-COMMENT ON INDEX idx_organizations_slug IS 'URLs amigáveis para organizations';
+COMMENT ON INDEX idx_organizations_name IS 'Busca por nome de organização';
 COMMENT ON INDEX idx_applications_job_status IS 'Pipeline de candidaturas otimizado';
