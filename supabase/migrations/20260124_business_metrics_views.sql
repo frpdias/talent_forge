@@ -42,8 +42,8 @@ CREATE OR REPLACE VIEW v_avg_time_by_stage AS
 WITH stage_transitions AS (
   SELECT
     ae.application_id,
-    ae.old_stage_id,
-    ae.new_stage_id,
+    ae.from_stage_id,
+    ae.to_stage_id,
     ps.name as stage_name,
     ps.order_index,
     ae.created_at as entered_at,
@@ -52,8 +52,8 @@ WITH stage_transitions AS (
       ORDER BY ae.created_at
     ) as exited_at
   FROM application_events ae
-  JOIN pipeline_stages ps ON ps.id = ae.new_stage_id
-  WHERE ae.event_type = 'stage_change'
+  JOIN pipeline_stages ps ON ps.id = ae.to_stage_id
+  WHERE ae.from_stage_id IS NOT NULL AND ae.to_stage_id IS NOT NULL
 )
 SELECT
   stage_name,
