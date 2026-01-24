@@ -52,17 +52,26 @@ END $$;
 -- 3. Atualizar scope de roles
 UPDATE roles SET scope = 'organization' WHERE scope = 'tenant';
 
--- 4. Adicionar constraint em org_members
+-- 4. Normalizar TODOS os status existentes em org_members
+UPDATE org_members 
+SET status = 'active' 
+WHERE status IS NULL 
+   OR status NOT IN ('active', 'inactive', 'invited', 'suspended');
+
+-- 5. Adicionar constraint em org_members
+ALTER TABLE org_members 
+  DROP CONSTRAINT IF EXISTS org_members_status_check;
+  
 ALTER TABLE org_members 
   ADD CONSTRAINT org_members_status_check 
   CHECK (status IN ('active', 'inactive', 'invited', 'suspended'));
 
--- 5. Criar índice para performance
+-- 6. Criar índice para performance
 CREATE INDEX IF NOT EXISTS idx_org_members_status 
   ON org_members(org_id, status) 
   WHERE status = 'active';
 
--- 6. Atualizar comentários
+-- 7. Atualizar comentários
 COMMENT ON TABLE org_members IS 'Membros das organizações (multi-tenant)';
 COMMENT ON COLUMN org_members.status IS 'Status: active, inactive, invited, suspended';
 COMMENT ON COLUMN roles.scope IS 'Escopo: organization, system';
