@@ -45,7 +45,7 @@ WITH stage_transitions AS (
     ae.from_stage_id,
     ae.to_stage_id,
     ps.name as stage_name,
-    ps.order_index,
+    ps.position,
     ae.created_at as entered_at,
     LEAD(ae.created_at) OVER (
       PARTITION BY ae.application_id 
@@ -57,7 +57,7 @@ WITH stage_transitions AS (
 )
 SELECT
   stage_name,
-  order_index,
+  position,
   COUNT(*) as transitions_count,
   ROUND(
     AVG(EXTRACT(EPOCH FROM (exited_at - entered_at)) / 86400)
@@ -71,8 +71,8 @@ SELECT
     1
   ) as median_days_in_stage
 FROM stage_transitions
-GROUP BY stage_name, order_index
-ORDER BY order_index;
+GROUP BY stage_name, position
+ORDER BY position;
 
 COMMENT ON VIEW v_avg_time_by_stage IS 'Tempo médio que candidatos ficam em cada estágio';
 
