@@ -52,11 +52,18 @@ END $$;
 -- 3. Atualizar scope de roles
 UPDATE roles SET scope = 'organization' WHERE scope = 'tenant';
 
--- 4. Normalizar TODOS os status existentes em org_members
+-- 4. Normalizar TODOS os status e roles existentes em org_members
+-- Normalizar status
 UPDATE org_members 
 SET status = 'active' 
 WHERE status IS NULL 
    OR status NOT IN ('active', 'inactive', 'invited', 'suspended');
+
+-- Normalizar roles (valores válidos: admin, manager, member, viewer)
+UPDATE org_members 
+SET role = 'member' 
+WHERE role IS NULL 
+   OR role NOT IN ('admin', 'manager', 'member', 'viewer');
 
 -- 5. Adicionar constraint em org_members
 ALTER TABLE org_members 

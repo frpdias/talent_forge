@@ -15,7 +15,7 @@ SELECT
   j.status as job_status,
   j.created_at as job_created_at,
   COUNT(DISTINCT a.id) as total_applications,
-  COUNT(DISTINCT CASE WHEN a.status = 'active' THEN a.id END) as active_applications,
+  COUNT(DISTINCT CASE WHEN a.status = 'in_process' THEN a.id END) as in_process_applications,
   COUNT(DISTINCT CASE WHEN a.status = 'hired' THEN a.id END) as hired_count,
   COUNT(DISTINCT CASE WHEN a.status = 'rejected' THEN a.id END) as rejected_count,
   ROUND(
