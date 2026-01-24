@@ -121,12 +121,12 @@ SELECT
   c.email as candidate_email,
   cp.phone,
   COUNT(DISTINCT a.id) as total_applications,
-  COUNT(DISTINCT a.id) FILTER (WHERE a.status = 'active') as active_applications,
+  COUNT(DISTINCT a.id) FILTER (WHERE a.status = 'applied') as active_applications,
   COUNT(DISTINCT a.id) FILTER (WHERE a.status = 'hired') as hired_count,
   MAX(a.created_at) as last_application_date,
-  ARRAY_AGG(DISTINCT j.title) FILTER (WHERE a.status = 'active') as active_in_jobs
+  ARRAY_AGG(DISTINCT j.title) FILTER (WHERE a.status = 'applied') as active_in_jobs
 FROM candidates c
-LEFT JOIN candidate_profiles cp ON cp.candidate_id = c.id
+LEFT JOIN candidate_profiles cp ON cp.user_id = c.user_id
 LEFT JOIN applications a ON a.candidate_id = c.id
 LEFT JOIN jobs j ON j.id = a.job_id
 GROUP BY c.id, c.name, c.email, cp.phone
