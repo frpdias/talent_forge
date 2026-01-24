@@ -38,10 +38,9 @@ CREATE INDEX IF NOT EXISTS idx_security_events_severity_date
 CREATE INDEX IF NOT EXISTS idx_security_events_type_date 
   ON security_events(type, created_at DESC);
 
--- Query: Estatísticas por severidade (últimas 24h)
-CREATE INDEX IF NOT EXISTS idx_security_events_severity_24h 
-  ON security_events(severity, created_at DESC) 
-  WHERE created_at > NOW() - INTERVAL '24 hours';
+-- Query: Índice geral por data (removido WHERE com NOW() - não é IMMUTABLE)
+CREATE INDEX IF NOT EXISTS idx_security_events_date 
+  ON security_events(created_at DESC);
 
 -- =============================================
 -- USER ACTIVITY
@@ -55,10 +54,9 @@ CREATE INDEX IF NOT EXISTS idx_user_activity_user_action_date
 CREATE INDEX IF NOT EXISTS idx_user_activity_action_date 
   ON user_activity(action, created_at DESC);
 
--- Query: Atividades recentes (últimas 24h)
-CREATE INDEX IF NOT EXISTS idx_user_activity_recent 
-  ON user_activity(created_at DESC) 
-  WHERE created_at > NOW() - INTERVAL '24 hours';
+-- Query: Índice geral por data (removido WHERE com NOW() - não é IMMUTABLE)
+CREATE INDEX IF NOT EXISTS idx_user_activity_date 
+  ON user_activity(created_at DESC);
 
 -- =============================================
 -- SYSTEM SETTINGS
@@ -137,10 +135,9 @@ CREATE INDEX IF NOT EXISTS idx_jobs_slug
 -- BLOCKED IPS
 -- =============================================
 
--- Query: Verificar se IP está bloqueado
-CREATE INDEX IF NOT EXISTS idx_blocked_ips_check 
-  ON blocked_ips(ip_address, expires_at) 
-  WHERE expires_at IS NULL OR expires_at > NOW();
+-- Query: Buscar por IP address (único)
+CREATE UNIQUE INDEX IF NOT EXISTS idx_blocked_ips_ip 
+  ON blocked_ips(ip_address);
 
 -- =============================================
 -- CANDIDATE PROFILES
