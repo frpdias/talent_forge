@@ -114,9 +114,15 @@ CREATE INDEX IF NOT EXISTS idx_applications_stage
 CREATE INDEX IF NOT EXISTS idx_application_events_app_date 
   ON application_events(application_id, created_at DESC);
 
--- Query: Eventos por tipo
-CREATE INDEX IF NOT EXISTS idx_application_events_type 
-  ON application_events(event_type, created_at DESC);
+-- Query: Eventos por estágio de origem
+CREATE INDEX IF NOT EXISTS idx_application_events_from_stage 
+  ON application_events(from_stage_id, created_at DESC) 
+  WHERE from_stage_id IS NOT NULL;
+
+-- Query: Eventos por estágio de destino
+CREATE INDEX IF NOT EXISTS idx_application_events_to_stage 
+  ON application_events(to_stage_id, created_at DESC) 
+  WHERE to_stage_id IS NOT NULL;
 
 -- =============================================
 -- JOBS
