@@ -60,14 +60,14 @@ SELECT
   position,
   COUNT(*) as transitions_count,
   ROUND(
-    AVG(EXTRACT(EPOCH FROM (exited_at - entered_at)) / 86400)
+    AVG(EXTRACT(EPOCH FROM (exited_at - entered_at)) / 86400)::NUMERIC
     FILTER (WHERE exited_at IS NOT NULL),
     1
   ) as avg_days_in_stage,
   ROUND(
     PERCENTILE_CONT(0.5) WITHIN GROUP (
       ORDER BY EXTRACT(EPOCH FROM (exited_at - entered_at)) / 86400
-    ) FILTER (WHERE exited_at IS NOT NULL),
+    ) FILTER (WHERE exited_at IS NOT NULL)::NUMERIC,
     1
   ) as median_days_in_stage
 FROM stage_transitions
@@ -96,7 +96,7 @@ SELECT
     2
   ) as hire_rate,
   ROUND(
-    AVG(EXTRACT(EPOCH FROM (a.updated_at - a.created_at)) / 86400)
+    AVG(EXTRACT(EPOCH FROM (a.updated_at - a.created_at)) / 86400)::NUMERIC
     FILTER (WHERE a.status = 'hired'),
     1
   ) as avg_days_to_hire
@@ -152,7 +152,7 @@ SELECT
     2
   ) as completion_rate,
   ROUND(
-    AVG(EXTRACT(EPOCH FROM (a.completed_at - ai.created_at)) / 3600)
+    AVG(EXTRACT(EPOCH FROM (a.completed_at - ai.created_at)) / 3600)::NUMERIC
     FILTER (WHERE a.status = 'completed'),
     1
   ) as avg_hours_to_complete
