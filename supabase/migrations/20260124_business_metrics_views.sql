@@ -139,27 +139,22 @@ COMMENT ON VIEW v_top_candidates IS 'Candidatos mais ativos por número de candi
 -- ASSESSMENTS COMPLETION RATE
 -- =============================================
 
+-- Nota: View simplificada - assessments não tem invitation_id ou status
 CREATE OR REPLACE VIEW v_assessment_completion_rate AS
 SELECT
-  ai.org_id,
-  ai.job_id,
+  a.job_id,
+  j.org_id,
   j.title as job_title,
-  COUNT(DISTINCT ai.id) as invitations_sent,
-  COUNT(DISTINCT a.id) FILTER (WHERE a.status = 'completed') as completed_count,
+  COUNT(DISTINCT a.id) as total_assessments,
+  COUNT(DISTINCT a.id) FILTER (WHERE a.normalized_score IS NOT NULL) as completed_count,
   ROUND(
-    COUNT(DISTINCT a.id) FILTER (WHERE a.status = 'completed')::NUMERIC /
-    NULLIF(COUNT(DISTINCT ai.id), 0) * 100,
+    COUNT(DISTINCT a.id) FILTER (WHERE a.normalized_score IS NOT NULL)::NUMERIC /
+    NULLIF(COUNT(DISTINCT a.id), 0) * 100,
     2
-  ) as completion_rate,
-  ROUND(
-    (AVG(EXTRACT(EPOCH FROM (a.completed_at - ai.created_at)) / 3600)
-    FILTER (WHERE a.status = 'completed'))::NUMERIC,
-    1
-  ) as avg_hours_to_complete
-FROM assessment_invitations ai
-LEFT JOIN assessments a ON a.invitation_id = ai.id
-LEFT JOIN jobs j ON j.id = ai.job_id
-GROUP BY ai.org_id, ai.job_id, j.title;
+  ) as completion_rate
+FROM assessments a
+LEFT JOIN jobs j ON j.id = a.job_id
+GROUP BY a.job_id, j.org_id, j.title;
 
 COMMENT ON VIEW v_assessment_completion_rate IS 'Taxa de conclusão de assessments';
 
