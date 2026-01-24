@@ -68,25 +68,23 @@ CREATE INDEX IF NOT EXISTS idx_system_settings_category_key
 
 -- Query: Settings públicas
 CREATE INDEX IF NOT EXISTS idx_system_settings_public 
-  ON system_settings(is_public, key) 
+  ON system_settings(is_public) 
   WHERE is_public = true;
 
 -- =============================================
 -- ORGANIZATIONS
 -- =============================================
 
--- Query: Busca por slug (URLs amigáveis)
-CREATE UNIQUE INDEX IF NOT EXISTS idx_organizations_slug 
-  ON organizations(slug) 
-  WHERE slug IS NOT NULL;
+-- Query: Busca por nome
+CREATE INDEX IF NOT EXISTS idx_organizations_name 
+  ON organizations(name);
 
--- Query: Organizações ativas
-CREATE INDEX IF NOT EXISTS idx_organizations_status_active 
-  ON organizations(status, created_at DESC) 
-  WHERE status = 'active';
+-- Query: Organizações por tipo
+CREATE INDEX IF NOT EXISTS idx_organizations_type 
+  ON organizations(org_type);
 
--- Query: Busca por CNPJ
-CREATE UNIQUE INDEX IF NOT EXISTS idx_organizations_cnpj_unique 
+-- Query: Busca por CNPJ (será adicionado pela migration P0)
+CREATE INDEX IF NOT EXISTS idx_organizations_cnpj 
   ON organizations(cnpj) 
   WHERE cnpj IS NOT NULL;
 
@@ -133,9 +131,14 @@ CREATE INDEX IF NOT EXISTS idx_jobs_org_status
   ON jobs(org_id, status, created_at DESC) 
   WHERE status = 'open';
 
--- Query: Vagas por slug
-CREATE INDEX IF NOT EXISTS idx_jobs_slug 
-  ON jobs(slug);
+-- Query: Vagas por título
+CREATE INDEX IF NOT EXISTS idx_jobs_title 
+  ON jobs(title);
+
+-- Query: Vagas por tipo de emprego
+CREATE INDEX IF NOT EXISTS idx_jobs_employment_type 
+  ON jobs(employment_type) 
+  WHERE employment_type IS NOT NULL;
 
 -- =============================================
 -- BLOCKED IPS
