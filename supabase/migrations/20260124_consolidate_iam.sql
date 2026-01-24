@@ -10,9 +10,19 @@ BEGIN
     -- Garantir que org_members tem coluna status
     ALTER TABLE org_members ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'active';
     
-    -- Migrar dados
+    -- Remover constraint se existir (para permitir migração)
+    ALTER TABLE org_members DROP CONSTRAINT IF EXISTS org_members_status_check;
+    
+    -- Migrar dados com normalização de status
     INSERT INTO org_members (org_id, user_id, role, status)
-    SELECT tenant_id, user_id, role, status
+    SELECT 
+      tenant_id, 
+      user_id, 
+      role, 
+      CASE 
+        WHEN status IN ('active', 'inactive', 'invited', 'suspended') THEN status
+        ELSE 'active'
+      END as status
     FROM tenant_users
     ON CONFLICT (org_id, user_id) DO UPDATE 
     SET role = EXCLUDED.role, status = EXCLUDED.status;
