@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { Mail, Lock, Eye, EyeOff, Building2, UserCircle, Check } from 'lucide-react';
@@ -18,8 +18,12 @@ export default function RegisterPage() {
 function RegisterContent() {
   const searchParams = useSearchParams();
   const typeParam = searchParams.get('type') as 'recruiter' | 'candidate' | null;
-  
-  const [userType, setUserType] = useState<'recruiter' | 'candidate'>(typeParam || 'recruiter');
+  const inviteToken = searchParams.get('invite');
+  const apiBase = (process.env.NEXT_PUBLIC_API_URL || '').replace(/\/api\/v1\/?$/, '');
+
+  const [userType, setUserType] = useState<'recruiter' | 'candidate'>(
+    inviteToken ? 'candidate' : typeParam || 'recruiter',
+  );
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -28,6 +32,39 @@ function RegisterContent() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
+  const [inviteOrgName, setInviteOrgName] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!inviteToken) return;
+    setUserType('candidate');
+  }, [inviteToken]);
+
+  useEffect(() => {
+    if (!inviteToken || !apiBase) return;
+    let ignore = false;
+
+    async function loadInvite() {
+      try {
+        const res = await fetch(`${apiBase}/api/v1/invite-links/${inviteToken}`);
+        const data = await res.json();
+        if (!res.ok || !data?.valid) {
+          throw new Error(data?.reason || 'Convite invalido');
+        }
+        if (!ignore) {
+          setInviteOrgName(data.orgName || null);
+        }
+      } catch (err: any) {
+        if (!ignore) {
+          setError(err?.message || 'Convite invalido');
+        }
+      }
+    }
+
+    loadInvite();
+    return () => {
+      ignore = true;
+    };
+  }, [inviteToken, apiBase]);
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -52,17 +89,42 @@ function RegisterContent() {
     setLoading(true);
     setError('');
     try {
+      if (inviteToken) {
+        if (!apiBase) {
+          throw new Error('API URL nao configurada.');
+        }
+
+        const res = await fetch(
+          `${apiBase}/api/v1/invite-links/${inviteToken}/register`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              fullName: normalizedName,
+              email: normalizedEmail,
+              password,
+            }),
+          },
+        );
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data?.error || data?.message || 'Erro ao criar conta');
+        }
+        setSuccess(true);
+        return;
+      }
+
       const supabase = createClient();
       if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
         throw new Error('Configuração do Supabase não encontrada. Configure as variáveis de ambiente.');
       }
-      
+
       console.log('📝 Registrando usuário com:', {
         email: normalizedEmail,
         user_type: userType,
-        full_name: normalizedName
+        full_name: normalizedName,
       });
-      
+
       const { data, error: authError } = await supabase.auth.signUp({
         email: normalizedEmail,
         password,
@@ -74,18 +136,14 @@ function RegisterContent() {
           emailRedirectTo: `${window.location.origin}/auth/callback?type=${userType}`,
         },
       });
-      
+
       console.log('✅ SignUp result:', data);
       console.log('❌ SignUp error:', authError);
-      
+
       if (authError) {
         console.error('Supabase Auth Error:', authError);
         throw authError;
       }
-      // Perfil do usuário será criado via trigger no banco (handle_new_user)
-      // Não inserir manualmente para evitar conflitos com RLS/policies.
-      // Se necessário, faremos o enriquecimento do perfil após confirmação de email.
-      console.log('Signup success:', data);
       setSuccess(true);
     } catch (err: any) {
       console.error('Registration error:', err);
@@ -129,9 +187,18 @@ function RegisterContent() {
           <div className="w-16 h-16 sm:w-20 sm:h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4 sm:mb-6">
             <Check className="w-8 h-8 sm:w-10 sm:h-10 text-green-600" />
           </div>
-          <h2 className="text-2xl sm:text-3xl font-semibold text-[#141042] mb-3 sm:mb-4">Verifique seu email</h2>
+          <h2 className="text-2xl sm:text-3xl font-semibold text-[#141042] mb-3 sm:mb-4">
+            {inviteToken ? 'Conta criada' : 'Verifique seu email'}
+          </h2>
           <p className="text-sm sm:text-base text-[#666666] mb-6 sm:mb-8">
-            Enviamos um link de confirmação para <strong className="text-[#141042]">{email}</strong>
+            {inviteToken ? (
+              <>Sua conta foi criada com sucesso. Faça login para continuar.</>
+            ) : (
+              <>
+                Enviamos um link de confirmação para{' '}
+                <strong className="text-[#141042]">{email}</strong>
+              </>
+            )}
           </p>
           <Link 
             href="/login"
@@ -205,6 +272,12 @@ function RegisterContent() {
             </p>
           </div>
 
+          {inviteToken && (
+            <div className="mb-4 sm:mb-6 p-3 sm:p-4 bg-blue-50 border border-blue-200 rounded-xl text-blue-700 text-xs sm:text-sm">
+              Convite para {inviteOrgName || 'sua organizacao'} · email ja validado.
+            </div>
+          )}
+
           {/* Full name */}
           <div className="mb-4 sm:mb-5">
             <label className="block text-xs sm:text-sm font-medium text-[#333333] mb-1.5">
@@ -220,39 +293,41 @@ function RegisterContent() {
           </div>
 
           {/* User Type Selection */}
-          <div className="mb-6 sm:mb-8">
-            <label className="block text-xs sm:text-sm font-medium text-[#333333] mb-2 sm:mb-3">Eu sou...</label>
-            <div className="grid grid-cols-2 gap-3 sm:gap-4">
-              <button
-                type="button"
-                onClick={() => setUserType('recruiter')}
-                className={`p-3 sm:p-4 rounded-xl border-2 transition-all ${
-                  userType === 'recruiter'
-                    ? 'border-[#141042] bg-[#141042]/5'
-                    : 'border-[#E5E5DC] hover:border-[#141042]/30'
-                }`}
-              >
-                <Building2 className={`w-5 h-5 sm:w-6 sm:h-6 mx-auto mb-1.5 sm:mb-2 ${userType === 'recruiter' ? 'text-[#141042]' : 'text-[#333333]'}`} />
-                <span className={`block text-xs sm:text-sm font-medium ${userType === 'recruiter' ? 'text-[#141042]' : 'text-[#333333]'}`}>
-                  Recrutador
-                </span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setUserType('candidate')}
-                className={`p-3 sm:p-4 rounded-xl border-2 transition-all ${
-                  userType === 'candidate'
-                    ? 'border-[#141042] bg-[#141042]/5'
-                    : 'border-[#E5E5DC] hover:border-[#141042]/30'
-                }`}
-              >
-                <UserCircle className={`w-5 h-5 sm:w-6 sm:h-6 mx-auto mb-1.5 sm:mb-2 ${userType === 'candidate' ? 'text-[#141042]' : 'text-[#333333]'}`} />
-                <span className={`block text-xs sm:text-sm font-medium ${userType === 'candidate' ? 'text-[#141042]' : 'text-[#333333]'}`}>
-                  Candidato
-                </span>
-              </button>
+          {!inviteToken && (
+            <div className="mb-6 sm:mb-8">
+              <label className="block text-xs sm:text-sm font-medium text-[#333333] mb-2 sm:mb-3">Eu sou...</label>
+              <div className="grid grid-cols-2 gap-3 sm:gap-4">
+                <button
+                  type="button"
+                  onClick={() => setUserType('recruiter')}
+                  className={`p-3 sm:p-4 rounded-xl border-2 transition-all ${
+                    userType === 'recruiter'
+                      ? 'border-[#141042] bg-[#141042]/5'
+                      : 'border-[#E5E5DC] hover:border-[#141042]/30'
+                  }`}
+                >
+                  <Building2 className={`w-5 h-5 sm:w-6 sm:h-6 mx-auto mb-1.5 sm:mb-2 ${userType === 'recruiter' ? 'text-[#141042]' : 'text-[#333333]'}`} />
+                  <span className={`block text-xs sm:text-sm font-medium ${userType === 'recruiter' ? 'text-[#141042]' : 'text-[#333333]'}`}>
+                    Recrutador
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setUserType('candidate')}
+                  className={`p-3 sm:p-4 rounded-xl border-2 transition-all ${
+                    userType === 'candidate'
+                      ? 'border-[#141042] bg-[#141042]/5'
+                      : 'border-[#E5E5DC] hover:border-[#141042]/30'
+                  }`}
+                >
+                  <UserCircle className={`w-5 h-5 sm:w-6 sm:h-6 mx-auto mb-1.5 sm:mb-2 ${userType === 'candidate' ? 'text-[#141042]' : 'text-[#333333]'}`} />
+                  <span className={`block text-xs sm:text-sm font-medium ${userType === 'candidate' ? 'text-[#141042]' : 'text-[#333333]'}`}>
+                    Candidato
+                  </span>
+                </button>
+              </div>
             </div>
-          </div>
+          )}
 
           {error && (
             <div className="mb-4 sm:mb-6 p-3 sm:p-4 bg-red-50 border border-red-200 rounded-xl text-red-600 text-xs sm:text-sm">

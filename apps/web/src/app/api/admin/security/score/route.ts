@@ -7,7 +7,7 @@ export const dynamic = 'force-dynamic';
  * GET /api/admin/security/score
  * Calcula e retorna o score de segurança baseado nas verificações
  */
-export async function GET() {
+export async function GET(request: Request) {
   try {
     const supabase = await createClient();
 
@@ -33,14 +33,13 @@ export async function GET() {
     }
 
     // Buscar verificações do endpoint de checks
-    const checksResponse = await fetch(
-      `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/api/admin/security/checks`,
-      {
-        headers: {
-          Cookie: '', // Headers necessários para auth
-        },
-      }
-    );
+    const baseUrl = new URL(request.url).origin;
+    const cookieHeader = request.headers.get('cookie') || '';
+    const checksResponse = await fetch(`${baseUrl}/api/admin/security/checks`, {
+      headers: {
+        cookie: cookieHeader,
+      },
+    });
 
     if (!checksResponse.ok) {
       // Se não conseguir buscar checks, calcular score básico

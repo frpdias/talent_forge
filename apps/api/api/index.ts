@@ -1,5 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { NestFactory } from '@nestjs/core';
+import { ValidationPipe } from '@nestjs/common';
+import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { AppModule } from '../src/app.module';
 
 let app: any = null;
@@ -13,8 +15,36 @@ async function bootstrap() {
     logger: ['error', 'warn', 'log'],
   });
 
-  // Remove global prefix for Vercel - routes are used directly
-  app.enableCors({ origin: true, credentials: true });
+  // Keep parity with local/serverless behavior
+  app.setGlobalPrefix('api/v1');
+  app.enableCors({
+    origin: [
+      process.env.FRONTEND_URL || 'http://localhost:3000',
+      'http://127.0.0.1:3000',
+    ],
+    credentials: true,
+  });
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      transform: true,
+      transformOptions: {
+        enableImplicitConversion: true,
+      },
+    }),
+  );
+
+  const config = new DocumentBuilder()
+    .setTitle('TalentForge API')
+    .setDescription('API para recrutamento inteligente com testes comportamentais')
+    .setVersion('1.0')
+    .addBearerAuth()
+    .addApiKey({ type: 'apiKey', name: 'x-org-id', in: 'header' }, 'x-org-id')
+    .build();
+
+  const document = SwaggerModule.createDocument(app, config);
+  SwaggerModule.setup('docs', app, document);
 
   await app.init();
 

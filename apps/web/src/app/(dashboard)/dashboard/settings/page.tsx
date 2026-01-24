@@ -9,6 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { DashboardHeader } from '@/components/DashboardHeader';
 import { Building2, Save, User, Bell, Lock } from 'lucide-react';
 import { createBrowserClient } from '@supabase/ssr';
+import { useOrgStore } from '@/lib/store';
 import { WebhookManager } from '@/components';
 
 export default function SettingsPage() {
@@ -25,6 +26,7 @@ export default function SettingsPage() {
     email: '',
     phone: '',
   });
+  const { currentOrg } = useOrgStore();
 
   const supabase = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -45,7 +47,7 @@ export default function SettingsPage() {
       // Load user profile
       const { data: profile } = await supabase
         .from('user_profiles')
-        .select('*, organizations(*)')
+        .select('*')
         .eq('id', user.id)
         .single();
 
@@ -56,12 +58,19 @@ export default function SettingsPage() {
           phone: profile.phone || '',
         });
 
-        if (profile.organizations) {
+        const { data: membership } = await supabase
+          .from('org_members')
+          .select('org_id, organizations(*)')
+          .eq('user_id', user.id)
+          .limit(1)
+          .maybeSingle();
+
+        if (membership?.organizations) {
           setOrgData({
-            name: profile.organizations.name || '',
-            description: profile.organizations.description || '',
-            website: profile.organizations.website || '',
-            industry: profile.organizations.industry || '',
+            name: membership.organizations.name || '',
+            description: membership.organizations.description || '',
+            website: membership.organizations.website || '',
+            industry: membership.organizations.industry || '',
           });
         }
       }
@@ -79,25 +88,44 @@ export default function SettingsPage() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      const { data: profile } = await supabase
-        .from('user_profiles')
-        .select('organization_id')
-        .eq('id', user.id)
-        .single();
+      let orgId = currentOrg?.id || null;
+      if (!orgId) {
+        const { data: membership } = await supabase
+          .from('org_members')
+          .select('org_id')
+          .eq('user_id', user.id)
+          .limit(1)
+          .maybeSingle();
+        orgId = membership?.org_id || null;
+      }
 
-      if (!profile?.organization_id) return;
+      if (!orgId) {
+        throw new Error('Nenhuma organização vinculada ao usuário.');
+      }
 
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('organizations')
         .update(orgData)
-        .eq('id', profile.organization_id);
+        .eq('id', orgId)
+        .select()
+        .single();
 
-      if (error) throw error;
+      if (error) {
+        throw error;
+      }
+      if (!data) {
+        throw new Error('Organizacao nao encontrada ou sem permissao.');
+      }
 
       alert('Configurações da organização salvas com sucesso!');
     } catch (error: any) {
       console.error('Error saving organization:', error);
-      alert(error.message || 'Erro ao salvar configurações');
+      const message =
+        error?.message ||
+        error?.details ||
+        error?.hint ||
+        'Erro ao salvar configurações';
+      alert(message);
     } finally {
       setSaving(false);
     }

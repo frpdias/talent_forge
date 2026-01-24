@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { createBrowserClient } from '@supabase/ssr';
@@ -9,6 +10,7 @@ import {
   Users, 
   UserCheck,
   FileBarChart,
+  UserPlus,
   Settings, 
   LogOut,
   Plus,
@@ -25,6 +27,7 @@ const navItems = [
   { href: '/dashboard/candidates', label: 'Candidatos', icon: Users },
   { href: '/dashboard/pipeline', label: 'Pipeline', icon: UserCheck },
   { href: '/dashboard/reports', label: 'Relatórios', icon: FileBarChart },
+  { href: '/dashboard/invite', label: 'Convidar', icon: UserPlus },
 ];
 
 const moreItems = [
@@ -35,11 +38,57 @@ const moreItems = [
 export default function RecruiterLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
+  const [userName, setUserName] = useState<string>('Recrutador');
+  const [orgName, setOrgName] = useState<string>('Organizacao');
 
-  const supabase = createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  const supabase = useMemo(
+    () =>
+      createBrowserClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      ),
+    [],
   );
+
+  useEffect(() => {
+    let ignore = false;
+
+    async function loadUserInfo() {
+      const { data: userData } = await supabase.auth.getUser();
+      const userId = userData?.user?.id;
+      if (!userId) return;
+
+      const { data: profile } = await supabase
+        .from('user_profiles')
+        .select('full_name')
+        .eq('id', userId)
+        .maybeSingle();
+
+      if (profile?.full_name && !ignore) {
+        setUserName(profile.full_name);
+      }
+
+      const { data: membership } = await supabase
+        .from('org_members')
+        .select('organizations(name)')
+        .eq('user_id', userId)
+        .limit(1)
+        .maybeSingle();
+
+      const org = Array.isArray(membership?.organizations)
+        ? membership.organizations[0]?.name
+        : (membership as any)?.organizations?.name;
+
+      if (org && !ignore) {
+        setOrgName(org);
+      }
+    }
+
+    loadUserInfo();
+    return () => {
+      ignore = true;
+    };
+  }, [supabase]);
 
   const handleLogout = async () => {
     try {
@@ -140,13 +189,21 @@ export default function RecruiterLayout({ children }: { children: React.ReactNod
 
         {/* User Section */}
         <div className="p-3 border-t border-border bg-gray-50">
+          <div className="flex items-center justify-center pb-3">
+            <img
+              src="https://fjudsjzfnysaztcwlwgm.supabase.co/storage/v1/object/public/LOGOS/LOGO4.png"
+              alt="Fartech"
+              className="h-8 w-auto opacity-80"
+              loading="lazy"
+            />
+          </div>
           <div className="flex items-center gap-3 p-2 rounded-lg hover:bg-white transition-colors cursor-pointer">
             <div className="w-9 h-9 rounded-lg bg-gray-200 flex items-center justify-center text-gray-600 font-semibold text-sm">
-              R
+              {userName.charAt(0).toUpperCase()}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-foreground truncate">Recrutador</p>
-              <p className="text-xs text-foreground-muted truncate">TechCorp</p>
+              <p className="text-sm font-medium text-foreground truncate">{userName}</p>
+              <p className="text-xs text-foreground-muted truncate">{orgName}</p>
             </div>
             <button 
               onClick={handleLogout}
@@ -196,10 +253,10 @@ export default function RecruiterLayout({ children }: { children: React.ReactNod
               
               <button className="flex items-center gap-3 p-1.5 pr-3 rounded-lg hover:bg-gray-50 transition-colors">
                 <div className="w-8 h-8 rounded-lg bg-gray-200 flex items-center justify-center text-gray-600 font-semibold text-sm">
-                  R
+                  {userName.charAt(0).toUpperCase()}
                 </div>
                 <div className="text-left">
-                  <p className="text-sm font-medium text-foreground">Recrutador</p>
+                  <p className="text-sm font-medium text-foreground">{userName}</p>
                 </div>
                 <ChevronDown className="w-4 h-4 text-gray-400" />
               </button>

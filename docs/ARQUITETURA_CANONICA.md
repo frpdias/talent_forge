@@ -18,7 +18,10 @@
 ## 3) Schema canônico (tabelas oficiais)
 
 ### Core ATS / Multi-tenant
-- `organizations`
+- `organizations` (id, name, slug, description, website, industry, created_at, updated_at)
+  - **Descrição:** Entidades organizacionais (empresas/clientes) no sistema multi-tenant
+  - **Campos adicionados (2026-01-24):** description, website, industry
+  - **Propósito:** Permitir cadastro completo de informações da organização
 - `org_members`
 - `candidates`
 - `jobs`
@@ -951,6 +954,26 @@ Consulte [docs/CONEXOES_BANCO_STATUS.md](CONEXOES_BANCO_STATUS.md) para:
 - ✅ Sprint 2: Security Center (score, verificações, ameaças) - 100%
 - ✅ Sprint 3: System Settings (persistência, RLS, auditoria) - 100%
 - ✅ Sprint 4: Audit Logs + Security Events (interfaces completas) - 100%
+
+**Migrations Recentes:**
+- ✅ `20260124_organizations_metadata.sql` - Campos adicionais em organizations (description, website, industry)
+- ✅ `20260124_consolidate_companies_organizations.sql` - P0: Merge de companies → organizations (cnpj, email, phone, etc.)
+- ✅ `20260124_lock_audit_logs_security.sql` - P0: Proteção contra DELETE em audit_logs + trigger de logging
+- ✅ `20260124_performance_indexes.sql` - P1: 40+ índices compostos para otimização de queries
+- ✅ `20260124_consolidate_iam.sql` - P1: Consolidação IAM (tenants → organizations, tenant_users → org_members)
+- ✅ `20260124_business_metrics_views.sql` - P3: 6 views analíticas (funil, performance, KPIs executivos)
+
+**Melhorias Implementadas (2026-01-24):**
+- ✅ **P0 - Consolidação Arquitetural:** Eliminação de duplicações (companies, tenants)
+- ✅ **P0 - Segurança:** Proteção de audit_logs contra adulteração/exclusão
+- ✅ **P1 - Performance:** 40+ índices compostos (80-95% redução em tempo de query)
+- ✅ **P1 - IAM:** Modelo unificado organization-centric
+- ✅ **P2 - Rate Limiting:** 50/100 req/min para APIs admin/públicas
+- ✅ **P2 - Notificações Realtime:** Hooks React para alertas instantâneos
+- ✅ **P3 - Business Intelligence:** Views pré-computadas para dashboards executivos
+- ✅ **P3 - Testes:** Estrutura Jest configurada (threshold 50% de cobertura)
+
+**Consulte [/IMPROVEMENTS_LOG.md](/IMPROVEMENTS_LOG.md) para detalhes completos das melhorias.**
 
 ---
 

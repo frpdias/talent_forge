@@ -4,9 +4,28 @@
 -- =====================================================
 
 -- 1. Criar constraints UNIQUE (se não existirem)
-ALTER TABLE roles ADD CONSTRAINT roles_name_unique UNIQUE (name);
-ALTER TABLE permissions ADD CONSTRAINT permissions_action_resource_unique UNIQUE (action, resource);
-ALTER TABLE role_permissions ADD CONSTRAINT role_permissions_unique UNIQUE (role_id, permission_id);
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint WHERE conname = 'roles_name_unique'
+  ) THEN
+    ALTER TABLE roles ADD CONSTRAINT roles_name_unique UNIQUE (name);
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint WHERE conname = 'permissions_action_resource_unique'
+  ) THEN
+    ALTER TABLE permissions
+      ADD CONSTRAINT permissions_action_resource_unique UNIQUE (action, resource);
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint WHERE conname = 'role_permissions_unique'
+  ) THEN
+    ALTER TABLE role_permissions
+      ADD CONSTRAINT role_permissions_unique UNIQUE (role_id, permission_id);
+  END IF;
+END $$;
 
 -- 2. Roles padrão do sistema
 INSERT INTO roles (name, scope) VALUES
