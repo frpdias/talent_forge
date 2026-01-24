@@ -117,7 +117,7 @@ COMMENT ON VIEW v_recruiter_performance IS 'Métricas de performance por recruta
 CREATE OR REPLACE VIEW v_top_candidates AS
 SELECT
   c.id as candidate_id,
-  c.name as candidate_name,
+  c.full_name as candidate_name,
   c.email as candidate_email,
   cp.phone,
   COUNT(DISTINCT a.id) as total_applications,
@@ -129,7 +129,7 @@ FROM candidates c
 LEFT JOIN candidate_profiles cp ON cp.user_id = c.user_id
 LEFT JOIN applications a ON a.candidate_id = c.id
 LEFT JOIN jobs j ON j.id = a.job_id
-GROUP BY c.id, c.name, c.email, cp.phone
+GROUP BY c.id, c.full_name, c.email, cp.phone
 HAVING COUNT(DISTINCT a.id) > 0
 ORDER BY COUNT(DISTINCT a.id) DESC;
 
