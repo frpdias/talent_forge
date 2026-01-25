@@ -88,7 +88,14 @@ export default function PipelinePage() {
 
       const { data: { user } } = await supabase.auth.getUser();
       const { data: sessionData } = await supabase.auth.getSession();
-      const token = sessionData?.session?.access_token || null;
+      let token = sessionData?.session?.access_token || null;
+
+      if (!token && sessionData?.session?.refresh_token) {
+        const { data: refreshed, error: refreshError } = await supabase.auth.refreshSession();
+        if (!refreshError) {
+          token = refreshed?.session?.access_token || null;
+        }
+      }
 
       // Get user's organization
       const { data: orgMembership } = await supabase
@@ -137,7 +144,26 @@ export default function PipelinePage() {
         setRecruiters([]);
       }
 
-      const applications = await applicationsApi.list(token, resolvedOrgId);
+      let applications;
+      try {
+        applications = await applicationsApi.list(token, resolvedOrgId);
+      } catch (error: any) {
+        if (String(error?.message || '').toLowerCase().includes('invalid or expired token')) {
+          const { data: refreshed, error: refreshError } = await supabase.auth.refreshSession();
+          const refreshedToken = refreshed?.session?.access_token || null;
+
+          if (refreshError || !refreshedToken) {
+            throw error;
+          }
+
+          token = refreshedToken;
+          setSessionToken(refreshedToken);
+          applications = await applicationsApi.list(refreshedToken, resolvedOrgId);
+        } else {
+          throw error;
+        }
+      }
+
       console.log('✅ [Pipeline] Aplicações retornadas da API:', applications);
 
       const normalizedApplications = (applications as any || []).map((app: any) => ({
