@@ -18,3 +18,13 @@
 3) Scaffold Next: `npx create-next-app apps/web --ts --app --eslint --tailwind --src-dir`. Adicionar variáveis Supabase no `.env.local`.  
 4) Definir CI simples (lint/test) depois que os apps existirem.  
 5) Entregar MVP features: organizations, jobs+stages, candidates, applications Kanban, assessments v1, reports básicos.  
+
+## 2026-01-24 — Origem do candidato (source)
+- **Decisão:** adicionar `candidates.source` para consolidar relatórios de origem.
+- **Motivo:** alimentar a seção “Efetividade por Origem” na aba de relatórios sem criar tabelas novas.
+- **Impacto:** atualização de DTOs e endpoint `/reports/dashboard` para expor `sources`.
+
+## 2026-01-24 — Integração Google Agenda (OAuth)
+- **Decisão:** integrar Google Agenda via OAuth 2.0 usando endpoints em `/auth`.
+- **Motivo:** permitir criação de reuniões com Google Meet e agenda no dashboard do recrutador.
+- **Impacto:** novas colunas em `user_profiles` para tokens e status, e UI no card de Webhooks.

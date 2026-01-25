@@ -56,6 +56,17 @@ export declare class ReportsService {
             createdAt: any;
             job: any;
         }[];
+        averageScore: number;
+        medianScore: number;
+        traitAverages: {
+            bigFive: Record<string, number>;
+            disc: Record<string, number>;
+        };
+        scoreDistribution: {
+            range: string;
+            count: number;
+            percentage: number;
+        }[];
     }>;
     getDashboardStats(orgId: string): Promise<{
         stats: {
@@ -65,6 +76,10 @@ export declare class ReportsService {
             totalApplications: number;
             totalAssessments: number;
         };
+        sources: {
+            name: string;
+            value: number;
+        }[];
         recentActivity: {
             id: any;
             type: string;

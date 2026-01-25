@@ -39,6 +39,9 @@ let ApplicationsController = class ApplicationsController {
     updateStage(id, dto, orgId, user) {
         return this.applicationsService.updateStage(id, dto, orgId, user.sub);
     }
+    updateStatus(id, dto, orgId, user) {
+        return this.applicationsService.updateStatus(id, dto, orgId, user.sub);
+    }
     getEvents(id, orgId) {
         return this.applicationsService.getEvents(id, orgId);
     }
@@ -106,6 +109,17 @@ __decorate([
     __metadata("design:paramtypes", [String, dto_1.UpdateApplicationStageDto, String, Object]),
     __metadata("design:returntype", void 0)
 ], ApplicationsController.prototype, "updateStage", null);
+__decorate([
+    (0, common_1.Patch)(':id/status'),
+    (0, swagger_1.ApiOperation)({ summary: 'Update application status (applied, in_process, hired, rejected)' }),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, common_1.Body)()),
+    __param(2, (0, org_decorator_1.OrgId)()),
+    __param(3, (0, current_user_decorator_1.CurrentUser)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, dto_1.UpdateApplicationStatusDto, String, Object]),
+    __metadata("design:returntype", void 0)
+], ApplicationsController.prototype, "updateStatus", null);
 __decorate([
     (0, common_1.Get)(':id/events'),
     (0, swagger_1.ApiOperation)({ summary: 'Get application events history' }),

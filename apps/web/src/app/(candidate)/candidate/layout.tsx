@@ -337,8 +337,7 @@ export default function CandidateLayout({ children }: { children: React.ReactNod
             <img
               src="https://fjudsjzfnysaztcwlwgm.supabase.co/storage/v1/object/public/LOGOS/LOGO4.png"
               alt="Talent Forge"
-              className="opacity-50"
-              style={{ height: '150px' }}
+              className="h-16 w-auto opacity-50"
             />
           </div>
           <button

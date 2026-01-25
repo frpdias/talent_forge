@@ -5,6 +5,10 @@ Base: `/api/v1`. Auth: Bearer JWT (Supabase). Header: `x-org-id` obrigatório pa
 ## Auth / Organizations
 - `POST /organizations` body `{ name, orgType }` → cria org e membership admin.  
 - `GET /organizations` → lista orgs do usuário.  
+- `GET /auth/google-calendar/authorize` → retorna URL OAuth do Google Agenda.  
+- `GET /auth/google-calendar/callback` → callback OAuth (redirect para settings).  
+- `GET /auth/google-calendar/status` → status de conexão + email.  
+- `POST /auth/google-calendar/disconnect` → desconecta a agenda.  
 
 ## Jobs & Pipeline
 - `POST /jobs` body `{ title, description?, location?, salaryMin?, salaryMax?, employmentType?, seniority?, status? }`
@@ -14,7 +18,7 @@ Base: `/api/v1`. Auth: Bearer JWT (Supabase). Header: `x-org-id` obrigatório pa
 - `PATCH /jobs/:id/stages/:stageId` body `{ name?, position? }`
 
 ## Candidates
-- `POST /candidates` body `{ fullName, email?, phone?, location?, currentRole?, linkedinUrl?, salaryExpectation?, availabilityDate?, tags? }`
+- `POST /candidates` body `{ fullName, email?, phone?, location?, currentRole?, linkedinUrl?, source?, salaryExpectation?, availabilityDate?, tags? }`
 - `GET /candidates?search=...&tag=...`
 - `PATCH /candidates/:id` body parcial
 - `POST /candidates/:id/notes` body `{ note }`
@@ -32,6 +36,7 @@ Base: `/api/v1`. Auth: Bearer JWT (Supabase). Header: `x-org-id` obrigatório pa
 - Webhook `POST /integrations/assessments/result` (opcional) para receber score do motor de teste.
 
 ## Reports (básico)
+- `GET /reports/dashboard` → stats + recentActivity + sources (origem de candidatos).
 - `GET /reports/pipelines?jobId=...` → distribuições por etapa, tempo médio, conversão.
 - `GET /reports/assessments?jobId=...` → média/mediana de score, correlação simples com status.
 

@@ -21,6 +21,7 @@ import {
   CreateCandidateDto,
   UpdateCandidateDto,
   CreateCandidateNoteDto,
+  UpdateCandidateNoteDto,
 } from './dto';
 import { OrgGuard } from '../auth/guards/org.guard';
 import { OrgId } from '../auth/decorators/org.decorator';
@@ -93,7 +94,35 @@ export class CandidatesController {
 
   @Get(':id/notes')
   @ApiOperation({ summary: 'Get all notes for a candidate' })
-  getNotes(@Param('id') candidateId: string, @OrgId() orgId: string) {
-    return this.candidatesService.getNotes(candidateId, orgId);
+  @ApiQuery({ name: 'context', required: false, description: 'Filter by context (profile, resume, assessments, interview, general)' })
+  getNotes(
+    @Param('id') candidateId: string,
+    @OrgId() orgId: string,
+    @Query('context') context?: string,
+  ) {
+    return this.candidatesService.getNotes(candidateId, orgId, context);
+  }
+
+  @Patch(':candidateId/notes/:noteId')
+  @ApiOperation({ summary: 'Update a specific note' })
+  updateNote(
+    @Param('candidateId') candidateId: string,
+    @Param('noteId') noteId: string,
+    @Body() dto: UpdateCandidateNoteDto,
+    @OrgId() orgId: string,
+    @CurrentUser() user: JwtPayload,
+  ) {
+    return this.candidatesService.updateNote(candidateId, noteId, dto, orgId, user.sub);
+  }
+
+  @Delete(':candidateId/notes/:noteId')
+  @ApiOperation({ summary: 'Delete a specific note' })
+  deleteNote(
+    @Param('candidateId') candidateId: string,
+    @Param('noteId') noteId: string,
+    @OrgId() orgId: string,
+    @CurrentUser() user: JwtPayload,
+  ) {
+    return this.candidatesService.deleteNote(candidateId, noteId, orgId, user.sub);
   }
 }

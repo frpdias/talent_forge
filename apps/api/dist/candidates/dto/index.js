@@ -9,7 +9,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.CreateCandidateNoteDto = exports.UpdateCandidateDto = exports.CreateCandidateDto = void 0;
+exports.UpdateCandidateNoteDto = exports.CreateCandidateNoteDto = exports.NoteContext = exports.UpdateCandidateDto = exports.CreateCandidateDto = void 0;
 const class_validator_1 = require("class-validator");
 const swagger_1 = require("@nestjs/swagger");
 class CreateCandidateDto {
@@ -50,6 +50,12 @@ __decorate([
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
 ], CreateCandidateDto.prototype, "linkedinUrl", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({ description: 'Candidate source channel' }),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], CreateCandidateDto.prototype, "source", void 0);
 __decorate([
     (0, swagger_1.ApiPropertyOptional)({ description: 'Salary expectation' }),
     (0, class_validator_1.IsOptional)(),
@@ -112,6 +118,12 @@ __decorate([
     __metadata("design:type", String)
 ], UpdateCandidateDto.prototype, "linkedinUrl", void 0);
 __decorate([
+    (0, swagger_1.ApiPropertyOptional)({ description: 'Candidate source channel' }),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], UpdateCandidateDto.prototype, "source", void 0);
+__decorate([
     (0, swagger_1.ApiPropertyOptional)({ description: 'Salary expectation' }),
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsNumber)(),
@@ -133,6 +145,14 @@ __decorate([
     (0, class_validator_1.IsString)({ each: true }),
     __metadata("design:type", Array)
 ], UpdateCandidateDto.prototype, "tags", void 0);
+var NoteContext;
+(function (NoteContext) {
+    NoteContext["PROFILE"] = "profile";
+    NoteContext["RESUME"] = "resume";
+    NoteContext["ASSESSMENTS"] = "assessments";
+    NoteContext["INTERVIEW"] = "interview";
+    NoteContext["GENERAL"] = "general";
+})(NoteContext || (exports.NoteContext = NoteContext = {}));
 class CreateCandidateNoteDto {
 }
 exports.CreateCandidateNoteDto = CreateCandidateNoteDto;
@@ -141,4 +161,32 @@ __decorate([
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
 ], CreateCandidateNoteDto.prototype, "note", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({
+        description: 'Context where the note was created',
+        enum: NoteContext,
+        default: 'general',
+    }),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], CreateCandidateNoteDto.prototype, "context", void 0);
+class UpdateCandidateNoteDto {
+}
+exports.UpdateCandidateNoteDto = UpdateCandidateNoteDto;
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({ description: 'Note content' }),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], UpdateCandidateNoteDto.prototype, "note", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({
+        description: 'Context where the note was updated',
+        enum: NoteContext,
+    }),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], UpdateCandidateNoteDto.prototype, "context", void 0);
 //# sourceMappingURL=index.js.map

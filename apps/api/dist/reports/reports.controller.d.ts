@@ -10,6 +10,10 @@ export declare class ReportsController {
             totalApplications: number;
             totalAssessments: number;
         };
+        sources: {
+            name: string;
+            value: number;
+        }[];
         recentActivity: {
             id: any;
             type: string;
@@ -72,6 +76,17 @@ export declare class ReportsController {
             status: any;
             createdAt: any;
             job: any;
+        }[];
+        averageScore: number;
+        medianScore: number;
+        traitAverages: {
+            bigFive: Record<string, number>;
+            disc: Record<string, number>;
+        };
+        scoreDistribution: {
+            range: string;
+            count: number;
+            percentage: number;
         }[];
     }>;
 }

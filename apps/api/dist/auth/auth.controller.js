@@ -33,6 +33,20 @@ let AuthController = class AuthController {
     health() {
         return { status: 'ok', timestamp: new Date().toISOString() };
     }
+    async authorizeGoogleCalendar(user) {
+        return this.authService.getGoogleCalendarAuthUrl(user.sub);
+    }
+    async googleCalendarCallback(code, state, res) {
+        await this.authService.handleGoogleCalendarCallback(code, state);
+        const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+        return res.redirect(`${frontendUrl}/dashboard/settings?google=connected`);
+    }
+    async googleCalendarStatus(user) {
+        return this.authService.getGoogleCalendarStatus(user.sub);
+    }
+    async googleCalendarDisconnect(user) {
+        return this.authService.disconnectGoogleCalendar(user.sub);
+    }
 };
 exports.AuthController = AuthController;
 __decorate([
@@ -52,6 +66,46 @@ __decorate([
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", void 0)
 ], AuthController.prototype, "health", null);
+__decorate([
+    (0, common_1.Get)('google-calendar/authorize'),
+    (0, swagger_1.ApiBearerAuth)(),
+    (0, swagger_1.ApiOperation)({ summary: 'Get Google Calendar OAuth URL' }),
+    __param(0, (0, current_user_decorator_1.CurrentUser)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], AuthController.prototype, "authorizeGoogleCalendar", null);
+__decorate([
+    (0, common_1.Get)('google-calendar/callback'),
+    (0, public_decorator_1.Public)(),
+    (0, swagger_1.ApiOperation)({ summary: 'Handle Google Calendar OAuth callback' }),
+    (0, swagger_1.ApiQuery)({ name: 'code', required: true }),
+    (0, swagger_1.ApiQuery)({ name: 'state', required: true }),
+    __param(0, (0, common_1.Query)('code')),
+    __param(1, (0, common_1.Query)('state')),
+    __param(2, (0, common_1.Res)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String, Object]),
+    __metadata("design:returntype", Promise)
+], AuthController.prototype, "googleCalendarCallback", null);
+__decorate([
+    (0, common_1.Get)('google-calendar/status'),
+    (0, swagger_1.ApiBearerAuth)(),
+    (0, swagger_1.ApiOperation)({ summary: 'Get Google Calendar connection status' }),
+    __param(0, (0, current_user_decorator_1.CurrentUser)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], AuthController.prototype, "googleCalendarStatus", null);
+__decorate([
+    (0, common_1.Post)('google-calendar/disconnect'),
+    (0, swagger_1.ApiBearerAuth)(),
+    (0, swagger_1.ApiOperation)({ summary: 'Disconnect Google Calendar' }),
+    __param(0, (0, current_user_decorator_1.CurrentUser)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], AuthController.prototype, "googleCalendarDisconnect", null);
 exports.AuthController = AuthController = __decorate([
     (0, swagger_1.ApiTags)('Auth'),
     (0, common_1.Controller)('auth'),

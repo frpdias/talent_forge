@@ -1,7 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Webhook, Plus, Trash2, Eye, EyeOff, Copy, Check } from 'lucide-react';
+import { createBrowserClient } from '@supabase/ssr';
+import { apiFetch } from '@/lib/api';
 
 interface WebhookConfig {
   id: string;
@@ -29,6 +31,15 @@ export function WebhookManager() {
   const [isCreating, setIsCreating] = useState(false);
   const [showSecret, setShowSecret] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [calendarLoading, setCalendarLoading] = useState(true);
+  const [calendarConnecting, setCalendarConnecting] = useState(false);
+  const [calendarConnected, setCalendarConnected] = useState(false);
+  const [calendarEmail, setCalendarEmail] = useState<string | null>(null);
+
+  const supabase = createBrowserClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  );
 
   const [newWebhook, setNewWebhook] = useState({
     name: '',
@@ -36,6 +47,71 @@ export function WebhookManager() {
     events: [] as string[],
     secret: '',
   });
+
+  useEffect(() => {
+    loadCalendarStatus();
+  }, []);
+
+  const loadCalendarStatus = async () => {
+    try {
+      setCalendarLoading(true);
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData?.session?.access_token;
+      if (!token) {
+        setCalendarConnected(false);
+        setCalendarEmail(null);
+        return;
+      }
+
+      const data = await apiFetch<{ connected: boolean; email?: string | null }>(
+        '/auth/google-calendar/status',
+        { token }
+      );
+      setCalendarConnected(Boolean(data.connected));
+      setCalendarEmail(data.email || null);
+    } catch (error) {
+      console.error('Erro ao carregar status do Google Agenda:', error);
+      setCalendarConnected(false);
+      setCalendarEmail(null);
+    } finally {
+      setCalendarLoading(false);
+    }
+  };
+
+  const handleConnectCalendar = async () => {
+    try {
+      setCalendarConnecting(true);
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData?.session?.access_token;
+      if (!token) return;
+
+      const data = await apiFetch<{ url: string }>('/auth/google-calendar/authorize', { token });
+      if (data.url) {
+        window.location.href = data.url;
+      }
+    } catch (error) {
+      console.error('Erro ao conectar Google Agenda:', error);
+    } finally {
+      setCalendarConnecting(false);
+    }
+  };
+
+  const handleDisconnectCalendar = async () => {
+    try {
+      setCalendarConnecting(true);
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData?.session?.access_token;
+      if (!token) return;
+
+      await apiFetch('/auth/google-calendar/disconnect', { token, method: 'POST' });
+      setCalendarConnected(false);
+      setCalendarEmail(null);
+    } catch (error) {
+      console.error('Erro ao desconectar Google Agenda:', error);
+    } finally {
+      setCalendarConnecting(false);
+    }
+  };
 
   const generateSecret = () => {
     const secret = 'whsec_' + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
@@ -78,6 +154,60 @@ export function WebhookManager() {
 
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+      <div className="mb-6 border border-gray-200 rounded-lg p-4 bg-gray-50">
+        <div className="flex items-center justify-between gap-4">
+          <div>
+            <h3 className="text-lg font-semibold text-gray-900">Google Agenda</h3>
+            <p className="text-sm text-gray-600 mt-1">
+              Conecte sua agenda para criar convites com Google Meet.
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            {calendarConnected && (
+              <span className="text-xs font-medium text-green-700 bg-green-100 px-2 py-1 rounded-full">
+                Conectado
+              </span>
+            )}
+            <button
+              onClick={calendarConnected ? handleDisconnectCalendar : handleConnectCalendar}
+              disabled={calendarLoading || calendarConnecting}
+              className="px-4 py-2 text-sm font-medium text-white bg-[#141042] rounded-lg hover:bg-[#1F1B5C] disabled:opacity-50"
+            >
+              {calendarConnected
+                ? 'Desconectar'
+                : calendarConnecting
+                ? 'Conectando...'
+                : 'Conectar Google'}
+            </button>
+          </div>
+        </div>
+
+        <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3 text-sm text-gray-700">
+          <div className="flex gap-2">
+            <span className="font-semibold">1.</span>
+            <span>Clique em “Conectar Google”.</span>
+          </div>
+          <div className="flex gap-2">
+            <span className="font-semibold">2.</span>
+            <span>Autorize o acesso à sua agenda.</span>
+          </div>
+          <div className="flex gap-2">
+            <span className="font-semibold">3.</span>
+            <span>Volte para as configurações.</span>
+          </div>
+          <div className="flex gap-2">
+            <span className="font-semibold">4.</span>
+            <span>Crie reuniões com Google Meet.</span>
+          </div>
+        </div>
+
+        {calendarConnected && (
+          <p className="text-xs text-gray-500 mt-3">
+            Conectado como: {calendarEmail || 'conta do Google'}
+          </p>
+        )}
+      </div>
+
       <div className="flex items-center justify-between mb-6">
         <div>
           <h2 className="text-xl font-bold text-gray-900">Webhooks</h2>

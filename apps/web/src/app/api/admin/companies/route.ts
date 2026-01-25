@@ -11,9 +11,9 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: 'Não autenticado' }, { status: 401 });
     }
 
-    // Buscar todas as empresas
+    // Buscar todas as empresas (agora em organizations)
     const { data: companies, error } = await supabase
-      .from('companies')
+      .from('organizations')
       .select('*')
       .order('name', { ascending: true });
 
@@ -67,11 +67,12 @@ export async function POST(request: Request) {
       );
     }
 
-    // Inserir empresa
+    // Inserir empresa (agora em organizations)
     const { data: company, error } = await supabase
-      .from('companies')
+      .from('organizations')
       .insert({
         name,
+        slug: name.toLowerCase().replace(/\s+/g, '-'),
         cnpj,
         email,
         phone: phone || null,

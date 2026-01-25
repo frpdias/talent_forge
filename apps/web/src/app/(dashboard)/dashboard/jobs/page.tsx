@@ -31,6 +31,8 @@ interface Job {
   salary_max?: number;
   status: 'open' | 'on_hold' | 'closed';
   applications_count?: number;
+  hire_rate?: number;
+  avg_time_to_hire?: number;
   created_at: string;
 }
 
@@ -78,7 +80,54 @@ export default function JobsPage() {
 
       if (error) throw error;
 
-      setJobs(data || []);
+      const jobIds = (data || []).map((job: any) => job.id);
+      if (jobIds.length > 0) {
+        const { data: applications } = await supabase
+          .from('applications')
+          .select('job_id, status, created_at, updated_at')
+          .in('job_id', jobIds);
+
+        const totals = new Map<string, number>();
+        const hires = new Map<string, number>();
+        const durations = new Map<string, number[]>();
+
+        (applications || []).forEach((app: any) => {
+          totals.set(app.job_id, (totals.get(app.job_id) || 0) + 1);
+          if (app.status === 'hired') {
+            hires.set(app.job_id, (hires.get(app.job_id) || 0) + 1);
+            if (app.created_at && app.updated_at) {
+              const days = Math.round(
+                (new Date(app.updated_at).getTime() - new Date(app.created_at).getTime()) /
+                  (1000 * 60 * 60 * 24)
+              );
+              const list = durations.get(app.job_id) || [];
+              list.push(days);
+              durations.set(app.job_id, list);
+            }
+          }
+        });
+
+        const enrichedJobs = (data || []).map((job: any) => {
+          const total = totals.get(job.id) || 0;
+          const hired = hires.get(job.id) || 0;
+          const avgDays = durations.get(job.id)?.length
+            ? Math.round(
+                durations.get(job.id)!.reduce((sum, val) => sum + val, 0) /
+                  durations.get(job.id)!.length
+              )
+            : 0;
+          return {
+            ...job,
+            applications_count: total,
+            hire_rate: total > 0 ? Math.round((hired / total) * 100) : 0,
+            avg_time_to_hire: avgDays,
+          };
+        });
+
+        setJobs(enrichedJobs);
+      } else {
+        setJobs(data || []);
+      }
     } catch (error) {
       console.error('Error loading jobs:', error);
     } finally {
@@ -232,6 +281,14 @@ export default function JobsPage() {
                         <div className="flex items-center gap-1.5">
                           <Users className="h-3.5 w-3.5" />
                           <span>{job.applications_count || 0} candidaturas</span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <Users className="h-3.5 w-3.5" />
+                          <span>Hire rate: {job.hire_rate || 0}%</span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <Clock className="h-3.5 w-3.5" />
+                          <span>Tempo médio: {job.avg_time_to_hire || 0}d</span>
                         </div>
                       </div>
 

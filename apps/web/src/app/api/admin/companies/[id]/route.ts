@@ -29,11 +29,12 @@ export async function PATCH(
       size,
     } = body;
 
-    // Atualizar empresa
+    // Atualizar empresa (agora em organizations)
     const { data: company, error } = await supabase
-      .from('companies')
+      .from('organizations')
       .update({
         name,
+        slug: name ? name.toLowerCase().replace(/\s+/g, '-') : undefined,
         cnpj,
         email,
         phone: phone || null,
@@ -80,9 +81,9 @@ export async function DELETE(
       return NextResponse.json({ error: 'Não autenticado' }, { status: 401 });
     }
 
-    // Deletar empresa
+    // Deletar empresa (agora em organizations)
     const { error } = await supabase
-      .from('companies')
+      .from('organizations')
       .delete()
       .eq('id', id);
 

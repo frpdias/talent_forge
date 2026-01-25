@@ -13,3 +13,7 @@ export declare class UpdateApplicationStageDto {
     status?: ApplicationStatus;
     note?: string;
 }
+export declare class UpdateApplicationStatusDto {
+    status: ApplicationStatus;
+    note?: string;
+}

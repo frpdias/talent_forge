@@ -25,6 +25,9 @@ supabase/.temp/
 .env
 .env.*
 
+# Supabase debug/maintenance scripts (local only)
+supabase/scripts/
+
 # OS/editor
 .DS_Store
 Thumbs.db

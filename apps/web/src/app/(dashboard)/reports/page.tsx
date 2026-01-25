@@ -1,14 +1,14 @@
 'use client';
 
 import { Header } from '@/components/layout';
-import { Card, CardContent, Badge, Button, Select } from '@/components/ui';
+import { Card, CardContent, Button, Select } from '@/components/ui';
+import { SourceEffectiveness } from '@/components';
 import { useEffect, useState } from 'react';
 import { useOrgStore } from '@/lib/store';
 import { useAuth } from '@/lib/auth';
 import { reportsApi, jobsApi } from '@/lib/api';
 import {
   BarChart3,
-  TrendingUp,
   Users,
   Brain,
   Download,
@@ -19,6 +19,14 @@ import {
   ArrowDownRight,
 } from 'lucide-react';
 
+interface StatCardProps {
+  title: string;
+  value: string | number;
+  icon: React.ElementType;
+  trend?: { value: number; positive: boolean };
+  color: 'blue' | 'green' | 'purple' | 'amber';
+}
+
 interface DashboardStats {
   totalJobs: number;
   openJobs: number;
@@ -27,8 +35,10 @@ interface DashboardStats {
   totalAssessments: number;
 }
 
-interface PipelineStageStats {
+interface PipelineStage {
+  stageId: string;
   stageName: string;
+  position: number;
   count: number;
   percentage: number;
 }
@@ -36,8 +46,9 @@ interface PipelineStageStats {
 interface PipelineReport {
   jobId: string;
   jobTitle: string;
+  jobStatus: string;
   totalApplications: number;
-  stages: PipelineStageStats[];
+  stages: PipelineStage[];
   conversions: number[];
   statusDistribution: {
     applied: number;
@@ -52,24 +63,15 @@ interface PipelineReport {
 interface AssessmentReport {
   totalAssessments: number;
   completedAssessments: number;
-  averageScore: number;
-  medianScore: number;
+  byType: Record<string, number>;
+  recentAssessments: Array<{ id: string; type: string; status: string; createdAt: string }>;
+  traitAverages?: {
+    bigFive?: Record<string, number>;
+    disc?: Record<string, number>;
+  };
+  averageScore?: number;
+  medianScore?: number;
   scoreDistribution: Array<{ range: string; count: number; percentage: number }>;
-  traitAverages: {
-    bigFive: {
-      openness: number;
-      conscientiousness: number;
-      extraversion: number;
-      agreeableness: number;
-      neuroticism: number;
-    };
-    disc: {
-      dominance: number;
-      influence: number;
-      steadiness: number;
-      conscientiousness: number;
-    };
-  } | null;
 }
 
 interface Job {
@@ -77,12 +79,9 @@ interface Job {
   title: string;
 }
 
-interface StatCardProps {
-  title: string;
-  value: string | number;
-  icon: React.ElementType;
-  trend?: { value: number; positive: boolean };
-  color: 'blue' | 'green' | 'purple' | 'amber';
+interface SourceMetric {
+  name: string;
+  value: number;
 }
 
 const colorClasses = {
@@ -153,6 +152,7 @@ export default function ReportsPage() {
   const [assessmentReport, setAssessmentReport] = useState<AssessmentReport | null>(null);
   const [jobs, setJobs] = useState<Job[]>([]);
   const [selectedJob, setSelectedJob] = useState<string>('');
+  const [sourceMetrics, setSourceMetrics] = useState<SourceMetric[]>([]);
 
   useEffect(() => {
     if (currentOrg?.id && session?.access_token) {
@@ -180,7 +180,9 @@ export default function ReportsPage() {
         reportsApi.assessments(session!.access_token, currentOrg!.id, selectedJob || undefined),
       ]);
 
-      setStats((dashboardData as any).data?.stats);
+      const dashboardPayload = (dashboardData as any)?.data ?? dashboardData;
+      setStats(dashboardPayload?.stats || null);
+      setSourceMetrics(dashboardPayload?.sources || []);
       
       // Handle pipeline data - can be single report or array
       const pipeline = (pipelineData as any).data;
@@ -188,7 +190,16 @@ export default function ReportsPage() {
         setPipelineReports(Array.isArray(pipeline) ? pipeline : [pipeline]);
       }
       
-      setAssessmentReport((assessmentData as any).data);
+      const rawAssessment = (assessmentData as any).data as AssessmentReport | null;
+      setAssessmentReport(
+        rawAssessment
+          ? {
+              ...rawAssessment,
+              traitAverages: rawAssessment.traitAverages || {},
+              scoreDistribution: rawAssessment.scoreDistribution || [],
+            }
+          : null,
+      );
     } catch (error) {
       console.error('Failed to load reports:', error);
     } finally {
@@ -346,6 +357,21 @@ export default function ReportsPage() {
                     </Card>
                   ))}
                 </div>
+              </div>
+            )}
+
+            {/* Source Effectiveness */}
+            {sourceMetrics.length > 0 && (
+              <div className="space-y-4">
+                <h2 className="text-2xl font-bold text-gray-900">
+                  Efetividade por Origem
+                </h2>
+                <SourceEffectiveness
+                  data={sourceMetrics.map((source, index) => ({
+                    ...source,
+                    color: ['#141042', '#3B82F6', '#10B981', '#F59E0B', '#8B5CF6', '#EC4899'][index % 6],
+                  }))}
+                />
               </div>
             )}
 

@@ -53,6 +53,36 @@ interface SystemMetrics {
   };
 }
 
+interface BIMetrics {
+  globalStats: {
+    totalOrganizations: number;
+    avgConversionRate: string;
+    avgTimeToHire: string;
+    totalAssessmentsCompleted: number;
+    avgSatisfactionScore: string;
+  };
+  recruitmentFunnel: Array<{
+    job_title: string;
+    total_applications: number;
+    hired: number;
+    conversion_rate: number;
+    avg_days_to_hire: number;
+  }>;
+  recruiterPerformance: Array<{
+    recruiter_name: string;
+    total_jobs: number;
+    hired_count: number;
+    hire_rate: number;
+    avg_time_to_hire: number;
+  }>;
+  topCandidates: Array<{
+    candidate_name: string;
+    total_applications: number;
+    active_applications: number;
+    hired_count: number;
+  }>;
+}
+
 export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState<DashboardStats>({
@@ -88,16 +118,27 @@ export default function AdminDashboard() {
       info: 0,
     },
   });
+  const [biMetrics, setBiMetrics] = useState<BIMetrics | null>(null);
+  const [loadingBI, setLoadingBI] = useState(false);
 
   useEffect(() => {
     fetchDashboardData();
+    fetchBIMetrics();
     
     // Update metrics every 5 seconds
     const metricsInterval = setInterval(() => {
       fetchSystemMetrics();
     }, 5000);
 
-    return () => clearInterval(metricsInterval);
+    // Update BI metrics every 30 seconds
+    const biInterval = setInterval(() => {
+      fetchBIMetrics();
+    }, 30000);
+
+    return () => {
+      clearInterval(metricsInterval);
+      clearInterval(biInterval);
+    };
   }, []);
 
   async function fetchDashboardData() {
@@ -247,6 +288,22 @@ export default function AdminDashboard() {
 
     } catch (error) {
       console.error('Error fetching system metrics:', error);
+    }
+  }
+
+  async function fetchBIMetrics() {
+    try {
+      setLoadingBI(true);
+      const response = await fetch('/api/admin/metrics/bi');
+      const data = await response.json();
+
+      if (data.success && data.data) {
+        setBiMetrics(data.data);
+      }
+    } catch (error) {
+      console.error('Error fetching BI metrics:', error);
+    } finally {
+      setLoadingBI(false);
     }
   }
 
@@ -555,6 +612,159 @@ export default function AdminDashboard() {
           </div>
         </div>
       </div>
+
+      {/* Business Intelligence Section */}
+      {biMetrics && (
+        <div className="space-y-4 sm:space-y-6">
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg sm:text-xl font-bold text-[#141042]">Indicadores de Negócio</h2>
+            {loadingBI && (
+              <div className="flex items-center text-[#666666] text-sm">
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Atualizando...
+              </div>
+            )}
+          </div>
+
+          {/* Global KPIs */}
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-3 sm:gap-4">
+            <div className="bg-white border border-[#E5E5DC] rounded-xl p-4">
+              <div className="flex items-center justify-between mb-2">
+                <Building2 className="w-5 h-5 text-[#8B5CF6]" />
+                <TrendingUp className="w-4 h-4 text-[#10B981]" />
+              </div>
+              <p className="text-2xl font-bold text-[#141042]">{biMetrics.globalStats.totalOrganizations}</p>
+              <p className="text-xs text-[#666666] mt-1">Organizações Ativas</p>
+            </div>
+
+            <div className="bg-white border border-[#E5E5DC] rounded-xl p-4">
+              <div className="flex items-center justify-between mb-2">
+                <TrendingUp className="w-5 h-5 text-[#10B981]" />
+              </div>
+              <p className="text-2xl font-bold text-[#141042]">{biMetrics.globalStats.avgConversionRate}%</p>
+              <p className="text-xs text-[#666666] mt-1">Taxa de Conversão</p>
+            </div>
+
+            <div className="bg-white border border-[#E5E5DC] rounded-xl p-4">
+              <div className="flex items-center justify-between mb-2">
+                <Clock className="w-5 h-5 text-[#3B82F6]" />
+              </div>
+              <p className="text-2xl font-bold text-[#141042]">{biMetrics.globalStats.avgTimeToHire}</p>
+              <p className="text-xs text-[#666666] mt-1">Dias p/ Contratar</p>
+            </div>
+
+            <div className="bg-white border border-[#E5E5DC] rounded-xl p-4">
+              <div className="flex items-center justify-between mb-2">
+                <Activity className="w-5 h-5 text-[#F59E0B]" />
+              </div>
+              <p className="text-2xl font-bold text-[#141042]">{biMetrics.globalStats.totalAssessmentsCompleted}</p>
+              <p className="text-xs text-[#666666] mt-1">Assessments Completos</p>
+            </div>
+
+            <div className="bg-white border border-[#E5E5DC] rounded-xl p-4">
+              <div className="flex items-center justify-between mb-2">
+                <CheckCircle className="w-5 h-5 text-[#10B981]" />
+              </div>
+              <p className="text-2xl font-bold text-[#141042]">{biMetrics.globalStats.avgSatisfactionScore}</p>
+              <p className="text-xs text-[#666666] mt-1">NPS Candidatos</p>
+            </div>
+          </div>
+
+          {/* Recruitment Funnel & Recruiter Performance */}
+          <div className="grid lg:grid-cols-2 gap-4 sm:gap-6">
+            {/* Recruitment Funnel */}
+            <div className="bg-white border border-[#E5E5DC] rounded-xl p-4 sm:p-6">
+              <h3 className="text-base sm:text-lg font-semibold text-[#141042] mb-4">Funil de Recrutamento</h3>
+              <div className="space-y-3">
+                {biMetrics.recruitmentFunnel.length === 0 ? (
+                  <p className="text-[#666666] text-sm text-center py-8">Nenhum dado disponível</p>
+                ) : (
+                  biMetrics.recruitmentFunnel.map((job, i) => (
+                    <div key={i} className="bg-[#FAFAF8] rounded-lg p-4 hover:bg-[#F5F5F0] transition-colors">
+                      <div className="flex items-start justify-between mb-2">
+                        <div className="flex-1 min-w-0">
+                          <p className="text-[#141042] font-medium text-sm truncate">{job.job_title}</p>
+                          <p className="text-[#666666] text-xs mt-1">
+                            {job.total_applications} candidaturas • {job.hired} contratados
+                          </p>
+                        </div>
+                        <div className="text-right ml-4">
+                          <p className="text-[#10B981] font-semibold text-sm">{job.conversion_rate?.toFixed(1) || '0.0'}%</p>
+                          <p className="text-[#999999] text-xs">{job.avg_days_to_hire?.toFixed(0) || '0'} dias</p>
+                        </div>
+                      </div>
+                      <div className="h-1.5 bg-[#E5E5DC] rounded-full overflow-hidden">
+                        <div 
+                          className="h-full bg-[#10B981] rounded-full transition-all duration-500"
+                          style={{ width: `${job.conversion_rate || 0}%` }}
+                        />
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+
+            {/* Recruiter Performance */}
+            <div className="bg-white border border-[#E5E5DC] rounded-xl p-4 sm:p-6">
+              <h3 className="text-base sm:text-lg font-semibold text-[#141042] mb-4">Performance dos Recrutadores</h3>
+              <div className="space-y-3">
+                {biMetrics.recruiterPerformance.length === 0 ? (
+                  <p className="text-[#666666] text-sm text-center py-8">Nenhum dado disponível</p>
+                ) : (
+                  biMetrics.recruiterPerformance.map((recruiter, i) => (
+                    <div key={i} className="flex items-center justify-between p-3 bg-[#FAFAF8] rounded-lg hover:bg-[#F5F5F0] transition-colors">
+                      <div className="flex items-center space-x-3 min-w-0 flex-1">
+                        <div className="w-10 h-10 bg-[#8B5CF6] rounded-xl flex items-center justify-center text-white font-semibold text-sm shrink-0">
+                          {recruiter.recruiter_name?.charAt(0) || '?'}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-[#141042] font-medium text-sm truncate">{recruiter.recruiter_name || 'Sem nome'}</p>
+                          <p className="text-[#666666] text-xs">
+                            {recruiter.total_jobs} vagas • {recruiter.hired_count} contratações
+                          </p>
+                        </div>
+                      </div>
+                      <div className="text-right ml-4 shrink-0">
+                        <p className="text-[#141042] font-semibold text-sm">{recruiter.hire_rate?.toFixed(1) || '0.0'}%</p>
+                        <p className="text-[#999999] text-xs">{recruiter.avg_time_to_hire?.toFixed(0) || '0'}d</p>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Top Candidates */}
+          <div className="bg-white border border-[#E5E5DC] rounded-xl p-4 sm:p-6">
+            <h3 className="text-base sm:text-lg font-semibold text-[#141042] mb-4">Candidatos Mais Ativos</h3>
+            <div className="grid md:grid-cols-2 lg:grid-cols-5 gap-3">
+              {biMetrics.topCandidates.length === 0 ? (
+                <p className="text-[#666666] text-sm text-center py-8 col-span-full">Nenhum dado disponível</p>
+              ) : (
+                biMetrics.topCandidates.map((candidate, i) => (
+                  <div key={i} className="bg-[#FAFAF8] rounded-lg p-4 text-center hover:bg-[#F5F5F0] transition-colors">
+                    <div className="w-12 h-12 bg-[#06B6D4] rounded-xl flex items-center justify-center text-white font-bold text-lg mx-auto mb-2">
+                      {candidate.candidate_name?.charAt(0) || '?'}
+                    </div>
+                    <p className="text-[#141042] font-medium text-sm truncate mb-1">{candidate.candidate_name || 'Sem nome'}</p>
+                    <div className="flex items-center justify-center space-x-2 text-xs text-[#666666]">
+                      <span>{candidate.total_applications} apps</span>
+                      {candidate.hired_count > 0 && (
+                        <>
+                          <span>•</span>
+                          <span className="text-[#10B981] font-medium">{candidate.hired_count} contratado(s)</span>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="grid lg:grid-cols-2 gap-4 sm:gap-6">
         {/* Recent Activity */}

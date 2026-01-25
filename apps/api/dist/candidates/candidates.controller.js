@@ -42,8 +42,14 @@ let CandidatesController = class CandidatesController {
     createNote(candidateId, dto, orgId, user) {
         return this.candidatesService.createNote(candidateId, dto, orgId, user.sub);
     }
-    getNotes(candidateId, orgId) {
-        return this.candidatesService.getNotes(candidateId, orgId);
+    getNotes(candidateId, orgId, context) {
+        return this.candidatesService.getNotes(candidateId, orgId, context);
+    }
+    updateNote(candidateId, noteId, dto, orgId, user) {
+        return this.candidatesService.updateNote(candidateId, noteId, dto, orgId, user.sub);
+    }
+    deleteNote(candidateId, noteId, orgId, user) {
+        return this.candidatesService.deleteNote(candidateId, noteId, orgId, user.sub);
     }
 };
 exports.CandidatesController = CandidatesController;
@@ -111,12 +117,37 @@ __decorate([
 __decorate([
     (0, common_1.Get)(':id/notes'),
     (0, swagger_1.ApiOperation)({ summary: 'Get all notes for a candidate' }),
+    (0, swagger_1.ApiQuery)({ name: 'context', required: false, description: 'Filter by context (profile, resume, assessments, interview, general)' }),
     __param(0, (0, common_1.Param)('id')),
     __param(1, (0, org_decorator_1.OrgId)()),
+    __param(2, (0, common_1.Query)('context')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, String]),
+    __metadata("design:paramtypes", [String, String, String]),
     __metadata("design:returntype", void 0)
 ], CandidatesController.prototype, "getNotes", null);
+__decorate([
+    (0, common_1.Patch)(':candidateId/notes/:noteId'),
+    (0, swagger_1.ApiOperation)({ summary: 'Update a specific note' }),
+    __param(0, (0, common_1.Param)('candidateId')),
+    __param(1, (0, common_1.Param)('noteId')),
+    __param(2, (0, common_1.Body)()),
+    __param(3, (0, org_decorator_1.OrgId)()),
+    __param(4, (0, current_user_decorator_1.CurrentUser)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String, dto_1.UpdateCandidateNoteDto, String, Object]),
+    __metadata("design:returntype", void 0)
+], CandidatesController.prototype, "updateNote", null);
+__decorate([
+    (0, common_1.Delete)(':candidateId/notes/:noteId'),
+    (0, swagger_1.ApiOperation)({ summary: 'Delete a specific note' }),
+    __param(0, (0, common_1.Param)('candidateId')),
+    __param(1, (0, common_1.Param)('noteId')),
+    __param(2, (0, org_decorator_1.OrgId)()),
+    __param(3, (0, current_user_decorator_1.CurrentUser)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String, String, Object]),
+    __metadata("design:returntype", void 0)
+], CandidatesController.prototype, "deleteNote", null);
 exports.CandidatesController = CandidatesController = __decorate([
     (0, swagger_1.ApiTags)('Candidates'),
     (0, swagger_1.ApiBearerAuth)(),

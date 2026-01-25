@@ -153,9 +153,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <Image 
               src="https://fjudsjzfnysaztcwlwgm.supabase.co/storage/v1/object/public/LOGOS/LOGO4.png"
               alt="TalentForge"
-              width={140}
-              height={40}
-              className="opacity-60 hover:opacity-100 transition-opacity"
+              width={160}
+              height={64}
+              className="h-16 w-auto opacity-60 hover:opacity-100 transition-opacity"
               priority
             />
           </div>

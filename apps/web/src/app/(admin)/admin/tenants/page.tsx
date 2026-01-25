@@ -36,24 +36,31 @@ export default function TenantsPage() {
 
   async function fetchTenants() {
     try {
+      // Agora busca direto do Supabase organizations (consolidado com companies)
       const supabase = createClient();
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (!session?.access_token) {
-        console.error('No session');
+      const { data, error } = await supabase
+        .from('organizations')
+        .select('*')
+        .order('name', { ascending: true });
+
+      if (error) {
+        console.error('Error fetching tenants:', error);
         return;
       }
 
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/tenants`, {
-        headers: {
-          'Authorization': `Bearer ${session.access_token}`,
-        },
-      });
-      
-      if (res.ok) {
-        const data = await res.json();
-        setTenants(data);
-      }
+      // Mapear organizations para formato Tenant
+      const mappedTenants = (data || []).map(org => ({
+        id: org.id,
+        name: org.name,
+        slug: org.slug || org.name.toLowerCase().replace(/\s+/g, '-'),
+        status: org.status || 'active',
+        plan_id: org.plan_id,
+        settings: {},
+        created_at: org.created_at,
+        updated_at: org.updated_at,
+      }));
+
+      setTenants(mappedTenants);
     } catch (error) {
       console.error('Error fetching tenants:', error);
     } finally {
@@ -66,25 +73,24 @@ export default function TenantsPage() {
     setCreating(true);
     
     try {
+      // Insere diretamente na tabela organizations (consolidada)
       const supabase = createClient();
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (!session?.access_token) return;
+      const { error } = await supabase
+        .from('organizations')
+        .insert([{
+          name: newTenant.name,
+          // slug é gerado automaticamente pela coluna GENERATED
+          status: 'active',
+        }]);
 
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/tenants`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${session.access_token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(newTenant),
-      });
-      
-      if (res.ok) {
-        setShowCreateModal(false);
-        setNewTenant({ name: '', slug: '' });
-        fetchTenants();
+      if (error) {
+        console.error('Error creating tenant:', error);
+        return;
       }
+
+      setShowCreateModal(false);
+      setNewTenant({ name: '', slug: '' });
+      fetchTenants();
     } catch (error) {
       console.error('Error creating tenant:', error);
     } finally {

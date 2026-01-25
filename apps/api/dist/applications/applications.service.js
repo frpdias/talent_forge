@@ -157,6 +157,29 @@ let ApplicationsService = class ApplicationsService {
         });
         return this.findOne(id, orgId);
     }
+    async updateStatus(id, dto, orgId, userId) {
+        const supabase = this.supabaseService.getAdminClient();
+        const current = await this.findOne(id, orgId);
+        const { error } = await supabase
+            .from('applications')
+            .update({
+            status: dto.status,
+            updated_at: new Date().toISOString(),
+        })
+            .eq('id', id);
+        if (error) {
+            throw error;
+        }
+        await supabase.from('application_events').insert({
+            application_id: id,
+            from_stage_id: current.currentStageId,
+            to_stage_id: current.currentStageId,
+            status: dto.status,
+            note: dto.note || `Status alterado para: ${dto.status}`,
+            actor_id: userId,
+        });
+        return this.findOne(id, orgId);
+    }
     async getEvents(id, orgId) {
         const supabase = this.supabaseService.getAdminClient();
         await this.findOne(id, orgId);

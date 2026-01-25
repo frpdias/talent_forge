@@ -38,6 +38,11 @@ export class CreateCandidateDto {
   @IsString()
   linkedinUrl?: string;
 
+  @ApiPropertyOptional({ description: 'Candidate source channel' })
+  @IsOptional()
+  @IsString()
+  source?: string;
+
   @ApiPropertyOptional({ description: 'Salary expectation' })
   @IsOptional()
   @IsNumber()
@@ -89,6 +94,11 @@ export class UpdateCandidateDto {
   @IsString()
   linkedinUrl?: string;
 
+  @ApiPropertyOptional({ description: 'Candidate source channel' })
+  @IsOptional()
+  @IsString()
+  source?: string;
+
   @ApiPropertyOptional({ description: 'Salary expectation' })
   @IsOptional()
   @IsNumber()
@@ -109,8 +119,40 @@ export class UpdateCandidateDto {
   tags?: string[];
 }
 
+export enum NoteContext {
+  PROFILE = 'profile',
+  RESUME = 'resume',
+  ASSESSMENTS = 'assessments',
+  INTERVIEW = 'interview',
+  GENERAL = 'general',
+}
+
 export class CreateCandidateNoteDto {
   @ApiProperty({ description: 'Note content' })
   @IsString()
   note: string;
+
+  @ApiPropertyOptional({
+    description: 'Context where the note was created',
+    enum: NoteContext,
+    default: 'general',
+  })
+  @IsOptional()
+  @IsString()
+  context?: string;
+}
+
+export class UpdateCandidateNoteDto {
+  @ApiPropertyOptional({ description: 'Note content' })
+  @IsOptional()
+  @IsString()
+  note?: string;
+
+  @ApiPropertyOptional({
+    description: 'Context where the note was updated',
+    enum: NoteContext,
+  })
+  @IsOptional()
+  @IsString()
+  context?: string;
 }

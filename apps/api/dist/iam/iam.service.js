@@ -23,13 +23,13 @@ let IamService = class IamService {
     async listTenants(userId) {
         const supabase = this.supabaseService.getAdminClient();
         const { data, error } = await supabase
-            .from('tenant_users')
-            .select('role, status, tenants(id, name, status, plan_id, created_at, updated_at)')
+            .from('org_members')
+            .select('role, status, organizations!org_members_org_id_fkey(id, name, status, plan_id, created_at, updated_at)')
             .eq('user_id', userId);
         if (error)
             throw error;
         return (data || []).map((row) => ({
-            tenant: row.tenants,
+            tenant: row.organizations,
             role: row.role,
             status: row.status,
         }));
@@ -37,19 +37,20 @@ let IamService = class IamService {
     async createTenant(dto, userId) {
         const supabase = this.supabaseService.getAdminClient();
         const { data: tenant, error } = await supabase
-            .from('tenants')
+            .from('organizations')
             .insert({
             name: dto.name,
+            slug: dto.name.toLowerCase().replace(/\s+/g, '-'),
             plan_id: dto.planId || null,
         })
             .select()
             .single();
         if (error)
             throw error;
-        const { error: memberError } = await supabase.from('tenant_users').insert({
-            tenant_id: tenant.id,
+        const { error: memberError } = await supabase.from('org_members').insert({
+            org_id: tenant.id,
             user_id: userId,
-            role: 'owner',
+            role: 'admin',
             status: 'active',
         });
         if (memberError)
@@ -59,16 +60,16 @@ let IamService = class IamService {
     async getTenant(tenantId, userId) {
         const supabase = this.supabaseService.getAdminClient();
         const { data: membership } = await supabase
-            .from('tenant_users')
+            .from('org_members')
             .select('role')
-            .eq('tenant_id', tenantId)
+            .eq('org_id', tenantId)
             .eq('user_id', userId)
             .maybeSingle();
         if (!membership) {
             throw new common_1.NotFoundException('Tenant not found or access denied');
         }
         const { data: tenant, error } = await supabase
-            .from('tenants')
+            .from('organizations')
             .select('*')
             .eq('id', tenantId)
             .single();
@@ -79,18 +80,18 @@ let IamService = class IamService {
     async addTenantUser(tenantId, dto, userId) {
         const supabase = this.supabaseService.getAdminClient();
         const { data: membership } = await supabase
-            .from('tenant_users')
+            .from('org_members')
             .select('role')
-            .eq('tenant_id', tenantId)
+            .eq('org_id', tenantId)
             .eq('user_id', userId)
             .maybeSingle();
-        if (!membership || !['owner', 'admin'].includes(membership.role)) {
+        if (!membership || !['admin', 'manager'].includes(membership.role)) {
             throw new common_1.ForbiddenException('Insufficient permissions');
         }
         const { data, error } = await supabase
-            .from('tenant_users')
+            .from('org_members')
             .upsert({
-            tenant_id: tenantId,
+            org_id: tenantId,
             user_id: dto.userId,
             role: dto.role || 'member',
             status: 'active',
@@ -104,21 +105,21 @@ let IamService = class IamService {
     async updateTenantUser(tenantId, targetUserId, dto, userId) {
         const supabase = this.supabaseService.getAdminClient();
         const { data: membership } = await supabase
-            .from('tenant_users')
+            .from('org_members')
             .select('role')
-            .eq('tenant_id', tenantId)
+            .eq('org_id', tenantId)
             .eq('user_id', userId)
             .maybeSingle();
-        if (!membership || !['owner', 'admin'].includes(membership.role)) {
+        if (!membership || !['admin', 'manager'].includes(membership.role)) {
             throw new common_1.ForbiddenException('Insufficient permissions');
         }
         const { data, error } = await supabase
-            .from('tenant_users')
+            .from('org_members')
             .update({
             role: dto.role,
             status: dto.status,
         })
-            .eq('tenant_id', tenantId)
+            .eq('org_id', tenantId)
             .eq('user_id', targetUserId)
             .select()
             .single();

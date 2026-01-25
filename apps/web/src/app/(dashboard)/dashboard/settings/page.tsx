@@ -66,11 +66,12 @@ export default function SettingsPage() {
           .maybeSingle();
 
         if (membership?.organizations) {
+          const org = membership.organizations as { name?: string; description?: string; website?: string; industry?: string };
           setOrgData({
-            name: membership.organizations.name || '',
-            description: membership.organizations.description || '',
-            website: membership.organizations.website || '',
-            industry: membership.organizations.industry || '',
+            name: org.name || '',
+            description: org.description || '',
+            website: org.website || '',
+            industry: org.industry || '',
           });
         }
       }

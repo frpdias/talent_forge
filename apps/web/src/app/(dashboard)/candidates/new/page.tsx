@@ -24,6 +24,7 @@ export default function NewCandidatePage() {
     phone: '',
     location: '',
     headline: '',
+    source: '',
     resumeUrl: '',
     linkedinUrl: '',
     tags: [] as string[],
@@ -53,7 +54,18 @@ export default function NewCandidatePage() {
       setLoading(true);
       setError('');
 
-      await candidatesApi.create(form, session.access_token, currentOrg.id);
+      const payload = {
+        fullName: form.name,
+        email: form.email,
+        phone: form.phone,
+        location: form.location,
+        currentTitle: form.headline,
+        linkedinUrl: form.linkedinUrl,
+        source: form.source,
+        tags: form.tags,
+      };
+
+      await candidatesApi.create(payload, session.access_token, currentOrg.id);
       router.push('/candidates');
     } catch (err: any) {
       setError(err.message || 'Erro ao criar candidato');
@@ -133,6 +145,14 @@ export default function NewCandidatePage() {
                   value={form.headline}
                   onChange={handleChange}
                   placeholder="Desenvolvedor Full Stack na Empresa XYZ"
+                />
+
+                <Input
+                  label="Origem do Candidato"
+                  name="source"
+                  value={form.source}
+                  onChange={handleChange}
+                  placeholder="LinkedIn, Indicação, Site..."
                 />
               </div>
 

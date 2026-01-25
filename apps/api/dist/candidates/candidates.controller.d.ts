@@ -1,5 +1,5 @@
 import { CandidatesService } from './candidates.service';
-import { CreateCandidateDto, UpdateCandidateDto, CreateCandidateNoteDto } from './dto';
+import { CreateCandidateDto, UpdateCandidateDto, CreateCandidateNoteDto, UpdateCandidateNoteDto } from './dto';
 import type { JwtPayload } from '../auth/auth.service';
 export declare class CandidatesController {
     private candidatesService;
@@ -13,6 +13,7 @@ export declare class CandidatesController {
         location: any;
         currentTitle: any;
         linkedinUrl: any;
+        source: any;
         salaryExpectation: any;
         availabilityDate: any;
         tags: any;
@@ -30,6 +31,7 @@ export declare class CandidatesController {
         location: any;
         currentTitle: any;
         linkedinUrl: any;
+        source: any;
         salaryExpectation: any;
         availabilityDate: any;
         tags: any;
@@ -48,6 +50,7 @@ export declare class CandidatesController {
         location: any;
         currentTitle: any;
         linkedinUrl: any;
+        source: any;
         salaryExpectation: any;
         availabilityDate: any;
         tags: any;
@@ -64,6 +67,7 @@ export declare class CandidatesController {
         location: any;
         currentTitle: any;
         linkedinUrl: any;
+        source: any;
         salaryExpectation: any;
         availabilityDate: any;
         tags: any;
@@ -79,13 +83,31 @@ export declare class CandidatesController {
         candidateId: any;
         authorId: any;
         note: any;
+        context: any;
         createdAt: any;
     }>;
-    getNotes(candidateId: string, orgId: string): Promise<{
+    getNotes(candidateId: string, orgId: string, context?: string): Promise<{
+        id: any;
+        candidateId: any;
+        authorId: any;
+        authorName: any;
+        authorEmail: any;
+        note: any;
+        context: any;
+        createdAt: any;
+        updatedAt: any;
+    }[]>;
+    updateNote(candidateId: string, noteId: string, dto: UpdateCandidateNoteDto, orgId: string, user: JwtPayload): Promise<{
         id: any;
         candidateId: any;
         authorId: any;
         note: any;
+        context: any;
         createdAt: any;
-    }[]>;
+        updatedAt: any;
+    }>;
+    deleteNote(candidateId: string, noteId: string, orgId: string, user: JwtPayload): Promise<{
+        success: boolean;
+        message: string;
+    }>;
 }

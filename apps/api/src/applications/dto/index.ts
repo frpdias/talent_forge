@@ -33,3 +33,21 @@ export class UpdateApplicationStageDto {
   @IsString()
   note?: string;
 }
+
+export class UpdateApplicationStatusDto {
+  @ApiProperty({
+    description: 'New application status',
+    enum: ApplicationStatus,
+    example: 'in_process',
+  })
+  @IsEnum(ApplicationStatus)
+  status: ApplicationStatus;
+
+  @ApiPropertyOptional({
+    description: 'Optional note about the status change',
+    example: 'Candidate passed initial screening',
+  })
+  @IsOptional()
+  @IsString()
+  note?: string;
+}

@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Building, Plus, Search, Edit2, Trash2, Save, X, Building2, Mail, Phone, Globe, MapPin, Users, Calendar, CheckCircle, AlertCircle } from 'lucide-react';
+import OrganizationDashboard from '@/components/admin/OrganizationDashboard';
 
 interface Company {
   id: string;
@@ -38,6 +39,7 @@ export default function CompaniesPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [expandedCompanyId, setExpandedCompanyId] = useState<string | null>(null);
 
   const emptyForm: FormData = {
     name: '',
@@ -465,58 +467,77 @@ export default function CompaniesPage() {
                 </thead>
                 <tbody className="divide-y divide-[#E5E5DC]">
                   {filteredCompanies.map((company) => (
-                    <tr key={company.id} className="hover:bg-[#FAFAF8] transition-colors">
-                      <td className="px-6 py-4">
-                        <div>
-                          <div className="font-semibold text-[#141042]">{company.name}</div>
-                          {company.industry && (
-                            <div className="text-sm text-[#666666]">{company.industry}</div>
-                          )}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 text-sm text-[#666666]">
-                        {company.cnpj}
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="text-sm">
-                          <div className="text-[#666666]">{company.email}</div>
-                          {company.phone && (
-                            <div className="text-[#999]">{company.phone}</div>
-                          )}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
-                          company.size === 'small' ? 'bg-[#3B82F6]/10 text-[#3B82F6]' :
-                          company.size === 'medium' ? 'bg-[#10B981]/10 text-[#10B981]' :
-                          company.size === 'large' ? 'bg-[#F59E0B]/10 text-[#F59E0B]' :
-                          'bg-[#8B5CF6]/10 text-[#8B5CF6]'
-                        }`}>
-                          {company.size === 'small' && 'Pequena'}
-                          {company.size === 'medium' && 'Média'}
-                          {company.size === 'large' && 'Grande'}
-                          {company.size === 'enterprise' && 'Enterprise'}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="flex items-center justify-end space-x-2">
-                          <button
-                            onClick={() => handleEdit(company)}
-                            className="p-2 text-[#3B82F6] hover:bg-[#3B82F6]/10 rounded-lg transition-colors"
-                            title="Editar"
-                          >
-                            <Edit2 className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={() => handleDelete(company.id)}
-                            className="p-2 text-[#EF4444] hover:bg-[#EF4444]/10 rounded-lg transition-colors"
-                            title="Excluir"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
+                    <React.Fragment key={company.id}>
+                      <tr className="hover:bg-[#FAFAF8] transition-colors">
+                        <td className="px-6 py-4">
+                          <div>
+                            <button
+                              onClick={() => setExpandedCompanyId(expandedCompanyId === company.id ? null : company.id)}
+                              className="font-semibold text-[#141042] hover:text-[#3B82F6] transition-colors text-left"
+                            >
+                              {company.name}
+                            </button>
+                            {company.industry && (
+                              <div className="text-sm text-[#666666]">{company.industry}</div>
+                            )}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 text-sm text-[#666666]">
+                          {company.cnpj}
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="text-sm">
+                            <div className="text-[#666666]">{company.email}</div>
+                            {company.phone && (
+                              <div className="text-[#999]">{company.phone}</div>
+                            )}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
+                            company.size === 'small' ? 'bg-[#3B82F6]/10 text-[#3B82F6]' :
+                            company.size === 'medium' ? 'bg-[#10B981]/10 text-[#10B981]' :
+                            company.size === 'large' ? 'bg-[#F59E0B]/10 text-[#F59E0B]' :
+                            'bg-[#8B5CF6]/10 text-[#8B5CF6]'
+                          }`}>
+                            {company.size === 'small' && 'Pequena'}
+                            {company.size === 'medium' && 'Média'}
+                            {company.size === 'large' && 'Grande'}
+                            {company.size === 'enterprise' && 'Enterprise'}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="flex items-center justify-end space-x-2">
+                            <button
+                              onClick={() => handleEdit(company)}
+                              className="p-2 text-[#3B82F6] hover:bg-[#3B82F6]/10 rounded-lg transition-colors"
+                              title="Editar"
+                            >
+                              <Edit2 className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => handleDelete(company.id)}
+                              className="p-2 text-[#EF4444] hover:bg-[#EF4444]/10 rounded-lg transition-colors"
+                              title="Excluir"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                      {expandedCompanyId === company.id && (
+                        <tr>
+                          <td colSpan={5} className="p-0">
+                            <OrganizationDashboard
+                              companyId={company.id}
+                              companyName={company.name}
+                              isExpanded={true}
+                              onToggle={() => setExpandedCompanyId(null)}
+                            />
+                          </td>
+                        </tr>
+                      )}
+                    </React.Fragment>
                   ))}
                 </tbody>
               </table>

@@ -4,7 +4,7 @@ import {
   ConflictException,
 } from '@nestjs/common';
 import { SupabaseService } from '../supabase/supabase.service';
-import { CreateApplicationDto, UpdateApplicationStageDto } from './dto';
+import { CreateApplicationDto, UpdateApplicationStageDto, UpdateApplicationStatusDto } from './dto';
 
 @Injectable()
 export class ApplicationsService {
@@ -197,6 +197,42 @@ export class ApplicationsService {
       to_stage_id: dto.toStageId,
       status: dto.status || current.status,
       note: dto.note,
+      actor_id: userId,
+    });
+
+    return this.findOne(id, orgId);
+  }
+
+  async updateStatus(
+    id: string,
+    dto: UpdateApplicationStatusDto,
+    orgId: string,
+    userId: string,
+  ) {
+    const supabase = this.supabaseService.getAdminClient();
+
+    // Get current application
+    const current = await this.findOne(id, orgId);
+
+    const { error } = await supabase
+      .from('applications')
+      .update({
+        status: dto.status,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', id);
+
+    if (error) {
+      throw error;
+    }
+
+    // Create event
+    await supabase.from('application_events').insert({
+      application_id: id,
+      from_stage_id: current.currentStageId,
+      to_stage_id: current.currentStageId, // Same stage, just status change
+      status: dto.status,
+      note: dto.note || `Status alterado para: ${dto.status}`,
       actor_id: userId,
     });
 

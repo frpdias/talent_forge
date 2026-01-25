@@ -1,4 +1,8 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://talent-forge-api.vercel.app';
+const API_URL =
+  process.env.NEXT_PUBLIC_API_URL ||
+  (process.env.NODE_ENV === 'development'
+    ? 'http://localhost:3001/api/v1'
+    : 'https://talent-forge-api.vercel.app');
 
 const DEFAULT_TIMEOUT_MS = 10_000;
 
@@ -142,6 +146,35 @@ export const candidatesApi = {
       token,
       orgId,
     }),
+  
+  // Notes with context
+  getNotes: (id: string, token: string, orgId: string, context?: string) => {
+    const query = context ? `?context=${context}` : '';
+    return apiFetch(`/candidates/${id}/notes${query}`, { token, orgId });
+  },
+  
+  createNote: (id: string, data: { note: string; context?: string }, token: string, orgId: string) =>
+    apiFetch(`/candidates/${id}/notes`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+      token,
+      orgId,
+    }),
+  
+  updateNote: (candidateId: string, noteId: string, data: { note?: string; context?: string }, token: string, orgId: string) =>
+    apiFetch(`/candidates/${candidateId}/notes/${noteId}`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+      token,
+      orgId,
+    }),
+  
+  deleteNote: (candidateId: string, noteId: string, token: string, orgId: string) =>
+    apiFetch(`/candidates/${candidateId}/notes/${noteId}`, {
+      method: 'DELETE',
+      token,
+      orgId,
+    }),
 };
 
 // Applications
@@ -164,6 +197,14 @@ export const applicationsApi = {
   
   updateStage: (id: string, data: { toStageId: string; status?: string; note?: string }, token: string, orgId: string) =>
     apiFetch(`/applications/${id}/stage`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+      token,
+      orgId,
+    }),
+
+  updateStatus: (id: string, data: { status: string; note?: string }, token: string, orgId: string) =>
+    apiFetch(`/applications/${id}/status`, {
       method: 'PATCH',
       body: JSON.stringify(data),
       token,

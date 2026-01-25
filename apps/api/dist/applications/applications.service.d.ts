@@ -1,5 +1,5 @@
 import { SupabaseService } from '../supabase/supabase.service';
-import { CreateApplicationDto, UpdateApplicationStageDto } from './dto';
+import { CreateApplicationDto, UpdateApplicationStageDto, UpdateApplicationStatusDto } from './dto';
 export declare class ApplicationsService {
     private supabaseService;
     constructor(supabaseService: SupabaseService);
@@ -91,6 +91,34 @@ export declare class ApplicationsService {
         } | null;
     }>;
     updateStage(id: string, dto: UpdateApplicationStageDto, orgId: string, userId: string): Promise<{
+        events: any;
+        id: any;
+        jobId: any;
+        candidateId: any;
+        currentStageId: any;
+        status: any;
+        score: any;
+        createdBy: any;
+        createdAt: any;
+        updatedAt: any;
+        candidate: {
+            id: any;
+            fullName: any;
+            email: any;
+            currentTitle: any;
+            linkedinUrl: any;
+        } | null;
+        job: {
+            id: any;
+            title: any;
+        } | null;
+        currentStage: {
+            id: any;
+            name: any;
+            position: any;
+        } | null;
+    }>;
+    updateStatus(id: string, dto: UpdateApplicationStatusDto, orgId: string, userId: string): Promise<{
         events: any;
         id: any;
         jobId: any;

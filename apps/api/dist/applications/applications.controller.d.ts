@@ -1,5 +1,5 @@
 import { ApplicationsService } from './applications.service';
-import { CreateApplicationDto, UpdateApplicationStageDto } from './dto';
+import { CreateApplicationDto, UpdateApplicationStageDto, UpdateApplicationStatusDto } from './dto';
 import type { JwtPayload } from '../auth/auth.service';
 export declare class ApplicationsController {
     private applicationsService;
@@ -107,6 +107,34 @@ export declare class ApplicationsController {
         } | null;
     }>;
     updateStage(id: string, dto: UpdateApplicationStageDto, orgId: string, user: JwtPayload): Promise<{
+        events: any;
+        id: any;
+        jobId: any;
+        candidateId: any;
+        currentStageId: any;
+        status: any;
+        score: any;
+        createdBy: any;
+        createdAt: any;
+        updatedAt: any;
+        candidate: {
+            id: any;
+            fullName: any;
+            email: any;
+            currentTitle: any;
+            linkedinUrl: any;
+        } | null;
+        job: {
+            id: any;
+            title: any;
+        } | null;
+        currentStage: {
+            id: any;
+            name: any;
+            position: any;
+        } | null;
+    }>;
+    updateStatus(id: string, dto: UpdateApplicationStatusDto, orgId: string, user: JwtPayload): Promise<{
         events: any;
         id: any;
         jobId: any;

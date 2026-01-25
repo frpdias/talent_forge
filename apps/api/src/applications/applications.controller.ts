@@ -17,7 +17,7 @@ import {
   ApiQuery,
 } from '@nestjs/swagger';
 import { ApplicationsService } from './applications.service';
-import { CreateApplicationDto, UpdateApplicationStageDto } from './dto';
+import { CreateApplicationDto, UpdateApplicationStageDto, UpdateApplicationStatusDto } from './dto';
 import { OrgGuard } from '../auth/guards/org.guard';
 import { OrgId } from '../auth/decorators/org.decorator';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
@@ -82,6 +82,17 @@ export class ApplicationsController {
     @CurrentUser() user: JwtPayload,
   ) {
     return this.applicationsService.updateStage(id, dto, orgId, user.sub);
+  }
+
+  @Patch(':id/status')
+  @ApiOperation({ summary: 'Update application status (applied, in_process, hired, rejected)' })
+  updateStatus(
+    @Param('id') id: string,
+    @Body() dto: UpdateApplicationStatusDto,
+    @OrgId() orgId: string,
+    @CurrentUser() user: JwtPayload,
+  ) {
+    return this.applicationsService.updateStatus(id, dto, orgId, user.sub);
   }
 
   @Get(':id/events')

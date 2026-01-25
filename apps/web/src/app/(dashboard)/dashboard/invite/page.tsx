@@ -52,13 +52,14 @@ export default function InvitePage() {
         .maybeSingle();
 
       if (membership?.organizations) {
-        setOrgName(membership.organizations.name || null);
+        const org = membership.organizations as { name?: string; org_type?: string; slug?: string; role?: string };
+        setOrgName(org.name || null);
         setCurrentOrg({
           id: membership.org_id,
-          name: membership.organizations.name,
-          orgType: membership.organizations.org_type,
-          slug: membership.organizations.slug,
-          role: membership.organizations.role,
+          name: org.name || '',
+          orgType: org.org_type || '',
+          slug: org.slug || '',
+          role: org.role || '',
         });
       }
 

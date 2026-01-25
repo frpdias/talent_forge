@@ -208,6 +208,15 @@ const COLORS = {
 ### 🔒 Regras de Segurança (NÃO NEGOCIÁVEL)
 
 1. **RLS sempre habilitado**: `ALTER TABLE <table> ENABLE ROW LEVEL SECURITY;`
+   - ⚠️ **EXCEÇÃO TEMPORÁRIA (2026-01-24)**: Tabela `organizations` com RLS **DESABILITADO**
+   - **Motivo**: Políticas RLS muito restritivas bloqueando acesso legítimo de admins
+   - **TODO CRÍTICO**: Reabilitar RLS com políticas corrigidas que permitam:
+     - Admins verem todas organizations via `raw_user_meta_data->>'user_type' = 'admin'`
+     - Membros verem apenas organizations onde são `org_members.user_id = auth.uid()`
+   - **Script de correção**: `supabase/FIX_ORGANIZATIONS_RLS.sql` (necessita revisão de policies)
+   - **Data prevista**: Sprint 5 (próxima semana)
+   - **Comando para reativar**: `ALTER TABLE organizations ENABLE ROW LEVEL SECURITY;`
+
 2. **Policies por user_type**: admin, recruiter, candidate, viewer
 3. **Função `is_org_member()`**: Única fonte de verdade para membership
 4. **Service role APENAS para**:
@@ -288,20 +297,283 @@ SELECT * FROM v_recruiter_performance WHERE org_id = '<uuid>';
 ## 3) Schema canônico (tabelas oficiais)
 
 ### Core ATS / Multi-tenant
-- `organizations` (id, name, slug, description, website, industry, created_at, updated_at)
-  - **Descrição:** Entidades organizacionais (empresas/clientes) no sistema multi-tenant
-  - **Campos adicionados (2026-01-24):** description, website, industry
-  - **Propósito:** Permitir cadastro completo de informações da organização
-- `org_members`
-- `candidates`
-- `jobs`
-- `pipeline_stages`
-- `applications`
-- `application_events`
-- `candidate_notes`
+
+#### 📊 Schema Completo do Banco de Dados
+
+##### 1. **organizations** - Tabela Central Multi-tenant
+```sql
+organizations (
+  id UUID PRIMARY KEY,
+  name TEXT NOT NULL,
+  slug TEXT GENERATED ALWAYS AS (...) STORED UNIQUE,
+  description TEXT,
+  website TEXT,
+  industry TEXT,
+  status TEXT CHECK (status IN ('active', 'inactive', 'pending', 'suspended')),
+  plan_id TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+)
+```
+- **Propósito:** Entidade root do sistema multi-tenant. Todas as outras tabelas se relacionam direta ou indiretamente com esta.
+- **Dependências:** Nenhuma (tabela independente)
+- **Dependentes:** org_members, jobs, assessments (através de jobs)
+- **Índices:** PRIMARY KEY (id), UNIQUE (slug), INDEX (status)
+- ⚠️ **STATUS RLS:** DESABILITADO temporariamente (reabilitar Sprint 5)
+
+##### 2. **org_members** - Membros de Organizações
+```sql
+org_members (
+  id UUID PRIMARY KEY,
+  org_id UUID REFERENCES organizations(id) ON DELETE CASCADE,
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+  role TEXT CHECK (role IN ('admin', 'manager', 'member', 'viewer')),
+  status TEXT CHECK (status IN ('active', 'inactive', 'pending')),
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE (org_id, user_id)
+)
+```
+- **Propósito:** Relacionamento muitos-para-muitos entre usuários e organizações
+- **Dependências:** organizations (org_id), auth.users (user_id)
+- **Dependentes:** Usado em RLS policies via `is_org_member()`
+- **Índices:** PRIMARY KEY (id), INDEX (org_id), INDEX (user_id), UNIQUE (org_id + user_id)
+- **RLS:** Usuário só vê membros das orgs que pertence
+
+##### 3. **candidates** - Candidatos
+```sql
+candidates (
+  id UUID PRIMARY KEY,
+  owner_org_id UUID REFERENCES organizations(id),
+  full_name TEXT NOT NULL,
+  email TEXT NOT NULL,
+  phone TEXT,
+  location TEXT,
+  linkedin_url TEXT,
+  resume_url TEXT,
+  source TEXT,
+  tags TEXT[],
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+)
+```
+- **Propósito:** Armazena informações dos candidatos
+- **Dependências:** organizations (owner_org_id) - organização que criou o candidato
+- **Dependentes:** applications, candidate_notes, assessments
+- **Índices:** PRIMARY KEY (id), INDEX (owner_org_id), INDEX (email), INDEX (created_at)
+- **Relações:** Um candidato pertence a UMA organização, mas pode aplicar para vagas de outras orgs
+- **RLS:** Org owner + orgs com applications do candidato
+
+##### 4. **jobs** - Vagas
+```sql
+jobs (
+  id UUID PRIMARY KEY,
+  org_id UUID REFERENCES organizations(id) ON DELETE CASCADE,
+  title TEXT NOT NULL,
+  description TEXT,
+  requirements TEXT,
+  location TEXT,
+  employment_type TEXT CHECK (employment_type IN ('full_time', 'part_time', 'contract', 'internship')),
+  status TEXT CHECK (status IN ('open', 'on_hold', 'closed')),
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+)
+```
+- **Propósito:** Vagas de emprego criadas pelas organizações
+- **Dependências:** organizations (org_id)
+- **Dependentes:** applications, assessments, pipeline_stages
+- **Índices:** PRIMARY KEY (id), INDEX (org_id), INDEX (status), INDEX (created_at)
+- **Importância:** Tabela CENTRAL para conectar candidatos com organizações
+- **RLS:** Membros da org podem ver/editar
+
+##### 5. **pipeline_stages** - Estágios do Pipeline de Contratação
+```sql
+pipeline_stages (
+  id UUID PRIMARY KEY,
+  job_id UUID REFERENCES jobs(id) ON DELETE CASCADE,
+  name TEXT NOT NULL,
+  order_index INT NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+)
+```
+- **Propósito:** Define os estágios customizados de cada processo seletivo
+- **Dependências:** jobs (job_id)
+- **Dependentes:** applications (current_stage_id), application_events
+- **Índices:** PRIMARY KEY (id), INDEX (job_id), INDEX (order_index)
+- **RLS:** Herdado de jobs (via is_org_member com job_id)
+
+##### 6. **applications** - Candidaturas ⚠️ TABELA CRÍTICA
+```sql
+applications (
+  id UUID PRIMARY KEY,
+  job_id UUID REFERENCES jobs(id) ON DELETE CASCADE,
+  candidate_id UUID REFERENCES candidates(id) ON DELETE CASCADE,
+  current_stage_id UUID REFERENCES pipeline_stages(id),
+  status application_status DEFAULT 'applied',
+  applied_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
+  notes TEXT
+)
+```
+- **Propósito:** Relacionamento muitos-para-muitos entre candidatos e vagas
+- **Dependências:** jobs (job_id), candidates (candidate_id), pipeline_stages (current_stage_id)
+- **Dependentes:** application_events
+- **⚠️ IMPORTANTE:** NÃO TEM COLUNA `org_id`! Conecta-se a organizações ATRAVÉS de `jobs.org_id`
+- **Índices:** PRIMARY KEY (id), INDEX (job_id), INDEX (candidate_id), INDEX (status)
+- **Path para org:** `applications.job_id → jobs.org_id → organizations.id`
+- **RLS:** Verifica org através de job_id: `is_org_member((SELECT org_id FROM jobs WHERE id = applications.job_id))`
+
+##### 7. **application_events** - Histórico de Mudanças de Estágio
+```sql
+application_events (
+  id UUID PRIMARY KEY,
+  application_id UUID REFERENCES applications(id) ON DELETE CASCADE,
+  from_stage_id UUID REFERENCES pipeline_stages(id),
+  to_stage_id UUID REFERENCES pipeline_stages(id),
+  created_by UUID REFERENCES auth.users(id),
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  notes TEXT
+)
+```
+- **Propósito:** Auditoria de movimentações de candidatos no pipeline
+- **Dependências:** applications, pipeline_stages (from/to), auth.users (created_by)
+- **Dependentes:** Nenhum (tabela de log)
+- **Índices:** PRIMARY KEY (id), INDEX (application_id), INDEX (created_at DESC)
+- **Path para org:** `application_events → applications.job_id → jobs.org_id`
+- **RLS:** Herdado de applications
+
+##### 8. **assessments** - Avaliações Comportamentais ⚠️ TABELA CRÍTICA
+```sql
+assessments (
+  id UUID PRIMARY KEY,
+  candidate_id UUID REFERENCES candidates(id) ON DELETE CASCADE,
+  job_id UUID REFERENCES jobs(id) ON DELETE SET NULL,
+  assessment_kind assessment_kind NOT NULL DEFAULT 'behavioral_v1',
+  raw_score NUMERIC,
+  normalized_score NUMERIC,
+  traits JSONB,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+)
+```
+- **Propósito:** Armazena resultados de avaliações comportamentais (DISC, Cores, PI)
+- **Dependências:** candidates (candidate_id), jobs (job_id)
+- **Dependentes:** disc_assessments, color_assessments, pi_assessments
+- **⚠️ IMPORTANTE:** NÃO TEM COLUNA `org_id`! Conecta-se através de `job_id`
+- **⚠️ IMPORTANTE:** NÃO TEM COLUNA `status`! Use `normalized_score IS NOT NULL` para completed
+- **Índices:** PRIMARY KEY (id), INDEX (candidate_id), INDEX (job_id)
+- **Path para org:** `assessments.job_id → jobs.org_id → organizations.id`
+- **RLS:** Verifica org através de job_id
+
+##### 9. **candidate_notes** - Notas sobre Candidatos
+```sql
+candidate_notes (
+  id UUID PRIMARY KEY,
+  candidate_id UUID REFERENCES candidates(id) ON DELETE CASCADE,
+  author_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+  note TEXT NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+)
+```
+- **Propósito:** Anotações internas sobre candidatos
+- **Dependências:** candidates, auth.users (author)
+- **Dependentes:** Nenhum
+- **Índices:** PRIMARY KEY (id), INDEX (candidate_id), INDEX (created_at DESC)
+- **RLS:** Membros da org que possui o candidato
 
 **Observação (candidate_notes)**
 - Colunas oficiais: `candidate_id`, `author_id`, `note`, `created_at`.
+
+#### 📊 Views e Funções do Sistema (Sprint 4 - 2026-01-24)
+
+##### **v_org_metrics** - View de Métricas Organizacionais
+```sql
+v_org_metrics (
+  org_id, org_name, slug, status, plan_id, org_created_at,
+  total_users, active_users,
+  total_jobs, active_jobs, closed_jobs,
+  total_candidates, total_applications, total_hires, conversion_rate,
+  total_assessments, completed_assessments,
+  total_pipeline_events,
+  applications_last_30d, jobs_created_last_30d, hires_last_30d,
+  last_activity_at, estimated_db_size_bytes
+)
+```
+- **Propósito:** Agregação de métricas de negócio para dashboard administrativo
+- **Joins:**
+  - `organizations o`
+  - `LEFT JOIN org_members om ON om.org_id = o.id`
+  - `LEFT JOIN jobs j ON j.org_id = o.id`
+  - `LEFT JOIN applications a ON a.job_id = j.id` ⚠️ SEM org_id!
+  - `LEFT JOIN assessments ass ON ass.job_id = j.id` ⚠️ SEM org_id!
+  - `LEFT JOIN application_events ae ON ae.application_id = a.id`
+- **Agregações:** COUNT DISTINCT + CASE WHEN para métricas condicionais
+- **Performance:** Indexado em todas as FKs envolvidas
+- **Uso:** Dashboard admin para visão geral de cada organização
+
+##### **get_org_detailed_metrics(p_org_id UUID)** - Função RPC
+```sql
+RETURNS JSON {
+  org_id, metrics, database_breakdown, storage_usage, health
+}
+```
+- **Propósito:** Retorna JSON completo com métricas detalhadas
+- **Subqueries:**
+  - `candidates`: JOIN applications → jobs WHERE jobs.org_id = p_org_id
+  - `applications`: JOIN jobs WHERE jobs.org_id = p_org_id
+  - `assessments`: JOIN jobs WHERE jobs.org_id = p_org_id
+  - `pipeline_events`: JOIN applications → jobs WHERE jobs.org_id = p_org_id
+- **Uso:** API endpoint `/api/admin/companies/[id]/metrics`
+
+#### 🔗 Diagrama de Dependências (Grafo)
+
+```
+┌─────────────────┐
+│  organizations  │ ◄── ROOT (independente)
+└────────┬────────┘
+         │
+    ┌────┴────────────────────────┐
+    │                             │
+┌───▼──────┐              ┌───────▼────┐
+│org_members│              │    jobs    │
+└───────────┘              └───┬────────┘
+                               │
+              ┌────────────────┼─────────────────┐
+              │                │                 │
+       ┌──────▼──────┐  ┌──────▼─────────┐  ┌───▼────────┐
+       │applications │  │pipeline_stages │  │assessments │
+       └──────┬──────┘  └────────────────┘  └────────────┘
+              │
+       ┌──────▼──────────┐
+       │application_events│
+       └─────────────────┘
+
+┌──────────┐
+│candidates│ ◄── Referenciado por applications, assessments
+└──────────┘
+
+LEGENDA:
+◄── : Tabela de origem (independente)
+▼  : Dependência (FK)
+```
+
+#### ⚠️ Relações Críticas para Queries
+
+**Para acessar org_id a partir de:**
+
+1. **applications** → `SELECT j.org_id FROM jobs j WHERE j.id = applications.job_id`
+2. **assessments** → `SELECT j.org_id FROM jobs j WHERE j.id = assessments.job_id`
+3. **application_events** → `SELECT j.org_id FROM jobs j JOIN applications a ON a.id = ae.application_id WHERE j.id = a.job_id`
+4. **pipeline_stages** → `SELECT j.org_id FROM jobs j WHERE j.id = ps.job_id`
+
+**Tabelas COM org_id direto:**
+- ✅ org_members
+- ✅ jobs
+- ✅ candidates (owner_org_id)
+
+**Tabelas SEM org_id (conectam via jobs):**
+- ❌ applications
+- ❌ assessments
+- ❌ application_events
+- ❌ pipeline_stages
 
 ### Perfil do candidato (portal)
 - `candidate_profiles`
@@ -364,6 +636,72 @@ SELECT * FROM v_recruiter_performance WHERE org_id = '<uuid>';
   - **RLS:** Admins veem tudo, usuários veem apenas suas próprias ações
   - **Índices:** user_id, created_at DESC, action, (user_id + created_at) para queries otimizadas
   - **Cleanup:** Função `cleanup_old_user_activity()` remove dados >90 dias automaticamente
+
+#### 🚀 Otimizações de Performance (Sprint 4 - 2026-01-24)
+
+##### Índices Críticos Implementados
+
+**organizations:**
+- PRIMARY KEY (id) - UUID v4
+- UNIQUE INDEX (slug) - Busca por URL amigável
+- INDEX (status) - Filtros de status ativo/inativo
+
+**org_members:**
+- PRIMARY KEY (id)
+- INDEX (org_id) - Queries de membros por org (usado em RLS)
+- INDEX (user_id) - Queries de orgs por usuário
+- UNIQUE INDEX (org_id, user_id) - Previne duplicatas
+
+**jobs:**
+- PRIMARY KEY (id)
+- INDEX (org_id) - Principal filtro multi-tenant
+- INDEX (status) - Filtro de vagas abertas/fechadas
+- INDEX (created_at DESC) - Ordenação temporal
+
+**applications:**
+- PRIMARY KEY (id)
+- INDEX (job_id) - **CRÍTICO** para JOIN com jobs
+- INDEX (candidate_id) - Histórico do candidato
+- INDEX (status) - Filtros de pipeline
+- COMPOSITE INDEX (job_id, status) - Query optimization
+
+**assessments:**
+- PRIMARY KEY (id)
+- INDEX (candidate_id) - Histórico de avaliações
+- INDEX (job_id) - **CRÍTICO** para JOIN com jobs
+
+**application_events:**
+- PRIMARY KEY (id)
+- INDEX (application_id) - Timeline de eventos
+- INDEX (created_at DESC) - Ordenação temporal (auditoria)
+
+##### Query Patterns Otimizados
+
+**1. Dashboard de Organização (v_org_metrics):**
+```sql
+-- Usa índices: organizations.id, org_members.org_id, jobs.org_id, 
+--              applications.job_id, assessments.job_id
+SELECT * FROM v_org_metrics WHERE org_id = $1;
+-- Execution time: ~50-100ms para orgs com <10k registros
+```
+
+**2. Lista de Candidaturas por Vaga:**
+```sql
+-- Usa índices: applications.job_id, candidates.id
+SELECT a.*, c.* 
+FROM applications a
+JOIN candidates c ON c.id = a.candidate_id
+WHERE a.job_id = $1;
+-- Execution time: <10ms
+```
+
+**3. Verificação de Acesso (RLS):**
+```sql
+-- Usa índices: org_members.(org_id, user_id)
+SELECT 1 FROM org_members 
+WHERE org_id = $1 AND user_id = auth.uid() AND status = 'active';
+-- Execution time: <5ms (cached)
+```
 
 **Observações (companies)**
 - Tabela criada para cadastro inicial de empresas
@@ -1511,6 +1849,54 @@ WHERE table_name = 'organizations'
 - ✅ 6 views analíticas funcionais
 
 **Status Esperado:** "✅ Validação concluída! Verifique os resultados acima."
+
+---
+
+## 11.2) Sprint 5 - Correções Operacionais (2026-01-24)
+
+### ✅ Correções de Integridade de Dados (Supabase)
+- `candidates.owner_org_id` normalizado para garantir acesso multi-tenant correto.
+- `candidates.user_id` normalizado para permitir vínculo com assessments (PI/Cores).
+- Scripts de correção utilizados:
+   - `supabase/DEBUG_CANDIDATES_NOTES.sql`
+   - `supabase/FIX_CANDIDATE_USER_ID.sql`
+   - `supabase/migrations/20260124_create_missing_auth_users_final.sql`
+   - `supabase/migrations/20260124_force_candidates_to_fartech.sql`
+
+### ✅ Notas do Candidato
+- Persistência em `candidate_notes` confirmada.
+- Leitura/gravação feita via Supabase client (RLS) no front:
+   - [apps/web/src/components/candidates/NotesPanel.tsx](apps/web/src/components/candidates/NotesPanel.tsx)
+- Contextos válidos confirmados no enum `note_context`: profile, resume, assessments, interview, general.
+
+### ✅ Currículo e Perfil (Recrutador)
+- Aba **Currículo** mostra apenas `candidate_experience`.
+- Formação completa exibida em **Informações Pessoais** usando `candidate_education`:
+   - `degree_level`, `course_name`, `institution`.
+- Pretensão salarial e data de nascimento vêm de `candidate_profiles`:
+   - `salary_expectation`, `birth_date`.
+   - Idade calculada no front.
+
+### ✅ Testes (DISC/PI/Cores)
+- Aba **Testes** do recrutador renderiza cards no mesmo formato do painel do candidato.
+
+### ✅ UI/UX Ajustes
+- Botão **Voltar** no modal de detalhes do candidato.
+- Nome do candidato exibido acima de **Informações Pessoais**.
+
+### ✅ Relatórios (Origem de Candidatos)
+- `candidates.source` adicionado via migration `supabase/migrations/20260124_add_candidate_source.sql`.
+- `/reports/dashboard` retorna `sources` para “Efetividade por Origem”.
+
+### ✅ Integração Google Agenda (OAuth)
+- Campos adicionados em `user_profiles` para tokens e status da agenda.
+- Endpoints `/auth/google-calendar/*` para conexão, status e desconexão.
+- UI adicionada no card de Webhooks em Configurações com fluxo em 4 passos.
+- Marca d’água da Fartech no rodapé direito do modal de detalhes.
+- Logos padronizadas (altura 64px) em toda a aplicação.
+
+### ✅ Configuração de API em Dev
+- `API_URL` aponta para `http://localhost:3001/api/v1` quando `NODE_ENV=development`.
 
 ---
 

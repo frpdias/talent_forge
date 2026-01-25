@@ -9,7 +9,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.UpdateApplicationStageDto = exports.CreateApplicationDto = exports.ApplicationStatus = void 0;
+exports.UpdateApplicationStatusDto = exports.UpdateApplicationStageDto = exports.CreateApplicationDto = exports.ApplicationStatus = void 0;
 const class_validator_1 = require("class-validator");
 const swagger_1 = require("@nestjs/swagger");
 var ApplicationStatus;
@@ -52,4 +52,25 @@ __decorate([
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
 ], UpdateApplicationStageDto.prototype, "note", void 0);
+class UpdateApplicationStatusDto {
+}
+exports.UpdateApplicationStatusDto = UpdateApplicationStatusDto;
+__decorate([
+    (0, swagger_1.ApiProperty)({
+        description: 'New application status',
+        enum: ApplicationStatus,
+        example: 'in_process',
+    }),
+    (0, class_validator_1.IsEnum)(ApplicationStatus),
+    __metadata("design:type", String)
+], UpdateApplicationStatusDto.prototype, "status", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({
+        description: 'Optional note about the status change',
+        example: 'Candidate passed initial screening',
+    }),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], UpdateApplicationStatusDto.prototype, "note", void 0);
 //# sourceMappingURL=index.js.map

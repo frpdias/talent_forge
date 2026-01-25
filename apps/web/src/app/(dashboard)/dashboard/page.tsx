@@ -15,7 +15,7 @@ import {
   Clock,
   type LucideIcon,
 } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle, Button } from '@/components/ui';
+import { Card, CardContent, CardHeader, CardTitle, Button, Badge } from '@/components/ui';
 import { useOrgStore } from '@/lib/store';
 import { api } from '@/lib/api';
 import { formatDate } from '@/lib/utils';
@@ -42,6 +42,24 @@ interface ActiveJob {
   title: string | null;
   status: string | null;
   created_at: string | null;
+}
+
+interface BottleneckStage {
+  label: string;
+  count: number;
+}
+
+interface StalledApplication {
+  id: string;
+  candidateName: string;
+  jobTitle: string;
+  days: number;
+}
+
+interface AlertItem {
+  title: string;
+  description: string;
+  tone: 'warning' | 'danger' | 'info';
 }
 
 interface StatCardConfig {
@@ -83,6 +101,9 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [activeJobs, setActiveJobs] = useState<ActiveJob[]>([]);
   const [loadingJobs, setLoadingJobs] = useState(false);
+  const [bottleneckStages, setBottleneckStages] = useState<BottleneckStage[]>([]);
+  const [stalledApplications, setStalledApplications] = useState<StalledApplication[]>([]);
+  const [alerts, setAlerts] = useState<AlertItem[]>([]);
   const supabase = useMemo(() => createClient(), []);
 
   useEffect(() => {
@@ -246,6 +267,86 @@ export default function DashboardPage() {
       }
       const totalApplications = applicationsResult.count ?? 0;
       const pendingApplications = pendingApplicationsResult.count ?? 0;
+      const statusLabel: Record<string, string> = {
+        applied: 'Novas',
+        in_process: 'Em Processo',
+        hired: 'Contratado',
+        rejected: 'Rejeitado',
+      };
+
+      if (jobIds.length > 0) {
+        const { data: applicationsData } = await supabase
+          .from('applications')
+          .select('id, status, updated_at, created_at, job_id, candidates(full_name), jobs(title), pipeline_stages(name)')
+          .in('job_id', jobIds);
+
+        const stageCounts = new Map<string, number>();
+        const stalled: StalledApplication[] = [];
+        const appCountByJob = new Map<string, number>();
+        const today = new Date();
+        const thresholdDays = 7;
+
+        (applicationsData || []).forEach((app: any) => {
+          const label = app.pipeline_stages?.name || statusLabel[app.status] || app.status || 'Outros';
+          stageCounts.set(label, (stageCounts.get(label) || 0) + 1);
+
+          const updatedAt = app.updated_at || app.created_at;
+          if (updatedAt) {
+            const diffDays = Math.floor(
+              (today.getTime() - new Date(updatedAt).getTime()) / (1000 * 60 * 60 * 24)
+            );
+            if (diffDays >= thresholdDays) {
+              stalled.push({
+                id: app.id,
+                candidateName: app.candidates?.full_name || 'Candidato',
+                jobTitle: app.jobs?.title || 'Vaga',
+                days: diffDays,
+              });
+            }
+          }
+
+          if (app.job_id) {
+            appCountByJob.set(app.job_id, (appCountByJob.get(app.job_id) || 0) + 1);
+          }
+        });
+
+        const sortedStages = Array.from(stageCounts.entries())
+          .map(([label, count]) => ({ label, count }))
+          .sort((a, b) => b.count - a.count)
+          .slice(0, 3);
+        setBottleneckStages(sortedStages);
+
+        const sortedStalled = stalled
+          .sort((a, b) => b.days - a.days)
+          .slice(0, 5);
+        setStalledApplications(sortedStalled);
+
+        const alertsList: AlertItem[] = [];
+        (jobsResult.data || []).forEach((job: any) => {
+          const count = appCountByJob.get(job.id) || 0;
+          if ((job.status === 'open' || job.status === 'on_hold') && count === 0) {
+            alertsList.push({
+              title: 'Vaga sem candidatos',
+              description: `${job.title || 'Vaga'} sem candidaturas`,
+              tone: 'warning',
+            });
+          }
+        });
+
+        if (sortedStalled.length > 0) {
+          alertsList.push({
+            title: 'Candidatos parados',
+            description: `${sortedStalled.length} candidatos sem movimentação há ${thresholdDays}+ dias`,
+            tone: 'danger',
+          });
+        }
+
+        setAlerts(alertsList.slice(0, 4));
+      } else {
+        setBottleneckStages([]);
+        setStalledApplications([]);
+        setAlerts([]);
+      }
       setStats({
         totalJobs,
         activeJobs,
@@ -384,6 +485,66 @@ export default function DashboardPage() {
               </Card>
             );
           })}
+        </div>
+
+        {/* Insights */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+          <Card>
+            <CardHeader>
+              <CardTitle>Gargalos por Etapa</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {bottleneckStages.length === 0 ? (
+                <p className="text-sm text-foreground-muted">Sem dados suficientes.</p>
+              ) : (
+                bottleneckStages.map((stage) => (
+                  <div key={stage.label} className="flex items-center justify-between">
+                    <span className="text-sm text-foreground">{stage.label}</span>
+                    <Badge>{stage.count}</Badge>
+                  </div>
+                ))
+              )}
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Candidatos Parados</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {stalledApplications.length === 0 ? (
+                <p className="text-sm text-foreground-muted">Nenhum candidato parado.</p>
+              ) : (
+                stalledApplications.map((item) => (
+                  <div key={item.id} className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-foreground">{item.candidateName}</p>
+                      <p className="text-xs text-foreground-muted">{item.jobTitle}</p>
+                    </div>
+                    <Badge variant="warning">{item.days} dias</Badge>
+                  </div>
+                ))
+              )}
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Alertas</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {alerts.length === 0 ? (
+                <p className="text-sm text-foreground-muted">Sem alertas no momento.</p>
+              ) : (
+                alerts.map((alert, idx) => (
+                  <div key={`${alert.title}-${idx}`} className="rounded-lg border border-border p-3">
+                    <p className="text-sm font-medium text-foreground">{alert.title}</p>
+                    <p className="text-xs text-foreground-muted mt-1">{alert.description}</p>
+                  </div>
+                ))
+              )}
+            </CardContent>
+          </Card>
         </div>
 
         {/* Main Content Grid */}

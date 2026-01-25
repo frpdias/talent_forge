@@ -28,6 +28,7 @@ let CandidatesService = class CandidatesService {
             location: dto.location,
             current_title: dto.currentTitle,
             linkedin_url: dto.linkedinUrl,
+            source: dto.source,
             salary_expectation: dto.salaryExpectation,
             availability_date: dto.availabilityDate,
             tags: dto.tags || [],
@@ -103,6 +104,8 @@ let CandidatesService = class CandidatesService {
             updateData.current_title = dto.currentTitle;
         if (dto.linkedinUrl !== undefined)
             updateData.linkedin_url = dto.linkedinUrl;
+        if (dto.source !== undefined)
+            updateData.source = dto.source;
         if (dto.salaryExpectation !== undefined)
             updateData.salary_expectation = dto.salaryExpectation;
         if (dto.availabilityDate !== undefined)
@@ -145,6 +148,7 @@ let CandidatesService = class CandidatesService {
             candidate_id: candidateId,
             author_id: userId,
             note: dto.note,
+            context: dto.context || 'general',
         })
             .select()
             .single();
@@ -156,17 +160,25 @@ let CandidatesService = class CandidatesService {
             candidateId: data.candidate_id,
             authorId: data.author_id,
             note: data.note,
+            context: data.context,
             createdAt: data.created_at,
         };
     }
-    async getNotes(candidateId, orgId) {
+    async getNotes(candidateId, orgId, context) {
         const supabase = this.supabaseService.getAdminClient();
         await this.findOne(candidateId, orgId);
-        const { data, error } = await supabase
+        let query = supabase
             .from('candidate_notes')
-            .select('*')
+            .select(`
+        *,
+        author:user_profiles!candidate_notes_author_id_fkey(full_name, email)
+      `)
             .eq('candidate_id', candidateId)
             .order('created_at', { ascending: false });
+        if (context) {
+            query = query.eq('context', context);
+        }
+        const { data, error } = await query;
         if (error) {
             throw error;
         }
@@ -174,9 +186,76 @@ let CandidatesService = class CandidatesService {
             id: note.id,
             candidateId: note.candidate_id,
             authorId: note.author_id,
+            authorName: note.author?.full_name || 'Unknown',
+            authorEmail: note.author?.email,
             note: note.note,
+            context: note.context || 'general',
             createdAt: note.created_at,
+            updatedAt: note.updated_at,
         }));
+    }
+    async updateNote(candidateId, noteId, dto, orgId, userId) {
+        const supabase = this.supabaseService.getAdminClient();
+        await this.findOne(candidateId, orgId);
+        const { data: existingNote, error: fetchError } = await supabase
+            .from('candidate_notes')
+            .select('*')
+            .eq('id', noteId)
+            .eq('candidate_id', candidateId)
+            .single();
+        if (fetchError || !existingNote) {
+            throw new common_1.NotFoundException('Note not found');
+        }
+        if (existingNote.author_id !== userId) {
+            throw new common_1.ForbiddenException('You can only update your own notes');
+        }
+        const updateData = {};
+        if (dto.note !== undefined)
+            updateData.note = dto.note;
+        if (dto.context !== undefined)
+            updateData.context = dto.context;
+        const { data, error } = await supabase
+            .from('candidate_notes')
+            .update(updateData)
+            .eq('id', noteId)
+            .select()
+            .single();
+        if (error) {
+            throw error;
+        }
+        return {
+            id: data.id,
+            candidateId: data.candidate_id,
+            authorId: data.author_id,
+            note: data.note,
+            context: data.context,
+            createdAt: data.created_at,
+            updatedAt: data.updated_at,
+        };
+    }
+    async deleteNote(candidateId, noteId, orgId, userId) {
+        const supabase = this.supabaseService.getAdminClient();
+        await this.findOne(candidateId, orgId);
+        const { data: existingNote, error: fetchError } = await supabase
+            .from('candidate_notes')
+            .select('author_id')
+            .eq('id', noteId)
+            .eq('candidate_id', candidateId)
+            .single();
+        if (fetchError || !existingNote) {
+            throw new common_1.NotFoundException('Note not found');
+        }
+        if (existingNote.author_id !== userId) {
+            throw new common_1.ForbiddenException('You can only delete your own notes');
+        }
+        const { error } = await supabase
+            .from('candidate_notes')
+            .delete()
+            .eq('id', noteId);
+        if (error) {
+            throw error;
+        }
+        return { success: true, message: 'Note deleted successfully' };
     }
     mapToResponse(candidate) {
         return {
@@ -188,6 +267,7 @@ let CandidatesService = class CandidatesService {
             location: candidate.location,
             currentTitle: candidate.current_title,
             linkedinUrl: candidate.linkedin_url,
+            source: candidate.source,
             salaryExpectation: candidate.salary_expectation,
             availabilityDate: candidate.availability_date,
             tags: candidate.tags,

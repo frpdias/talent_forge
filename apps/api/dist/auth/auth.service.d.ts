@@ -25,4 +25,21 @@ export declare class AuthService {
     }[]>;
     isOrgMember(userId: string, orgId: string): Promise<boolean>;
     getOrgMemberRole(userId: string, orgId: string): Promise<string | null>;
+    getGoogleCalendarAuthUrl(userId: string): Promise<{
+        url: string;
+    }>;
+    handleGoogleCalendarCallback(code: string, state: string): Promise<{
+        connected: boolean;
+        email: string | null;
+    }>;
+    getGoogleCalendarStatus(userId: string): Promise<{
+        connected: boolean;
+        email?: undefined;
+    } | {
+        connected: boolean;
+        email: any;
+    }>;
+    disconnectGoogleCalendar(userId: string): Promise<{
+        connected: boolean;
+    }>;
 }

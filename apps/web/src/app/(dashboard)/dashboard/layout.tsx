@@ -193,7 +193,7 @@ export default function RecruiterLayout({ children }: { children: React.ReactNod
             <img
               src="https://fjudsjzfnysaztcwlwgm.supabase.co/storage/v1/object/public/LOGOS/LOGO4.png"
               alt="Fartech"
-              className="h-8 w-auto opacity-80"
+              className="h-16 w-auto opacity-80"
               loading="lazy"
             />
           </div>
