@@ -108,7 +108,10 @@ export async function middleware(request: NextRequest) {
 
   // Add rate limit headers to response
   if (pathname.startsWith('/api/')) {
-    const ip = request.ip || request.headers.get('x-forwarded-for') || 'unknown';
+    const ip =
+      request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
+      request.headers.get('x-real-ip') ||
+      'unknown';
     const isAdminAPI = pathname.startsWith('/api/admin/');
     const maxRequests = isAdminAPI ? MAX_ADMIN_API_REQUESTS : MAX_PUBLIC_API_REQUESTS;
     const record = rateLimitMap.get(ip);
