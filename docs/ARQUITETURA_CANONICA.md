@@ -217,6 +217,15 @@ const COLORS = {
    - **Data prevista**: Sprint 5 (próxima semana)
    - **Comando para reativar**: `ALTER TABLE organizations ENABLE ROW LEVEL SECURITY;`
 
+#### ✅ Plano pendente — executar por último (RLS em `organizations`)
+1. Concluir reconexão de **todos** os serviços da aplicação.
+2. Revisar e aplicar `supabase/FIX_ORGANIZATIONS_RLS.sql` no Supabase SQL Editor.
+3. Reativar RLS:
+   - `ALTER TABLE organizations ENABLE ROW LEVEL SECURITY;`
+4. Reexecutar validação:
+   - `supabase/VALIDATE_IMPROVEMENTS.sql`
+5. Validar acesso de admin e membros via `org_members`.
+
 2. **Policies por user_type**: admin, recruiter, candidate, viewer
 3. **Função `is_org_member()`**: Única fonte de verdade para membership
 4. **Service role APENAS para**:
@@ -258,6 +267,33 @@ const COLORS = {
    - Types devem passar: `npm run type-check`
 7. **Merge para main** somente após validação completa
 
+### 🔌 Conexões locais (obrigatório em dev)
+- Web local deve apontar para API local:
+   - `NEXT_PUBLIC_API_URL=http://localhost:3001/api/v1`
+- API local deve aceitar origem `http://localhost:3000` via CORS.
+- Se usar API remota em dev, garantir que CORS permita `localhost`.
+
+### 🧭 Pipeline (recrutador)
+- O pipeline exibe **candidaturas (applications)**, não apenas candidatos.
+- Se a coluna estiver vazia, verifique:
+   - se há `applications` para a org ativa (via `jobs.org_id`), e
+   - se a org selecionada no UI é a correta.
+
+### 🏢 Seletor de organização (recrutador)
+- O layout do recrutador deve permitir trocar a org ativa no UI.
+- A org ativa define o escopo de pipeline, jobs, candidatos e relatórios.
+
+### 🎯 Visibilidade de vagas (candidato)
+- Hoje o candidato lista vagas via função pública `get_open_jobs` (retorna todas as vagas abertas).
+- **Regra desejada** (pendente de implementação): candidato deve ver apenas vagas da sua org/recrutador.
+- Implementação prevista: filtrar por `org_id` do candidato (via `org_members`/`candidates.owner_org_id`) ou habilitar “públicas + da org”.
+
+### 🧩 Recrutador/Headhunter como organização
+- Cada recrutador/headhunter deve possuir **sua própria** `organization` (`org_type='headhunter'`).
+- O usuário precisa estar vinculado em `org_members` nessa org (role `admin`, status `active`).
+- Candidatos criados pelo recrutador devem usar `owner_org_id` dessa org.
+- Migração recomendada: criar org por recrutador existente e reatribuir candidatos (`20260126_recruiter_orgs.sql`).
+
 ### 📊 Views de Business Intelligence (Sprint 4 - 2026-01-24)
 
 **6 Views Analíticas Criadas:**
@@ -284,6 +320,9 @@ SELECT * FROM v_recruiter_performance WHERE org_id = '<uuid>';
 - **Backend**: NestJS 11 (BFF + serviços de domínio) com Supabase JS e Swagger.
 - **Banco**: Supabase Postgres + Auth + Storage, com **RLS obrigatório**.
 - **Infra**: Vercel (web/api) + Supabase (DB/Auth/Storage).
+- **Produção (2026-01-26)**:
+   - Web: https://fartech-talentforge-amber.vercel.app
+   - API: https://api-py-ruddy.vercel.app/api/v1
 
 ## 2) Padrões essenciais (não desviar)
 - **Multi-tenant**: `organizations` + `org_members`.
@@ -735,6 +774,12 @@ WHERE org_id = $1 AND user_id = auth.uid() AND status = 'active';
 | `/jobs/:id` | Detalhe de vaga pública |
 | `/assessment/*` | Realização de assessments |
 
+**Nota (Landing page):** Conteúdo deve refletir a arquitetura canônica:
+- Multi-tenant com isolamento por `org_id`/RLS.
+- Auditoria de pipeline via `application_events`.
+- Avaliações comportamentais com DISC como padrão.
+- CTAs: `/register?type=recruiter` e `/register?type=candidate`; header exibe apenas “Login”.
+
 ### Recrutador (`user_type === 'recruiter'`)
 | Rota | Descrição |
 |------|-----------|
@@ -751,6 +796,8 @@ WHERE org_id = $1 AND user_id = auth.uid() AND status = 'active';
 | `/candidate/profile` | Edição de perfil |
 | `/candidate/applications` | Minhas candidaturas |
 | `/onboarding` | Completar perfil inicial |
+
+**Nota (2026-01-26):** A aba **Configurações** foi removida do menu do candidato. A rota não é exposta na navegação.
 
 ### Admin (`user_type === 'admin'`)
 | Rota | Descrição |

@@ -1,8 +1,12 @@
-const API_URL =
+const RAW_API_URL =
   process.env.NEXT_PUBLIC_API_URL ||
   (process.env.NODE_ENV === 'development'
     ? 'http://localhost:3001/api/v1'
-    : 'https://talent-forge-api.vercel.app');
+    : 'https://api-py-ruddy.vercel.app');
+
+const API_URL = RAW_API_URL.replace(/\/$/, '').endsWith('/api/v1')
+  ? RAW_API_URL.replace(/\/$/, '')
+  : `${RAW_API_URL.replace(/\/$/, '')}/api/v1`;
 
 const DEFAULT_TIMEOUT_MS = 10_000;
 

@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { createBrowserClient } from '@supabase/ssr';
+import { useOrgStore } from '@/lib/store';
 import { 
   LayoutDashboard, 
   Briefcase, 
@@ -38,8 +39,10 @@ const moreItems = [
 export default function RecruiterLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
+  const { currentOrg, organizations, setCurrentOrg, setOrganizations } = useOrgStore();
   const [userName, setUserName] = useState<string>('Recrutador');
   const [orgName, setOrgName] = useState<string>('Organizacao');
+  const [orgDropdownOpen, setOrgDropdownOpen] = useState(false);
 
   const supabase = useMemo(
     () =>
@@ -82,6 +85,61 @@ export default function RecruiterLayout({ children }: { children: React.ReactNod
       if (org && !ignore) {
         setOrgName(org);
       }
+
+      const { data: memberships } = await supabase
+        .from('org_members')
+        .select('org_id, role, organizations(id, name, org_type, slug)')
+        .eq('user_id', userId);
+
+      const orgs = (memberships || [])
+        .map((member: any) => {
+          const org = Array.isArray(member.organizations)
+            ? member.organizations[0]
+            : member.organizations;
+
+          if (!org) return null;
+
+          return {
+            id: org.id,
+            name: org.name,
+            orgType: org.org_type,
+            slug: org.slug,
+            role: member.role,
+          };
+        })
+        .filter(Boolean);
+
+      if (!ignore && orgs.length > 0) {
+        setOrganizations(orgs as any);
+        if (!currentOrg) {
+          let preferredOrg = orgs[0] as any;
+
+          try {
+            const counts = await Promise.all(
+              (orgs as any[]).map(async (org) => {
+                const { count } = await supabase
+                  .from('jobs')
+                  .select('id', { count: 'exact', head: true })
+                  .eq('org_id', org.id);
+
+                return { org, count: count ?? 0 };
+              })
+            );
+
+            const best = counts.reduce((acc, item) =>
+              item.count > acc.count ? item : acc
+            );
+
+            preferredOrg = best.org;
+          } catch (error) {
+            console.warn('[RecruiterLayout] Falha ao escolher org padrão:', error);
+          }
+
+          if (!ignore) {
+            setCurrentOrg(preferredOrg);
+          }
+        }
+      }
     }
 
     loadUserInfo();
@@ -114,6 +172,38 @@ export default function RecruiterLayout({ children }: { children: React.ReactNod
               <span className="text-tf-accent font-bold text-sm tracking-wide">FORGE</span>
             </div>
           </Link>
+        </div>
+
+        {/* Org Selector */}
+        <div className="px-3 py-3 border-b border-border">
+          <button
+            onClick={() => setOrgDropdownOpen(!orgDropdownOpen)}
+            className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm border border-gray-200 bg-white hover:bg-gray-50"
+          >
+            <div className="flex items-center gap-2 min-w-0">
+              <Building2 className="h-4 w-4 text-gray-400" />
+              <span className="truncate text-gray-700">
+                {currentOrg?.name || orgName}
+              </span>
+            </div>
+            <ChevronDown className={`h-4 w-4 text-gray-400 transition-transform ${orgDropdownOpen ? 'rotate-180' : ''}`} />
+          </button>
+          {orgDropdownOpen && organizations.length > 0 && (
+            <div className="mt-2 rounded-lg border border-gray-200 bg-white shadow-sm">
+              {organizations.map((org) => (
+                <button
+                  key={org.id}
+                  onClick={() => {
+                    setCurrentOrg(org);
+                    setOrgDropdownOpen(false);
+                  }}
+                  className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-50 ${currentOrg?.id === org.id ? 'bg-gray-50' : ''}`}
+                >
+                  {org.name}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Navigation */}
@@ -203,7 +293,7 @@ export default function RecruiterLayout({ children }: { children: React.ReactNod
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-foreground truncate">{userName}</p>
-              <p className="text-xs text-foreground-muted truncate">{orgName}</p>
+              <p className="text-xs text-foreground-muted truncate">{currentOrg?.name || orgName}</p>
             </div>
             <button 
               onClick={handleLogout}

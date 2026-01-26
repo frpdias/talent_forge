@@ -9,6 +9,13 @@ import {
 interface OrganizationMetrics {
   org_id: string;
   org_name: string;
+  candidates?: {
+    id: string;
+    full_name: string | null;
+    email: string | null;
+    phone: string | null;
+    created_at: string;
+  }[];
   business: {
     active_users: number;
     total_users: number;
@@ -352,6 +359,35 @@ export default function OrganizationDashboard({ companyId, companyName, isExpand
                       </div>
                     )}
                   </div>
+                </div>
+              </div>
+
+              {/* 6. Candidatos por Empresa */}
+              <div>
+                <h4 className="text-sm font-semibold text-[#141042] mb-3 flex items-center">
+                  <Users className="w-4 h-4 mr-2" />
+                  Candidatos
+                </h4>
+                <div className="bg-white border border-[#E5E5DC] rounded-lg overflow-hidden">
+                  {metrics.candidates && metrics.candidates.length > 0 ? (
+                    <div className="divide-y divide-[#E5E5DC]">
+                      {metrics.candidates.map((candidate) => (
+                        <div key={candidate.id} className="px-4 py-3">
+                          <div className="text-sm font-medium text-[#141042]">
+                            {candidate.full_name || 'Sem nome'}
+                          </div>
+                          <div className="text-xs text-[#666666]">
+                            {candidate.email || 'Sem email'}
+                          </div>
+                          {candidate.phone && (
+                            <div className="text-xs text-[#999]">{candidate.phone}</div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="p-4 text-sm text-[#666666]">Nenhum candidato vinculado.</div>
+                  )}
                 </div>
               </div>
             </div>

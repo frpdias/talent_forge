@@ -7,15 +7,15 @@ import OrganizationDashboard from '@/components/admin/OrganizationDashboard';
 interface Company {
   id: string;
   name: string;
-  cnpj: string;
-  email: string;
-  phone: string;
-  website: string;
-  address: string;
-  city: string;
-  state: string;
-  industry: string;
-  size: string;
+  cnpj?: string | null;
+  email?: string | null;
+  phone?: string | null;
+  website?: string | null;
+  address?: string | null;
+  city?: string | null;
+  state?: string | null;
+  industry?: string | null;
+  size?: string | null;
   created_at: string;
 }
 
@@ -25,6 +25,7 @@ interface FormData {
   email: string;
   phone: string;
   website: string;
+  cep: string;
   address: string;
   city: string;
   state: string;
@@ -47,6 +48,7 @@ export default function CompaniesPage() {
     email: '',
     phone: '',
     website: '',
+    cep: '',
     address: '',
     city: '',
     state: '',
@@ -116,15 +118,16 @@ export default function CompaniesPage() {
   const handleEdit = (company: Company) => {
     setFormData({
       name: company.name,
-      cnpj: company.cnpj,
-      email: company.email,
-      phone: company.phone,
-      website: company.website,
-      address: company.address,
-      city: company.city,
-      state: company.state,
-      industry: company.industry,
-      size: company.size,
+      cnpj: company.cnpj || '',
+      email: company.email || '',
+      phone: company.phone || '',
+      website: company.website || '',
+      cep: '',
+      address: company.address || '',
+      city: company.city || '',
+      state: company.state || '',
+      industry: company.industry || '',
+      size: company.size || 'small',
     });
     setEditingId(company.id);
     setShowForm(true);
@@ -164,11 +167,35 @@ export default function CompaniesPage() {
     setMessage(null);
   };
 
-  const filteredCompanies = companies.filter(company =>
-    company.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    company.cnpj.includes(searchTerm) ||
-    company.email.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const fetchAddressByCep = async (cep: string) => {
+    const cleaned = cep.replace(/\D/g, '');
+    if (cleaned.length !== 8) return;
+
+    try {
+      const response = await fetch(`https://viacep.com.br/ws/${cleaned}/json/`);
+      if (!response.ok) return;
+      const data = await response.json();
+      if (data?.erro) return;
+
+      setFormData((prev) => ({
+        ...prev,
+        address: data.logradouro || prev.address,
+        city: data.localidade || prev.city,
+        state: data.uf || prev.state,
+      }));
+    } catch (error) {
+      console.error('Erro ao buscar CEP:', error);
+    }
+  };
+
+  const filteredCompanies = companies.filter(company => {
+    const term = searchTerm.toLowerCase();
+    return (
+      company.name.toLowerCase().includes(term) ||
+      (company.cnpj || '').includes(searchTerm) ||
+      (company.email || '').toLowerCase().includes(term)
+    );
+  });
 
   return (
     <div className="space-y-6 sm:space-y-8 pb-20 lg:pb-0">
@@ -204,9 +231,9 @@ export default function CompaniesPage() {
           }`}
         >
           {message.type === 'success' ? (
-            <CheckCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
+            <CheckCircle className="w-5 h-5 shrink-0 mt-0.5" />
           ) : (
-            <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
+            <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
           )}
           <p className="text-sm font-medium">{message.text}</p>
         </div>
@@ -256,6 +283,26 @@ export default function CompaniesPage() {
                   value={formData.cnpj}
                   onChange={(e) => setFormData({ ...formData, cnpj: e.target.value })}
                   placeholder="00.000.000/0000-00"
+                  className="w-full px-4 py-2 border border-[#E5E5DC] rounded-lg focus:outline-none focus:border-[#141042]"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-[#141042] mb-2">
+                  CEP
+                </label>
+                <input
+                  type="text"
+                  value={formData.cep}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    setFormData({ ...formData, cep: value });
+                    const cleaned = value.replace(/\D/g, '');
+                    if (cleaned.length === 8) {
+                      void fetchAddressByCep(cleaned);
+                    }
+                  }}
+                  placeholder="00000-000"
                   className="w-full px-4 py-2 border border-[#E5E5DC] rounded-lg focus:outline-none focus:border-[#141042]"
                 />
               </div>
@@ -483,11 +530,11 @@ export default function CompaniesPage() {
                           </div>
                         </td>
                         <td className="px-6 py-4 text-sm text-[#666666]">
-                          {company.cnpj}
+                          {company.cnpj || '—'}
                         </td>
                         <td className="px-6 py-4">
                           <div className="text-sm">
-                            <div className="text-[#666666]">{company.email}</div>
+                            <div className="text-[#666666]">{company.email || '—'}</div>
                             {company.phone && (
                               <div className="text-[#999]">{company.phone}</div>
                             )}
@@ -498,12 +545,14 @@ export default function CompaniesPage() {
                             company.size === 'small' ? 'bg-[#3B82F6]/10 text-[#3B82F6]' :
                             company.size === 'medium' ? 'bg-[#10B981]/10 text-[#10B981]' :
                             company.size === 'large' ? 'bg-[#F59E0B]/10 text-[#F59E0B]' :
-                            'bg-[#8B5CF6]/10 text-[#8B5CF6]'
+                            company.size === 'enterprise' ? 'bg-[#8B5CF6]/10 text-[#8B5CF6]' :
+                            'bg-[#E5E5DC] text-[#666666]'
                           }`}>
                             {company.size === 'small' && 'Pequena'}
                             {company.size === 'medium' && 'Média'}
                             {company.size === 'large' && 'Grande'}
                             {company.size === 'enterprise' && 'Enterprise'}
+                            {!company.size && '—'}
                           </span>
                         </td>
                         <td className="px-6 py-4">

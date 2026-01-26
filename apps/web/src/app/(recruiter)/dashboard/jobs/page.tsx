@@ -159,17 +159,17 @@ export default function JobsPage() {
   return (
     <div className="min-h-full">
       {/* Page Header */}
-      <div className="bg-white border-b border-[var(--border)]">
+      <div className="bg-white border-b border-border">
         <div className="pl-0 pr-6 py-6">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <p className="text-xs font-medium text-[var(--tf-accent)] uppercase tracking-wider mb-1">
+              <p className="text-xs font-medium text-tf-accent uppercase tracking-wider mb-1">
                 Gestão
               </p>
-              <h1 className="text-2xl font-semibold text-[var(--foreground)]">
+              <h1 className="text-2xl font-semibold text-foreground">
                 Vagas
               </h1>
-              <p className="text-sm text-[var(--foreground-muted)] mt-1">
+              <p className="text-sm text-foreground-muted mt-1">
                 Gerencie suas oportunidades de trabalho
               </p>
             </div>
@@ -189,20 +189,20 @@ export default function JobsPage() {
           <CardContent className="p-4">
             <div className="flex flex-col sm:flex-row gap-4">
               <div className="flex-1 relative">
-                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--tf-gray-400)]" />
+                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                 <input
                   type="text"
                   placeholder="Buscar vagas..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2.5 text-sm border border-[var(--border)] rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-[var(--tf-accent)] focus:border-[var(--tf-accent)] transition-all"
+                  className="w-full pl-10 pr-4 py-2.5 text-sm border border-border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-tf-accent focus:border-tf-accent transition-all"
                 />
               </div>
               <div className="flex gap-2">
                 <select
                   value={statusFilter}
                   onChange={(e) => setStatusFilter(e.target.value)}
-                  className="px-4 py-2.5 text-sm border border-[var(--border)] rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-[var(--tf-accent)] focus:border-[var(--tf-accent)]"
+                  className="px-4 py-2.5 text-sm border border-border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-tf-accent focus:border-tf-accent"
                 >
                   <option value="all">Todas</option>
                   <option value="on_hold">Rascunhos</option>
@@ -217,18 +217,18 @@ export default function JobsPage() {
         {/* Jobs List */}
         {loading ? (
           <div className="flex items-center justify-center py-12">
-            <div className="w-6 h-6 border-2 border-[var(--tf-accent)] border-t-transparent rounded-full animate-spin" />
+            <div className="w-6 h-6 border-2 border-tf-accent border-t-transparent rounded-full animate-spin" />
           </div>
         ) : filteredJobs.length === 0 ? (
           <Card>
             <CardContent className="p-12 text-center">
-              <div className="w-12 h-12 bg-[var(--tf-gray-100)] rounded-full flex items-center justify-center mx-auto mb-4">
-                <Briefcase className="h-6 w-6 text-[var(--tf-gray-400)]" />
+              <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Briefcase className="h-6 w-6 text-gray-400" />
               </div>
-              <h3 className="text-base font-semibold text-[var(--foreground)] mb-2">
+              <h3 className="text-base font-semibold text-foreground mb-2">
                 Nenhuma vaga encontrada
               </h3>
-              <p className="text-sm text-[var(--foreground-muted)] mb-6">
+              <p className="text-sm text-foreground-muted mb-6">
                 {searchQuery
                   ? 'Tente ajustar seus filtros de busca'
                   : 'Comece criando sua primeira vaga'}
@@ -246,26 +246,32 @@ export default function JobsPage() {
         ) : (
           <div className="grid gap-4">
             {filteredJobs.map((job) => (
-              <Card key={job.id} hover>
-                <CardContent className="p-5">
+              <button
+                key={job.id}
+                type="button"
+                onClick={() => router.push(`/dashboard/jobs/${job.id}`)}
+                className="text-left"
+              >
+                <Card hover className="cursor-pointer">
+                  <CardContent className="p-5">
                   <div className="flex items-start gap-4">
-                    <div className="p-2.5 bg-[var(--tf-accent-subtle)] rounded-lg shrink-0">
-                      <Briefcase className="h-5 w-5 text-[var(--tf-accent)]" />
+                    <div className="p-2.5 bg-tf-accent-subtle rounded-lg shrink-0">
+                      <Briefcase className="h-5 w-5 text-tf-accent" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start justify-between gap-4 mb-3">
                         <div>
-                          <h3 className="text-base font-semibold text-[var(--foreground)] mb-0.5">
+                          <h3 className="text-base font-semibold text-foreground mb-0.5">
                             {job.title}
                           </h3>
-                          <p className="text-sm text-[var(--foreground-muted)]">{job.department}</p>
+                          <p className="text-sm text-foreground-muted">{job.department}</p>
                         </div>
                         <Badge variant={statusColors[job.status]}>
                           {statusLabels[job.status]}
                         </Badge>
                       </div>
 
-                      <div className="flex flex-wrap gap-4 text-sm text-[var(--foreground-muted)]">
+                      <div className="flex flex-wrap gap-4 text-sm text-foreground-muted">
                         <div className="flex items-center gap-1.5">
                           <MapPin className="h-3.5 w-3.5" />
                           <span>{job.location}</span>
@@ -292,8 +298,8 @@ export default function JobsPage() {
                         </div>
                       </div>
 
-                      <div className="mt-4 pt-4 border-t border-[var(--divider)] flex items-center justify-between">
-                        <span className="text-xs text-[var(--tf-gray-400)]">
+                      <div className="mt-4 pt-4 border-t border-(--divider) flex items-center justify-between">
+                        <span className="text-xs text-gray-400">
                           Criada em {formatDate(job.created_at)}
                         </span>
                         <Link href={`/dashboard/jobs/${job.id}`}>
@@ -305,8 +311,9 @@ export default function JobsPage() {
                       </div>
                     </div>
                   </div>
-                </CardContent>
-              </Card>
+                  </CardContent>
+                </Card>
+              </button>
             ))}
           </div>
         )}

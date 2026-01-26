@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useMemo, useState, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Header } from '@/components/layout';
 import { Card, CardContent, Badge, Button, Modal } from '@/components/ui';
@@ -8,6 +8,7 @@ import { KanbanBoard, KanbanColumnData } from '@/components/kanban';
 import { useOrgStore } from '@/lib/store';
 import { jobsApi, applicationsApi, candidatesApi } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
+import { createClient } from '@/lib/supabase/client';
 import { formatDate, formatCurrency, getJobStatusLabel, getJobStatusColor } from '@/lib/utils';
 import {
   ArrowLeft,
@@ -52,23 +53,57 @@ export default function JobDetailPage() {
   const router = useRouter();
   const { currentOrg } = useOrgStore();
   const { session } = useAuth();
+  const supabase = useMemo(() => createClient(), []);
   const [job, setJob] = useState<Job | null>(null);
   const [kanbanData, setKanbanData] = useState<KanbanData | null>(null);
   const [loading, setLoading] = useState(true);
   const [showAddCandidate, setShowAddCandidate] = useState(false);
   const [candidates, setCandidates] = useState<any[]>([]);
   const [selectedCandidate, setSelectedCandidate] = useState('');
+  const [resolvedOrgId, setResolvedOrgId] = useState<string | null>(null);
 
   useEffect(() => {
-    if (currentOrg?.id && session?.access_token && id) {
-      loadJob();
-      loadKanban();
-    }
-  }, [currentOrg?.id, session?.access_token, id]);
+    let ignore = false;
 
-  const loadJob = async () => {
+    async function resolveOrg() {
+      if (currentOrg?.id) {
+        setResolvedOrgId(currentOrg.id);
+        return;
+      }
+
+      const { data: userData } = await supabase.auth.getUser();
+      const userId = userData?.user?.id;
+      if (!userId) return;
+
+      const { data: orgMembership } = await supabase
+        .from('org_members')
+        .select('org_id')
+        .eq('user_id', userId)
+        .limit(1)
+        .maybeSingle();
+
+      if (!ignore) {
+        setResolvedOrgId(orgMembership?.org_id || null);
+      }
+    }
+
+    resolveOrg();
+    return () => {
+      ignore = true;
+    };
+  }, [currentOrg?.id, supabase]);
+
+  useEffect(() => {
+    const orgId = currentOrg?.id || resolvedOrgId;
+    if (orgId && session?.access_token && id) {
+      loadJob(orgId);
+      loadKanban(orgId);
+    }
+  }, [currentOrg?.id, resolvedOrgId, session?.access_token, id]);
+
+  const loadJob = async (orgId: string) => {
     try {
-      const data = await jobsApi.get(id as string, session!.access_token, currentOrg!.id);
+      const data = await jobsApi.get(id as string, session!.access_token, orgId);
       setJob((data as any).data);
     } catch (error) {
       console.error('Failed to load job:', error);
@@ -77,9 +112,9 @@ export default function JobDetailPage() {
     }
   };
 
-  const loadKanban = async () => {
+  const loadKanban = async (orgId: string) => {
     try {
-      const data = await applicationsApi.getKanban(id as string, session!.access_token, currentOrg!.id);
+      const data = await applicationsApi.getKanban(id as string, session!.access_token, orgId);
       setKanbanData(data as any);
     } catch (error) {
       console.error('Failed to load kanban:', error);
@@ -87,32 +122,37 @@ export default function JobDetailPage() {
   };
 
   const handleMoveCard = useCallback(async (cardId: string, fromColumn: string, toColumn: string, newIndex: number) => {
+    const orgId = currentOrg?.id || resolvedOrgId;
+    if (!orgId) return;
     try {
       await applicationsApi.updateStage(
         cardId,
         { toStageId: toColumn },
         session!.access_token,
-        currentOrg!.id
+        orgId
       );
     } catch (error) {
       console.error('Failed to move card:', error);
       // Reload kanban to restore correct state
-      loadKanban();
+      loadKanban(orgId);
     }
-  }, [session, currentOrg]);
+  }, [session, currentOrg, resolvedOrgId]);
 
   const handleAddCandidate = async () => {
     if (!selectedCandidate) return;
+
+    const orgId = currentOrg?.id || resolvedOrgId;
+    if (!orgId) return;
 
     try {
       await applicationsApi.create(
         { jobId: id as string, candidateId: selectedCandidate },
         session!.access_token,
-        currentOrg!.id
+        orgId
       );
       setShowAddCandidate(false);
       setSelectedCandidate('');
-      loadKanban();
+      loadKanban(orgId);
     } catch (error) {
       console.error('Failed to add candidate:', error);
     }
@@ -120,7 +160,9 @@ export default function JobDetailPage() {
 
   const loadCandidates = async () => {
     try {
-      const data = await candidatesApi.list(session!.access_token, currentOrg!.id);
+      const orgId = currentOrg?.id || resolvedOrgId;
+      if (!orgId) return;
+      const data = await candidatesApi.list(session!.access_token, orgId);
       setCandidates((data as any).data || []);
     } catch (error) {
       console.error('Failed to load candidates:', error);
@@ -128,10 +170,11 @@ export default function JobDetailPage() {
   };
 
   useEffect(() => {
-    if (showAddCandidate && session?.access_token && currentOrg?.id) {
+    const orgId = currentOrg?.id || resolvedOrgId;
+    if (showAddCandidate && session?.access_token && orgId) {
       loadCandidates();
     }
-  }, [showAddCandidate]);
+  }, [showAddCandidate, currentOrg?.id, resolvedOrgId, session?.access_token]);
 
   if (loading) {
     return (
@@ -251,7 +294,7 @@ export default function JobDetailPage() {
             <option value="">Selecione um candidato...</option>
             {candidates.map((candidate) => (
               <option key={candidate.id} value={candidate.id}>
-                {candidate.name} - {candidate.email}
+                {candidate.fullName || candidate.name || 'Candidato'} - {candidate.email}
               </option>
             ))}
           </select>

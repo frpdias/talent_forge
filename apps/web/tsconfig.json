@@ -40,6 +40,7 @@
     "node_modules",
     "src/app/(dashboard)/dashboard/page-backup.tsx",
     "src/app/(dashboard)/dashboard/page-backup.tsx.bak",
-    "src/app/(dashboard)/dashboard/page-simple.tsx.bak"
+    "src/app/(dashboard)/dashboard/page-simple.tsx.bak",
+    "src/app/(recruiter)/dashboard/page-backup.tsx"
   ]
 }

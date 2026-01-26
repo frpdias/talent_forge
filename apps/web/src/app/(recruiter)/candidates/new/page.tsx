@@ -1,12 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Header } from '@/components/layout';
 import { Card, CardContent, Button, Input, Textarea } from '@/components/ui';
 import { useOrgStore } from '@/lib/store';
 import { candidatesApi } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
+import { createClient } from '@/lib/supabase/client';
 import { ArrowLeft, Save, X } from 'lucide-react';
 import Link from 'next/link';
 
@@ -14,9 +15,11 @@ export default function NewCandidatePage() {
   const router = useRouter();
   const { currentOrg } = useOrgStore();
   const { session } = useAuth();
+  const supabase = useMemo(() => createClient(), []);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [tagInput, setTagInput] = useState('');
+  const [resolvedOrgId, setResolvedOrgId] = useState<string | null>(null);
 
   const [form, setForm] = useState({
     name: '',
@@ -29,6 +32,37 @@ export default function NewCandidatePage() {
     linkedinUrl: '',
     tags: [] as string[],
   });
+
+  useEffect(() => {
+    let ignore = false;
+
+    async function resolveOrg() {
+      if (currentOrg?.id) {
+        setResolvedOrgId(currentOrg.id);
+        return;
+      }
+
+      const { data: userData } = await supabase.auth.getUser();
+      const userId = userData?.user?.id;
+      if (!userId) return;
+
+      const { data: orgMembership } = await supabase
+        .from('org_members')
+        .select('org_id')
+        .eq('user_id', userId)
+        .limit(1)
+        .maybeSingle();
+
+      if (!ignore) {
+        setResolvedOrgId(orgMembership?.org_id || null);
+      }
+    }
+
+    resolveOrg();
+    return () => {
+      ignore = true;
+    };
+  }, [currentOrg?.id, supabase]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -48,7 +82,11 @@ export default function NewCandidatePage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!session?.access_token || !currentOrg?.id) return;
+    const orgId = currentOrg?.id || resolvedOrgId;
+    if (!session?.access_token || !orgId) {
+      setError('Organização não encontrada. Recarregue a página e tente novamente.');
+      return;
+    }
 
     try {
       setLoading(true);
@@ -65,7 +103,7 @@ export default function NewCandidatePage() {
         tags: form.tags,
       };
 
-      await candidatesApi.create(payload, session.access_token, currentOrg.id);
+      await candidatesApi.create(payload, session.access_token, orgId);
       router.push('/candidates');
     } catch (err: any) {
       setError(err.message || 'Erro ao criar candidato');

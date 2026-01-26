@@ -1,18 +1,53 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { createClient as createServerClient } from '@/lib/supabase/server';
+import { createClient as createAdminClient } from '@supabase/supabase-js';
+
+async function ensureAdmin() {
+  const supabase = await createServerClient();
+  const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+
+  if (sessionError || !session) {
+    return { error: NextResponse.json({ error: 'Não autenticado' }, { status: 401 }) };
+  }
+
+  const { data: profile, error: profileError } = await supabase
+    .from('user_profiles')
+    .select('user_type')
+    .eq('id', session.user.id)
+    .single();
+
+  const userType = profile?.user_type || (session.user.user_metadata as any)?.user_type;
+
+  if (profileError || !userType || userType !== 'admin') {
+    return { error: NextResponse.json({ error: 'Acesso negado' }, { status: 403 }) };
+  }
+
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+  if (!supabaseUrl || !serviceRoleKey) {
+    return {
+      error: NextResponse.json(
+        { error: 'SUPABASE_SERVICE_ROLE_KEY não configurada' },
+        { status: 500 }
+      ),
+    };
+  }
+
+  const admin = createAdminClient(supabaseUrl, serviceRoleKey, {
+    auth: { autoRefreshToken: false, persistSession: false },
+  });
+
+  return { admin };
+}
 
 export async function GET(request: Request) {
   try {
-    const supabase = await createClient();
-
-    // Verificar autenticação
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) {
-      return NextResponse.json({ error: 'Não autenticado' }, { status: 401 });
-    }
+    const { admin, error: adminError } = await ensureAdmin();
+    if (adminError) return adminError;
 
     // Buscar todas as empresas (agora em organizations)
-    const { data: companies, error } = await supabase
+    const { data: companies, error } = await admin
       .from('organizations')
       .select('*')
       .order('name', { ascending: true });
@@ -37,13 +72,8 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    const supabase = await createClient();
-
-    // Verificar autenticação
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) {
-      return NextResponse.json({ error: 'Não autenticado' }, { status: 401 });
-    }
+    const { admin, error: adminError } = await ensureAdmin();
+    if (adminError) return adminError;
 
     const body = await request.json();
     const {
@@ -68,11 +98,11 @@ export async function POST(request: Request) {
     }
 
     // Inserir empresa (agora em organizations)
-    const { data: company, error } = await supabase
+    const { data: company, error } = await admin
       .from('organizations')
       .insert({
         name,
-        slug: name.toLowerCase().replace(/\s+/g, '-'),
+        org_type: 'company',
         cnpj,
         email,
         phone: phone || null,

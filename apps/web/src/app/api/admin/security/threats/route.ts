@@ -24,7 +24,9 @@ export async function GET(request: Request) {
       .eq('id', session.user.id)
       .single();
 
-    if (!profile || profile.user_type !== 'admin') {
+    const userType = profile?.user_type || (session.user.user_metadata as any)?.user_type;
+
+    if (!userType || userType !== 'admin') {
       return NextResponse.json({ error: 'Acesso negado' }, { status: 403 });
     }
 

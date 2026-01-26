@@ -37,6 +37,11 @@ export default function LandingPage() {
                 <span className="text-[#1F4ED8] font-semibold text-xl tracking-tight">TALENT</span>
                 <span className="text-[#F97316] font-bold text-xl tracking-wider">FORGE</span>
               </div>
+              <img
+                src="https://fjudsjzfnysaztcwlwgm.supabase.co/storage/v1/object/public/LOGOS/LOGO4.png"
+                alt="Talent Forge"
+                className="h-12 w-auto"
+              />
             </Link>
             
             {/* Navigation - Desktop */}
@@ -59,13 +64,7 @@ export default function LandingPage() {
                 className="flex items-center space-x-2 px-4 py-2 text-[#141042] hover:bg-[#F5F5F0] rounded-lg transition-colors text-sm font-medium"
               >
                 <LogIn className="w-4 h-4" />
-                <span>Login Recrutador</span>
-              </Link>
-              <Link 
-                href="/register" 
-                className="btn-primary text-sm"
-              >
-                Começar Grátis
+                <span>Login</span>
               </Link>
             </div>
 
@@ -110,13 +109,7 @@ export default function LandingPage() {
                   className="flex items-center justify-center space-x-2 w-full py-3 text-[#141042] font-medium border border-[#E5E5DC] rounded-xl"
                 >
                   <LogIn className="w-4 h-4" />
-                  <span>Login Recrutador</span>
-                </Link>
-                <Link 
-                  href="/register"
-                  className="block w-full py-3 text-center bg-[#141042] text-white font-medium rounded-xl"
-                >
-                  Começar Grátis
+                  <span>Login</span>
                 </Link>
               </div>
             </nav>
@@ -182,10 +175,6 @@ export default function LandingPage() {
             {/* Trust Indicators */}
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-8 text-[#666666]">
               <div className="flex items-center space-x-2">
-                <CheckCircle2 className="w-4 h-4 sm:w-5 sm:h-5 text-green-600" />
-                <span className="text-fluid-xs">Grátis para começar</span>
-              </div>
-              <div className="flex items-center space-x-2">
                 <Shield className="w-4 h-4 sm:w-5 sm:h-5 text-[#141042]" />
                 <span className="text-fluid-xs">Dados protegidos</span>
               </div>
@@ -207,6 +196,51 @@ export default function LandingPage() {
                 </div>
               </div>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Architecture Highlights */}
+      <section className="section-fluid px-4 sm:px-6 lg:px-8 bg-[#FAFAF8]">
+        <div className="w-full">
+          <div className="text-center mb-10 sm:mb-14">
+            <h2 className="text-fluid-h2 font-semibold text-[#141042] tracking-tight mb-3 sm:mb-4">
+              Arquitetura pronta para escala
+            </h2>
+            <p className="text-fluid-lg text-[#666666] max-w-2xl mx-auto px-4 sm:px-0">
+              Multi-tenant seguro, auditoria completa e avaliações padrão DISC.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
+            {[
+              {
+                icon: Shield,
+                title: 'Isolamento por organização',
+                description: 'RLS e filtros por org_id garantem dados separados entre empresas.'
+              },
+              {
+                icon: BarChart3,
+                title: 'Auditoria de pipeline',
+                description: 'application_events registra cada mudança de estágio com histórico completo.'
+              },
+              {
+                icon: Brain,
+                title: 'DISC como padrão',
+                description: 'Avaliações comportamentais padronizadas para decisões mais assertivas.'
+              }
+            ].map((item, i) => (
+              <div
+                key={i}
+                className="p-5 sm:p-7 rounded-2xl bg-white border border-[#E5E5DC] hover:border-[#141042]/20 transition-all"
+              >
+                <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center mb-4" style={{ backgroundColor: '#14104210' }}>
+                  <item.icon className="w-5 h-5 sm:w-6 sm:h-6" style={{ color: '#141042' }} />
+                </div>
+                <h3 className="text-fluid-h4 font-semibold text-[#141042] mb-2">{item.title}</h3>
+                <p className="text-fluid-sm text-[#666666] leading-relaxed">{item.description}</p>
+              </div>
+            ))}
           </div>
         </div>
       </section>

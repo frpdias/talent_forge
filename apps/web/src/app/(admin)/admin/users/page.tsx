@@ -13,6 +13,7 @@ interface User {
   location: string | null;
   email_verified: boolean;
   last_sign_in: string | null;
+  organizations?: { id: string; name: string }[];
 }
 
 type TabType = 'all' | 'recruiter' | 'candidate' | 'admin';
@@ -140,13 +141,14 @@ export default function UsersPage() {
                 <th className="text-left px-6 py-4 text-sm font-semibold text-[#141042]">Usuário</th>
                 <th className="text-left px-6 py-4 text-sm font-semibold text-[#141042]">Email</th>
                 <th className="text-left px-6 py-4 text-sm font-semibold text-[#141042]">Tipo</th>
+                <th className="text-left px-6 py-4 text-sm font-semibold text-[#141042]">Empresa</th>
                 <th className="text-left px-6 py-4 text-sm font-semibold text-[#141042]">Cadastro</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={4} className="px-6 py-12 text-center">
+                  <td colSpan={5} className="px-6 py-12 text-center">
                     <div className="flex flex-col items-center">
                       <Loader2 className="w-8 h-8 text-[#141042] animate-spin mb-4" />
                       <p className="text-[#666666]">Carregando usuários...</p>
@@ -155,7 +157,7 @@ export default function UsersPage() {
                 </tr>
               ) : filteredUsers.length === 0 ? (
                 <tr>
-                  <td colSpan={4} className="px-6 py-12 text-center">
+                  <td colSpan={5} className="px-6 py-12 text-center">
                     <Users className="w-12 h-12 text-[#999] mx-auto mb-4" />
                     <p className="text-[#666666]">Nenhum usuário encontrado</p>
                   </td>
@@ -190,6 +192,13 @@ export default function UsersPage() {
                         <span className={`inline-flex px-2.5 py-1 rounded-lg text-xs font-medium border ${typeConfig.color}`}>
                           {typeConfig.label}
                         </span>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="text-sm text-[#666666]">
+                          {user.organizations && user.organizations.length > 0
+                            ? user.organizations.map((org) => org.name).join(', ')
+                            : '—'}
+                        </div>
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex items-center space-x-2 text-sm text-[#666666]">

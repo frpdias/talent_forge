@@ -40,7 +40,6 @@ let IamService = class IamService {
             .from('organizations')
             .insert({
             name: dto.name,
-            slug: dto.name.toLowerCase().replace(/\s+/g, '-'),
             plan_id: dto.planId || null,
         })
             .select()

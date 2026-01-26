@@ -1,19 +1,29 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-  {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false,
-    },
-  }
-);
-
 export async function POST(request: Request) {
   try {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+    if (!supabaseUrl || !serviceRoleKey) {
+      return NextResponse.json(
+        { error: 'SUPABASE_SERVICE_ROLE_KEY não configurada' },
+        { status: 500 }
+      );
+    }
+
+    const supabaseAdmin = createClient(
+      supabaseUrl,
+      serviceRoleKey,
+      {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false,
+        },
+      }
+    );
+
     const body = await request.json();
     const { email, password, fullName, userType, phone, company, position } = body;
 
@@ -77,6 +87,41 @@ export async function POST(request: Request) {
     if (profileError) {
       console.error('⚠️ Erro ao criar perfil (mas usuário Auth criado):', profileError);
       // Não falha a request - o perfil pode ser criado depois pelo trigger
+    }
+
+    if (userType === 'recruiter') {
+      const orgNameBase = company || fullName || email;
+      const orgName = `${orgNameBase} - ${authData.user.id.slice(0, 8)}`;
+
+      const { data: org, error: orgError } = await supabaseAdmin
+        .from('organizations')
+        .insert({
+          name: orgName,
+          org_type: 'headhunter',
+          status: 'active',
+          email,
+          phone: phone || null,
+          website: company ? null : null,
+        })
+        .select()
+        .single();
+
+      if (orgError) {
+        console.error('❌ Erro ao criar organização do recrutador:', orgError);
+      } else if (org?.id) {
+        const { error: memberError } = await supabaseAdmin
+          .from('org_members')
+          .insert({
+            org_id: org.id,
+            user_id: authData.user.id,
+            role: 'admin',
+            status: 'active',
+          });
+
+        if (memberError) {
+          console.error('❌ Erro ao vincular recrutador à organização:', memberError);
+        }
+      }
     }
 
     console.log('✅ Usuário criado:', {

@@ -9,7 +9,6 @@ import {
   FileText, 
   Bookmark, 
   User,
-  Settings, 
   LogOut,
   Menu,
   X,
@@ -22,7 +21,9 @@ import {
 import { createClient } from '@/lib/supabase/client';
 import { UserAvatar } from '@/components/UserAvatar';
 
-const navItems = [
+type NavItem = { href: string; label: string; icon: typeof Home };
+
+const navItems: NavItem[] = [
   { href: '/candidate', label: 'Início', icon: Home },
   { href: '/candidate/jobs', label: 'Buscar Vagas', icon: Briefcase },
   { href: '/candidate/applications', label: 'Candidaturas', icon: FileText },
@@ -30,9 +31,7 @@ const navItems = [
   { href: '/candidate/profile', label: 'Perfil', icon: User },
 ];
 
-const moreItems = [
-  { href: '/candidate/settings', label: 'Configurações', icon: Settings },
-];
+const moreItems: NavItem[] = [];
 
 export default function CandidateLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();

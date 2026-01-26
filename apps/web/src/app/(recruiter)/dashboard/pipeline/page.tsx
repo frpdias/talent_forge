@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { createBrowserClient } from '@supabase/ssr';
 import { applicationsApi } from '@/lib/api';
+import { useOrgStore } from '@/lib/store';
 
 interface Application {
   id: string;
@@ -50,6 +51,7 @@ const STAGE_COLORS = [
 ];
 
 export default function PipelinePage() {
+  const { currentOrg } = useOrgStore();
   const [columns, setColumns] = useState<Column[]>(
     STATUS_COLUMNS.map(stage => ({ ...stage, applications: [] }))
   );
@@ -76,7 +78,7 @@ export default function PipelinePage() {
 
   useEffect(() => {
     loadApplications();
-  }, []);
+  }, [currentOrg?.id]);
 
   useEffect(() => {
     buildColumns();
@@ -97,15 +99,19 @@ export default function PipelinePage() {
         }
       }
 
-      // Get user's organization
-      const { data: orgMembership } = await supabase
-        .from('org_members')
-        .select('org_id')
-        .eq('user_id', user?.id)
-        .limit(1)
-        .maybeSingle();
+      let resolvedOrgId = currentOrg?.id || null;
 
-      const resolvedOrgId = orgMembership?.org_id || null;
+      // Fallback: derive org from membership if store is not ready
+      if (!resolvedOrgId) {
+        const { data: orgMembership } = await supabase
+          .from('org_members')
+          .select('org_id')
+          .eq('user_id', user?.id)
+          .limit(1)
+          .maybeSingle();
+
+        resolvedOrgId = orgMembership?.org_id || null;
+      }
       console.log('🔍 [Pipeline] Debug:', { userId: user?.id, orgId: resolvedOrgId, hasToken: !!token });
       
       if (!token || !resolvedOrgId) {
@@ -134,10 +140,10 @@ export default function PipelinePage() {
       if (recruiterIds.length > 0) {
         const { data: profiles } = await supabase
           .from('user_profiles')
-          .select('user_id, full_name, email')
-          .in('user_id', recruiterIds);
+          .select('id, full_name, email')
+          .in('id', recruiterIds);
         setRecruiters((profiles || []).map((profile: any) => ({
-          id: profile.user_id,
+          id: profile.id,
           name: profile.full_name || profile.email || 'Recrutador',
         })));
       } else {

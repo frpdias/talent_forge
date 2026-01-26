@@ -26,7 +26,7 @@ let InviteLinksController = class InviteLinksController {
         this.inviteLinksService = inviteLinksService;
     }
     create(dto, orgId, orgRole, user) {
-        if (!['owner', 'admin', 'recruiter'].includes(orgRole)) {
+        if (!['owner', 'admin', 'manager', 'recruiter'].includes(orgRole)) {
             throw new common_1.ForbiddenException('Insufficient permissions');
         }
         return this.inviteLinksService.createInviteLink(orgId, user.sub, dto);

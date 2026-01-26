@@ -217,6 +217,34 @@ export default function CandidateOnboarding() {
           description: exp.description || '',
         })));
       }
+    } else {
+      // Fallback: carregar dados básicos do candidato para pré-preencher
+      const { data: candidate } = await supabase
+        .from('candidates')
+        .select('full_name, email, phone, location, current_title, salary_expectation')
+        .or(profileEmail ? `user_id.eq.${user.id},email.eq.${profileEmail}` : `user_id.eq.${user.id}`)
+        .maybeSingle();
+
+      if (candidate) {
+        const [city = '', state = ''] = (candidate.location || '').split(',').map((part: string) => part.trim());
+        setPersonalData({
+          fullName: candidate.full_name || '',
+          cpf: '',
+          email: candidate.email || user.email || '',
+          phone: candidate.phone || '',
+          birthDate: '',
+          city,
+          state,
+        });
+
+        setProfessionalData({
+          currentTitle: candidate.current_title || '',
+          areaOfExpertise: '',
+          seniorityLevel: '',
+          salaryExpectation: candidate.salary_expectation ? String(candidate.salary_expectation) : '',
+          employmentTypes: [],
+        });
+      }
     }
   };
 
@@ -403,7 +431,7 @@ export default function CandidateOnboarding() {
           .update({
             full_name: personalData.fullName,
             cpf: personalData.cpf.replace(/\D/g, ''),
-            email: personalData.email,
+            email: resolvedEmail || null,
             phone: personalData.phone,
             birth_date: personalData.birthDate,
             city: personalData.city,
@@ -551,7 +579,7 @@ export default function CandidateOnboarding() {
   const handleFinish = async () => {
     console.log('🚀 handleFinish iniciado', { profileId, userId });
     
-    if (!profileId) {
+    if (!profileId || !userId) {
       setError('Perfil não encontrado. Tente refazer o cadastro.');
       return;
     }
@@ -586,7 +614,7 @@ export default function CandidateOnboarding() {
             .from('resumes')
             .upload(fileName, resumeFile, {
               cacheControl: '3600',
-              upsert: false
+              upsert: true
             });
 
           if (uploadError) {

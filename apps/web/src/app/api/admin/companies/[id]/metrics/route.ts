@@ -1,5 +1,38 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { createClient as createServerClient } from '@/lib/supabase/server';
+import { createClient as createAdminClient } from '@supabase/supabase-js';
+
+async function ensureAdmin() {
+  const supabase = await createServerClient();
+  const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+
+  if (sessionError || !session) {
+    return { error: NextResponse.json({ error: 'Não autenticado' }, { status: 401 }) };
+  }
+
+  const userType = (session.user.user_metadata as any)?.user_type;
+  if (userType !== 'admin') {
+    return { error: NextResponse.json({ error: 'Acesso negado' }, { status: 403 }) };
+  }
+
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+  if (!supabaseUrl || !serviceRoleKey) {
+    return {
+      error: NextResponse.json(
+        { error: 'SUPABASE_SERVICE_ROLE_KEY não configurada' },
+        { status: 500 }
+      ),
+    };
+  }
+
+  const admin = createAdminClient(supabaseUrl, serviceRoleKey, {
+    auth: { autoRefreshToken: false, persistSession: false },
+  });
+
+  return { admin };
+}
 
 export async function GET(
   request: NextRequest,
@@ -8,32 +41,14 @@ export async function GET(
   try {
     const { id } = await params;
     console.log('🔍 [Metrics API] Iniciando busca de métricas para org:', id);
-    
-    const supabase = await createClient();
-    console.log('✅ [Metrics API] Supabase client criado');
-
-    // Verificar autenticação
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) {
-      console.error('❌ [Metrics API] Usuário não autenticado');
-      return NextResponse.json({ error: 'Não autenticado' }, { status: 401 });
-    }
-    console.log('✅ [Metrics API] Usuário autenticado:', session.user.email);
-
-    // Verificar se é admin
-    const { data: userData } = await supabase.auth.getUser();
-    const userType = userData.user?.user_metadata?.user_type;
-    console.log('🔐 [Metrics API] User type:', userType);
-    
-    if (userType !== 'admin') {
-      console.error('❌ [Metrics API] Acesso negado - não é admin');
-      return NextResponse.json({ error: 'Acesso negado' }, { status: 403 });
-    }
+    const { admin, error: adminError } = await ensureAdmin();
+    if (adminError) return adminError;
+    console.log('✅ [Metrics API] Supabase admin client criado');
 
     console.log('📊 [Metrics API] Buscando métricas para org_id:', id);
 
     // Buscar métricas da view
-    const { data: metrics, error: metricsError } = await supabase
+    const { data: metrics, error: metricsError } = await admin
       .from('v_org_metrics')
       .select('*')
       .eq('org_id', id)
@@ -53,9 +68,16 @@ export async function GET(
     console.log('✅ [Metrics API] Métricas encontradas para:', metrics?.org_name);
 
     // Buscar breakdown detalhado do banco
-    const { data: dbBreakdown } = await supabase.rpc('get_org_detailed_metrics', {
+    const { data: dbBreakdown } = await admin.rpc('get_org_detailed_metrics', {
       p_org_id: id
     });
+
+    const { data: candidates } = await admin
+      .from('candidates')
+      .select('id, full_name, email, phone, created_at')
+      .eq('owner_org_id', id)
+      .order('created_at', { ascending: false })
+      .limit(20);
 
     // Se a função RPC não retornar dados, usar métricas básicas
     const response = dbBreakdown || {
@@ -82,6 +104,7 @@ export async function GET(
     const formattedResponse = {
       org_id: id,
       org_name: metrics.org_name,
+      candidates: candidates || [],
       
       // 1. Métricas de Negócio
       business: {

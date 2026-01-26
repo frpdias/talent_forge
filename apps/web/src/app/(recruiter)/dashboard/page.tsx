@@ -17,7 +17,7 @@ import {
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, Button, Badge } from '@/components/ui';
 import { useOrgStore } from '@/lib/store';
-import { api } from '@/lib/api';
+import { reportsApi } from '@/lib/api';
 import { formatDate } from '@/lib/utils';
 import { createClient } from '@/lib/supabase/client';
 
@@ -33,7 +33,10 @@ interface DashboardStats {
 interface RecentActivity {
   id: string;
   type: 'application' | 'assessment' | 'stage_change';
-  description: string;
+  description?: string;
+  candidateName?: string;
+  jobTitle?: string;
+  status?: string;
   createdAt: string;
 }
 
@@ -359,10 +362,17 @@ export default function DashboardPage() {
 
       void (async () => {
         try {
-          const response = await api.reports.getDashboard();
-          if ((response.data as any)?.stats) {
-            setStats((response.data as any).stats);
-            setRecentActivity((response.data as any).recentActivity || []);
+          const { data: sessionData } = await supabase.auth.getSession();
+          const token = sessionData?.session?.access_token;
+
+          if (!token || !orgId) return;
+
+          const response = await reportsApi.dashboard(token, orgId);
+          const payload = (response as any)?.data ?? response;
+
+          if (payload?.stats) {
+            setStats(payload.stats);
+            setRecentActivity(payload.recentActivity || []);
           }
         } catch (error) {
           console.error('Failed to load dashboard data (API):', error);
@@ -580,23 +590,51 @@ export default function DashboardPage() {
                   </div>
                 ) : (
                   <div className="divide-y divide-(--divider)">
-                    {recentActivity.slice(0, 5).map((activity, index) => (
-                      <div
-                        key={activity.id}
-                        className="flex items-center gap-4 px-5 py-4 hover:bg-gray-50 transition-colors"
-                      >
-                        <div className={`w-2 h-2 rounded-full ${
-                          activity.type === 'application' ? 'bg-blue-500' :
-                          activity.type === 'assessment' ? 'bg-emerald-500' : 'bg-amber-500'
-                        }`} />
-                        <p className="flex-1 text-sm text-foreground">
-                          {activity.description}
-                        </p>
-                        <span className="text-xs text-foreground-muted whitespace-nowrap">
-                          {formatDate(activity.createdAt)}
-                        </span>
-                      </div>
-                    ))}
+                    {recentActivity.slice(0, 5).map((activity) => {
+                      const statusLabels: Record<string, string> = {
+                        applied: 'Aplicada',
+                        in_process: 'Em processo',
+                        hired: 'Contratada',
+                        rejected: 'Rejeitada',
+                      };
+                      const typeLabel =
+                        activity.type === 'assessment'
+                          ? 'Assessment'
+                          : activity.type === 'stage_change'
+                            ? 'Mudança de etapa'
+                            : 'Candidatura';
+                      const statusLabel = activity.status
+                        ? statusLabels[activity.status] || activity.status
+                        : null;
+                      const title =
+                        activity.description ||
+                        `${typeLabel}${statusLabel ? ` ${statusLabel}` : ''}`;
+                      const candidateLabel = activity.candidateName || 'Candidato';
+                      const jobLabel = activity.jobTitle ? ` · ${activity.jobTitle}` : '';
+
+                      return (
+                        <div
+                          key={activity.id}
+                          className="flex items-center gap-4 px-5 py-4 hover:bg-gray-50 transition-colors"
+                        >
+                          <div className={`w-2 h-2 rounded-full ${
+                            activity.type === 'application' ? 'bg-blue-500' :
+                            activity.type === 'assessment' ? 'bg-emerald-500' : 'bg-amber-500'
+                          }`} />
+                          <div className="flex-1">
+                            <p className="text-sm font-medium text-foreground">
+                              {title}
+                            </p>
+                            <p className="text-xs text-foreground-muted">
+                              por {candidateLabel}{jobLabel}
+                            </p>
+                          </div>
+                          <span className="text-xs text-foreground-muted whitespace-nowrap">
+                            {formatDate(activity.createdAt)}
+                          </span>
+                        </div>
+                      );
+                    })}
                   </div>
                 )}
               </CardContent>

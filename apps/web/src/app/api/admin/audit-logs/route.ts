@@ -36,7 +36,9 @@ export async function GET(request: Request) {
       .eq('id', session.user.id)
       .single();
 
-    if (profileError || !profile || profile.user_type !== 'admin') {
+    const userType = profile?.user_type || (session.user.user_metadata as any)?.user_type;
+
+    if (profileError || !userType || userType !== 'admin') {
       return NextResponse.json(
         { error: 'Acesso negado. Apenas administradores podem visualizar logs de auditoria.' },
         { status: 403 }
@@ -58,14 +60,7 @@ export async function GET(request: Request) {
     // 4. Construir query com filtros
     let query = supabase
       .from('audit_logs')
-      .select(`
-        *,
-        actor:actor_id (
-          id,
-          email,
-          raw_user_meta_data
-        )
-      `, { count: 'exact' });
+      .select('*', { count: 'exact' });
 
     // Aplicar filtros
     if (action) {
@@ -103,9 +98,44 @@ export async function GET(request: Request) {
     // 6. Formatar resposta com informações de paginação
     const totalPages = count ? Math.ceil(count / limit) : 0;
 
+    const actorIds = Array.from(
+      new Set((logs || []).map((log: any) => log.actor_id).filter(Boolean))
+    );
+
+    let actorMap = new Map<string, { id: string; email: string | null; full_name: string | null }>();
+
+    if (actorIds.length > 0) {
+      const { data: actors, error: actorsError } = await supabase
+        .from('user_profiles')
+        .select('id, email, full_name')
+        .in('id', actorIds);
+
+      if (actorsError) {
+        console.error('Erro ao buscar atores dos audit logs:', actorsError);
+      } else {
+        actorMap = new Map((actors || []).map((actor) => [actor.id, actor]));
+      }
+    }
+
+    const logsWithActors = (logs || []).map((log: any) => {
+      const actor = actorMap.get(log.actor_id) || null;
+      return {
+        ...log,
+        actor: actor
+          ? {
+              id: actor.id,
+              email: actor.email,
+              raw_user_meta_data: {
+                full_name: actor.full_name || undefined,
+              },
+            }
+          : null,
+      };
+    });
+
     return NextResponse.json({
       success: true,
-      data: logs || [],
+      data: logsWithActors,
       pagination: {
         page,
         limit,

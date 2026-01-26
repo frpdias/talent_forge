@@ -1,5 +1,4 @@
 'use client';
-/*
 
 import { useEffect, useState } from 'react';
 import { Header } from '@/components/layout';
@@ -36,8 +35,6 @@ interface DashboardStats {
   pendingApplications: number;
   completedAssessments: number;
 }
-*/
-
 interface RecentActivity {
   id: string;
   type: 'application' | 'assessment' | 'stage_change';
@@ -427,3 +424,4 @@ export default function DashboardPage() {
     </div>
   );
 }
+

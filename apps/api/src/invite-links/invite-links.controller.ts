@@ -41,7 +41,7 @@ export class InviteLinksController {
     @OrgRole() orgRole: string,
     @CurrentUser() user: JwtPayload,
   ) {
-    if (!['owner', 'admin', 'recruiter'].includes(orgRole)) {
+    if (!['owner', 'admin', 'manager', 'recruiter'].includes(orgRole)) {
       throw new ForbiddenException('Insufficient permissions');
     }
 
