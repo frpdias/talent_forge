@@ -523,7 +523,7 @@ export default function CandidatesPage() {
         subtitle="Gerencie seu banco de talentos"
       />
 
-      <div className="pl-0 pr-6 py-6 space-y-5">
+      <div className="px-6 py-6 space-y-5">
         {/* Filters */}
         <Card>
           <CardContent className="p-4">

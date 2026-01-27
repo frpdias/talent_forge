@@ -392,7 +392,7 @@ export default function PipelinePage() {
         }
       />
 
-      <div className="pl-0 pr-6 py-6">
+      <div className="px-6 py-6">
         {/* Filters */}
         <Card className="mb-6">
           <CardContent className="p-4">

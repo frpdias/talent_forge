@@ -165,7 +165,7 @@ export default function SettingsPage() {
         subtitle="Gerencie as configurações da sua conta e organização"
       />
 
-      <div className="p-4 sm:p-6 max-w-4xl mx-auto space-y-6">
+      <div className="px-6 py-6 space-y-6">
         {/* Organization Settings */}
         <Card>
           <CardHeader>

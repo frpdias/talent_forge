@@ -160,7 +160,7 @@ export default function JobsPage() {
     <div className="min-h-full">
       {/* Page Header */}
       <div className="bg-white border-b border-border">
-        <div className="pl-0 pr-6 py-6">
+        <div className="px-6 py-6">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <p className="text-xs font-medium text-tf-accent uppercase tracking-wider mb-1">
@@ -183,7 +183,7 @@ export default function JobsPage() {
         </div>
       </div>
 
-      <div className="pl-0 pr-6 py-6 space-y-5">
+      <div className="px-6 py-6 space-y-5">
         {/* Filters */}
         <Card>
           <CardContent className="p-4">
