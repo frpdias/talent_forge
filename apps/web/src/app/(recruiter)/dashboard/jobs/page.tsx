@@ -246,11 +246,16 @@ export default function JobsPage() {
         ) : (
           <div className="grid gap-4">
             {filteredJobs.map((job) => (
-              <button
+              <div
                 key={job.id}
-                type="button"
-                onClick={() => router.push(`/dashboard/jobs/${job.id}`)}
-                className="text-left"
+                onClick={(e) => {
+                  // Não navegar se clicou no botão "Ver Detalhes"
+                  if ((e.target as HTMLElement).closest('a, button')) {
+                    return;
+                  }
+                  router.push(`/dashboard/jobs/${job.id}`);
+                }}
+                className="text-left cursor-pointer"
               >
                 <Card hover className="cursor-pointer">
                   <CardContent className="p-5">
@@ -313,7 +318,7 @@ export default function JobsPage() {
                   </div>
                   </CardContent>
                 </Card>
-              </button>
+              </div>
             ))}
           </div>
         )}

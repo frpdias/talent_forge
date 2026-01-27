@@ -18,6 +18,7 @@ import {
 import { CboSelector } from '@/components/CboSelector';
 import { DashboardHeader } from '@/components/DashboardHeader';
 import { createBrowserClient } from '@supabase/ssr';
+import { getUserOrganization } from '@/lib/get-user-org';
 import Link from 'next/link';
 
 interface JobFormData {
@@ -63,19 +64,9 @@ export default function NewJobPage() {
     try {
       setLoading(true);
 
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Not authenticated');
+      // Get user's organization usando helper
+      const member = await getUserOrganization(supabase);
 
-      // Get user's organization
-      const { data: member } = await supabase
-        .from('org_members')
-        .select('org_id')
-        .eq('user_id', user.id)
-        .single();
-
-      if (!member?.org_id) {
-        throw new Error('Organization not found');
-      }
 
       const jobData = {
         title: formData.title,

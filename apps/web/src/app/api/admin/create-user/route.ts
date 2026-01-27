@@ -108,20 +108,51 @@ export async function POST(request: Request) {
 
       if (orgError) {
         console.error('❌ Erro ao criar organização do recrutador:', orgError);
-      } else if (org?.id) {
-        const { error: memberError } = await supabaseAdmin
-          .from('org_members')
-          .insert({
-            org_id: org.id,
-            user_id: authData.user.id,
-            role: 'admin',
-            status: 'active',
-          });
-
-        if (memberError) {
-          console.error('❌ Erro ao vincular recrutador à organização:', memberError);
-        }
+        // Retornar erro para evitar recruiter sem organização
+        return NextResponse.json(
+          { 
+            error: 'Erro ao criar organização do recrutador',
+            details: orgError.message 
+          },
+          { status: 500 }
+        );
       }
+
+      if (!org?.id) {
+        console.error('❌ Organização não foi criada para o recrutador');
+        return NextResponse.json(
+          { error: 'Organização não foi criada' },
+          { status: 500 }
+        );
+      }
+
+      const { error: memberError } = await supabaseAdmin
+        .from('org_members')
+        .insert({
+          org_id: org.id,
+          user_id: authData.user.id,
+          role: 'admin',
+          status: 'active',
+        });
+
+      if (memberError) {
+        console.error('❌ Erro ao vincular recrutador à organização:', memberError);
+        // Retornar erro crítico
+        return NextResponse.json(
+          { 
+            error: 'Erro ao vincular recrutador à organização',
+            details: memberError.message,
+            warning: 'Usuário criado mas sem organização - necessário correção manual'
+          },
+          { status: 500 }
+        );
+      }
+
+      console.log('✅ Organização criada e recruiter vinculado:', {
+        org_id: org.id,
+        org_name: org.name,
+        user_id: authData.user.id
+      });
     }
 
     console.log('✅ Usuário criado:', {
