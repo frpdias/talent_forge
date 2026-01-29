@@ -6,27 +6,27 @@
    ============================================ */
 
 :root {
-  /* Primary Brand - Deep Navy (Confiança & Profissionalismo) */
-  --tf-primary: #0F172A;
-  --tf-primary-hover: #1E293B;
-  --tf-primary-active: #334155;
-  --tf-primary-light: #475569;
+  /* Primary Brand - Deep Purple (Arquitetura Canônica Oficial) */
+  --tf-primary: #141042;
+  --tf-primary-hover: #1E1859;
+  --tf-primary-active: #2A2270;
+  --tf-primary-light: #3B2E88;
   
-  /* Secondary - Refined Slate */
-  --tf-secondary: #64748B;
-  --tf-secondary-hover: #475569;
-  --tf-secondary-light: #94A3B8;
+  /* Secondary - Success Green (Arquitetura Canônica Oficial) */
+  --tf-secondary: #10B981;
+  --tf-secondary-hover: #059669;
+  --tf-secondary-light: #34D399;
   
-  /* Accent - Premium Blue */
-  --tf-accent: #2563EB;
-  --tf-accent-hover: #1D4ED8;
-  --tf-accent-light: #3B82F6;
-  --tf-accent-subtle: #EFF6FF;
+  /* Accent - Blue Informativo (Arquitetura Canônica Oficial) */
+  --tf-accent: #3B82F6;
+  --tf-accent-hover: #2563EB;
+  --tf-accent-light: #60A5FA;
+  --tf-accent-subtle: #DBEAFE;
   
   /* Success - Corporate Green */
-  --tf-success: #059669;
-  --tf-success-light: #10B981;
-  --tf-success-subtle: #ECFDF5;
+  --tf-success: #10B981;
+  --tf-success-light: #34D399;
+  --tf-success-subtle: #D1FAE5;
   
   /* Warning - Professional Amber */
   --tf-warning: #D97706;
@@ -52,15 +52,15 @@
   
   /* Backgrounds */
   --background: #FFFFFF;
-  --background-subtle: #F8FAFC;
-  --background-muted: #F1F5F9;
-  --foreground: #0F172A;
-  --foreground-muted: #64748B;
+  --background-subtle: #FAFAF8;
+  --background-muted: #F5F5F0;
+  --foreground: #141042;
+  --foreground-muted: #666666;
   
   /* Borders & Dividers */
-  --border: #E2E8F0;
-  --border-hover: #CBD5E1;
-  --divider: #F1F5F9;
+  --border: #E5E5DC;
+  --border-hover: #D4D4C8;
+  --divider: #F5F5F0;
   
   /* Shadows */
   --shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.05);
@@ -70,7 +70,7 @@
   --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
   
   /* Ring */
-  --ring: #2563EB;
+  --ring: #3B82F6;
   --ring-offset: #FFFFFF;
   
   /* Legacy compatibility */
