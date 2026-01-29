@@ -18,7 +18,8 @@ import {
   ChevronDown,
   Building2,
   Search,
-  HelpCircle
+  HelpCircle,
+  Activity
 } from 'lucide-react';
 import { NotificationCenter } from '@/components/notifications/NotificationCenter';
 
@@ -28,6 +29,7 @@ const navItems = [
   { href: '/dashboard/candidates', label: 'Candidatos', icon: Users },
   { href: '/dashboard/pipeline', label: 'Pipeline', icon: UserCheck },
   { href: '/dashboard/reports', label: 'Relatórios', icon: FileBarChart },
+  { href: '/php/tfci/cycles', label: 'Módulo PHP', icon: Activity },
   { href: '/dashboard/invite', label: 'Convidar', icon: UserPlus },
 ];
 

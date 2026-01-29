@@ -14,7 +14,15 @@ const nextConfig: NextConfig = {
       },
     ],
   },
-  // outputFileTracingRoot: path.join(__dirname, "../../"),
+  outputFileTracingRoot: path.join(__dirname, "../../"),
+  outputFileTracingExcludes: {
+    '*': [
+      'node_modules/@swc/core-linux-x64-gnu',
+      'node_modules/@swc/core-linux-x64-musl',
+      'node_modules/@esbuild/darwin-x64',
+      'node_modules/@esbuild/linux-x64',
+    ],
+  },
 };
 
 export default nextConfig;

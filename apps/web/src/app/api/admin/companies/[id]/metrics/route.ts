@@ -79,6 +79,16 @@ export async function GET(
       .order('created_at', { ascending: false })
       .limit(20);
 
+    // Buscar status do módulo PHP
+    const { data: phpModule } = await admin
+      .from('php_module_activations')
+      .select('is_active, settings, created_at')
+      .eq('org_id', id)
+      .single();
+
+    // Extrair pesos do settings JSONB (conforme arquitetura canônica)
+    const weights = phpModule?.settings?.weights || { tfci: 30, nr1: 40, copc: 30 };
+
     // Se a função RPC não retornar dados, usar métricas básicas
     const response = dbBreakdown || {
       org_id: id,
@@ -165,6 +175,15 @@ export async function GET(
         created_at: metrics.org_created_at,
         alerts: response.health?.alerts || [],
       },
+
+      // 6. Módulo PHP
+      php_module: phpModule ? {
+        is_active: phpModule.is_active,
+        tfci_weight: weights.tfci,
+        nr1_weight: weights.nr1,
+        copc_weight: weights.copc,
+        activated_at: phpModule.created_at,
+      } : null,
     };
 
     return NextResponse.json(formattedResponse);
