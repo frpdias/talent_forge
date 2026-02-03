@@ -35,7 +35,7 @@ CREATE POLICY "php_notifications_select_org_members" ON php_notifications
     FOR SELECT
     USING (
         org_id IN (
-            SELECT organization_id FROM organization_members 
+            SELECT org_id FROM org_members 
             WHERE user_id = auth.uid()
         )
         AND (user_id IS NULL OR user_id = auth.uid())
@@ -51,14 +51,14 @@ CREATE POLICY "php_notifications_update_own" ON php_notifications
     FOR UPDATE
     USING (
         org_id IN (
-            SELECT organization_id FROM organization_members 
+            SELECT org_id FROM org_members 
             WHERE user_id = auth.uid()
         )
         AND (user_id IS NULL OR user_id = auth.uid())
     )
     WITH CHECK (
         org_id IN (
-            SELECT organization_id FROM organization_members 
+            SELECT org_id FROM org_members 
             WHERE user_id = auth.uid()
         )
     );
@@ -92,7 +92,7 @@ CREATE POLICY "php_user_presence_select_org_members" ON php_user_presence
     FOR SELECT
     USING (
         org_id IN (
-            SELECT organization_id FROM organization_members 
+            SELECT org_id FROM org_members 
             WHERE user_id = auth.uid()
         )
     );
@@ -134,7 +134,7 @@ CREATE POLICY "php_comments_select_org_members" ON php_comments
     FOR SELECT
     USING (
         org_id IN (
-            SELECT organization_id FROM organization_members 
+            SELECT org_id FROM org_members 
             WHERE user_id = auth.uid()
         )
     );
@@ -144,7 +144,7 @@ CREATE POLICY "php_comments_insert_org_members" ON php_comments
     FOR INSERT
     WITH CHECK (
         org_id IN (
-            SELECT organization_id FROM organization_members 
+            SELECT org_id FROM org_members 
             WHERE user_id = auth.uid()
         )
         AND user_id = auth.uid()
@@ -188,7 +188,7 @@ CREATE POLICY "php_edit_locks_select_org_members" ON php_edit_locks
     FOR SELECT
     USING (
         org_id IN (
-            SELECT organization_id FROM organization_members 
+            SELECT org_id FROM org_members 
             WHERE user_id = auth.uid()
         )
     );
@@ -198,13 +198,13 @@ CREATE POLICY "php_edit_locks_manage_org_members" ON php_edit_locks
     FOR ALL
     USING (
         org_id IN (
-            SELECT organization_id FROM organization_members 
+            SELECT org_id FROM org_members 
             WHERE user_id = auth.uid()
         )
     )
     WITH CHECK (
         org_id IN (
-            SELECT organization_id FROM organization_members 
+            SELECT org_id FROM org_members 
             WHERE user_id = auth.uid()
         )
     );

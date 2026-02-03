@@ -31,7 +31,7 @@ CREATE POLICY "php_ai_usage_select_org_members" ON php_ai_usage
     FOR SELECT
     USING (
         org_id IN (
-            SELECT organization_id FROM organization_members 
+            SELECT org_id FROM org_members 
             WHERE user_id = auth.uid()
         )
     );
@@ -69,7 +69,7 @@ CREATE POLICY "php_ai_conversations_select_owner" ON php_ai_conversations
     USING (
         user_id = auth.uid() OR
         org_id IN (
-            SELECT organization_id FROM organization_members 
+            SELECT org_id FROM org_members 
             WHERE user_id = auth.uid() AND role IN ('admin', 'owner')
         )
     );
@@ -80,7 +80,7 @@ CREATE POLICY "php_ai_conversations_insert_owner" ON php_ai_conversations
     WITH CHECK (
         user_id = auth.uid() OR
         org_id IN (
-            SELECT organization_id FROM organization_members 
+            SELECT org_id FROM org_members 
             WHERE user_id = auth.uid()
         )
     );
@@ -120,7 +120,7 @@ CREATE POLICY "php_ai_reports_select_org_members" ON php_ai_reports
     FOR SELECT
     USING (
         org_id IN (
-            SELECT organization_id FROM organization_members 
+            SELECT org_id FROM org_members 
             WHERE user_id = auth.uid()
         )
     );
@@ -130,7 +130,7 @@ CREATE POLICY "php_ai_reports_insert_org_members" ON php_ai_reports
     FOR INSERT
     WITH CHECK (
         org_id IN (
-            SELECT organization_id FROM organization_members 
+            SELECT org_id FROM org_members 
             WHERE user_id = auth.uid()
         )
     );
