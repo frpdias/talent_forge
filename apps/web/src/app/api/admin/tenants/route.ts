@@ -4,7 +4,7 @@ import { createClient } from '@supabase/supabase-js';
 
 export async function GET(request: NextRequest) {
   try {
-    // Verificar se usuário é admin
+    // Verificar se usuário está autenticado
     const supabase = await createServerClient();
     const { data: { user } } = await supabase.auth.getUser();
 
@@ -12,23 +12,25 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Verificar se é admin
-    const { data: profile } = await supabase
-      .from('user_profiles')
-      .select('user_type')
-      .eq('user_id', user.id)
-      .single();
-
-    if (profile?.user_type !== 'admin') {
-      return NextResponse.json({ error: 'Forbidden - Admin only' }, { status: 403 });
-    }
-
-    // Usar service role para buscar todas as organizações (bypass RLS)
+    // Usar service role para verificar perfil e buscar dados (bypass RLS)
     const supabaseAdmin = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.SUPABASE_SERVICE_ROLE_KEY!,
       { auth: { persistSession: false } }
     );
+
+    // Verificar se é admin usando service role
+    const { data: profile } = await supabaseAdmin
+      .from('user_profiles')
+      .select('user_type')
+      .eq('user_id', user.id)
+      .single();
+
+    console.log('[Admin Tenants API] User:', user.email, 'Profile:', profile);
+
+    if (profile?.user_type !== 'admin') {
+      return NextResponse.json({ error: 'Forbidden - Admin only' }, { status: 403 });
+    }
 
     // Buscar organizações
     const { data: orgs, error: orgsError } = await supabaseAdmin
