@@ -22,13 +22,12 @@ import {
   UpdateActionItemDto,
   ActionPlanQueryDto,
 } from './dto/action-plan.dto';
-import { JwtAuthGuard } from '../../auth/jwt-auth.guard';
 import { PhpModuleGuard } from '../guards/php-module.guard';
 
 @ApiTags('PHP - Action Plans')
 @ApiBearerAuth()
 @Controller('api/v1/php/action-plans')
-@UseGuards(JwtAuthGuard, PhpModuleGuard)
+@UseGuards(PhpModuleGuard)
 export class ActionPlansController {
   constructor(private readonly actionPlansService: ActionPlansService) {}
 

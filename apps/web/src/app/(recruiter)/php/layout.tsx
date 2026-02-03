@@ -80,8 +80,8 @@ export default function PhpLayout({ children }: { children: ReactNode }) {
               <a href="/php/action-plans" className="text-sm font-semibold text-gray-700 hover:text-[#1F4ED8] transition-colors">
                 Ações
               </a>
-              <a href="/php/ai" className="text-sm font-semibold text-gray-700 hover:text-[#1F4ED8] transition-colors">
-                AI Insights
+              <a href="/php/ai-chat" className="text-sm font-semibold text-gray-700 hover:text-[#1F4ED8] transition-colors">
+                🤖 AI
               </a>
               <a href="/php/settings" className="text-sm font-semibold text-gray-700 hover:text-[#1F4ED8] transition-colors">
                 Config

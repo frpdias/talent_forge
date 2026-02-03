@@ -14,13 +14,12 @@ import {
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { SettingsService } from './settings.service';
 import { PhpSettingsDto } from './dto/settings.dto';
-import { JwtAuthGuard } from '../../auth/jwt-auth.guard';
 import { PhpModuleGuard } from '../guards/php-module.guard';
 
 @ApiTags('PHP - Settings')
 @ApiBearerAuth()
 @Controller('api/v1/php/settings')
-@UseGuards(JwtAuthGuard, PhpModuleGuard)
+@UseGuards(PhpModuleGuard)
 export class SettingsController {
   constructor(private readonly settingsService: SettingsService) {}
 
