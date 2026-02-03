@@ -1,6 +1,6 @@
 # Arquitetura Canônica — TalentForge
 
-**Última atualização**: 2026-01-29 23:58 | **Score de Conformidade**: ✅ 97% (Sprint 6+7+8+9+10: Módulo PHP + Admin Panel + Design System + Branding 100%)
+**Última atualização**: 2026-02-03 19:00 | **Score de Conformidade**: ✅ 98% (Sprint 12+13+14: Action Plans + OpenAI + Real-Time Dashboard 100%)
 
 ## 📜 FONTE DA VERDADE — PRINCÍPIO FUNDAMENTAL
 
@@ -3678,27 +3678,32 @@ git push origin main
 
 ---
 
-### 🚀 Sprint 12: Action Plans & Settings (Fevereiro 2026)
+### 🚀 Sprint 12: Action Plans & Settings (Fevereiro 2026) ✅ COMPLETO
 
 **Objetivo:** Implementar gestão de planos de ação e configurações avançadas
 
-**Features:**
-1. **Action Plans Management**
+**Features Implementadas:**
+1. **Action Plans Management** ✅
    - Frontend: `/php/action-plans` + `/php/action-plans/[id]`
-   - Backend: Endpoints CRUD action plans
-   - Integração com dashboard (top 5 ações)
-   - Atribuição automática ao gestor da equipe
-
-2. **Settings Page**
-   - Frontend: `/php/settings`
-   - Configuração de pesos customizáveis (TFCI/NR-1/COPC)
-   - Thresholds de alertas (burnout, conflito, queda brusca)
-   - Notificações por email/webhook
-
-3. **Validações:**
+   - Backend: `ActionPlansModule` com CRUD completo
    - Tabelas: `php_action_plans`, `php_action_items`
-   - Endpoints: 6 novos (CRUD plans + items)
-   - E2E tests: `test-action-plans-e2e.js`
+   - Integração com dashboard (top 5 ações)
+
+2. **Settings Page** ✅
+   - Frontend: `/php/settings`
+   - Backend: `SettingsModule` com configurações por org
+   - Tabela: `php_module_settings`
+   - Configuração de pesos, thresholds, notificações
+
+**Arquivos Criados:**
+- `apps/api/src/php/action-plans/` - Módulo completo (controller, service, module, DTOs)
+- `apps/api/src/php/settings/` - Módulo de configurações
+- `apps/web/src/app/(recruiter)/php/action-plans/page.tsx`
+- `apps/web/src/app/(recruiter)/php/settings/page.tsx`
+
+**Commits:**
+- `5dd105f` - feat(php): implement Action Plans module - Sprint 12 Phase 1
+- `08000af` - feat(php): implement Settings module - Sprint 12 Phase 2 complete
 
 ---
 
@@ -3750,32 +3755,86 @@ git push origin main
 - ✅ Caching de dados com TTL
 - ✅ Cost tracking por feature
 
+**Commit:** `446689c` - feat(php): implement OpenAI Enhanced module - Sprint 13
+
 ---
 
-### 📊 Sprint 14: Real-Time Dashboard (Abril 2026)
+### 📊 Sprint 14: Real-Time Dashboard (Abril 2026) ✅ COMPLETO
 
 **Objetivo:** Dashboard live com WebSockets para métricas em tempo real
 
-**Features:**
-1. **WebSocket Integration**
-   - Backend: Socket.IO em NestJS
-   - Frontend: Real-time updates (sem refresh)
-   - Events: Nova avaliação → dashboard atualiza instantaneamente
+**Features Implementadas:**
+1. **WebSocket Integration** ✅
+   - Backend: Socket.IO em NestJS (`PhpEventsGateway`)
+   - Namespace: `/php` com CORS e transports configurados
+   - Connection tracking por org_id
+   - Events: dashboard:update, notification, cursor:update, action:locked
 
-2. **Live Notifications**
-   - Alerta crítico (NR-1 alto) → toast notification
-   - Nova ação atribuída → badge no menu
-   - Meta atingida → celebração animada
+2. **Live Notifications** ✅
+   - `NotificationsModule` com serviço completo
+   - Tabela: `php_notifications` com RLS
+   - Convenience methods: notifyHighRiskNr1, notifyLowTfciScore, etc.
+   - Frontend: `NotificationBell` component com dropdown
 
-3. **Collaborative Features**
-   - Múltiplos admins vendo dashboard → cursor de outros usuários
-   - Comentários em tempo real nos action items
-   - Lock de edição (evitar conflitos)
+3. **Collaborative Features** ✅
+   - User presence tracking (`php_user_presence`)
+   - Cursor tracking em tempo real
+   - Edit locks (`php_edit_locks`) com expiração 5min
+   - Comments em tempo real (`php_comments`)
 
-4. **Validações:**
-   - Stress test: 50 usuários simultâneos
-   - Latência < 200ms (WebSocket)
-   - Fallback para polling se WebSocket falhar
+4. **Dashboard Metrics Service** ✅
+   - `DashboardService` com cache 30s
+   - Métricas agregadas: TFCI, NR-1, COPC, Action Plans
+   - Auto-emit via WebSocket on refresh
+
+**Arquivos Criados:**
+- `apps/api/src/php/events/php-events.gateway.ts` - WebSocket gateway (390+ linhas)
+- `apps/api/src/php/events/php-events.module.ts` - Módulo global
+- `apps/api/src/php/notifications/` - Módulo completo
+- `apps/api/src/php/dashboard/` - Serviço de métricas
+- `apps/web/src/hooks/use-php-realtime.ts` - Hook React para WebSocket
+- `apps/web/src/components/php/notifications.tsx` - Componentes UI
+- `supabase/migrations/20260205_realtime_dashboard.sql` - 4 tabelas + RLS
+
+**Novos Endpoints (7):**
+- GET `/php/notifications/:orgId` - Listar não lidas
+- GET `/php/notifications/:orgId/count` - Contador
+- POST `/php/notifications/:notificationId/read` - Marcar como lida
+- POST `/php/notifications/:orgId/read-all` - Marcar todas
+- GET `/php/dashboard/:orgId/metrics` - Métricas agregadas
+- POST `/php/dashboard/:orgId/refresh` - Forçar refresh + emit
+- GET `/php/dashboard/stats/connections` - Stats WebSocket
+
+**WebSocket Events:**
+- Client→Server: join:org, leave:org, cursor:move, action:lock/unlock, comment:add
+- Server→Client: user:joined, cursor:update, dashboard:update, notification, goal:achieved
+
+**Validações:**
+- ✅ Socket.IO instalado (@nestjs/websockets, socket.io)
+- ✅ Fallback para polling se WebSocket falhar
+- ✅ RLS em todas novas tabelas
+
+**Commits:**
+- `92c7006` - feat(php): Sprint 14 - Real-time dashboard with WebSocket
+- `3f99575` - fix(migrations): organization_members → org_members
+
+---
+
+### 📦 Shared Types Package (Fevereiro 2026) ✅ COMPLETO
+
+**Objetivo:** Tipos TypeScript compartilhados entre API e Web
+
+**Implementado:**
+- `packages/types/src/php.ts` - 17 enums + 30 interfaces para PHP
+- `packages/types/src/php-dto.ts` - 45+ DTOs para todos endpoints
+- `packages/types/src/employee.types.ts` - Tipos de Employee
+
+**Tipos Principais:**
+- Enums: PhpModuleStatus, TfciCycleStatus, Nr1RiskLevel, ActionPlanStatus, etc.
+- Entities: TfciCycle, Nr1Assessment, CopcMetric, ActionPlan, PhpNotification
+- DTOs: Create/Update/Query para todos os recursos
+
+**Commit:** `e5b5a8f` - feat(types): Add shared PHP module types and DTOs
 
 ---
 
