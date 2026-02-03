@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Users, Building2, Briefcase, Activity, TrendingUp, AlertTriangle, CheckCircle, ArrowUpRight, Loader2, Database, Zap, Clock, Signal, Bell, Eye, MousePointer } from 'lucide-react';
+import { Users, Building2, Briefcase, Activity, TrendingUp, AlertTriangle, CheckCircle, ArrowUpRight, Loader2, Database, Zap, Clock, Signal, Bell, Eye, MousePointer, Brain, Target, FileCheck, Sparkles, BarChart3, Shield, ListChecks } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 
 interface DashboardStats {
@@ -83,6 +83,62 @@ interface BIMetrics {
   }>;
 }
 
+interface PHPMetrics {
+  companiesWithPHP: number;
+  tfci: {
+    total: number;
+    active: number;
+    completed: number;
+    pending: number;
+    byPhase: {
+      selfAssessment: number;
+      peerAssessment: number;
+      managerAssessment: number;
+      review: number;
+    };
+  };
+  nr1: {
+    totalRiskAssessments: number;
+    totalSelfAssessments: number;
+    riskLevels: {
+      high: number;
+      medium: number;
+      low: number;
+    };
+    pendingAssessments: number;
+    completedAssessments: number;
+  };
+  actions: {
+    totalPlans: number;
+    activePlans: number;
+    completedPlans: number;
+    totalItems: number;
+    completedItems: number;
+    pendingItems: number;
+    byPriority: {
+      high: number;
+      medium: number;
+      low: number;
+    };
+  };
+  ai: {
+    totalRequests: number;
+    totalTokens: number;
+    totalCost: number;
+    avgTokensPerRequest: number;
+  };
+  copc: {
+    totalMetrics: number;
+    avgScore: string;
+    byType: Record<string, number>;
+  };
+  notifications: {
+    unread: number;
+    byType: Record<string, number>;
+  };
+  lastUpdated: string;
+}
+
 export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState<DashboardStats>({
@@ -120,10 +176,13 @@ export default function AdminDashboard() {
   });
   const [biMetrics, setBiMetrics] = useState<BIMetrics | null>(null);
   const [loadingBI, setLoadingBI] = useState(false);
+  const [phpMetrics, setPhpMetrics] = useState<PHPMetrics | null>(null);
+  const [loadingPHP, setLoadingPHP] = useState(false);
 
   useEffect(() => {
     fetchDashboardData();
     fetchBIMetrics();
+    fetchPHPMetrics();
     
     // Update metrics every 5 seconds
     const metricsInterval = setInterval(() => {
@@ -135,9 +194,15 @@ export default function AdminDashboard() {
       fetchBIMetrics();
     }, 30000);
 
+    // Update PHP metrics every 30 seconds
+    const phpInterval = setInterval(() => {
+      fetchPHPMetrics();
+    }, 30000);
+
     return () => {
       clearInterval(metricsInterval);
       clearInterval(biInterval);
+      clearInterval(phpInterval);
     };
   }, []);
 
@@ -304,6 +369,22 @@ export default function AdminDashboard() {
       console.error('Error fetching BI metrics:', error);
     } finally {
       setLoadingBI(false);
+    }
+  }
+
+  async function fetchPHPMetrics() {
+    try {
+      setLoadingPHP(true);
+      const response = await fetch('/api/admin/metrics/php');
+      const data = await response.json();
+
+      if (data.success && data.data) {
+        setPhpMetrics(data.data);
+      }
+    } catch (error) {
+      console.error('Error fetching PHP metrics:', error);
+    } finally {
+      setLoadingPHP(false);
     }
   }
 
@@ -612,6 +693,237 @@ export default function AdminDashboard() {
           </div>
         </div>
       </div>
+
+      {/* PHP Module Metrics Section */}
+      {phpMetrics && (
+        <div className="space-y-4 sm:space-y-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-lg sm:text-xl font-bold text-[#141042] flex items-center">
+                <Brain className="w-5 h-5 sm:w-6 sm:h-6 mr-2 text-[#8B5CF6]" />
+                Módulo PHP - Visão Global
+              </h2>
+              <p className="text-xs sm:text-sm text-[#666666]">Programa de Saúde Psicossocial</p>
+            </div>
+            {loadingPHP && (
+              <div className="flex items-center text-[#666666] text-sm">
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Atualizando...
+              </div>
+            )}
+          </div>
+
+          {/* PHP KPIs */}
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3 sm:gap-4">
+            <div className="bg-white border border-[#E5E5DC] rounded-xl p-4">
+              <div className="flex items-center justify-between mb-2">
+                <Building2 className="w-5 h-5 text-[#8B5CF6]" />
+              </div>
+              <p className="text-2xl font-bold text-[#141042]">{phpMetrics.companiesWithPHP}</p>
+              <p className="text-xs text-[#666666] mt-1">Empresas com PHP</p>
+            </div>
+
+            <div className="bg-white border border-[#E5E5DC] rounded-xl p-4">
+              <div className="flex items-center justify-between mb-2">
+                <Target className="w-5 h-5 text-[#06B6D4]" />
+                <span className="text-[10px] px-1.5 py-0.5 bg-[#06B6D4]/10 text-[#06B6D4] rounded-full">
+                  {phpMetrics.tfci.active} ativos
+                </span>
+              </div>
+              <p className="text-2xl font-bold text-[#141042]">{phpMetrics.tfci.total}</p>
+              <p className="text-xs text-[#666666] mt-1">Ciclos TFCI</p>
+            </div>
+
+            <div className="bg-white border border-[#E5E5DC] rounded-xl p-4">
+              <div className="flex items-center justify-between mb-2">
+                <Shield className="w-5 h-5 text-[#F59E0B]" />
+                {phpMetrics.nr1.riskLevels.high > 0 && (
+                  <span className="text-[10px] px-1.5 py-0.5 bg-[#EF4444]/10 text-[#EF4444] rounded-full">
+                    {phpMetrics.nr1.riskLevels.high} alto
+                  </span>
+                )}
+              </div>
+              <p className="text-2xl font-bold text-[#141042]">{phpMetrics.nr1.totalRiskAssessments}</p>
+              <p className="text-xs text-[#666666] mt-1">Avaliações NR-1</p>
+            </div>
+
+            <div className="bg-white border border-[#E5E5DC] rounded-xl p-4">
+              <div className="flex items-center justify-between mb-2">
+                <ListChecks className="w-5 h-5 text-[#10B981]" />
+                <span className="text-[10px] px-1.5 py-0.5 bg-[#10B981]/10 text-[#10B981] rounded-full">
+                  {phpMetrics.actions.completedPlans} ✓
+                </span>
+              </div>
+              <p className="text-2xl font-bold text-[#141042]">{phpMetrics.actions.activePlans}</p>
+              <p className="text-xs text-[#666666] mt-1">Planos Ativos</p>
+            </div>
+
+            <div className="bg-white border border-[#E5E5DC] rounded-xl p-4">
+              <div className="flex items-center justify-between mb-2">
+                <Sparkles className="w-5 h-5 text-[#EC4899]" />
+              </div>
+              <p className="text-2xl font-bold text-[#141042]">{phpMetrics.ai.totalRequests}</p>
+              <p className="text-xs text-[#666666] mt-1">Requisições IA</p>
+            </div>
+
+            <div className="bg-white border border-[#E5E5DC] rounded-xl p-4">
+              <div className="flex items-center justify-between mb-2">
+                <BarChart3 className="w-5 h-5 text-[#3B82F6]" />
+              </div>
+              <p className="text-2xl font-bold text-[#141042]">{phpMetrics.copc.avgScore}</p>
+              <p className="text-xs text-[#666666] mt-1">Score COPC Médio</p>
+            </div>
+          </div>
+
+          {/* PHP Detailed Metrics */}
+          <div className="grid lg:grid-cols-3 gap-4 sm:gap-6">
+            {/* TFCI Cycles Status */}
+            <div className="bg-white border border-[#E5E5DC] rounded-xl p-4 sm:p-6">
+              <h3 className="text-base sm:text-lg font-semibold text-[#141042] mb-4 flex items-center">
+                <Target className="w-5 h-5 mr-2 text-[#06B6D4]" />
+                Status Ciclos TFCI
+              </h3>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between p-3 bg-[#FAFAF8] rounded-lg">
+                  <span className="text-[#666666] text-sm">Ativos</span>
+                  <span className="font-semibold text-[#06B6D4]">{phpMetrics.tfci.active}</span>
+                </div>
+                <div className="flex items-center justify-between p-3 bg-[#FAFAF8] rounded-lg">
+                  <span className="text-[#666666] text-sm">Concluídos</span>
+                  <span className="font-semibold text-[#10B981]">{phpMetrics.tfci.completed}</span>
+                </div>
+                <div className="flex items-center justify-between p-3 bg-[#FAFAF8] rounded-lg">
+                  <span className="text-[#666666] text-sm">Pendentes</span>
+                  <span className="font-semibold text-[#F59E0B]">{phpMetrics.tfci.pending}</span>
+                </div>
+                <div className="pt-3 border-t border-[#E5E5DC]">
+                  <p className="text-xs text-[#999] mb-2">Por Fase:</p>
+                  <div className="grid grid-cols-2 gap-2 text-xs">
+                    <div className="flex justify-between">
+                      <span className="text-[#666]">Auto-avaliação</span>
+                      <span className="font-medium">{phpMetrics.tfci.byPhase.selfAssessment}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-[#666]">Pares</span>
+                      <span className="font-medium">{phpMetrics.tfci.byPhase.peerAssessment}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-[#666]">Gestor</span>
+                      <span className="font-medium">{phpMetrics.tfci.byPhase.managerAssessment}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-[#666]">Revisão</span>
+                      <span className="font-medium">{phpMetrics.tfci.byPhase.review}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* NR-1 Risk Overview */}
+            <div className="bg-white border border-[#E5E5DC] rounded-xl p-4 sm:p-6">
+              <h3 className="text-base sm:text-lg font-semibold text-[#141042] mb-4 flex items-center">
+                <Shield className="w-5 h-5 mr-2 text-[#F59E0B]" />
+                Riscos NR-1
+              </h3>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between p-3 bg-[#EF4444]/5 rounded-lg border border-[#EF4444]/20">
+                  <div className="flex items-center">
+                    <div className="w-2 h-2 bg-[#EF4444] rounded-full mr-2" />
+                    <span className="text-[#666666] text-sm">Risco Alto</span>
+                  </div>
+                  <span className="font-semibold text-[#EF4444]">{phpMetrics.nr1.riskLevels.high}</span>
+                </div>
+                <div className="flex items-center justify-between p-3 bg-[#F59E0B]/5 rounded-lg border border-[#F59E0B]/20">
+                  <div className="flex items-center">
+                    <div className="w-2 h-2 bg-[#F59E0B] rounded-full mr-2" />
+                    <span className="text-[#666666] text-sm">Risco Médio</span>
+                  </div>
+                  <span className="font-semibold text-[#F59E0B]">{phpMetrics.nr1.riskLevels.medium}</span>
+                </div>
+                <div className="flex items-center justify-between p-3 bg-[#10B981]/5 rounded-lg border border-[#10B981]/20">
+                  <div className="flex items-center">
+                    <div className="w-2 h-2 bg-[#10B981] rounded-full mr-2" />
+                    <span className="text-[#666666] text-sm">Risco Baixo</span>
+                  </div>
+                  <span className="font-semibold text-[#10B981]">{phpMetrics.nr1.riskLevels.low}</span>
+                </div>
+                <div className="pt-3 border-t border-[#E5E5DC]">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-[#666]">Auto-avaliações</span>
+                    <span className="font-medium">{phpMetrics.nr1.totalSelfAssessments}</span>
+                  </div>
+                  <div className="flex justify-between text-sm mt-1">
+                    <span className="text-[#666]">Pendentes</span>
+                    <span className="font-medium text-[#F59E0B]">{phpMetrics.nr1.pendingAssessments}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* AI & Actions Summary */}
+            <div className="bg-white border border-[#E5E5DC] rounded-xl p-4 sm:p-6">
+              <h3 className="text-base sm:text-lg font-semibold text-[#141042] mb-4 flex items-center">
+                <Sparkles className="w-5 h-5 mr-2 text-[#EC4899]" />
+                IA & Planos de Ação
+              </h3>
+              <div className="space-y-4">
+                {/* AI Usage */}
+                <div className="p-3 bg-gradient-to-r from-[#EC4899]/5 to-[#8B5CF6]/5 rounded-lg border border-[#EC4899]/20">
+                  <p className="text-xs text-[#999] mb-1">Uso de IA (30 dias)</p>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <p className="text-lg font-bold text-[#141042]">{(phpMetrics.ai.totalTokens / 1000).toFixed(1)}K</p>
+                      <p className="text-[10px] text-[#666]">Tokens</p>
+                    </div>
+                    <div>
+                      <p className="text-lg font-bold text-[#141042]">R$ {phpMetrics.ai.totalCost.toFixed(2)}</p>
+                      <p className="text-[10px] text-[#666]">Custo Est.</p>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Action Plans */}
+                <div>
+                  <p className="text-xs text-[#999] mb-2">Planos de Ação</p>
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-[#666]">Total de Planos</span>
+                      <span className="font-semibold">{phpMetrics.actions.totalPlans}</span>
+                    </div>
+                    <div className="h-2 bg-[#E5E5DC] rounded-full overflow-hidden">
+                      <div 
+                        className="h-full bg-[#10B981] rounded-full transition-all"
+                        style={{ 
+                          width: phpMetrics.actions.totalPlans > 0 
+                            ? `${(phpMetrics.actions.completedPlans / phpMetrics.actions.totalPlans) * 100}%` 
+                            : '0%' 
+                        }}
+                      />
+                    </div>
+                    <div className="flex justify-between text-xs text-[#666]">
+                      <span>{phpMetrics.actions.completedPlans} concluídos</span>
+                      <span>{phpMetrics.actions.activePlans} em andamento</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Action Items */}
+                <div className="pt-3 border-t border-[#E5E5DC]">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-[#666]">Itens de Ação</span>
+                    <span className="font-medium">{phpMetrics.actions.totalItems}</span>
+                  </div>
+                  <div className="flex justify-between text-xs mt-1">
+                    <span className="text-[#10B981]">{phpMetrics.actions.completedItems} concluídos</span>
+                    <span className="text-[#F59E0B]">{phpMetrics.actions.pendingItems} pendentes</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Business Intelligence Section */}
       {biMetrics && (
