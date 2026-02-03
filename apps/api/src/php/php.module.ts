@@ -9,9 +9,23 @@ import { AiModule } from './ai/ai.module';
 import { EmployeesModule } from './employees/employees.module';
 import { ActionPlansModule } from './action-plans/action-plans.module';
 import { SettingsModule } from './settings/settings.module';
+import { PhpEventsModule } from './events/php-events.module';
+import { NotificationsModule } from './notifications/notifications.module';
+import { DashboardModule } from './dashboard/dashboard.module';
 
 @Module({
-  imports: [TfciModule, Nr1Module, CopcModule, AiModule, EmployeesModule, ActionPlansModule, SettingsModule],
+  imports: [
+    PhpEventsModule, // Global WebSocket gateway
+    TfciModule,
+    Nr1Module,
+    CopcModule,
+    AiModule,
+    EmployeesModule,
+    ActionPlansModule,
+    SettingsModule,
+    NotificationsModule,
+    DashboardModule,
+  ],
   controllers: [PhpController],
   providers: [PhpService, PhpModuleGuard],
   exports: [PhpService, PhpModuleGuard],
