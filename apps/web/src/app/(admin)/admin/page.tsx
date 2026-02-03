@@ -190,7 +190,7 @@ export default function AdminDashboard() {
           orgsDetailResult.data.map(async (org: any) => {
             const [jobsCount, membersCount] = await Promise.all([
               supabase.from('jobs').select('id', { count: 'exact', head: true }).eq('org_id', org.id),
-              supabase.from('organization_members').select('id', { count: 'exact', head: true }).eq('org_id', org.id),
+              supabase.from('org_members').select('id', { count: 'exact', head: true }).eq('org_id', org.id),
             ]);
             
             return {

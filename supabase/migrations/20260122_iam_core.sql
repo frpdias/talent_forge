@@ -1,25 +1,32 @@
 -- IAM Core (Tenants/Roles/Policies)
 -- Date: 2026-01-22
+-- Updated: 2026-02-03
+--
+-- ⚠️ NOTA IMPORTANTE:
+-- As tabelas `tenants` e `tenant_users` abaixo foram DESCONTINUADAS.
+-- A aplicação usa `organizations` e `org_members` para multi-tenant.
+-- Estas CREATE TABLE são mantidas comentadas apenas para referência histórica.
+-- NÃO DESCOMENTE - as tabelas corretas já existem (organizations, org_members).
 
--- Tenants
-CREATE TABLE IF NOT EXISTS tenants (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  name TEXT NOT NULL,
-  status TEXT NOT NULL DEFAULT 'active',
-  plan_id TEXT,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
+-- DEPRECATED: Tenants (usar organizations)
+-- CREATE TABLE IF NOT EXISTS tenants (
+--   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+--   name TEXT NOT NULL,
+--   status TEXT NOT NULL DEFAULT 'active',
+--   plan_id TEXT,
+--   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+--   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+-- );
 
--- Tenant users
-CREATE TABLE IF NOT EXISTS tenant_users (
-  tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
-  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-  role TEXT NOT NULL DEFAULT 'member',
-  status TEXT NOT NULL DEFAULT 'active',
-  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  PRIMARY KEY (tenant_id, user_id)
-);
+-- DEPRECATED: Tenant users (usar org_members)
+-- CREATE TABLE IF NOT EXISTS tenant_users (
+--   tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+--   user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+--   role TEXT NOT NULL DEFAULT 'member',
+--   status TEXT NOT NULL DEFAULT 'active',
+--   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+--   PRIMARY KEY (tenant_id, user_id)
+-- );
 
 -- Roles and permissions
 CREATE TABLE IF NOT EXISTS roles (

@@ -1815,15 +1815,24 @@ Dashboard dedicado em `/admin/security` com:
 - LGPD: export/delete e retention.
 
 ### Modelo (núcleo)
-- `tenants` (id, name, status, plan_id, created_at)
-- `tenant_users` (tenant_id, user_id, role, status)
+
+**⚠️ NOTA (2026-02-03): Consolidação de Tabelas**
+> As tabelas `tenants` e `tenant_users` foram **DESCONTINUADAS**.
+> Usar `organizations` e `org_members` como fonte de verdade para multi-tenant.
+> A migration `20260122_iam_core.sql` foi atualizada com os CREATE TABLE comentados.
+> A API e frontend já usam `organizations`/`org_members`.
+
+- ~~`tenants` (DEPRECATED → usar `organizations`)~~
+- ~~`tenant_users` (DEPRECATED → usar `org_members`)~~
+- `organizations` (id, name, slug, status, plan_id, created_at) — **USAR ESTA**
+- `org_members` (org_id, user_id, role, status) — **USAR ESTA**
 - `roles` (id, name, scope)
 - `permissions` (id, action, resource)
 - `role_permissions` (role_id, permission_id)
 - `policies` (id, effect, conditions jsonb)
-- `api_keys` (tenant_id, key_hash, scopes, expires_at)
-- `audit_logs` (tenant_id, actor_id, action, resource, metadata)
-- `security_events` (tenant_id, type, severity, details)
+- `api_keys` (org_id, key_hash, scopes, expires_at) — referencia organizations
+- `audit_logs` (org_id, actor_id, action, resource, metadata) — referencia organizations
+- `security_events` (org_id, type, severity, details) — referencia organizations
 
 ### Endpoints (MVP)
 - `POST /auth/login` (OIDC/MFA)
@@ -1853,23 +1862,28 @@ Dashboard dedicado em `/admin/security` com:
 - 2026-01-23: aplicado **IAM Seed** (5 roles + 29 permissions + role-permission mappings) via SQL Editor (arquivo [supabase/migrations/20260123_iam_seed_roles_permissions.sql](../supabase/migrations/20260123_iam_seed_roles_permissions.sql)).
 - 2026-01-23: aplicado **Tabela Companies** (cadastro de empresas) via SQL Editor (arquivo [supabase/migrations/20260123_create_companies_table.sql](../supabase/migrations/20260123_create_companies_table.sql)).
 - 2026-01-23: implementado **Admin User Creation** (criação de usuários via service role) - páginas `/admin/create-user` e `/admin/companies`.
+- **2026-02-03: LIMPEZA DE TABELAS NÃO UTILIZADAS** (arquivo [supabase/migrations/20260203_cleanup_unused_tables.sql](../supabase/migrations/20260203_cleanup_unused_tables.sql)):
+  - ✅ Removidas: `candidate_saved_jobs`, `candidate_applications_view`, `invitations`, `employee_reports`
+  - ✅ Confirmado: `tenants` e `tenant_users` nunca existiram no banco (apenas nos arquivos de migration)
+  - ✅ Atualizado: `20260122_iam_core.sql` com CREATE TABLE comentados
+  - ✅ Documentado: API e frontend já usam `organizations`/`org_members`
 
-### Status IAM (validado em 2026-01-23)
+### Status IAM (validado em 2026-01-23, atualizado 2026-02-03)
 | Componente | Status | Detalhes |
 |------------|--------|----------|
-| Tabelas | ✅ | tenants, tenant_users, roles, permissions, role_permissions, policies, api_keys, audit_logs, security_events |
+| Tabelas | ✅ | ~~tenants, tenant_users~~ → **organizations, org_members** (consolidado), roles, permissions, role_permissions, policies, api_keys, audit_logs, security_events |
 | RLS | ✅ | Políticas básicas ativas |
 | Roles | ✅ | owner, admin, recruiter, viewer, candidate, manager |
 | Permissions | ✅ | 30 permissões CRUD por recurso |
-| Endpoints | ✅ | **Todos validados localmente** |
+| Endpoints | ✅ | **Todos validados localmente** (usam organizations/org_members) |
 
-#### Endpoints IAM validados
-| Endpoint | GET | POST | PATCH | DELETE |
-|----------|-----|------|-------|--------|
-| `/api/v1/tenants` | ✅ | ✅ | — | — |
-| `/api/v1/tenants/:id` | ✅ | — | — | — |
-| `/api/v1/tenants/:id/users` | — | ✅ | — | — |
-| `/api/v1/tenants/:id/users/:userId` | — | — | ✅ | — |
+#### Endpoints IAM validados (usam organizations/org_members internamente)
+| Endpoint | GET | POST | PATCH | DELETE | Nota |
+|----------|-----|------|-------|--------|------|
+| `/api/v1/tenants` | ✅ | ✅ | — | — | → `organizations` |
+| `/api/v1/tenants/:id` | ✅ | — | — | — | → `organizations` |
+| `/api/v1/tenants/:id/users` | — | ✅ | — | — | → `org_members` |
+| `/api/v1/tenants/:id/users/:userId` | — | — | ✅ | — | → `org_members` |
 | `/api/v1/roles` | ✅ | ✅ | — | — |
 | `/api/v1/permissions` | ✅ | ✅ | — | — |
 | `/api/v1/policies` | — | ✅ | — | — |

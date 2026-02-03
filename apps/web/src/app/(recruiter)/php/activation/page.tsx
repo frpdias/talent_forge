@@ -27,7 +27,7 @@ export default function PhpActivationPage() {
         .from('user_profiles')
         .select('email')
         .eq('id', user.id)
-        .single();
+        .maybeSingle();
 
       // Apenas o email contato.fartech@app.br pode acessar
       if (profile?.email !== 'contato.fartech@app.br') {

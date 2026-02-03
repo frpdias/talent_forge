@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/lib/auth';
 import { useOrgStore } from '@/lib/store';
+import { usePhpModule } from '@/lib/hooks/usePhpModule';
 import {
   LayoutDashboard,
   Briefcase,
@@ -15,10 +16,15 @@ import {
   LogOut,
   Building2,
   ChevronDown,
+  HeartPulse,
+  Building,
+  UserCog,
+  Activity,
 } from 'lucide-react';
 import { useState } from 'react';
 
-const navigation = [
+// Menu principal de Recrutamento
+const recruitmentNavigation = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
   { name: 'Vagas', href: '/jobs', icon: Briefcase },
   { name: 'Candidatos', href: '/candidates', icon: Users },
@@ -27,11 +33,20 @@ const navigation = [
   { name: 'Configurações', href: '/settings', icon: Settings },
 ];
 
+// Menu do Módulo PHP (Pessoas & Cultura)
+const phpNavigation = [
+  { name: 'Ciclos TF-CI', href: '/php/tfci/cycles', icon: Activity },
+  { name: 'NR-1', href: '/php/nr1', icon: ClipboardList },
+  { name: 'CO-PC', href: '/php/copc', icon: Users },
+  { name: 'Dashboard PHP', href: '/php/dashboard', icon: LayoutDashboard },
+];
+
 export function Sidebar() {
   const pathname = usePathname();
   const { signOut, user } = useAuth();
   const { currentOrg, organizations, setCurrentOrg } = useOrgStore();
   const [orgDropdownOpen, setOrgDropdownOpen] = useState(false);
+  const { isActive: phpModuleActive, loading: phpLoading } = usePhpModule();
 
   return (
     <aside className="fixed inset-y-0 left-0 z-40 w-64 bg-gray-900 text-white flex flex-col">
@@ -79,25 +94,76 @@ export function Sidebar() {
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 px-4 py-4 space-y-1 overflow-y-auto">
-        {navigation.map((item) => {
-          const isActive = pathname.startsWith(item.href);
-          return (
+      <nav className="flex-1 px-4 py-4 overflow-y-auto">
+        {/* Seção Recrutamento */}
+        <div className="mb-6">
+          <h3 className="px-3 mb-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+            Recrutamento
+          </h3>
+          <div className="space-y-1">
+            {recruitmentNavigation.map((item) => {
+              const isActive = pathname.startsWith(item.href);
+              return (
+                <Link
+                  key={item.name}
+                  href={item.href}
+                  className={cn(
+                    'flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors',
+                    isActive
+                      ? 'bg-blue-600 text-white'
+                      : 'text-gray-300 hover:bg-gray-800 hover:text-white'
+                  )}
+                >
+                  <item.icon className="h-5 w-5" />
+                  {item.name}
+                </Link>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Seção Módulo PHP - Pessoas & Cultura */}
+        {phpModuleActive && (
+          <div className="mb-6">
+            <h3 className="px-3 mb-2 text-xs font-semibold text-orange-400 uppercase tracking-wider flex items-center gap-2">
+              <HeartPulse className="h-4 w-4" />
+              Pessoas & Cultura
+            </h3>
+            <div className="space-y-1">
+              {phpNavigation.map((item) => {
+                const isActive = pathname.startsWith(item.href);
+                return (
+                  <Link
+                    key={item.name}
+                    href={item.href}
+                    className={cn(
+                      'flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors',
+                      isActive
+                        ? 'bg-orange-500 text-white'
+                        : 'text-gray-300 hover:bg-gray-800 hover:text-white'
+                    )}
+                  >
+                    <item.icon className="h-5 w-5" />
+                    {item.name}
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Link para ativar módulo PHP se não estiver ativo */}
+        {!phpModuleActive && !phpLoading && (
+          <div className="mb-6">
             <Link
-              key={item.name}
-              href={item.href}
-              className={cn(
-                'flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors',
-                isActive
-                  ? 'bg-blue-600 text-white'
-                  : 'text-gray-300 hover:bg-gray-800 hover:text-white'
-              )}
+              href="/php/activation"
+              className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-orange-400 hover:bg-gray-800 transition-colors border border-dashed border-orange-400/50"
             >
-              <item.icon className="h-5 w-5" />
-              {item.name}
+              <HeartPulse className="h-5 w-5" />
+              Ativar Módulo PHP
             </Link>
-          );
-        })}
+          </div>
+        )}
       </nav>
 
       {/* User */}

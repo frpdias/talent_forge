@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { createClient } from '@/lib/supabase/client';
 
 interface TfciCycle {
   id: string;
@@ -19,6 +20,8 @@ export default function TfciCyclesPage() {
   const [cycles, setCycles] = useState<TfciCycle[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
+  const [orgId, setOrgId] = useState<string | null>(null);
+  const [orgError, setOrgError] = useState<string | null>(null);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -28,15 +31,55 @@ export default function TfciCyclesPage() {
   });
 
   useEffect(() => {
-    fetchCycles();
+    initializeAndFetch();
   }, []);
 
-  const fetchCycles = async () => {
+  const initializeAndFetch = async () => {
+    const supabase = createClient();
+    
+    // Buscar usuário e organização
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      router.push('/login');
+      return;
+    }
+
+    const { data: orgMember, error: orgError } = await supabase
+      .from('org_members')
+      .select('org_id')
+      .eq('user_id', user.id)
+      .maybeSingle();
+
+    if (orgError) {
+      console.error('Error fetching org member:', orgError);
+      setOrgError('Erro ao buscar sua organização.');
+      setLoading(false);
+      return;
+    }
+
+    if (orgMember?.org_id) {
+      setOrgId(orgMember.org_id);
+      await fetchCycles(orgMember.org_id);
+      return;
+    }
+
+    setOrgError('Você não está associado a nenhuma organização.');
+    setLoading(false);
+  };
+
+  const fetchCycles = async (organizationId: string) => {
     try {
-      const response = await fetch('/api/v1/php/tfci/cycles');
-      if (response.ok) {
-        const data = await response.json();
-        setCycles(data);
+      const supabase = createClient();
+      const { data, error } = await supabase
+        .from('tfci_cycles')
+        .select('*')
+        .eq('org_id', organizationId)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching cycles:', error);
+      } else {
+        setCycles(data || []);
       }
     } catch (error) {
       console.error('Error fetching cycles:', error);
@@ -47,17 +90,27 @@ export default function TfciCyclesPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    try {
-      const response = await fetch('/api/v1/php/tfci/cycles', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
-      });
+    if (!orgId) return;
 
-      if (response.ok) {
+    try {
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      const { error } = await supabase
+        .from('tfci_cycles')
+        .insert({
+          org_id: orgId,
+          name: formData.name,
+          start_date: formData.start_date,
+          end_date: formData.end_date,
+          status: formData.status,
+          created_by: user?.id,
+        });
+
+      if (!error) {
         setShowForm(false);
         setFormData({ name: '', start_date: '', end_date: '', status: 'draft' });
-        fetchCycles();
+        fetchCycles(orgId);
       }
     } catch (error) {
       console.error('Error creating cycle:', error);
@@ -65,13 +118,17 @@ export default function TfciCyclesPage() {
   };
 
   const updateCycleStatus = async (cycleId: string, status: string) => {
+    if (!orgId) return;
+    
     try {
-      await fetch(`/api/v1/php/tfci/cycles/${cycleId}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status }),
-      });
-      fetchCycles();
+      const supabase = createClient();
+      await supabase
+        .from('tfci_cycles')
+        .update({ status })
+        .eq('id', cycleId)
+        .eq('org_id', orgId);
+      
+      fetchCycles(orgId);
     } catch (error) {
       console.error('Error updating cycle:', error);
     }
@@ -91,6 +148,23 @@ export default function TfciCyclesPage() {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#1F4ED8]"></div>
+      </div>
+    );
+  }
+
+  if (orgError) {
+    return (
+      <div className="max-w-3xl mx-auto py-12 px-4">
+        <div className="bg-white rounded-lg shadow-sm border p-8 text-center">
+          <h2 className="text-xl font-semibold text-gray-900 mb-2">Acesso indisponível</h2>
+          <p className="text-sm text-gray-600 mb-4">{orgError}</p>
+          <button
+            onClick={() => router.push('/dashboard')}
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+          >
+            Voltar ao Dashboard
+          </button>
+        </div>
       </div>
     );
   }

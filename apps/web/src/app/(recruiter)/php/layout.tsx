@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { createBrowserClient } from '@supabase/ssr';
 import { ArrowLeft } from 'lucide-react';
 import ModuleStatusBadge from './_components/ModuleStatusBadge';
+import { CompanySelector } from '@/components/php/CompanySelector';
 
 export default function PhpLayout({ children }: { children: ReactNode }) {
   const router = useRouter();
@@ -25,7 +26,7 @@ export default function PhpLayout({ children }: { children: ReactNode }) {
           .from('user_profiles')
           .select('email')
           .eq('id', user.id)
-          .single();
+          .maybeSingle();
 
         setIsAdmin(profile?.email === 'contato.fartech@app.br');
       }
@@ -83,6 +84,7 @@ export default function PhpLayout({ children }: { children: ReactNode }) {
           </div>
         </div>
       </header>
+      <CompanySelector />
       <main className="flex-1">{children}</main>
       <footer className="bg-white border-t mt-auto">
         <div className="max-w-7xl mx-auto px-4 py-6">
