@@ -3,3 +3,7 @@ export * from './enums';
 export * from './entities';
 export * from './dto';
 export * from './api';
+
+// PHP Module Types
+export * from './php';
+export * from './php-dto';
