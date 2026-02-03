@@ -7,9 +7,10 @@ import { Nr1Module } from './nr1/nr1.module';
 import { CopcModule } from './copc/copc.module';
 import { AiModule } from './ai/ai.module';
 import { EmployeesModule } from './employees/employees.module';
+import { ActionPlansModule } from './action-plans/action-plans.module';
 
 @Module({
-  imports: [TfciModule, Nr1Module, CopcModule, AiModule, EmployeesModule],
+  imports: [TfciModule, Nr1Module, CopcModule, AiModule, EmployeesModule, ActionPlansModule],
   controllers: [PhpController],
   providers: [PhpService, PhpModuleGuard],
   exports: [PhpService, PhpModuleGuard],

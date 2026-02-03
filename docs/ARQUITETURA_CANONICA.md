@@ -3562,7 +3562,46 @@ USING (
 
 ## 📋 PRÓXIMOS PASSOS — Roadmap Sprint 11+
 
-### 🎯 Sprint 11: Validação & Produção (ATUAL)
+### ✅ Sprint 11: Validação & Cleanup (CONCLUÍDO)
+
+**Status:** ✅ Concluído em 2026-02-03  
+**Objetivo:** Cleanup de banco de dados e validação de arquitetura
+
+**Conquistas da Sprint 11:**
+- ✅ Auditoria completa do banco de dados (70+ tabelas analisadas)
+- ✅ Remoção de tabelas não utilizadas (candidate_saved_jobs, candidate_applications_view, invitations, employee_reports)
+- ✅ Consolidação IAM: tenants/tenant_users deprecados → usar organizations/org_members
+- ✅ Documentação de migrations atualizada
+- ✅ Arquitetura canônica validada
+
+---
+
+### ✅ Sprint 12: Action Plans & Settings (EM ANDAMENTO)
+
+**Status:** 🟢 Fase 1 Concluída (Action Plans)  
+**Deadline:** 07/02/2026  
+**Objetivo:** Implementar gestão de planos de ação e configurações avançadas
+
+**Conquistas Sprint 12 - Fase 1 (Action Plans):**
+- ✅ Backend API completo (`apps/api/src/php/action-plans/`)
+  - ActionPlansModule, Controller, Service, DTOs, Entities
+  - 8 endpoints: CRUD plans + CRUD items + stats + top-priority
+- ✅ Frontend completo (`apps/web/src/app/(recruiter)/php/action-plans/`)
+  - Lista de planos com filtros (status, risco, atrasados)
+  - Formulário de criação de plano
+  - Página de detalhe com gerenciamento de tarefas
+- ✅ RLS policies corrigidas (INSERT/DELETE para action_items)
+- ✅ Menu "Ações" adicionado ao layout PHP
+
+**Pendente Sprint 12 - Fase 2 (Settings):**
+- [ ] Settings Page (`/php/settings`)
+  - Configuração de pesos customizáveis (TFCI/NR-1/COPC)
+  - Thresholds de alertas (burnout, conflito, queda brusca)
+  - Notificações por email/webhook
+
+---
+
+### 🎯 Sprint 11 Legacy: Validação & Produção
 
 **Status:** 🟡 Em Validação Manual  
 **Deadline:** 31/01/2026  
