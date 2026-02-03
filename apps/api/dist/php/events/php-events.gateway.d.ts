@@ -67,7 +67,7 @@ export declare class PhpEventsGateway implements OnGatewayInit, OnGatewayConnect
     }): {
         success: boolean;
         users_online: UserPresence[];
-        your_socket_id: any;
+        your_socket_id: string;
     };
     handleLeaveOrg(client: Socket, data: {
         org_id: string;
@@ -114,7 +114,7 @@ export declare class PhpEventsGateway implements OnGatewayInit, OnGatewayConnect
         success: boolean;
         comment: {
             id: string;
-            entity_type: "action_plan" | "action_item" | "assessment";
+            entity_type: "assessment" | "action_plan" | "action_item";
             entity_id: string;
             content: string;
             author: {
