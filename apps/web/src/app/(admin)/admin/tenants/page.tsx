@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Building2, Plus, Search, MoreVertical, Users, CheckCircle, XCircle, Clock } from 'lucide-react';
+import { Building2, Plus, Search, MoreVertical, Users, CheckCircle, XCircle, Clock, Briefcase, Eye, Loader2, Brain } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 
 interface Tenant {
@@ -13,6 +13,10 @@ interface Tenant {
   settings: Record<string, unknown>;
   created_at: string;
   updated_at: string;
+  // Métricas extras
+  users_count: number;
+  jobs_count: number;
+  php_active: boolean;
 }
 
 const statusConfig: Record<string, { label: string; color: string; icon: React.ElementType }> = {
@@ -36,31 +40,56 @@ export default function TenantsPage() {
 
   async function fetchTenants() {
     try {
-      // Agora busca direto do Supabase organizations (consolidado com companies)
       const supabase = createClient();
-      const { data, error } = await supabase
+      
+      // Buscar organizações
+      const { data: orgsData, error: orgsError } = await supabase
         .from('organizations')
         .select('*')
         .order('name', { ascending: true });
 
-      if (error) {
-        console.error('Error fetching tenants:', error);
+      if (orgsError) {
+        console.error('Error fetching tenants:', orgsError);
         return;
       }
 
-      // Mapear organizations para formato Tenant
-      const mappedTenants = (data || []).map(org => ({
-        id: org.id,
-        name: org.name,
-        slug: org.slug || org.name.toLowerCase().replace(/\s+/g, '-'),
-        status: org.status || 'active',
-        plan_id: org.plan_id,
-        settings: {},
-        created_at: org.created_at,
-        updated_at: org.updated_at,
-      }));
+      // Buscar contagens para cada organização em paralelo
+      const tenantsWithCounts = await Promise.all(
+        (orgsData || []).map(async (org) => {
+          const [usersResult, jobsResult, phpResult] = await Promise.all([
+            supabase
+              .from('org_members')
+              .select('id', { count: 'exact', head: true })
+              .eq('org_id', org.id),
+            supabase
+              .from('jobs')
+              .select('id', { count: 'exact', head: true })
+              .eq('org_id', org.id),
+            supabase
+              .from('php_module_activations')
+              .select('id')
+              .eq('org_id', org.id)
+              .eq('is_active', true)
+              .maybeSingle(),
+          ]);
 
-      setTenants(mappedTenants);
+          return {
+            id: org.id,
+            name: org.name,
+            slug: org.slug || org.name.toLowerCase().replace(/\s+/g, '-'),
+            status: org.status || 'active',
+            plan_id: org.plan_id,
+            settings: {},
+            created_at: org.created_at,
+            updated_at: org.updated_at,
+            users_count: usersResult.count || 0,
+            jobs_count: jobsResult.count || 0,
+            php_active: !!phpResult.data,
+          };
+        })
+      );
+
+      setTenants(tenantsWithCounts);
     } catch (error) {
       console.error('Error fetching tenants:', error);
     } finally {
@@ -120,6 +149,40 @@ export default function TenantsPage() {
         </button>
       </div>
 
+      {/* Stats Cards */}
+      {!loading && tenants.length > 0 && (
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="bg-white border border-[#E5E5DC] rounded-xl p-4">
+            <div className="flex items-center justify-between mb-2">
+              <Building2 className="w-5 h-5 text-[#8B5CF6]" />
+            </div>
+            <p className="text-2xl font-bold text-[#141042]">{tenants.length}</p>
+            <p className="text-xs text-[#666666]">Total Tenants</p>
+          </div>
+          <div className="bg-white border border-[#E5E5DC] rounded-xl p-4">
+            <div className="flex items-center justify-between mb-2">
+              <CheckCircle className="w-5 h-5 text-[#10B981]" />
+            </div>
+            <p className="text-2xl font-bold text-[#141042]">{tenants.filter(t => t.status === 'active').length}</p>
+            <p className="text-xs text-[#666666]">Ativos</p>
+          </div>
+          <div className="bg-white border border-[#E5E5DC] rounded-xl p-4">
+            <div className="flex items-center justify-between mb-2">
+              <Users className="w-5 h-5 text-[#3B82F6]" />
+            </div>
+            <p className="text-2xl font-bold text-[#141042]">{tenants.reduce((acc, t) => acc + t.users_count, 0)}</p>
+            <p className="text-xs text-[#666666]">Total Usuários</p>
+          </div>
+          <div className="bg-white border border-[#E5E5DC] rounded-xl p-4">
+            <div className="flex items-center justify-between mb-2">
+              <Brain className="w-5 h-5 text-[#8B5CF6]" />
+            </div>
+            <p className="text-2xl font-bold text-[#141042]">{tenants.filter(t => t.php_active).length}</p>
+            <p className="text-xs text-[#666666]">Com PHP Ativo</p>
+          </div>
+        </div>
+      )}
+
       {/* Search */}
       <div className="relative">
         <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#999]" />
@@ -134,14 +197,9 @@ export default function TenantsPage() {
 
       {/* Tenants Grid */}
       {loading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {[1, 2, 3].map((i) => (
-            <div key={i} className="bg-white border border-[#E5E5DC] rounded-2xl p-6 animate-pulse">
-              <div className="h-6 bg-gray-200 rounded w-2/3 mb-4" />
-              <div className="h-4 bg-gray-200 rounded w-1/2 mb-2" />
-              <div className="h-4 bg-gray-200 rounded w-1/3" />
-            </div>
-          ))}
+        <div className="flex flex-col items-center justify-center py-12">
+          <Loader2 className="w-8 h-8 text-[#141042] animate-spin mb-4" />
+          <p className="text-[#666666]">Carregando tenants...</p>
         </div>
       ) : filteredTenants.length === 0 ? (
         <div className="bg-white border border-[#E5E5DC] rounded-2xl p-12 text-center">
@@ -170,13 +228,32 @@ export default function TenantsPage() {
                   <div className="w-12 h-12 bg-[#141042]/5 rounded-xl flex items-center justify-center">
                     <Building2 className="w-6 h-6 text-[#141042]" />
                   </div>
-                  <button className="p-2 hover:bg-gray-100 rounded-lg">
-                    <MoreVertical className="w-5 h-5 text-[#999]" />
-                  </button>
+                  <div className="flex items-center space-x-2">
+                    {tenant.php_active && (
+                      <div className="px-2 py-1 bg-[#8B5CF6]/10 rounded-lg" title="Módulo PHP Ativo">
+                        <Brain className="w-4 h-4 text-[#8B5CF6]" />
+                      </div>
+                    )}
+                    <button className="p-2 hover:bg-gray-100 rounded-lg">
+                      <MoreVertical className="w-5 h-5 text-[#999]" />
+                    </button>
+                  </div>
                 </div>
                 
                 <h3 className="text-lg font-semibold text-[#141042] mb-1">{tenant.name}</h3>
                 <p className="text-sm text-[#666666] mb-4">/{tenant.slug}</p>
+                
+                {/* Métricas */}
+                <div className="flex items-center space-x-4 mb-4 text-sm">
+                  <div className="flex items-center space-x-1.5 text-[#666666]">
+                    <Users className="w-4 h-4" />
+                    <span>{tenant.users_count} usuários</span>
+                  </div>
+                  <div className="flex items-center space-x-1.5 text-[#666666]">
+                    <Briefcase className="w-4 h-4" />
+                    <span>{tenant.jobs_count} vagas</span>
+                  </div>
+                </div>
                 
                 <div className="flex items-center justify-between">
                   <div className={`inline-flex items-center space-x-1.5 px-2.5 py-1 rounded-lg text-sm ${status.color}`}>
