@@ -83,6 +83,9 @@ export default function PhpLayout({ children }: { children: ReactNode }) {
               <a href="/php/ai" className="text-sm font-semibold text-gray-700 hover:text-[#1F4ED8] transition-colors">
                 AI Insights
               </a>
+              <a href="/php/settings" className="text-sm font-semibold text-gray-700 hover:text-[#1F4ED8] transition-colors">
+                Config
+              </a>
             </nav>
           </div>
         </div>

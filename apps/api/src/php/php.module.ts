@@ -8,9 +8,10 @@ import { CopcModule } from './copc/copc.module';
 import { AiModule } from './ai/ai.module';
 import { EmployeesModule } from './employees/employees.module';
 import { ActionPlansModule } from './action-plans/action-plans.module';
+import { SettingsModule } from './settings/settings.module';
 
 @Module({
-  imports: [TfciModule, Nr1Module, CopcModule, AiModule, EmployeesModule, ActionPlansModule],
+  imports: [TfciModule, Nr1Module, CopcModule, AiModule, EmployeesModule, ActionPlansModule, SettingsModule],
   controllers: [PhpController],
   providers: [PhpService, PhpModuleGuard],
   exports: [PhpService, PhpModuleGuard],

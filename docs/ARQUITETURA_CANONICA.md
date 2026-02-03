@@ -3576,10 +3576,9 @@ USING (
 
 ---
 
-### ✅ Sprint 12: Action Plans & Settings (EM ANDAMENTO)
+### ✅ Sprint 12: Action Plans & Settings (CONCLUÍDO)
 
-**Status:** 🟢 Fase 1 Concluída (Action Plans)  
-**Deadline:** 07/02/2026  
+**Status:** ✅ Concluído em 2026-02-03  
 **Objetivo:** Implementar gestão de planos de ação e configurações avançadas
 
 **Conquistas Sprint 12 - Fase 1 (Action Plans):**
@@ -3593,11 +3592,17 @@ USING (
 - ✅ RLS policies corrigidas (INSERT/DELETE para action_items)
 - ✅ Menu "Ações" adicionado ao layout PHP
 
-**Pendente Sprint 12 - Fase 2 (Settings):**
-- [ ] Settings Page (`/php/settings`)
-  - Configuração de pesos customizáveis (TFCI/NR-1/COPC)
-  - Thresholds de alertas (burnout, conflito, queda brusca)
-  - Notificações por email/webhook
+**Conquistas Sprint 12 - Fase 2 (Settings):**
+- ✅ Backend API completo (`apps/api/src/php/settings/`)
+  - SettingsModule, Controller, Service, DTOs, Entities
+  - 4 endpoints: GET, PUT, POST reset, POST test-webhook
+- ✅ Frontend completo (`apps/web/src/app/(recruiter)/php/settings/`)
+  - 4 abas: Pesos, Alertas, Notificações, Avançado
+  - Configuração de pesos TFCI/NR-1/COPC (validação = 100%)
+  - Thresholds customizáveis (burnout, conflito, queda, absenteísmo)
+  - Notificações por email e webhook
+  - Opções de IA e automação
+- ✅ Menu "Config" adicionado ao layout PHP
 
 ---
 
