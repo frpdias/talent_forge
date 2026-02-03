@@ -342,8 +342,9 @@ export default function NR1SelfAssessmentPage() {
             className="flex items-center gap-2 text-gray-600 hover:text-[#141042] mb-4"
           >
             <ArrowLeft className="w-4 h-4" />
-          Voltar
-        </button>
+            Voltar
+          </button>
+        )}
         <div className="flex items-center gap-3 mb-2">
           <Heart className="w-8 h-8 text-pink-600" />
           <h1 className="text-3xl font-bold text-[#141042]">

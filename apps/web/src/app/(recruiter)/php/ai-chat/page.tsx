@@ -365,17 +365,19 @@ export default function AiChatPage() {
               { type: 'executive', title: 'Executivo', icon: '👔', desc: 'Para C-level' },
               { type: 'comparison', title: 'Comparativo', icon: '📊', desc: 'Entre períodos' },
             ].map((r) => (
-              <Card
+              <div
                 key={r.type}
                 className="cursor-pointer hover:border-primary transition-colors"
                 onClick={() => generateReport(r.type)}
               >
-                <CardContent className="pt-6 text-center">
-                  <div className="text-4xl mb-2">{r.icon}</div>
-                  <h3 className="font-semibold">{r.title}</h3>
-                  <p className="text-sm text-muted-foreground">{r.desc}</p>
-                </CardContent>
-              </Card>
+                <Card>
+                  <CardContent className="pt-6 text-center">
+                    <div className="text-4xl mb-2">{r.icon}</div>
+                    <h3 className="font-semibold">{r.title}</h3>
+                    <p className="text-sm text-muted-foreground">{r.desc}</p>
+                  </CardContent>
+                </Card>
+              </div>
             ))}
           </div>
 
