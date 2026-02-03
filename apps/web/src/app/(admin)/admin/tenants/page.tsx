@@ -40,58 +40,24 @@ export default function TenantsPage() {
 
   async function fetchTenants() {
     try {
-      const supabase = createClient();
+      console.log('[Tenants] Buscando via API...');
       
-      // Buscar organizações
-      const { data: orgsData, error: orgsError } = await supabase
-        .from('organizations')
-        .select('*')
-        .order('name', { ascending: true });
+      // Usar API route que tem acesso admin (service role)
+      const response = await fetch('/api/admin/tenants');
+      const result = await response.json();
+      
+      console.log('[Tenants] Resultado API:', result);
 
-      if (orgsError) {
-        console.error('Error fetching tenants:', orgsError);
+      if (!response.ok || !result.success) {
+        console.error('Error fetching tenants:', result.error);
+        setTenants([]);
         return;
       }
 
-      // Buscar contagens para cada organização em paralelo
-      const tenantsWithCounts = await Promise.all(
-        (orgsData || []).map(async (org) => {
-          const [usersResult, jobsResult, phpResult] = await Promise.all([
-            supabase
-              .from('org_members')
-              .select('id', { count: 'exact', head: true })
-              .eq('org_id', org.id),
-            supabase
-              .from('jobs')
-              .select('id', { count: 'exact', head: true })
-              .eq('org_id', org.id),
-            supabase
-              .from('php_module_activations')
-              .select('id')
-              .eq('org_id', org.id)
-              .eq('is_active', true)
-              .maybeSingle(),
-          ]);
-
-          return {
-            id: org.id,
-            name: org.name,
-            slug: org.slug || org.name.toLowerCase().replace(/\s+/g, '-'),
-            status: org.status || 'active',
-            plan_id: org.plan_id,
-            settings: {},
-            created_at: org.created_at,
-            updated_at: org.updated_at,
-            users_count: usersResult.count || 0,
-            jobs_count: jobsResult.count || 0,
-            php_active: !!phpResult.data,
-          };
-        })
-      );
-
-      setTenants(tenantsWithCounts);
+      setTenants(result.data || []);
     } catch (error) {
       console.error('Error fetching tenants:', error);
+      setTenants([]);
     } finally {
       setLoading(false);
     }
