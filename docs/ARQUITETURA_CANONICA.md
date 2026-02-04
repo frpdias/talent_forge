@@ -1,6 +1,6 @@
 # Arquitetura Canônica — TalentForge
 
-**Última atualização**: 2026-02-04 14:30 | **Score de Conformidade**: ✅ 98% (Sprint 15: Gestão de Empresas + Campos Corporativos + EmployeesModule)
+**Última atualização**: 2026-02-04 18:00 | **Score de Conformidade**: ✅ 96% (Sprint 15: Gestão de Empresas + Realtime Dashboard + 17 tabelas PHP)
 
 ## 📜 FONTE DA VERDADE — PRINCÍPIO FUNDAMENTAL
 
@@ -158,11 +158,13 @@ PROJETO_TALENT_FORGE/
 │   │   ├── 20260124_business_metrics_views.sql
 │   │   ├── 20260124_organizations_metadata.sql
 │   │   ├── 20260129_reactivate_organizations_rls.sql
-│   │   ├── 20260130_create_php_module_tables.sql ✅ Módulo PHP (12 tabelas)
+│   │   ├── 20260130_create_php_module_tables.sql ✅ Módulo PHP (12 tabelas core)
+│   │   ├── 20260130_php_employees.sql ✅ Tabela employees + hierarquia
 │   │   ├── 20260202_nr1_invitations.sql ✅ Convites NR-1
 │   │   ├── 20260202_nr1_self_assessment.sql ✅ Self-assessment NR-1
 │   │   ├── 20260202_tfci_peer_selection_system.sql ✅ Seleção de pares TFCI
-│   │   └── 20260204_organization_corporate_fields.sql ✅ NOVO (Campos corporativos)
+│   │   ├── 20260204_organization_corporate_fields.sql ✅ Campos corporativos
+│   │   └── 20260205_realtime_dashboard.sql ✅ NOVO (Notifications + Presence + Comments + Locks)
 │   ├── VALIDATE_IMPROVEMENTS.sql  # Script de validação
 │   └── README.md                  # Instruções de migrations
 │
@@ -698,9 +700,11 @@ LEGENDA:
   - Toggle do módulo PHP integrado na página da empresa
   - Cards de estatísticas (colaboradores, departamentos, vagas, data cadastro)
   - Top 3 gestores com badges de ranking
-- 📊 **Score de Conformidade**: 98%
+- ✅ Sprint 15: **Realtime Dashboard** (php_notifications, php_user_presence, php_comments, php_edit_locks)
+- 📊 **Score de Conformidade**: 96%
+- ⚠️ **PENDENTE**: Teams CRUD (tabelas existem, falta API + UI)
 
-### 📂 Estrutura de Rotas PHP (26 páginas)
+### 📂 Estrutura de Rotas PHP (28 páginas)
 
 ```
 apps/web/src/app/(recruiter)/php/
@@ -709,6 +713,10 @@ apps/web/src/app/(recruiter)/php/
 ├── dashboard/page.tsx            # Dashboard com scores integrados
 ├── employees/
 │   └── page.tsx                  # Lista colaboradores da org
+├── teams/                        # ⚠️ PENDENTE IMPLEMENTAÇÃO
+│   ├── page.tsx                  # Lista times + criar novo
+│   └── [id]/
+│       └── page.tsx              # Detalhes time + membros
 ├── tfci/
 │   └── cycles/
 │       ├── page.tsx              # Lista ciclos TFCI + criar novo
@@ -785,17 +793,43 @@ apps/web/src/app/(recruiter)/php/
 | POST | `/php/copc/catalog` | Cria métrica no catálogo |
 
 #### Outros Endpoints PHP
+
+##### Employees (11 endpoints) ✅
+| Método | Rota | Descrição |
+|--------|------|-----------|
+| GET | `/php/employees` | Lista colaboradores (paginado) |
+| POST | `/php/employees` | Cria colaborador |
+| GET | `/php/employees/:id` | Detalhes colaborador |
+| PUT | `/php/employees/:id` | Atualiza colaborador |
+| DELETE | `/php/employees/:id` | Remove colaborador |
+| POST | `/php/employees/import` | Importa CSV de colaboradores |
+| GET | `/php/employees/hierarchy` | Organograma completo |
+| GET | `/php/employees/hierarchy-levels` | Níveis hierárquicos |
+| GET | `/php/employees/valid-managers` | Gestores válidos por nível |
+| GET | `/php/employees/hierarchy-config` | Configuração de hierarquia |
+
+##### Teams (6 endpoints) ⚠️ PENDENTE IMPLEMENTAÇÃO
+| Método | Rota | Descrição |
+|--------|------|-----------|
+| GET | `/php/teams` | Lista times da org |
+| POST | `/php/teams` | Cria novo time |
+| GET | `/php/teams/:id` | Detalhes do time |
+| PUT | `/php/teams/:id` | Atualiza time |
+| DELETE | `/php/teams/:id` | Remove time |
+| POST | `/php/teams/:id/members` | Adiciona membro ao time |
+| DELETE | `/php/teams/:id/members/:userId` | Remove membro do time |
+
+##### Outros
 | Método | Rota | Descrição |
 |--------|------|-----------|
 | GET | `/php/status` | Status ativação para usuário |
-| GET | `/php/employees` | Lista colaboradores da org |
 | GET | `/php/ai/insights/:org_id` | Insights AI |
 | POST | `/php/ai/recommendations` | Recomendações AI |
 | GET | `/php/dashboard/:org_id` | Dashboard integrado |
 | GET | `/php/action-plans` | Lista planos de ação |
 | POST | `/php/action-plans` | Cria plano de ação |
 
-### 🗂️ Estrutura de Tabelas PHP (12 tabelas)
+### 🗂️ Estrutura de Tabelas PHP (17 tabelas)
 
 #### 1. **php_module_activations** — Controle de Ativação
 ```sql
@@ -890,7 +924,7 @@ GET    /api/v1/php/status                   // Status para recruiter (novo)
   - ✅ **Interação**: `cursor-pointer` + tooltip "PHP Module - People, Health & Performance"
 - **Conformidade:** 100% alinhado com `docs/design-system.md`
 
-#### 2. **teams** — Estrutura de Equipes
+#### 2. **teams** — Estrutura de Equipes ⚠️
 ```sql
 teams (
   id UUID PRIMARY KEY,
@@ -906,10 +940,10 @@ teams (
 ```
 - **Propósito:** Agrupamento de colaboradores para análises coletivas
 - **Índices:** org_id, manager_id
-- **RLS:** Membros veem, gestores gerenciam
-- **Status:** ✅ Implementado
+- **RLS:** ✅ Implementado (membros veem, gestores gerenciam)
+- **Status:** ⚠️ **TABELA EXISTE, MAS SEM CRUD** (API + UI pendentes)
 
-#### 3. **team_members** — Membros de Equipes
+#### 3. **team_members** — Membros de Equipes ⚠️
 ```sql
 team_members (
   id UUID PRIMARY KEY,
@@ -922,8 +956,8 @@ team_members (
 ```
 - **Propósito:** Relacionamento M:N usuário-time
 - **Índices:** team_id, user_id
-- **RLS:** Membros veem, gestores gerenciam
-- **Status:** ✅ Implementado
+- **RLS:** ✅ Implementado (membros veem, gestores gerenciam)
+- **Status:** ⚠️ **TABELA EXISTE, MAS SEM CRUD** (API + UI pendentes)
 
 #### 4. **nr1_dimensions** — Catálogo NR-1 v1.0
 ```sql
@@ -1243,6 +1277,114 @@ php_action_items (
 - **Índices:** action_plan_id, assigned_to, status
 - **RLS:** Membros veem, atribuídos atualizam
 - **Status:** ✅ Sprint 10 completo (AI-generated action items)
+
+#### 13. **employees** — Colaboradores ✅
+```sql
+employees (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+  full_name TEXT NOT NULL,
+  cpf TEXT NOT NULL, -- Encriptado em produção
+  birth_date DATE,
+  hire_date DATE NOT NULL,
+  termination_date DATE,
+  manager_id UUID REFERENCES employees(id) ON DELETE SET NULL,
+  position TEXT,
+  department TEXT,
+  user_id UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+  email TEXT,
+  phone TEXT,
+  status TEXT NOT NULL CHECK (status IN ('active', 'inactive', 'terminated')) DEFAULT 'active',
+  metadata JSONB DEFAULT '{}',
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  CONSTRAINT unique_cpf_per_org UNIQUE (organization_id, cpf)
+)
+```
+- **Propósito:** Funcionários das empresas clientes (usado no PHP Module)
+- **⚠️ Nota:** NÃO confundir com `candidates` (processo de recrutamento)
+- **Índices:** organization_id, manager_id, user_id, status, hire_date, department
+- **RLS:** Admins full access, membros da org leem
+- **Status:** ✅ Sprint 15 completo (11 endpoints + hierarquia + import CSV)
+
+#### 14. **php_notifications** — Notificações Real-time ✅
+```sql
+php_notifications (
+  id VARCHAR(100) PRIMARY KEY,
+  org_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+  user_id UUID REFERENCES auth.users(id) ON DELETE SET NULL, -- NULL = todos da org
+  type VARCHAR(20) NOT NULL CHECK (type IN ('alert', 'info', 'success', 'warning')),
+  category VARCHAR(20) NOT NULL CHECK (category IN ('tfci', 'nr1', 'copc', 'action_plan', 'system')),
+  title VARCHAR(255) NOT NULL,
+  message TEXT NOT NULL,
+  action_url VARCHAR(500),
+  metadata JSONB DEFAULT '{}',
+  read BOOLEAN DEFAULT FALSE,
+  read_at TIMESTAMP WITH TIME ZONE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+)
+```
+- **Propósito:** Sistema de notificações push do módulo PHP
+- **Índices:** org_id, user_id, read, (org_id, read), created_at DESC, category
+- **RLS:** Membros veem suas notificações ou da org (user_id NULL)
+- **Status:** ✅ Sprint 14 completo (Realtime Dashboard)
+
+#### 15. **php_user_presence** — Presença Online ✅
+```sql
+php_user_presence (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  org_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  socket_id VARCHAR(100),
+  page VARCHAR(255),
+  is_online BOOLEAN DEFAULT TRUE,
+  last_seen TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  UNIQUE(org_id, user_id)
+)
+```
+- **Propósito:** Tracking de usuários online no dashboard PHP
+- **Índices:** org_id, user_id, is_online
+- **RLS:** Membros da org veem presença, usuário atualiza própria presença
+- **Status:** ✅ Sprint 14 completo (Realtime Dashboard)
+
+#### 16. **php_comments** — Comentários Colaborativos ✅
+```sql
+php_comments (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  org_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  entity_type VARCHAR(50) NOT NULL CHECK (entity_type IN ('action_plan', 'action_item', 'assessment', 'cycle')),
+  entity_id UUID NOT NULL,
+  content TEXT NOT NULL,
+  parent_id UUID REFERENCES php_comments(id) ON DELETE CASCADE,
+  is_edited BOOLEAN DEFAULT FALSE,
+  edited_at TIMESTAMP WITH TIME ZONE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+)
+```
+- **Propósito:** Comentários em qualquer entidade PHP (planos, ciclos, etc)
+- **Índices:** org_id, (entity_type, entity_id), user_id, parent_id, created_at DESC
+- **RLS:** Membros da org leem/criam, autor edita/deleta
+- **Status:** ✅ Sprint 14 completo (Realtime Dashboard)
+
+#### 17. **php_edit_locks** — Locks de Edição ✅
+```sql
+php_edit_locks (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  org_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+  entity_type VARCHAR(50) NOT NULL,
+  entity_id UUID NOT NULL,
+  locked_by UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  locked_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  expires_at TIMESTAMP WITH TIME ZONE DEFAULT (NOW() + INTERVAL '5 minutes'),
+  UNIQUE(entity_type, entity_id)
+)
+```
+- **Propósito:** Prevenir edição simultânea (pessimistic locking)
+- **Índices:** (entity_type, entity_id), expires_at
+- **RLS:** Membros da org leem/gerenciam locks
+- **Status:** ✅ Sprint 14 completo (Realtime Dashboard)
 
 ### 📊 Views do Módulo PHP
 
@@ -1694,6 +1836,27 @@ WHERE org_id = $1 AND user_id = auth.uid() AND status = 'active';
 - Tabela criada para cadastro inicial de empresas
 - Campo `size`: 'small' (1-50), 'medium' (51-250), 'large' (251-1000), 'enterprise' (1000+)
 - Evoluirá para cadastro completo com gestão de vagas, histórico, relatórios
+
+---
+
+### 🚧 Gaps Identificados no Módulo PHP (2026-02-04)
+
+| Item | Banco | API | UI | Status |
+|------|-------|-----|-----|--------|
+| `teams` | ✅ Tabela existe | ❌ Sem endpoints | ❌ Sem página | ⚠️ **PENDENTE** |
+| `team_members` | ✅ Tabela existe | ❌ Sem endpoints | ❌ Sem página | ⚠️ **PENDENTE** |
+| `employees` | ✅ Tabela existe | ✅ 11 endpoints | ✅ Página existe | ✅ Completo |
+| `php_notifications` | ✅ Tabela existe | ✅ Via realtime | ✅ Dashboard | ✅ Completo |
+| `php_user_presence` | ✅ Tabela existe | ✅ Via realtime | ✅ Dashboard | ✅ Completo |
+| `php_comments` | ✅ Tabela existe | ✅ Via realtime | ✅ Dashboard | ✅ Completo |
+| `php_edit_locks` | ✅ Tabela existe | ✅ Via realtime | ✅ Dashboard | ✅ Completo |
+
+**Ação necessária:**
+- [ ] Criar `TeamsController` + `TeamsService` no backend (`apps/api/src/php/teams/`)
+- [ ] Criar página `/php/teams/page.tsx` no frontend
+- [ ] Criar página `/php/teams/[id]/page.tsx` para detalhes do time
+
+---
 
 ## 4) Tabelas legadas (não usar)
 - `candidate_applications_view`
