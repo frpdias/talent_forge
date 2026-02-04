@@ -74,18 +74,7 @@ export class OrganizationsService {
   async findOne(id: string, userId: string) {
     const supabase = this.supabaseService.getAdminClient();
 
-    // Check membership
-    const { data: member } = await supabase
-      .from('org_members')
-      .select('role')
-      .eq('org_id', id)
-      .eq('user_id', userId)
-      .single();
-
-    if (!member) {
-      throw new NotFoundException('Organization not found or access denied');
-    }
-
+    // Buscar a organização primeiro
     const { data, error } = await supabase
       .from('organizations')
       .select('*')
@@ -96,16 +85,7 @@ export class OrganizationsService {
       throw new NotFoundException('Organization not found');
     }
 
-    return {
-      ...this.mapToResponse(data),
-      role: member.role,
-    };
-  }
-
-  async update(id: string, dto: UpdateOrganizationDto, userId: string) {
-    const supabase = this.supabaseService.getAdminClient();
-
-    // Check admin role
+    // Check membership direta
     const { data: member } = await supabase
       .from('org_members')
       .select('role')
@@ -113,7 +93,70 @@ export class OrganizationsService {
       .eq('user_id', userId)
       .single();
 
-    if (!member || member.role !== 'admin') {
+    if (member) {
+      return {
+        ...this.mapToResponse(data),
+        role: member.role,
+      };
+    }
+
+    // Se não é membro direto, verificar se é recrutador da org pai (parent_org_id)
+    if (data.parent_org_id) {
+      const { data: parentMember } = await supabase
+        .from('org_members')
+        .select('role')
+        .eq('org_id', data.parent_org_id)
+        .eq('user_id', userId)
+        .single();
+
+      if (parentMember) {
+        return {
+          ...this.mapToResponse(data),
+          role: 'recruiter', // Recrutador tem acesso às empresas filhas
+        };
+      }
+    }
+
+    throw new NotFoundException('Organization not found or access denied');
+  }
+
+  async update(id: string, dto: UpdateOrganizationDto, userId: string) {
+    const supabase = this.supabaseService.getAdminClient();
+
+    // Buscar a organização primeiro
+    const { data: org } = await supabase
+      .from('organizations')
+      .select('parent_org_id')
+      .eq('id', id)
+      .single();
+
+    if (!org) {
+      throw new NotFoundException('Organization not found');
+    }
+
+    // Check admin role direto
+    const { data: member } = await supabase
+      .from('org_members')
+      .select('role')
+      .eq('org_id', id)
+      .eq('user_id', userId)
+      .single();
+
+    let hasPermission = member?.role === 'admin';
+
+    // Se não é admin direto, verificar se é membro da org pai
+    if (!hasPermission && org.parent_org_id) {
+      const { data: parentMember } = await supabase
+        .from('org_members')
+        .select('role')
+        .eq('org_id', org.parent_org_id)
+        .eq('user_id', userId)
+        .single();
+
+      hasPermission = !!parentMember; // Recrutador pode editar empresas filhas
+    }
+
+    if (!hasPermission) {
       throw new NotFoundException(
         'Organization not found or insufficient permissions',
       );
@@ -155,7 +198,14 @@ export class OrganizationsService {
   async getMembers(orgId: string, userId: string) {
     const supabase = this.supabaseService.getAdminClient();
 
-    // Check membership before exposing member list
+    // Buscar a organização primeiro
+    const { data: org } = await supabase
+      .from('organizations')
+      .select('parent_org_id')
+      .eq('id', orgId)
+      .single();
+
+    // Check membership direto
     const { data: membership } = await supabase
       .from('org_members')
       .select('id')
@@ -163,7 +213,21 @@ export class OrganizationsService {
       .eq('user_id', userId)
       .single();
 
-    if (!membership) {
+    let hasAccess = !!membership;
+
+    // Se não é membro direto, verificar se é membro da org pai
+    if (!hasAccess && org?.parent_org_id) {
+      const { data: parentMembership } = await supabase
+        .from('org_members')
+        .select('id')
+        .eq('org_id', org.parent_org_id)
+        .eq('user_id', userId)
+        .single();
+
+      hasAccess = !!parentMembership;
+    }
+
+    if (!hasAccess) {
       throw new ForbiddenException('User is not a member of this organization');
     }
 

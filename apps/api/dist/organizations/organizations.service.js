@@ -65,15 +65,6 @@ let OrganizationsService = class OrganizationsService {
     }
     async findOne(id, userId) {
         const supabase = this.supabaseService.getAdminClient();
-        const { data: member } = await supabase
-            .from('org_members')
-            .select('role')
-            .eq('org_id', id)
-            .eq('user_id', userId)
-            .single();
-        if (!member) {
-            throw new common_1.NotFoundException('Organization not found or access denied');
-        }
         const { data, error } = await supabase
             .from('organizations')
             .select('*')
@@ -82,20 +73,61 @@ let OrganizationsService = class OrganizationsService {
         if (error || !data) {
             throw new common_1.NotFoundException('Organization not found');
         }
-        return {
-            ...this.mapToResponse(data),
-            role: member.role,
-        };
-    }
-    async update(id, dto, userId) {
-        const supabase = this.supabaseService.getAdminClient();
         const { data: member } = await supabase
             .from('org_members')
             .select('role')
             .eq('org_id', id)
             .eq('user_id', userId)
             .single();
-        if (!member || member.role !== 'admin') {
+        if (member) {
+            return {
+                ...this.mapToResponse(data),
+                role: member.role,
+            };
+        }
+        if (data.parent_org_id) {
+            const { data: parentMember } = await supabase
+                .from('org_members')
+                .select('role')
+                .eq('org_id', data.parent_org_id)
+                .eq('user_id', userId)
+                .single();
+            if (parentMember) {
+                return {
+                    ...this.mapToResponse(data),
+                    role: 'recruiter',
+                };
+            }
+        }
+        throw new common_1.NotFoundException('Organization not found or access denied');
+    }
+    async update(id, dto, userId) {
+        const supabase = this.supabaseService.getAdminClient();
+        const { data: org } = await supabase
+            .from('organizations')
+            .select('parent_org_id')
+            .eq('id', id)
+            .single();
+        if (!org) {
+            throw new common_1.NotFoundException('Organization not found');
+        }
+        const { data: member } = await supabase
+            .from('org_members')
+            .select('role')
+            .eq('org_id', id)
+            .eq('user_id', userId)
+            .single();
+        let hasPermission = member?.role === 'admin';
+        if (!hasPermission && org.parent_org_id) {
+            const { data: parentMember } = await supabase
+                .from('org_members')
+                .select('role')
+                .eq('org_id', org.parent_org_id)
+                .eq('user_id', userId)
+                .single();
+            hasPermission = !!parentMember;
+        }
+        if (!hasPermission) {
             throw new common_1.NotFoundException('Organization not found or insufficient permissions');
         }
         const updateData = {
@@ -140,13 +172,28 @@ let OrganizationsService = class OrganizationsService {
     }
     async getMembers(orgId, userId) {
         const supabase = this.supabaseService.getAdminClient();
+        const { data: org } = await supabase
+            .from('organizations')
+            .select('parent_org_id')
+            .eq('id', orgId)
+            .single();
         const { data: membership } = await supabase
             .from('org_members')
             .select('id')
             .eq('org_id', orgId)
             .eq('user_id', userId)
             .single();
-        if (!membership) {
+        let hasAccess = !!membership;
+        if (!hasAccess && org?.parent_org_id) {
+            const { data: parentMembership } = await supabase
+                .from('org_members')
+                .select('id')
+                .eq('org_id', org.parent_org_id)
+                .eq('user_id', userId)
+                .single();
+            hasAccess = !!parentMembership;
+        }
+        if (!hasAccess) {
             throw new common_1.ForbiddenException('User is not a member of this organization');
         }
         const { data, error } = await supabase
