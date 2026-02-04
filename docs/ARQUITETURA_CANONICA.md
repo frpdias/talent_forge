@@ -1,6 +1,6 @@
 # Arquitetura Canônica — TalentForge
 
-**Última atualização**: 2026-02-04 18:00 | **Score de Conformidade**: ✅ 96% (Sprint 15: Gestão de Empresas + Realtime Dashboard + 17 tabelas PHP)
+**Última atualização**: 2026-02-04 19:00 | **Score de Conformidade**: ✅ 100% (Sprint 16: Teams CRUD completo)
 
 ## 📜 FONTE DA VERDADE — PRINCÍPIO FUNDAMENTAL
 
@@ -701,8 +701,8 @@ LEGENDA:
   - Cards de estatísticas (colaboradores, departamentos, vagas, data cadastro)
   - Top 3 gestores com badges de ranking
 - ✅ Sprint 15: **Realtime Dashboard** (php_notifications, php_user_presence, php_comments, php_edit_locks)
-- 📊 **Score de Conformidade**: 96%
-- ⚠️ **PENDENTE**: Teams CRUD (tabelas existem, falta API + UI)
+- ✅ Sprint 16: **Teams CRUD completo** (TeamsModule + TeamsController + páginas frontend)
+- 📊 **Score de Conformidade**: 100%
 
 ### 📂 Estrutura de Rotas PHP (28 páginas)
 
@@ -713,7 +713,7 @@ apps/web/src/app/(recruiter)/php/
 ├── dashboard/page.tsx            # Dashboard com scores integrados
 ├── employees/
 │   └── page.tsx                  # Lista colaboradores da org
-├── teams/                        # ⚠️ PENDENTE IMPLEMENTAÇÃO
+├── teams/                        # ✅ IMPLEMENTADO Sprint 16
 │   ├── page.tsx                  # Lista times + criar novo
 │   └── [id]/
 │       └── page.tsx              # Detalhes time + membros
@@ -808,16 +808,18 @@ apps/web/src/app/(recruiter)/php/
 | GET | `/php/employees/valid-managers` | Gestores válidos por nível |
 | GET | `/php/employees/hierarchy-config` | Configuração de hierarquia |
 
-##### Teams (6 endpoints) ⚠️ PENDENTE IMPLEMENTAÇÃO
+##### Teams (9 endpoints) ✅ IMPLEMENTADO Sprint 16
 | Método | Rota | Descrição |
 |--------|------|-----------|
 | GET | `/php/teams` | Lista times da org |
 | POST | `/php/teams` | Cria novo time |
-| GET | `/php/teams/:id` | Detalhes do time |
-| PUT | `/php/teams/:id` | Atualiza time |
+| GET | `/php/teams/:id` | Detalhes do time com membros |
+| PATCH | `/php/teams/:id` | Atualiza time |
 | DELETE | `/php/teams/:id` | Remove time |
 | POST | `/php/teams/:id/members` | Adiciona membro ao time |
 | DELETE | `/php/teams/:id/members/:userId` | Remove membro do time |
+| PATCH | `/php/teams/:id/members/:userId/role` | Atualiza papel do membro |
+| GET | `/php/teams/:id/available-members` | Lista membros disponíveis |
 
 ##### Outros
 | Método | Rota | Descrição |
@@ -924,7 +926,7 @@ GET    /api/v1/php/status                   // Status para recruiter (novo)
   - ✅ **Interação**: `cursor-pointer` + tooltip "PHP Module - People, Health & Performance"
 - **Conformidade:** 100% alinhado com `docs/design-system.md`
 
-#### 2. **teams** — Estrutura de Equipes ⚠️
+#### 2. **teams** — Estrutura de Equipes ✅
 ```sql
 teams (
   id UUID PRIMARY KEY,
@@ -941,9 +943,9 @@ teams (
 - **Propósito:** Agrupamento de colaboradores para análises coletivas
 - **Índices:** org_id, manager_id
 - **RLS:** ✅ Implementado (membros veem, gestores gerenciam)
-- **Status:** ⚠️ **TABELA EXISTE, MAS SEM CRUD** (API + UI pendentes)
+- **Status:** ✅ **IMPLEMENTADO Sprint 16** (TeamsModule + 9 endpoints + UI)
 
-#### 3. **team_members** — Membros de Equipes ⚠️
+#### 3. **team_members** — Membros de Equipes ✅
 ```sql
 team_members (
   id UUID PRIMARY KEY,
@@ -957,7 +959,7 @@ team_members (
 - **Propósito:** Relacionamento M:N usuário-time
 - **Índices:** team_id, user_id
 - **RLS:** ✅ Implementado (membros veem, gestores gerenciam)
-- **Status:** ⚠️ **TABELA EXISTE, MAS SEM CRUD** (API + UI pendentes)
+- **Status:** ✅ **IMPLEMENTADO Sprint 16** (CRUD via TeamsService)
 
 #### 4. **nr1_dimensions** — Catálogo NR-1 v1.0
 ```sql

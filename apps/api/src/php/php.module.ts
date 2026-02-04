@@ -7,6 +7,7 @@ import { Nr1Module } from './nr1/nr1.module';
 import { CopcModule } from './copc/copc.module';
 import { AiModule } from './ai/ai.module';
 import { EmployeesModule } from './employees/employees.module';
+import { TeamsModule } from './teams/teams.module';
 import { ActionPlansModule } from './action-plans/action-plans.module';
 import { SettingsModule } from './settings/settings.module';
 import { PhpEventsModule } from './events/php-events.module';
@@ -21,6 +22,7 @@ import { DashboardModule } from './dashboard/dashboard.module';
     CopcModule,
     AiModule,
     EmployeesModule,
+    TeamsModule,
     ActionPlansModule,
     SettingsModule,
     NotificationsModule,

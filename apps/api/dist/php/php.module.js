@@ -16,6 +16,7 @@ const nr1_module_1 = require("./nr1/nr1.module");
 const copc_module_1 = require("./copc/copc.module");
 const ai_module_1 = require("./ai/ai.module");
 const employees_module_1 = require("./employees/employees.module");
+const teams_module_1 = require("./teams/teams.module");
 const action_plans_module_1 = require("./action-plans/action-plans.module");
 const settings_module_1 = require("./settings/settings.module");
 const php_events_module_1 = require("./events/php-events.module");
@@ -33,6 +34,7 @@ exports.PhpModule = PhpModule = __decorate([
             copc_module_1.CopcModule,
             ai_module_1.AiModule,
             employees_module_1.EmployeesModule,
+            teams_module_1.TeamsModule,
             action_plans_module_1.ActionPlansModule,
             settings_module_1.SettingsModule,
             notifications_module_1.NotificationsModule,

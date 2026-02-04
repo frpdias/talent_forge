@@ -77,6 +77,9 @@ export default function PhpLayout({ children }: { children: ReactNode }) {
               <a href="/php/copc" className="text-sm font-semibold text-gray-700 hover:text-[#1F4ED8] transition-colors">
                 COPC
               </a>
+              <a href="/php/teams" className="text-sm font-semibold text-gray-700 hover:text-[#1F4ED8] transition-colors">
+                Times
+              </a>
               <a href="/php/action-plans" className="text-sm font-semibold text-gray-700 hover:text-[#1F4ED8] transition-colors">
                 Ações
               </a>
