@@ -46,14 +46,17 @@ let TeamsController = class TeamsController {
     addMember(orgId, id, addMemberDto) {
         return this.teamsService.addMember(orgId, id, addMemberDto);
     }
-    removeMember(orgId, id, userId) {
-        return this.teamsService.removeMember(orgId, id, userId);
+    removeMember(orgId, id, memberId) {
+        return this.teamsService.removeMember(orgId, id, memberId);
     }
-    updateMemberRole(orgId, id, userId, role) {
-        return this.teamsService.updateMemberRole(orgId, id, userId, role);
+    updateMemberRole(orgId, id, memberId, role) {
+        return this.teamsService.updateMemberRole(orgId, id, memberId, role);
     }
     getAvailableMembers(orgId, id) {
         return this.teamsService.getAvailableMembers(orgId, id);
+    }
+    getOrganizationHierarchy(orgId) {
+        return this.teamsService.getOrganizationHierarchy(orgId);
     }
 };
 exports.TeamsController = TeamsController;
@@ -125,10 +128,10 @@ __decorate([
 ], TeamsController.prototype, "remove", null);
 __decorate([
     (0, common_1.Post)(':id/members'),
-    (0, swagger_1.ApiOperation)({ summary: 'Adicionar membro ao time' }),
-    (0, swagger_1.ApiResponse)({ status: 201, description: 'Membro adicionado' }),
+    (0, swagger_1.ApiOperation)({ summary: 'Adicionar funcionário ao time' }),
+    (0, swagger_1.ApiResponse)({ status: 201, description: 'Funcionário adicionado' }),
     (0, swagger_1.ApiResponse)({ status: 404, description: 'Time não encontrado' }),
-    (0, swagger_1.ApiResponse)({ status: 409, description: 'Usuário já é membro do time' }),
+    (0, swagger_1.ApiResponse)({ status: 409, description: 'Funcionário já é membro do time' }),
     (0, swagger_1.ApiParam)({ name: 'id', description: 'ID do time' }),
     __param(0, (0, org_decorator_1.OrgId)()),
     __param(1, (0, common_1.Param)('id', common_1.ParseUUIDPipe)),
@@ -138,30 +141,30 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], TeamsController.prototype, "addMember", null);
 __decorate([
-    (0, common_1.Delete)(':id/members/:userId'),
-    (0, swagger_1.ApiOperation)({ summary: 'Remover membro do time' }),
-    (0, swagger_1.ApiResponse)({ status: 200, description: 'Membro removido' }),
-    (0, swagger_1.ApiResponse)({ status: 404, description: 'Time ou membro não encontrado' }),
+    (0, common_1.Delete)(':id/members/:memberId'),
+    (0, swagger_1.ApiOperation)({ summary: 'Remover funcionário do time' }),
+    (0, swagger_1.ApiResponse)({ status: 200, description: 'Funcionário removido' }),
+    (0, swagger_1.ApiResponse)({ status: 404, description: 'Time ou funcionário não encontrado' }),
     (0, swagger_1.ApiParam)({ name: 'id', description: 'ID do time' }),
-    (0, swagger_1.ApiParam)({ name: 'userId', description: 'ID do usuário' }),
+    (0, swagger_1.ApiParam)({ name: 'memberId', description: 'ID do funcionário (employee_id)' }),
     __param(0, (0, org_decorator_1.OrgId)()),
     __param(1, (0, common_1.Param)('id', common_1.ParseUUIDPipe)),
-    __param(2, (0, common_1.Param)('userId', common_1.ParseUUIDPipe)),
+    __param(2, (0, common_1.Param)('memberId', common_1.ParseUUIDPipe)),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String, String, String]),
     __metadata("design:returntype", void 0)
 ], TeamsController.prototype, "removeMember", null);
 __decorate([
-    (0, common_1.Patch)(':id/members/:userId/role'),
-    (0, swagger_1.ApiOperation)({ summary: 'Atualizar papel do membro no time' }),
+    (0, common_1.Patch)(':id/members/:memberId/role'),
+    (0, swagger_1.ApiOperation)({ summary: 'Atualizar papel do funcionário no time' }),
     (0, swagger_1.ApiResponse)({ status: 200, description: 'Papel atualizado' }),
-    (0, swagger_1.ApiResponse)({ status: 404, description: 'Time ou membro não encontrado' }),
+    (0, swagger_1.ApiResponse)({ status: 404, description: 'Time ou funcionário não encontrado' }),
     (0, swagger_1.ApiParam)({ name: 'id', description: 'ID do time' }),
-    (0, swagger_1.ApiParam)({ name: 'userId', description: 'ID do usuário' }),
+    (0, swagger_1.ApiParam)({ name: 'memberId', description: 'ID do funcionário (employee_id)' }),
     (0, swagger_1.ApiQuery)({ name: 'role', required: true, enum: ['member', 'lead', 'coordinator'] }),
     __param(0, (0, org_decorator_1.OrgId)()),
     __param(1, (0, common_1.Param)('id', common_1.ParseUUIDPipe)),
-    __param(2, (0, common_1.Param)('userId', common_1.ParseUUIDPipe)),
+    __param(2, (0, common_1.Param)('memberId', common_1.ParseUUIDPipe)),
     __param(3, (0, common_1.Query)('role')),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String, String, String, String]),
@@ -169,8 +172,8 @@ __decorate([
 ], TeamsController.prototype, "updateMemberRole", null);
 __decorate([
     (0, common_1.Get)(':id/available-members'),
-    (0, swagger_1.ApiOperation)({ summary: 'Listar membros disponíveis para adicionar ao time' }),
-    (0, swagger_1.ApiResponse)({ status: 200, description: 'Lista de membros disponíveis' }),
+    (0, swagger_1.ApiOperation)({ summary: 'Listar funcionários disponíveis para adicionar ao time' }),
+    (0, swagger_1.ApiResponse)({ status: 200, description: 'Lista de funcionários disponíveis' }),
     (0, swagger_1.ApiResponse)({ status: 404, description: 'Time não encontrado' }),
     (0, swagger_1.ApiParam)({ name: 'id', description: 'ID do time' }),
     __param(0, (0, org_decorator_1.OrgId)()),
@@ -179,6 +182,15 @@ __decorate([
     __metadata("design:paramtypes", [String, String]),
     __metadata("design:returntype", void 0)
 ], TeamsController.prototype, "getAvailableMembers", null);
+__decorate([
+    (0, common_1.Get)('hierarchy'),
+    (0, swagger_1.ApiOperation)({ summary: 'Obter hierarquia de funcionários da organização' }),
+    (0, swagger_1.ApiResponse)({ status: 200, description: 'Hierarquia de funcionários' }),
+    __param(0, (0, org_decorator_1.OrgId)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", void 0)
+], TeamsController.prototype, "getOrganizationHierarchy", null);
 exports.TeamsController = TeamsController = __decorate([
     (0, swagger_1.ApiTags)('PHP Module - Teams'),
     (0, swagger_1.ApiBearerAuth)(),

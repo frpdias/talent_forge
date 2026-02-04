@@ -37,14 +37,14 @@ let TeamsService = class TeamsService {
         }
         if (dto.manager_id) {
             const { data: manager } = await client
-                .from('org_members')
+                .from('employees')
                 .select('id')
-                .eq('org_id', dto.organization_id)
-                .eq('user_id', dto.manager_id)
+                .eq('organization_id', dto.organization_id)
+                .eq('id', dto.manager_id)
                 .eq('status', 'active')
                 .maybeSingle();
             if (!manager) {
-                throw new common_1.BadRequestException('Gestor deve ser membro ativo da organização');
+                throw new common_1.BadRequestException('Gestor deve ser um funcionário ativo da organização');
             }
         }
         const { data, error } = await client
@@ -101,48 +101,40 @@ let TeamsService = class TeamsService {
         if (membersError) {
             throw new common_1.BadRequestException(`Erro ao buscar membros: ${membersError.message}`);
         }
-        let membersWithUsers = members || [];
+        let membersWithEmployees = members || [];
         if (members && members.length > 0) {
             const userIds = members.map(m => m.user_id);
-            const { data: users } = await client
-                .from('user_profiles')
-                .select('id, email, full_name, avatar_url')
-                .in('id', userIds);
-            if (users) {
-                const userMap = new Map(users.map(u => [u.id, u]));
-                membersWithUsers = members.map(m => ({
+            const { data: employees } = await client
+                .from('employees')
+                .select('id, full_name, position, department, manager_id, user_id')
+                .eq('organization_id', orgId)
+                .in('user_id', userIds);
+            if (employees) {
+                const employeeMap = new Map(employees.map(e => [e.user_id, e]));
+                membersWithEmployees = members.map(m => ({
                     ...m,
-                    user: userMap.get(m.user_id) ? {
-                        id: userMap.get(m.user_id).id,
-                        email: userMap.get(m.user_id).email,
-                        raw_user_meta_data: {
-                            full_name: userMap.get(m.user_id).full_name,
-                            avatar_url: userMap.get(m.user_id).avatar_url,
-                        },
-                    } : undefined,
+                    employee: employeeMap.get(m.user_id) || undefined,
                 }));
             }
         }
         let manager = undefined;
         if (team.manager_id) {
             const { data: managerData } = await client
-                .from('user_profiles')
-                .select('id, email, full_name')
+                .from('employees')
+                .select('id, full_name, position')
                 .eq('id', team.manager_id)
                 .single();
             if (managerData) {
                 manager = {
                     id: managerData.id,
-                    email: managerData.email,
-                    raw_user_meta_data: {
-                        full_name: managerData.full_name,
-                    },
+                    full_name: managerData.full_name,
+                    position: managerData.position,
                 };
             }
         }
         return {
             ...team,
-            members: membersWithUsers,
+            members: membersWithEmployees,
             manager,
         };
     }
@@ -171,14 +163,14 @@ let TeamsService = class TeamsService {
         }
         if (dto.manager_id) {
             const { data: manager } = await client
-                .from('org_members')
+                .from('employees')
                 .select('id')
-                .eq('org_id', orgId)
-                .eq('user_id', dto.manager_id)
+                .eq('organization_id', orgId)
+                .eq('id', dto.manager_id)
                 .eq('status', 'active')
                 .maybeSingle();
             if (!manager) {
-                throw new common_1.BadRequestException('Gestor deve ser membro ativo da organização');
+                throw new common_1.BadRequestException('Gestor deve ser um funcionário ativo da organização');
             }
         }
         const updateData = { updated_at: new Date().toISOString() };
@@ -232,30 +224,31 @@ let TeamsService = class TeamsService {
         if (teamError || !team) {
             throw new common_1.NotFoundException('Time não encontrado');
         }
-        const { data: orgMember } = await client
-            .from('org_members')
-            .select('id')
-            .eq('org_id', orgId)
-            .eq('user_id', dto.user_id)
+        const { data: employee } = await client
+            .from('employees')
+            .select('id, user_id, full_name, position, department, manager_id')
+            .eq('organization_id', orgId)
+            .eq('id', dto.user_id)
             .eq('status', 'active')
             .maybeSingle();
-        if (!orgMember) {
-            throw new common_1.BadRequestException('Usuário deve ser membro ativo da organização');
+        if (!employee) {
+            throw new common_1.BadRequestException('Funcionário não encontrado ou inativo');
         }
+        const memberUserId = employee.user_id || employee.id;
         const { data: existingMember } = await client
             .from('team_members')
             .select('id')
             .eq('team_id', teamId)
-            .eq('user_id', dto.user_id)
+            .eq('user_id', memberUserId)
             .maybeSingle();
         if (existingMember) {
-            throw new common_1.ConflictException('Usuário já é membro deste time');
+            throw new common_1.ConflictException('Funcionário já é membro deste time');
         }
         const { data, error } = await client
             .from('team_members')
             .insert({
             team_id: teamId,
-            user_id: dto.user_id,
+            user_id: memberUserId,
             role_in_team: dto.role_in_team || 'member',
         })
             .select()
@@ -267,9 +260,18 @@ let TeamsService = class TeamsService {
             .from('teams')
             .update({ member_count: team.member_count + 1, updated_at: new Date().toISOString() })
             .eq('id', teamId);
-        return data;
+        return {
+            ...data,
+            employee: {
+                id: employee.id,
+                full_name: employee.full_name,
+                position: employee.position,
+                department: employee.department,
+                manager_id: employee.manager_id,
+            },
+        };
     }
-    async removeMember(orgId, teamId, userId) {
+    async removeMember(orgId, teamId, memberId) {
         const client = this.supabase.getAdminClient();
         const { data: team, error: teamError } = await client
             .from('teams')
@@ -280,20 +282,35 @@ let TeamsService = class TeamsService {
         if (teamError || !team) {
             throw new common_1.NotFoundException('Time não encontrado');
         }
-        const { data: member } = await client
+        let { data: member } = await client
             .from('team_members')
-            .select('id')
+            .select('id, user_id')
             .eq('team_id', teamId)
-            .eq('user_id', userId)
+            .eq('user_id', memberId)
             .maybeSingle();
         if (!member) {
-            throw new common_1.NotFoundException('Usuário não é membro deste time');
+            const { data: employee } = await client
+                .from('employees')
+                .select('user_id')
+                .eq('id', memberId)
+                .maybeSingle();
+            if (employee?.user_id) {
+                const result = await client
+                    .from('team_members')
+                    .select('id, user_id')
+                    .eq('team_id', teamId)
+                    .eq('user_id', employee.user_id)
+                    .maybeSingle();
+                member = result.data;
+            }
+        }
+        if (!member) {
+            throw new common_1.NotFoundException('Membro não encontrado neste time');
         }
         const { error } = await client
             .from('team_members')
             .delete()
-            .eq('team_id', teamId)
-            .eq('user_id', userId);
+            .eq('id', member.id);
         if (error) {
             throw new common_1.BadRequestException(`Erro ao remover membro: ${error.message}`);
         }
@@ -305,7 +322,7 @@ let TeamsService = class TeamsService {
         })
             .eq('id', teamId);
     }
-    async updateMemberRole(orgId, teamId, userId, role) {
+    async updateMemberRole(orgId, teamId, memberId, role) {
         const client = this.supabase.getAdminClient();
         const { data: team, error: teamError } = await client
             .from('teams')
@@ -316,11 +333,20 @@ let TeamsService = class TeamsService {
         if (teamError || !team) {
             throw new common_1.NotFoundException('Time não encontrado');
         }
+        let targetUserId = memberId;
+        const { data: employee } = await client
+            .from('employees')
+            .select('user_id')
+            .eq('id', memberId)
+            .maybeSingle();
+        if (employee?.user_id) {
+            targetUserId = employee.user_id;
+        }
         const { data, error } = await client
             .from('team_members')
             .update({ role_in_team: role })
             .eq('team_id', teamId)
-            .eq('user_id', userId)
+            .eq('user_id', targetUserId)
             .select()
             .single();
         if (error || !data) {
@@ -330,30 +356,77 @@ let TeamsService = class TeamsService {
     }
     async getAvailableMembers(orgId, teamId) {
         const client = this.supabase.getAdminClient();
-        const { data: orgMembers } = await client
-            .from('org_members')
-            .select('user_id')
-            .eq('org_id', orgId)
-            .eq('status', 'active');
-        if (!orgMembers || orgMembers.length === 0) {
+        const { data: employees } = await client
+            .from('employees')
+            .select(`
+        id,
+        full_name,
+        position,
+        department,
+        manager_id,
+        user_id,
+        manager:manager_id(id, full_name)
+      `)
+            .eq('organization_id', orgId)
+            .eq('status', 'active')
+            .order('full_name', { ascending: true });
+        if (!employees || employees.length === 0) {
             return [];
         }
         const { data: teamMembers } = await client
             .from('team_members')
             .select('user_id')
             .eq('team_id', teamId);
-        const teamMemberIds = new Set((teamMembers || []).map(m => m.user_id));
-        const availableIds = orgMembers
-            .filter(m => !teamMemberIds.has(m.user_id))
-            .map(m => m.user_id);
-        if (availableIds.length === 0) {
-            return [];
+        const teamMemberUserIds = new Set((teamMembers || []).map(m => m.user_id));
+        const availableEmployees = employees.filter(emp => {
+            const inTeamByUserId = emp.user_id && teamMemberUserIds.has(emp.user_id);
+            const inTeamByEmpId = teamMemberUserIds.has(emp.id);
+            return !inTeamByUserId && !inTeamByEmpId;
+        });
+        return availableEmployees.map(emp => {
+            const managerData = Array.isArray(emp.manager) ? emp.manager[0] : emp.manager;
+            return {
+                id: emp.id,
+                full_name: emp.full_name,
+                position: emp.position,
+                department: emp.department,
+                manager_id: emp.manager_id,
+                user_id: emp.user_id,
+                manager: managerData ? { id: managerData.id, full_name: managerData.full_name } : undefined,
+            };
+        });
+    }
+    async getOrganizationHierarchy(orgId) {
+        const client = this.supabase.getAdminClient();
+        const { data: employees, error } = await client
+            .from('employees')
+            .select(`
+        id,
+        full_name,
+        position,
+        department,
+        manager_id,
+        user_id,
+        manager:manager_id(id, full_name)
+      `)
+            .eq('organization_id', orgId)
+            .eq('status', 'active')
+            .order('full_name', { ascending: true });
+        if (error) {
+            throw new common_1.BadRequestException(`Erro ao buscar hierarquia: ${error.message}`);
         }
-        const { data: users } = await client
-            .from('user_profiles')
-            .select('id, email, full_name, avatar_url')
-            .in('id', availableIds);
-        return users || [];
+        return (employees || []).map(emp => {
+            const managerData = Array.isArray(emp.manager) ? emp.manager[0] : emp.manager;
+            return {
+                id: emp.id,
+                full_name: emp.full_name,
+                position: emp.position,
+                department: emp.department,
+                manager_id: emp.manager_id,
+                user_id: emp.user_id,
+                manager: managerData ? { id: managerData.id, full_name: managerData.full_name } : undefined,
+            };
+        });
     }
 };
 exports.TeamsService = TeamsService;

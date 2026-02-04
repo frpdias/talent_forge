@@ -99,10 +99,10 @@ export class TeamsController {
   // ===== TEAM MEMBERS =====
 
   @Post(':id/members')
-  @ApiOperation({ summary: 'Adicionar membro ao time' })
-  @ApiResponse({ status: 201, description: 'Membro adicionado' })
+  @ApiOperation({ summary: 'Adicionar funcionário ao time' })
+  @ApiResponse({ status: 201, description: 'Funcionário adicionado' })
   @ApiResponse({ status: 404, description: 'Time não encontrado' })
-  @ApiResponse({ status: 409, description: 'Usuário já é membro do time' })
+  @ApiResponse({ status: 409, description: 'Funcionário já é membro do time' })
   @ApiParam({ name: 'id', description: 'ID do time' })
   addMember(
     @OrgId() orgId: string,
@@ -112,39 +112,39 @@ export class TeamsController {
     return this.teamsService.addMember(orgId, id, addMemberDto);
   }
 
-  @Delete(':id/members/:userId')
-  @ApiOperation({ summary: 'Remover membro do time' })
-  @ApiResponse({ status: 200, description: 'Membro removido' })
-  @ApiResponse({ status: 404, description: 'Time ou membro não encontrado' })
+  @Delete(':id/members/:memberId')
+  @ApiOperation({ summary: 'Remover funcionário do time' })
+  @ApiResponse({ status: 200, description: 'Funcionário removido' })
+  @ApiResponse({ status: 404, description: 'Time ou funcionário não encontrado' })
   @ApiParam({ name: 'id', description: 'ID do time' })
-  @ApiParam({ name: 'userId', description: 'ID do usuário' })
+  @ApiParam({ name: 'memberId', description: 'ID do funcionário (employee_id)' })
   removeMember(
     @OrgId() orgId: string,
     @Param('id', ParseUUIDPipe) id: string,
-    @Param('userId', ParseUUIDPipe) userId: string,
+    @Param('memberId', ParseUUIDPipe) memberId: string,
   ) {
-    return this.teamsService.removeMember(orgId, id, userId);
+    return this.teamsService.removeMember(orgId, id, memberId);
   }
 
-  @Patch(':id/members/:userId/role')
-  @ApiOperation({ summary: 'Atualizar papel do membro no time' })
+  @Patch(':id/members/:memberId/role')
+  @ApiOperation({ summary: 'Atualizar papel do funcionário no time' })
   @ApiResponse({ status: 200, description: 'Papel atualizado' })
-  @ApiResponse({ status: 404, description: 'Time ou membro não encontrado' })
+  @ApiResponse({ status: 404, description: 'Time ou funcionário não encontrado' })
   @ApiParam({ name: 'id', description: 'ID do time' })
-  @ApiParam({ name: 'userId', description: 'ID do usuário' })
+  @ApiParam({ name: 'memberId', description: 'ID do funcionário (employee_id)' })
   @ApiQuery({ name: 'role', required: true, enum: ['member', 'lead', 'coordinator'] })
   updateMemberRole(
     @OrgId() orgId: string,
     @Param('id', ParseUUIDPipe) id: string,
-    @Param('userId', ParseUUIDPipe) userId: string,
+    @Param('memberId', ParseUUIDPipe) memberId: string,
     @Query('role') role: 'member' | 'lead' | 'coordinator',
   ) {
-    return this.teamsService.updateMemberRole(orgId, id, userId, role);
+    return this.teamsService.updateMemberRole(orgId, id, memberId, role);
   }
 
   @Get(':id/available-members')
-  @ApiOperation({ summary: 'Listar membros disponíveis para adicionar ao time' })
-  @ApiResponse({ status: 200, description: 'Lista de membros disponíveis' })
+  @ApiOperation({ summary: 'Listar funcionários disponíveis para adicionar ao time' })
+  @ApiResponse({ status: 200, description: 'Lista de funcionários disponíveis' })
   @ApiResponse({ status: 404, description: 'Time não encontrado' })
   @ApiParam({ name: 'id', description: 'ID do time' })
   getAvailableMembers(
@@ -152,5 +152,14 @@ export class TeamsController {
     @Param('id', ParseUUIDPipe) id: string,
   ) {
     return this.teamsService.getAvailableMembers(orgId, id);
+  }
+
+  @Get('hierarchy')
+  @ApiOperation({ summary: 'Obter hierarquia de funcionários da organização' })
+  @ApiResponse({ status: 200, description: 'Hierarquia de funcionários' })
+  getOrganizationHierarchy(
+    @OrgId() orgId: string,
+  ) {
+    return this.teamsService.getOrganizationHierarchy(orgId);
   }
 }

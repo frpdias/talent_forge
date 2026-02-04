@@ -16,8 +16,11 @@ class AddTeamMemberDto {
 }
 exports.AddTeamMemberDto = AddTeamMemberDto;
 __decorate([
-    (0, swagger_1.ApiProperty)({ description: 'ID do usuário', example: '550e8400-e29b-41d4-a716-446655440002' }),
-    (0, class_validator_1.IsUUID)('4', { message: 'user_id deve ser um UUID válido' }),
+    (0, swagger_1.ApiProperty)({
+        description: 'ID do funcionário (employee_id) do organograma',
+        example: '550e8400-e29b-41d4-a716-446655440002'
+    }),
+    (0, class_validator_1.IsUUID)('4', { message: 'user_id (employee_id) deve ser um UUID válido' }),
     __metadata("design:type", String)
 ], AddTeamMemberDto.prototype, "user_id", void 0);
 __decorate([

@@ -16,23 +16,32 @@ export interface TeamMember {
     user_id: string;
     role_in_team: 'member' | 'lead' | 'coordinator';
     joined_at: string;
-    user?: {
+    employee?: {
         id: string;
-        email: string;
-        raw_user_meta_data?: {
-            full_name?: string;
-            avatar_url?: string;
-        };
+        full_name: string;
+        position: string | null;
+        department: string | null;
+        manager_id: string | null;
     };
 }
 export interface TeamWithMembers extends Team {
     members: TeamMember[];
     manager?: {
         id: string;
-        email: string;
-        raw_user_meta_data?: {
-            full_name?: string;
-        };
+        full_name: string;
+        position: string | null;
+    };
+}
+export interface EmployeeForTeam {
+    id: string;
+    full_name: string;
+    position: string | null;
+    department: string | null;
+    manager_id: string | null;
+    user_id: string | null;
+    manager?: {
+        id: string;
+        full_name: string;
     };
 }
 export declare class TeamsService {
@@ -51,7 +60,8 @@ export declare class TeamsService {
     update(orgId: string, teamId: string, dto: UpdateTeamDto): Promise<Team>;
     remove(orgId: string, teamId: string): Promise<void>;
     addMember(orgId: string, teamId: string, dto: AddTeamMemberDto): Promise<TeamMember>;
-    removeMember(orgId: string, teamId: string, userId: string): Promise<void>;
-    updateMemberRole(orgId: string, teamId: string, userId: string, role: 'member' | 'lead' | 'coordinator'): Promise<TeamMember>;
-    getAvailableMembers(orgId: string, teamId: string): Promise<any[]>;
+    removeMember(orgId: string, teamId: string, memberId: string): Promise<void>;
+    updateMemberRole(orgId: string, teamId: string, memberId: string, role: 'member' | 'lead' | 'coordinator'): Promise<TeamMember>;
+    getAvailableMembers(orgId: string, teamId: string): Promise<EmployeeForTeam[]>;
+    getOrganizationHierarchy(orgId: string): Promise<EmployeeForTeam[]>;
 }

@@ -24,13 +24,12 @@ interface TeamMember {
   user_id: string;
   role_in_team: 'member' | 'lead' | 'coordinator';
   joined_at: string;
-  user?: {
+  employee?: {
     id: string;
-    email: string;
-    raw_user_meta_data?: {
-      full_name?: string;
-      avatar_url?: string;
-    };
+    full_name: string;
+    position: string | null;
+    department: string | null;
+    manager_id: string | null;
   };
 }
 
@@ -46,18 +45,22 @@ interface Team {
   members: TeamMember[];
   manager?: {
     id: string;
-    email: string;
-    raw_user_meta_data?: {
-      full_name?: string;
-    };
+    full_name: string;
+    position: string | null;
   };
 }
 
-interface AvailableMember {
+interface AvailableEmployee {
   id: string;
-  email: string;
-  full_name: string | null;
-  avatar_url: string | null;
+  full_name: string;
+  position: string | null;
+  department: string | null;
+  manager_id: string | null;
+  user_id: string | null;
+  manager?: {
+    id: string;
+    full_name: string;
+  };
 }
 
 const roleLabels: Record<string, string> = {
@@ -91,7 +94,7 @@ export default function TeamDetailsPage() {
   const [saving, setSaving] = useState(false);
   
   const [showAddMember, setShowAddMember] = useState(false);
-  const [availableMembers, setAvailableMembers] = useState<AvailableMember[]>([]);
+  const [availableEmployees, setAvailableEmployees] = useState<AvailableEmployee[]>([]);
   const [loadingAvailable, setLoadingAvailable] = useState(false);
   const [addingMember, setAddingMember] = useState(false);
   const [selectedRole, setSelectedRole] = useState<'member' | 'lead' | 'coordinator'>('member');
@@ -122,7 +125,7 @@ export default function TeamDetailsPage() {
     }
   }, [currentOrg?.id, teamId, router]);
 
-  const loadAvailableMembers = useCallback(async () => {
+  const loadAvailableEmployees = useCallback(async () => {
     if (!currentOrg?.id || !teamId) return;
     
     try {
@@ -136,10 +139,10 @@ export default function TeamDetailsPage() {
 
       if (res.ok) {
         const data = await res.json();
-        setAvailableMembers(data || []);
+        setAvailableEmployees(data || []);
       }
     } catch (error) {
-      console.error('Erro ao carregar membros disponíveis:', error);
+      console.error('Erro ao carregar funcionários disponíveis:', error);
     } finally {
       setLoadingAvailable(false);
     }
@@ -151,9 +154,9 @@ export default function TeamDetailsPage() {
 
   useEffect(() => {
     if (showAddMember) {
-      loadAvailableMembers();
+      loadAvailableEmployees();
     }
-  }, [showAddMember, loadAvailableMembers]);
+  }, [showAddMember, loadAvailableEmployees]);
 
   const handleSaveEdit = async () => {
     if (!currentOrg?.id || !team) return;
@@ -187,7 +190,7 @@ export default function TeamDetailsPage() {
     }
   };
 
-  const handleAddMember = async (userId: string) => {
+  const handleAddMember = async (employeeId: string) => {
     if (!currentOrg?.id || !team) return;
     
     try {
@@ -200,17 +203,17 @@ export default function TeamDetailsPage() {
           'x-org-id': currentOrg.id,
         },
         body: JSON.stringify({
-          user_id: userId,
+          user_id: employeeId, // employee_id passed as user_id for API compatibility
           role_in_team: selectedRole,
         }),
       });
 
       if (res.ok) {
         await loadTeam();
-        await loadAvailableMembers();
+        await loadAvailableEmployees();
       } else {
         const err = await res.json();
-        alert(err.message || 'Erro ao adicionar membro');
+        alert(err.message || 'Erro ao adicionar funcionário');
       }
     } catch (error) {
       alert('Erro de conexão');
@@ -219,12 +222,12 @@ export default function TeamDetailsPage() {
     }
   };
 
-  const handleRemoveMember = async (userId: string, userName: string) => {
+  const handleRemoveMember = async (memberId: string, memberName: string) => {
     if (!currentOrg?.id || !team) return;
-    if (!confirm(`Remover ${userName} do time?`)) return;
+    if (!confirm(`Remover ${memberName} do time?`)) return;
     
     try {
-      const res = await fetch(`/api/v1/php/teams/${team.id}/members/${userId}`, {
+      const res = await fetch(`/api/v1/php/teams/${team.id}/members/${memberId}`, {
         method: 'DELETE',
         headers: {
           Authorization: `Bearer ${localStorage.getItem('token')}`,
@@ -236,18 +239,18 @@ export default function TeamDetailsPage() {
         await loadTeam();
       } else {
         const err = await res.json();
-        alert(err.message || 'Erro ao remover membro');
+        alert(err.message || 'Erro ao remover funcionário');
       }
     } catch (error) {
       alert('Erro de conexão');
     }
   };
 
-  const handleUpdateRole = async (userId: string, newRole: 'member' | 'lead' | 'coordinator') => {
+  const handleUpdateRole = async (memberId: string, newRole: 'member' | 'lead' | 'coordinator') => {
     if (!currentOrg?.id || !team) return;
     
     try {
-      const res = await fetch(`/api/v1/php/teams/${team.id}/members/${userId}/role?role=${newRole}`, {
+      const res = await fetch(`/api/v1/php/teams/${team.id}/members/${memberId}/role?role=${newRole}`, {
         method: 'PATCH',
         headers: {
           Authorization: `Bearer ${localStorage.getItem('token')}`,
@@ -412,7 +415,7 @@ export default function TeamDetailsPage() {
             className="flex items-center gap-2 px-3 py-1.5 bg-[#1F4ED8] text-white text-sm rounded-lg hover:bg-[#1845B8] transition-colors"
           >
             <UserPlus className="w-4 h-4" />
-            Adicionar Membro
+            Adicionar Funcionário
           </button>
         </div>
 
@@ -424,7 +427,7 @@ export default function TeamDetailsPage() {
               onClick={() => setShowAddMember(true)}
               className="mt-3 text-[#1F4ED8] hover:underline text-sm"
             >
-              Adicionar primeiro membro
+              Adicionar primeiro funcionário
             </button>
           </div>
         ) : (
@@ -433,27 +436,24 @@ export default function TeamDetailsPage() {
               <div key={member.id} className="p-4 flex items-center justify-between hover:bg-gray-50">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center">
-                    {member.user?.raw_user_meta_data?.avatar_url ? (
-                      <img 
-                        src={member.user.raw_user_meta_data.avatar_url} 
-                        alt="" 
-                        className="w-10 h-10 rounded-full object-cover"
-                      />
-                    ) : (
-                      <User className="w-5 h-5 text-gray-500" />
-                    )}
+                    <User className="w-5 h-5 text-gray-500" />
                   </div>
                   <div>
                     <p className="font-medium text-gray-900">
-                      {member.user?.raw_user_meta_data?.full_name || member.user?.email || 'Usuário'}
+                      {member.employee?.full_name || 'Funcionário'}
                     </p>
-                    <p className="text-sm text-gray-500">{member.user?.email}</p>
+                    {member.employee?.position && (
+                      <p className="text-sm text-gray-500">{member.employee.position}</p>
+                    )}
+                    {member.employee?.department && (
+                      <p className="text-xs text-gray-400">{member.employee.department}</p>
+                    )}
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
                   <select
                     value={member.role_in_team}
-                    onChange={(e) => handleUpdateRole(member.user_id, e.target.value as any)}
+                    onChange={(e) => handleUpdateRole(member.employee?.id || member.user_id, e.target.value as any)}
                     className={`px-3 py-1.5 text-sm rounded-full border-0 cursor-pointer ${roleColors[member.role_in_team]}`}
                   >
                     <option value="member">Membro</option>
@@ -462,8 +462,8 @@ export default function TeamDetailsPage() {
                   </select>
                   <button
                     onClick={() => handleRemoveMember(
-                      member.user_id, 
-                      member.user?.raw_user_meta_data?.full_name || member.user?.email || 'Usuário'
+                      member.employee?.id || member.user_id, 
+                      member.employee?.full_name || 'Funcionário'
                     )}
                     className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                     title="Remover do time"
@@ -482,7 +482,7 @@ export default function TeamDetailsPage() {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg shadow-xl w-full max-w-md mx-4 max-h-[80vh] flex flex-col">
             <div className="p-4 border-b border-gray-200 flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-gray-900">Adicionar Membro</h2>
+              <h2 className="text-lg font-semibold text-gray-900">Adicionar Funcionário</h2>
               <button
                 onClick={() => setShowAddMember(false)}
                 className="text-gray-400 hover:text-gray-600"
@@ -511,37 +511,36 @@ export default function TeamDetailsPage() {
                 <div className="p-8 text-center">
                   <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[#1F4ED8] mx-auto"></div>
                 </div>
-              ) : availableMembers.length === 0 ? (
+              ) : availableEmployees.length === 0 ? (
                 <div className="p-8 text-center">
                   <Users className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-                  <p className="text-gray-600">Todos os membros da organização já estão no time</p>
+                  <p className="text-gray-600">Todos os funcionários da organização já estão no time</p>
                 </div>
               ) : (
                 <div className="divide-y divide-gray-100">
-                  {availableMembers.map((member) => (
+                  {availableEmployees.map((employee) => (
                     <button
-                      key={member.id}
-                      onClick={() => handleAddMember(member.id)}
+                      key={employee.id}
+                      onClick={() => handleAddMember(employee.id)}
                       disabled={addingMember}
                       className="w-full p-4 flex items-center justify-between hover:bg-gray-50 disabled:opacity-50"
                     >
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center">
-                          {member.avatar_url ? (
-                            <img 
-                              src={member.avatar_url} 
-                              alt="" 
-                              className="w-10 h-10 rounded-full object-cover"
-                            />
-                          ) : (
-                            <User className="w-5 h-5 text-gray-500" />
-                          )}
+                          <User className="w-5 h-5 text-gray-500" />
                         </div>
                         <div className="text-left">
                           <p className="font-medium text-gray-900">
-                            {member.full_name || member.email}
+                            {employee.full_name}
                           </p>
-                          <p className="text-sm text-gray-500">{member.email}</p>
+                          <div className="flex items-center gap-2 text-sm text-gray-500">
+                            {employee.position && <span>{employee.position}</span>}
+                            {employee.position && employee.department && <span>•</span>}
+                            {employee.department && <span>{employee.department}</span>}
+                          </div>
+                          {employee.manager && (
+                            <p className="text-xs text-gray-400">Gestor: {employee.manager.full_name}</p>
+                          )}
                         </div>
                       </div>
                       <div className="p-2 text-[#1F4ED8] hover:bg-[#1F4ED8]/10 rounded-full">

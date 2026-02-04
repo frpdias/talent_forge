@@ -20,13 +20,12 @@ export interface TeamMember {
   user_id: string;
   role_in_team: 'member' | 'lead' | 'coordinator';
   joined_at: string;
-  user?: {
+  employee?: {
     id: string;
-    email: string;
-    raw_user_meta_data?: {
-      full_name?: string;
-      avatar_url?: string;
-    };
+    full_name: string;
+    position: string | null;
+    department: string | null;
+    manager_id: string | null;
   };
 }
 
@@ -34,10 +33,21 @@ export interface TeamWithMembers extends Team {
   members: TeamMember[];
   manager?: {
     id: string;
-    email: string;
-    raw_user_meta_data?: {
-      full_name?: string;
-    };
+    full_name: string;
+    position: string | null;
+  };
+}
+
+export interface EmployeeForTeam {
+  id: string;
+  full_name: string;
+  position: string | null;
+  department: string | null;
+  manager_id: string | null;
+  user_id: string | null;
+  manager?: {
+    id: string;
+    full_name: string;
   };
 }
 
@@ -74,18 +84,18 @@ export class TeamsService {
       throw new ConflictException('Já existe um time com este nome nesta organização');
     }
 
-    // Se manager_id foi fornecido, validar que é membro da org
+    // Se manager_id foi fornecido, validar que é um funcionário (employee) da org
     if (dto.manager_id) {
       const { data: manager } = await client
-        .from('org_members')
+        .from('employees')
         .select('id')
-        .eq('org_id', dto.organization_id)
-        .eq('user_id', dto.manager_id)
+        .eq('organization_id', dto.organization_id)
+        .eq('id', dto.manager_id)
         .eq('status', 'active')
         .maybeSingle();
 
       if (!manager) {
-        throw new BadRequestException('Gestor deve ser membro ativo da organização');
+        throw new BadRequestException('Gestor deve ser um funcionário ativo da organização');
       }
     }
 
@@ -166,54 +176,47 @@ export class TeamsService {
       throw new BadRequestException(`Erro ao buscar membros: ${membersError.message}`);
     }
 
-    // Se há membros, buscar dados dos usuários
-    let membersWithUsers: TeamMember[] = members || [];
+    // Se há membros, buscar dados dos funcionários
+    let membersWithEmployees: TeamMember[] = members || [];
     if (members && members.length > 0) {
       const userIds = members.map(m => m.user_id);
-      const { data: users } = await client
-        .from('user_profiles')
-        .select('id, email, full_name, avatar_url')
-        .in('id', userIds);
+      // Buscar funcionários que têm user_id correspondente aos membros do time
+      const { data: employees } = await client
+        .from('employees')
+        .select('id, full_name, position, department, manager_id, user_id')
+        .eq('organization_id', orgId)
+        .in('user_id', userIds);
 
-      if (users) {
-        const userMap = new Map(users.map(u => [u.id, u]));
-        membersWithUsers = members.map(m => ({
+      if (employees) {
+        const employeeMap = new Map(employees.map(e => [e.user_id, e]));
+        membersWithEmployees = members.map(m => ({
           ...m,
-          user: userMap.get(m.user_id) ? {
-            id: userMap.get(m.user_id)!.id,
-            email: userMap.get(m.user_id)!.email,
-            raw_user_meta_data: {
-              full_name: userMap.get(m.user_id)!.full_name,
-              avatar_url: userMap.get(m.user_id)!.avatar_url,
-            },
-          } : undefined,
+          employee: employeeMap.get(m.user_id) || undefined,
         }));
       }
     }
 
-    // Buscar dados do gestor se existir
-    let manager = undefined;
+    // Buscar dados do gestor se existir (manager_id é um employee.id)
+    let manager: { id: string; full_name: string; position: string | null } | undefined = undefined;
     if (team.manager_id) {
       const { data: managerData } = await client
-        .from('user_profiles')
-        .select('id, email, full_name')
+        .from('employees')
+        .select('id, full_name, position')
         .eq('id', team.manager_id)
         .single();
 
       if (managerData) {
         manager = {
           id: managerData.id,
-          email: managerData.email,
-          raw_user_meta_data: {
-            full_name: managerData.full_name,
-          },
+          full_name: managerData.full_name,
+          position: managerData.position,
         };
       }
     }
 
     return {
       ...team,
-      members: membersWithUsers,
+      members: membersWithEmployees,
       manager,
     };
   }
@@ -251,18 +254,18 @@ export class TeamsService {
       }
     }
 
-    // Se está definindo manager, validar
+    // Se está definindo manager, validar que é um funcionário
     if (dto.manager_id) {
       const { data: manager } = await client
-        .from('org_members')
+        .from('employees')
         .select('id')
-        .eq('org_id', orgId)
-        .eq('user_id', dto.manager_id)
+        .eq('organization_id', orgId)
+        .eq('id', dto.manager_id)
         .eq('status', 'active')
         .maybeSingle();
 
       if (!manager) {
-        throw new BadRequestException('Gestor deve ser membro ativo da organização');
+        throw new BadRequestException('Gestor deve ser um funcionário ativo da organização');
       }
     }
 
@@ -320,7 +323,7 @@ export class TeamsService {
   }
 
   /**
-   * Adicionar membro ao time
+   * Adicionar funcionário ao time (via employee_id)
    */
   async addMember(orgId: string, teamId: string, dto: AddTeamMemberDto): Promise<TeamMember> {
     const client = this.supabase.getAdminClient();
@@ -337,29 +340,32 @@ export class TeamsService {
       throw new NotFoundException('Time não encontrado');
     }
 
-    // Verificar se usuário é membro da org
-    const { data: orgMember } = await client
-      .from('org_members')
-      .select('id')
-      .eq('org_id', orgId)
-      .eq('user_id', dto.user_id)
+    // dto.user_id é o employee_id - buscar o funcionário
+    const { data: employee } = await client
+      .from('employees')
+      .select('id, user_id, full_name, position, department, manager_id')
+      .eq('organization_id', orgId)
+      .eq('id', dto.user_id) // user_id do DTO é na verdade employee_id
       .eq('status', 'active')
       .maybeSingle();
 
-    if (!orgMember) {
-      throw new BadRequestException('Usuário deve ser membro ativo da organização');
+    if (!employee) {
+      throw new BadRequestException('Funcionário não encontrado ou inativo');
     }
+
+    // Usar employee.user_id se existir, senão usar employee.id como identificador
+    const memberUserId = employee.user_id || employee.id;
 
     // Verificar se já é membro do time
     const { data: existingMember } = await client
       .from('team_members')
       .select('id')
       .eq('team_id', teamId)
-      .eq('user_id', dto.user_id)
+      .eq('user_id', memberUserId)
       .maybeSingle();
 
     if (existingMember) {
-      throw new ConflictException('Usuário já é membro deste time');
+      throw new ConflictException('Funcionário já é membro deste time');
     }
 
     // Adicionar membro
@@ -367,7 +373,7 @@ export class TeamsService {
       .from('team_members')
       .insert({
         team_id: teamId,
-        user_id: dto.user_id,
+        user_id: memberUserId,
         role_in_team: dto.role_in_team || 'member',
       })
       .select()
@@ -383,13 +389,22 @@ export class TeamsService {
       .update({ member_count: team.member_count + 1, updated_at: new Date().toISOString() })
       .eq('id', teamId);
 
-    return data;
+    return {
+      ...data,
+      employee: {
+        id: employee.id,
+        full_name: employee.full_name,
+        position: employee.position,
+        department: employee.department,
+        manager_id: employee.manager_id,
+      },
+    };
   }
 
   /**
-   * Remover membro do time
+   * Remover membro do time (por employee_id ou user_id)
    */
-  async removeMember(orgId: string, teamId: string, userId: string): Promise<void> {
+  async removeMember(orgId: string, teamId: string, memberId: string): Promise<void> {
     const client = this.supabase.getAdminClient();
 
     // Verificar se time existe e pertence à org
@@ -404,24 +419,43 @@ export class TeamsService {
       throw new NotFoundException('Time não encontrado');
     }
 
-    // Verificar se é membro do time
-    const { data: member } = await client
+    // memberId pode ser employee.id ou employee.user_id
+    // Primeiro, tentar encontrar o membro diretamente por user_id
+    let { data: member } = await client
       .from('team_members')
-      .select('id')
+      .select('id, user_id')
       .eq('team_id', teamId)
-      .eq('user_id', userId)
+      .eq('user_id', memberId)
       .maybeSingle();
 
     if (!member) {
-      throw new NotFoundException('Usuário não é membro deste time');
+      // Tentar buscar pelo employee_id
+      const { data: employee } = await client
+        .from('employees')
+        .select('user_id')
+        .eq('id', memberId)
+        .maybeSingle();
+
+      if (employee?.user_id) {
+        const result = await client
+          .from('team_members')
+          .select('id, user_id')
+          .eq('team_id', teamId)
+          .eq('user_id', employee.user_id)
+          .maybeSingle();
+        member = result.data;
+      }
+    }
+
+    if (!member) {
+      throw new NotFoundException('Membro não encontrado neste time');
     }
 
     // Remover
     const { error } = await client
       .from('team_members')
       .delete()
-      .eq('team_id', teamId)
-      .eq('user_id', userId);
+      .eq('id', member.id);
 
     if (error) {
       throw new BadRequestException(`Erro ao remover membro: ${error.message}`);
@@ -438,9 +472,9 @@ export class TeamsService {
   }
 
   /**
-   * Atualizar papel do membro no time
+   * Atualizar papel do membro no time (por employee_id ou user_id)
    */
-  async updateMemberRole(orgId: string, teamId: string, userId: string, role: 'member' | 'lead' | 'coordinator'): Promise<TeamMember> {
+  async updateMemberRole(orgId: string, teamId: string, memberId: string, role: 'member' | 'lead' | 'coordinator'): Promise<TeamMember> {
     const client = this.supabase.getAdminClient();
 
     // Verificar se time existe e pertence à org
@@ -455,12 +489,26 @@ export class TeamsService {
       throw new NotFoundException('Time não encontrado');
     }
 
+    // Tentar encontrar o membro por user_id ou via employee_id
+    let targetUserId = memberId;
+    
+    // Verificar se é um employee_id
+    const { data: employee } = await client
+      .from('employees')
+      .select('user_id')
+      .eq('id', memberId)
+      .maybeSingle();
+
+    if (employee?.user_id) {
+      targetUserId = employee.user_id;
+    }
+
     // Atualizar papel
     const { data, error } = await client
       .from('team_members')
       .update({ role_in_team: role })
       .eq('team_id', teamId)
-      .eq('user_id', userId)
+      .eq('user_id', targetUserId)
       .select()
       .single();
 
@@ -472,19 +520,28 @@ export class TeamsService {
   }
 
   /**
-   * Listar membros disponíveis para adicionar (que não estão no time)
+   * Listar funcionários disponíveis para adicionar ao time (com hierarquia)
    */
-  async getAvailableMembers(orgId: string, teamId: string): Promise<any[]> {
+  async getAvailableMembers(orgId: string, teamId: string): Promise<EmployeeForTeam[]> {
     const client = this.supabase.getAdminClient();
 
-    // Buscar todos membros da org
-    const { data: orgMembers } = await client
-      .from('org_members')
-      .select('user_id')
-      .eq('org_id', orgId)
-      .eq('status', 'active');
+    // Buscar todos funcionários ativos da organização
+    const { data: employees } = await client
+      .from('employees')
+      .select(`
+        id,
+        full_name,
+        position,
+        department,
+        manager_id,
+        user_id,
+        manager:manager_id(id, full_name)
+      `)
+      .eq('organization_id', orgId)
+      .eq('status', 'active')
+      .order('full_name', { ascending: true });
 
-    if (!orgMembers || orgMembers.length === 0) {
+    if (!employees || employees.length === 0) {
       return [];
     }
 
@@ -494,23 +551,68 @@ export class TeamsService {
       .select('user_id')
       .eq('team_id', teamId);
 
-    const teamMemberIds = new Set((teamMembers || []).map(m => m.user_id));
+    const teamMemberUserIds = new Set((teamMembers || []).map(m => m.user_id));
 
-    // Filtrar membros disponíveis
-    const availableIds = orgMembers
-      .filter(m => !teamMemberIds.has(m.user_id))
-      .map(m => m.user_id);
+    // Filtrar funcionários que não estão no time
+    // Um funcionário está no time se seu user_id ou seu id está em team_members.user_id
+    const availableEmployees = employees.filter(emp => {
+      const inTeamByUserId = emp.user_id && teamMemberUserIds.has(emp.user_id);
+      const inTeamByEmpId = teamMemberUserIds.has(emp.id);
+      return !inTeamByUserId && !inTeamByEmpId;
+    });
 
-    if (availableIds.length === 0) {
-      return [];
+    return availableEmployees.map(emp => {
+      // manager pode ser um array ou objeto único dependendo da relação
+      const managerData = Array.isArray(emp.manager) ? emp.manager[0] : emp.manager;
+      return {
+        id: emp.id,
+        full_name: emp.full_name,
+        position: emp.position,
+        department: emp.department,
+        manager_id: emp.manager_id,
+        user_id: emp.user_id,
+        manager: managerData ? { id: managerData.id, full_name: managerData.full_name } : undefined,
+      };
+    });
+  }
+
+  /**
+   * Listar funcionários da organização com estrutura hierárquica (para overview)
+   */
+  async getOrganizationHierarchy(orgId: string): Promise<EmployeeForTeam[]> {
+    const client = this.supabase.getAdminClient();
+
+    const { data: employees, error } = await client
+      .from('employees')
+      .select(`
+        id,
+        full_name,
+        position,
+        department,
+        manager_id,
+        user_id,
+        manager:manager_id(id, full_name)
+      `)
+      .eq('organization_id', orgId)
+      .eq('status', 'active')
+      .order('full_name', { ascending: true });
+
+    if (error) {
+      throw new BadRequestException(`Erro ao buscar hierarquia: ${error.message}`);
     }
 
-    // Buscar dados dos usuários disponíveis
-    const { data: users } = await client
-      .from('user_profiles')
-      .select('id, email, full_name, avatar_url')
-      .in('id', availableIds);
-
-    return users || [];
+    return (employees || []).map(emp => {
+      // manager pode ser um array ou objeto único dependendo da relação
+      const managerData = Array.isArray(emp.manager) ? emp.manager[0] : emp.manager;
+      return {
+        id: emp.id,
+        full_name: emp.full_name,
+        position: emp.position,
+        department: emp.department,
+        manager_id: emp.manager_id,
+        user_id: emp.user_id,
+        manager: managerData ? { id: managerData.id, full_name: managerData.full_name } : undefined,
+      };
+    });
   }
 }

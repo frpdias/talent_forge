@@ -12,7 +12,8 @@ export declare class TeamsController {
     update(orgId: string, id: string, updateTeamDto: UpdateTeamDto): Promise<import("./teams.service").Team>;
     remove(orgId: string, id: string): Promise<void>;
     addMember(orgId: string, id: string, addMemberDto: AddTeamMemberDto): Promise<import("./teams.service").TeamMember>;
-    removeMember(orgId: string, id: string, userId: string): Promise<void>;
-    updateMemberRole(orgId: string, id: string, userId: string, role: 'member' | 'lead' | 'coordinator'): Promise<import("./teams.service").TeamMember>;
-    getAvailableMembers(orgId: string, id: string): Promise<any[]>;
+    removeMember(orgId: string, id: string, memberId: string): Promise<void>;
+    updateMemberRole(orgId: string, id: string, memberId: string, role: 'member' | 'lead' | 'coordinator'): Promise<import("./teams.service").TeamMember>;
+    getAvailableMembers(orgId: string, id: string): Promise<import("./teams.service").EmployeeForTeam[]>;
+    getOrganizationHierarchy(orgId: string): Promise<import("./teams.service").EmployeeForTeam[]>;
 }
