@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Plus, AlertTriangle, CheckCircle, Users } from 'lucide-react';
+import { useOrgStore } from '@/lib/store';
 
 interface Nr1Assessment {
   id: string;
@@ -24,6 +25,7 @@ interface Nr1Assessment {
 
 export default function Nr1ListPage() {
   const router = useRouter();
+  const { currentOrg } = useOrgStore();
   const [assessments, setAssessments] = useState<Nr1Assessment[]>([]);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({
@@ -34,14 +36,20 @@ export default function Nr1ListPage() {
   });
 
   useEffect(() => {
-    fetchAssessments();
-  }, []);
+    if (currentOrg?.id) {
+      setLoading(true);
+      setAssessments([]);
+      fetchAssessments(currentOrg.id);
+    } else {
+      setLoading(false);
+      setAssessments([]);
+    }
+  }, [currentOrg?.id]);
 
-  const fetchAssessments = async () => {
+  const fetchAssessments = async (organizationId: string) => {
     try {
-      const orgId = '00000000-0000-0000-0000-000000000000'; // TODO: Get from context
       const response = await fetch(
-        `/api/v1/php/nr1/assessments?org_id=${orgId}&limit=50`
+        `/api/v1/php/nr1/assessments?org_id=${organizationId}&limit=50`
       );
       const data = await response.json();
       setAssessments(data);

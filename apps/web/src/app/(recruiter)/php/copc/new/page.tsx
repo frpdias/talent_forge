@@ -3,9 +3,11 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { useOrgStore } from '@/lib/store';
 
 export default function NewCopcMetric() {
   const router = useRouter();
+  const { currentOrg } = useOrgStore();
   const [loading, setLoading] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
 
@@ -81,15 +83,18 @@ export default function NewCopcMetric() {
       alert('Por favor, preencha todas as métricas obrigatórias.');
       return;
     }
+    if (!currentOrg?.id) {
+      alert('Selecione uma empresa primeiro');
+      return;
+    }
 
     setLoading(true);
 
     try {
       const token = localStorage.getItem('supabase_token');
-      const orgId = localStorage.getItem('org_id');
 
       const payload = {
-        org_id: orgId,
+        org_id: currentOrg.id,
         quality_score: Number(qualityScore),
         rework_rate: Number(reworkRate),
         process_adherence_rate: Number(processAdherenceRate),
@@ -110,7 +115,7 @@ export default function NewCopcMetric() {
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
-          'x-org-id': orgId || '',
+          'x-org-id': currentOrg.id,
         },
         body: JSON.stringify(payload),
       });

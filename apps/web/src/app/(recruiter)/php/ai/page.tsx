@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useOrgStore } from '@/lib/store';
 
 interface AiInsight {
   type: 'risk' | 'opportunity' | 'recommendation' | 'alert';
@@ -26,20 +27,25 @@ interface RiskPrediction {
 }
 
 export default function AiDashboard() {
+  const { currentOrg } = useOrgStore();
   const [loading, setLoading] = useState(true);
   const [insights, setInsights] = useState<AiInsight[]>([]);
   const [predictions, setPredictions] = useState<RiskPrediction[]>([]);
-  const [orgId, setOrgId] = useState<string>('');
 
   useEffect(() => {
-    loadAiData();
-  }, []);
+    if (currentOrg?.id) {
+      setLoading(true);
+      setInsights([]);
+      setPredictions([]);
+      loadAiData(currentOrg.id);
+    } else {
+      setLoading(false);
+    }
+  }, [currentOrg?.id]);
 
-  const loadAiData = async () => {
+  const loadAiData = async (organizationId: string) => {
     try {
       const token = localStorage.getItem('supabase_token');
-      const storedOrgId = localStorage.getItem('org_id') || '';
-      setOrgId(storedOrgId);
 
       // Carregar insights
       const insightsRes = await fetch('/api/v1/php/ai/generate-insights', {
@@ -47,9 +53,9 @@ export default function AiDashboard() {
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
-          'x-org-id': storedOrgId,
+          'x-org-id': organizationId,
         },
-        body: JSON.stringify({ org_id: storedOrgId }),
+        body: JSON.stringify({ org_id: organizationId }),
       });
 
       if (insightsRes.ok) {
@@ -63,9 +69,9 @@ export default function AiDashboard() {
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
-          'x-org-id': storedOrgId,
+          'x-org-id': organizationId,
         },
-        body: JSON.stringify({ org_id: storedOrgId, time_horizon: '30d' }),
+        body: JSON.stringify({ org_id: organizationId, time_horizon: '30d' }),
       });
 
       if (predictionsRes.ok) {
@@ -160,8 +166,9 @@ export default function AiDashboard() {
               </p>
             </div>
             <button
-              onClick={loadAiData}
-              className="px-4 py-2 bg-[#141042] text-white rounded-lg hover:bg-[#1a1554] transition-colors"
+              onClick={() => currentOrg?.id && loadAiData(currentOrg.id)}
+              disabled={!currentOrg?.id}
+              className="px-4 py-2 bg-[#141042] text-white rounded-lg hover:bg-[#1a1554] transition-colors disabled:opacity-50"
             >
               🔄 Atualizar
             </button>

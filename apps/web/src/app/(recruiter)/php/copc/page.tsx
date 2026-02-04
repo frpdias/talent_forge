@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { useOrgStore } from '@/lib/store';
 
 interface CategoryScore {
   category: string;
@@ -22,29 +23,34 @@ interface MetricEntry {
 
 export default function CopcDashboard() {
   const router = useRouter();
+  const { currentOrg } = useOrgStore();
   const [loading, setLoading] = useState(true);
   const [categories, setCategories] = useState<CategoryScore[]>([]);
   const [overallScore, setOverallScore] = useState(0);
   const [recentMetrics, setRecentMetrics] = useState<MetricEntry[]>([]);
-  const [orgId, setOrgId] = useState<string>('');
 
   useEffect(() => {
-    loadData();
-  }, []);
+    if (currentOrg?.id) {
+      setLoading(true);
+      setCategories([]);
+      setRecentMetrics([]);
+      loadData(currentOrg.id);
+    } else {
+      setLoading(false);
+    }
+  }, [currentOrg?.id]);
 
-  const loadData = async () => {
+  const loadData = async (organizationId: string) => {
     try {
       const token = localStorage.getItem('supabase_token');
-      const storedOrgId = localStorage.getItem('org_id') || '';
-      setOrgId(storedOrgId);
 
       // Carregar dashboard
       const dashboardRes = await fetch(
-        `/api/v1/php/copc/dashboard/${storedOrgId}?period=30d`,
+        `/api/v1/php/copc/dashboard/${organizationId}?period=30d`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
-            'x-org-id': storedOrgId,
+            'x-org-id': organizationId,
           },
         },
       );
@@ -90,11 +96,11 @@ export default function CopcDashboard() {
 
       // Carregar métricas recentes
       const metricsRes = await fetch(
-        `/api/v1/php/copc/metrics?org_id=${storedOrgId}&limit=10`,
+        `/api/v1/php/copc/metrics?org_id=${organizationId}&limit=10`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
-            'x-org-id': storedOrgId,
+            'x-org-id': organizationId,
           },
         },
       );

@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Save, ArrowLeft } from 'lucide-react';
+import { useOrgStore } from '@/lib/store';
 
 const NR1_DIMENSIONS = [
   { key: 'workload_pace_risk', name: 'Carga de Trabalho & Ritmo' },
@@ -25,21 +26,27 @@ const RISK_LABELS = [
 
 export default function NewNr1AssessmentPage() {
   const router = useRouter();
+  const { currentOrg } = useOrgStore();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState<Record<string, number>>({});
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!currentOrg?.id) {
+      alert('Selecione uma empresa primeiro');
+      return;
+    }
     setLoading(true);
 
     try {
-      const orgId = '00000000-0000-0000-0000-000000000000'; // TODO: Get from context
-      
       const response = await fetch('/api/v1/php/nr1/assessments', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'x-org-id': currentOrg.id,
+        },
         body: JSON.stringify({
-          org_id: orgId,
+          org_id: currentOrg.id,
           ...formData,
         }),
       });
