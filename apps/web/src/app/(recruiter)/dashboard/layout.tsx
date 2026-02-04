@@ -19,22 +19,34 @@ import {
   Building2,
   Search,
   HelpCircle,
-  Activity
+  Activity,
+  ClipboardCheck,
+  Target,
+  BarChart3
 } from 'lucide-react';
 import { NotificationCenter } from '@/components/notifications/NotificationCenter';
 
-const navItems = [
+// Itens de Recrutamento
+const recruitmentItems = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/dashboard/jobs', label: 'Vagas', icon: Briefcase },
   { href: '/dashboard/candidates', label: 'Candidatos', icon: Users },
   { href: '/dashboard/pipeline', label: 'Pipeline', icon: UserCheck },
   { href: '/dashboard/reports', label: 'Relatórios', icon: FileBarChart },
-  { href: '/php/tfci/cycles', label: 'Módulo PHP', icon: Activity },
-  { href: '/dashboard/invite', label: 'Convidar', icon: UserPlus },
 ];
 
-const moreItems = [
-  { href: '/dashboard/team', label: 'Equipe', icon: Building2 },
+// Itens de Avaliação (Módulo PHP/TFCI)
+const assessmentItems = [
+  { href: '/php/tfci/cycles', label: 'Ciclos de Avaliação', icon: Activity },
+  { href: '/php/tfci/assessments', label: 'Assessments', icon: ClipboardCheck },
+  { href: '/php/tfci/results', label: 'Resultados', icon: BarChart3 },
+];
+
+// Itens de Configurações
+const settingsItems = [
+  { href: '/dashboard/companies', label: 'Minhas Empresas', icon: Building2 },
+  { href: '/dashboard/invite', label: 'Convidar Usuário', icon: UserPlus },
+  { href: '/dashboard/team', label: 'Equipe', icon: Users },
   { href: '/dashboard/settings', label: 'Configurações', icon: Settings },
 ];
 
@@ -45,6 +57,12 @@ export default function RecruiterLayout({ children }: { children: React.ReactNod
   const [userName, setUserName] = useState<string>('Recrutador');
   const [orgName, setOrgName] = useState<string>('Organizacao');
   const [orgDropdownOpen, setOrgDropdownOpen] = useState(false);
+  const [isHydrated, setIsHydrated] = useState(false);
+
+  // Esperar hydration do zustand
+  useEffect(() => {
+    setIsHydrated(true);
+  }, []);
 
   const supabase = useMemo(
     () =>
@@ -59,88 +77,114 @@ export default function RecruiterLayout({ children }: { children: React.ReactNod
     let ignore = false;
 
     async function loadUserInfo() {
-      const { data: userData } = await supabase.auth.getUser();
-      const userId = userData?.user?.id;
-      if (!userId) return;
-
-      const { data: profile } = await supabase
-        .from('user_profiles')
-        .select('full_name')
-        .eq('id', userId)
-        .maybeSingle();
-
-      if (profile?.full_name && !ignore) {
-        setUserName(profile.full_name);
-      }
-
-      const { data: membership } = await supabase
-        .from('org_members')
-        .select('organizations(name)')
-        .eq('user_id', userId)
-        .limit(1)
-        .maybeSingle();
-
-      const org = Array.isArray(membership?.organizations)
-        ? membership.organizations[0]?.name
-        : (membership as any)?.organizations?.name;
-
-      if (org && !ignore) {
-        setOrgName(org);
-      }
-
-      const { data: memberships } = await supabase
-        .from('org_members')
-        .select('org_id, role, organizations(id, name, org_type, slug)')
-        .eq('user_id', userId);
-
-      const orgs = (memberships || [])
-        .map((member: any) => {
-          const org = Array.isArray(member.organizations)
-            ? member.organizations[0]
-            : member.organizations;
-
-          if (!org) return null;
-
-          return {
-            id: org.id,
-            name: org.name,
-            orgType: org.org_type,
-            slug: org.slug,
-            role: member.role,
-          };
-        })
-        .filter(Boolean);
-
-      if (!ignore && orgs.length > 0) {
-        setOrganizations(orgs as any);
-        if (!currentOrg) {
-          let preferredOrg = orgs[0] as any;
-
-          try {
-            const counts = await Promise.all(
-              (orgs as any[]).map(async (org) => {
-                const { count } = await supabase
-                  .from('jobs')
-                  .select('id', { count: 'exact', head: true })
-                  .eq('org_id', org.id);
-
-                return { org, count: count ?? 0 };
-              })
-            );
-
-            const best = counts.reduce((acc, item) =>
-              item.count > acc.count ? item : acc
-            );
-
-            preferredOrg = best.org;
-          } catch (error) {
-            console.warn('[RecruiterLayout] Falha ao escolher org padrão:', error);
-          }
-
-          if (!ignore) {
-            setCurrentOrg(preferredOrg);
-          }
+      try {
+        const { data: userData, error: authError } = await supabase.auth.getUser();
+        
+        if (authError) {
+          console.error('[RecruiterLayout] Erro auth.getUser:', authError);
+          return;
         }
+        
+        const userId = userData?.user?.id;
+        if (!userId) {
+          console.warn('[RecruiterLayout] Nenhum userId encontrado');
+          return;
+        }
+        
+        console.log('[RecruiterLayout] userId:', userId);
+
+        // Carregar perfil do usuário
+        const { data: profile, error: profileError } = await supabase
+          .from('user_profiles')
+          .select('full_name')
+          .eq('id', userId)
+          .maybeSingle();
+
+        if (profileError) {
+          console.warn('[RecruiterLayout] Erro ao carregar profile:', profileError);
+        }
+
+        if (profile?.full_name && !ignore) {
+          setUserName(profile.full_name);
+        }
+
+        // Carregar memberships do usuário
+        const { data: memberships, error: membershipsError } = await supabase
+          .from('org_members')
+          .select('org_id, role, organizations(id, name, org_type, slug)')
+          .eq('user_id', userId);
+
+        if (membershipsError) {
+          console.error('[RecruiterLayout] Erro ao carregar memberships:', membershipsError);
+          return;
+        }
+
+        console.log('[RecruiterLayout] memberships raw:', memberships);
+
+        const orgs = (memberships || [])
+          .map((member: any) => {
+            const org = Array.isArray(member.organizations)
+              ? member.organizations[0]
+              : member.organizations;
+
+            if (!org) {
+              console.warn('[RecruiterLayout] Membership sem org:', member);
+              return null;
+            }
+
+            return {
+              id: org.id,
+              name: org.name,
+              orgType: org.org_type,
+              slug: org.slug,
+              role: member.role,
+            };
+          })
+          .filter(Boolean);
+
+        console.log('[RecruiterLayout] orgs processadas:', orgs);
+
+        if (!ignore && orgs.length > 0) {
+          setOrganizations(orgs as any);
+          
+          // Definir primeira org como nome padrão
+          if (orgs[0]) {
+            setOrgName((orgs[0] as any).name);
+          }
+          
+          if (!currentOrg) {
+            let preferredOrg = orgs[0] as any;
+
+            try {
+              const counts = await Promise.all(
+                (orgs as any[]).map(async (org) => {
+                  const { count } = await supabase
+                    .from('jobs')
+                    .select('id', { count: 'exact', head: true })
+                    .eq('org_id', org.id);
+
+                  return { org, count: count ?? 0 };
+                })
+              );
+
+              const best = counts.reduce((acc, item) =>
+                item.count > acc.count ? item : acc
+              );
+
+              preferredOrg = best.org;
+            } catch (error) {
+              console.warn('[RecruiterLayout] Falha ao escolher org padrão:', error);
+            }
+
+            if (!ignore) {
+              setCurrentOrg(preferredOrg);
+            }
+          }
+        } else if (orgs.length === 0) {
+          console.warn('[RecruiterLayout] Nenhuma organização encontrada para o usuário');
+        }
+      } catch (error) {
+        console.error('[RecruiterLayout] Erro geral em loadUserInfo:', error);
       }
     }
 
@@ -185,37 +229,44 @@ export default function RecruiterLayout({ children }: { children: React.ReactNod
             <div className="flex items-center gap-2 min-w-0">
               <Building2 className="h-4 w-4 text-gray-400" />
               <span className="truncate text-gray-700">
-                {currentOrg?.name || orgName}
+                {currentOrg?.name || orgName || 'Selecionar empresa'}
               </span>
             </div>
             <ChevronDown className={`h-4 w-4 text-gray-400 transition-transform ${orgDropdownOpen ? 'rotate-180' : ''}`} />
           </button>
-          {orgDropdownOpen && organizations.length > 0 && (
-            <div className="mt-2 rounded-lg border border-gray-200 bg-white shadow-sm">
-              {organizations.map((org) => (
-                <button
-                  key={org.id}
-                  onClick={() => {
-                    setCurrentOrg(org);
-                    setOrgDropdownOpen(false);
-                  }}
-                  className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-50 ${currentOrg?.id === org.id ? 'bg-gray-50' : ''}`}
-                >
-                  {org.name}
-                </button>
-              ))}
+          {orgDropdownOpen && (
+            <div className="mt-2 rounded-lg border border-gray-200 bg-white shadow-sm max-h-48 overflow-y-auto">
+              {organizations.length === 0 ? (
+                <div className="px-3 py-2 text-sm text-gray-500">
+                  Carregando empresas...
+                </div>
+              ) : (
+                organizations.map((org) => (
+                  <button
+                    key={org.id}
+                    onClick={() => {
+                      setCurrentOrg(org);
+                      setOrgDropdownOpen(false);
+                    }}
+                    className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-50 ${currentOrg?.id === org.id ? 'bg-gray-50 font-medium' : ''}`}
+                  >
+                    {org.name}
+                  </button>
+                ))
+              )}
             </div>
           )}
         </div>
 
         {/* Navigation */}
         <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
+          {/* Seção: Recrutamento */}
           <div className="mb-2">
             <span className="px-3 text-[10px] font-semibold text-gray-400 uppercase tracking-wider">
-              Menu Principal
+              Recrutamento
             </span>
           </div>
-          {navItems.map((item) => {
+          {recruitmentItems.map((item) => {
             const isActive = pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href));
             return (
               <Link
@@ -236,12 +287,40 @@ export default function RecruiterLayout({ children }: { children: React.ReactNod
             );
           })}
 
-          <div className="pt-4 mt-4 border-t border-(--divider)">
+          {/* Seção: Avaliação */}
+          <div className="pt-4 mt-4 border-t border-[#E5E5DC]">
+            <span className="px-3 text-[10px] font-semibold text-gray-400 uppercase tracking-wider">
+              Avaliação de Pessoas
+            </span>
+          </div>
+          {assessmentItems.map((item) => {
+            const isActive = pathname === item.href || pathname.startsWith(item.href);
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`
+                  flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium
+                  transition-all duration-150
+                  ${isActive 
+                    ? 'bg-[#8B5CF6]/10 text-[#8B5CF6] border border-[#8B5CF6]/10' 
+                    : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                  }
+                `}
+              >
+                <item.icon className={`w-4.5 h-4.5 ${isActive ? 'text-[#8B5CF6]' : ''}`} />
+                <span>{item.label}</span>
+              </Link>
+            );
+          })}
+
+          {/* Seção: Configurações */}
+          <div className="pt-4 mt-4 border-t border-[#E5E5DC]">
             <span className="px-3 text-[10px] font-semibold text-gray-400 uppercase tracking-wider">
               Configurações
             </span>
           </div>
-          {moreItems.map((item) => {
+          {settingsItems.map((item) => {
             const isActive = pathname === item.href || pathname.startsWith(item.href);
             return (
               <Link
@@ -357,7 +436,7 @@ export default function RecruiterLayout({ children }: { children: React.ReactNod
         </header>
 
         {/* Main */}
-        <main className="flex-1">
+        <main className="flex-1 px-5 py-6">
           {children}
         </main>
       </div>

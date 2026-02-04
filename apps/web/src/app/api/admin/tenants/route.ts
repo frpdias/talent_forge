@@ -19,16 +19,25 @@ export async function GET(request: NextRequest) {
       { auth: { persistSession: false } }
     );
 
-    // Verificar se é admin usando service role
-    const { data: profile } = await supabaseAdmin
-      .from('user_profiles')
-      .select('user_type')
-      .eq('user_id', user.id)
-      .single();
+    // Verificar se é admin - primeiro via metadata, depois via profile
+    const metadataUserType = user.user_metadata?.user_type;
+    let isAdmin = metadataUserType === 'admin';
 
-    console.log('[Admin Tenants API] User:', user.email, 'Profile:', profile);
+    // Se não for admin via metadata, verifica no profile
+    if (!isAdmin) {
+      const { data: profile } = await supabaseAdmin
+        .from('user_profiles')
+        .select('user_type')
+        .eq('user_id', user.id)
+        .single();
+      
+      isAdmin = profile?.user_type === 'admin';
+      console.log('[Admin Tenants API] User:', user.email, 'Metadata:', metadataUserType, 'Profile:', profile?.user_type, 'isAdmin:', isAdmin);
+    } else {
+      console.log('[Admin Tenants API] User:', user.email, 'Admin via metadata:', metadataUserType);
+    }
 
-    if (profile?.user_type !== 'admin') {
+    if (!isAdmin) {
       return NextResponse.json({ error: 'Forbidden - Admin only' }, { status: 403 });
     }
 

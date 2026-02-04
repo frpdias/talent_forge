@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { createBrowserClient } from '@supabase/ssr';
 import { Plus, AlertTriangle, Clock, CheckCircle2, XCircle, Filter, BarChart3 } from 'lucide-react';
 import Link from 'next/link';
+import { useCurrentOrg } from '@/lib/hooks/useCurrentOrg';
 
 interface ActionPlan {
   id: string;
@@ -59,76 +60,63 @@ const sourceConfig = {
 };
 
 export default function ActionPlansPage() {
+  const { orgId, loading: orgLoading } = useCurrentOrg();
   const [plans, setPlans] = useState<ActionPlan[]>([]);
   const [stats, setStats] = useState<ActionPlanStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<string>('all');
-  const [orgId, setOrgId] = useState<string | null>(null);
 
   useEffect(() => {
-    async function loadData() {
-      const supabase = createBrowserClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-      );
-
-      // Get user's org
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      const { data: member } = await supabase
-        .from('org_members')
-        .select('org_id')
-        .eq('user_id', user.id)
-        .maybeSingle();
-
-      if (!member?.org_id) {
-        setLoading(false);
-        return;
-      }
-
-      setOrgId(member.org_id);
-
-      // Fetch action plans
-      const { data: plansData } = await supabase
-        .from('php_action_plans')
-        .select('*, items:php_action_items(*)')
-        .eq('org_id', member.org_id)
-        .order('priority', { ascending: true })
-        .order('created_at', { ascending: false });
-
-      setPlans(plansData || []);
-
-      // Calculate stats
-      const allPlans = plansData || [];
-      const today = new Date().toISOString().split('T')[0];
-      
-      setStats({
-        total: allPlans.length,
-        by_status: {
-          open: allPlans.filter(p => p.status === 'open').length,
-          in_progress: allPlans.filter(p => p.status === 'in_progress').length,
-          completed: allPlans.filter(p => p.status === 'completed').length,
-          cancelled: allPlans.filter(p => p.status === 'cancelled').length,
-        },
-        by_risk_level: {
-          low: allPlans.filter(p => p.risk_level === 'low').length,
-          medium: allPlans.filter(p => p.risk_level === 'medium').length,
-          high: allPlans.filter(p => p.risk_level === 'high').length,
-          critical: allPlans.filter(p => p.risk_level === 'critical').length,
-        },
-        overdue_count: allPlans.filter(p => 
-          p.due_date && 
-          p.due_date < today && 
-          !['completed', 'cancelled'].includes(p.status)
-        ).length,
-      });
-
+    if (orgId) {
+      loadData(orgId);
+    } else if (!orgLoading) {
       setLoading(false);
     }
+  }, [orgId, orgLoading]);
 
-    loadData();
-  }, []);
+  async function loadData(organizationId: string) {
+    const supabase = createBrowserClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    );
+
+    // Fetch action plans
+    const { data: plansData } = await supabase
+      .from('php_action_plans')
+      .select('*, items:php_action_items(*)')
+      .eq('org_id', organizationId)
+      .order('priority', { ascending: true })
+      .order('created_at', { ascending: false });
+
+    setPlans(plansData || []);
+
+    // Calculate stats
+    const allPlans = plansData || [];
+    const today = new Date().toISOString().split('T')[0];
+    
+    setStats({
+      total: allPlans.length,
+      by_status: {
+        open: allPlans.filter(p => p.status === 'open').length,
+        in_progress: allPlans.filter(p => p.status === 'in_progress').length,
+        completed: allPlans.filter(p => p.status === 'completed').length,
+        cancelled: allPlans.filter(p => p.status === 'cancelled').length,
+      },
+      by_risk_level: {
+        low: allPlans.filter(p => p.risk_level === 'low').length,
+        medium: allPlans.filter(p => p.risk_level === 'medium').length,
+        high: allPlans.filter(p => p.risk_level === 'high').length,
+        critical: allPlans.filter(p => p.risk_level === 'critical').length,
+      },
+      overdue_count: allPlans.filter(p => 
+        p.due_date && 
+        p.due_date < today && 
+        !['completed', 'cancelled'].includes(p.status)
+      ).length,
+    });
+
+    setLoading(false);
+  }
 
   const filteredPlans = plans.filter(plan => {
     if (filter === 'all') return true;

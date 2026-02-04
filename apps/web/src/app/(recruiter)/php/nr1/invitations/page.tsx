@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Send, Copy, RefreshCw, X, CheckCircle, Clock, XCircle, AlertCircle, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
+import { useCurrentOrg } from '@/lib/hooks/useCurrentOrg';
 
 interface Invitation {
   id: string;
@@ -23,64 +24,40 @@ interface Invitation {
 }
 
 export default function InvitationsPage() {
+  const { orgId, loading: orgLoading, error: orgError } = useCurrentOrg();
   const [invitations, setInvitations] = useState<Invitation[]>([]);
   const [employees, setEmployees] = useState<any[]>([]);
   const [selectedEmployees, setSelectedEmployees] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
   const [filter, setFilter] = useState<'all' | 'pending' | 'accepted' | 'completed' | 'expired'>('all');
-  const [orgId, setOrgId] = useState<string>('');
   const [copiedToken, setCopiedToken] = useState<string>('');
   
   const supabase = createClient();
 
   useEffect(() => {
-    loadData();
-  }, []);
+    if (orgId) {
+      loadData(orgId);
+    } else if (!orgLoading) {
+      setLoading(false);
+    }
+  }, [orgId, orgLoading]);
 
-  const loadData = async () => {
+  const loadData = async (organizationId: string) => {
     setLoading(true);
     try {
-      // Buscar org_id do usuário
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        alert('Erro: Usuário não autenticado');
-        throw new Error('Usuário não autenticado');
-      }
-
-      console.log('🔍 User ID:', user.id);
-
-      // Tentar buscar org_id do org_members (para recruiters/admin)
-      const { data: orgMember, error: orgError } = await supabase
-        .from('org_members')
-        .select('org_id')
-        .eq('user_id', user.id)
-        .maybeSingle();
-
-      console.log('📋 Org Member:', orgMember, 'Error:', orgError);
-
-      if (orgError) {
-        throw new Error('Erro ao buscar sua organização.');
-      }
-
-      if (!orgMember?.org_id) {
-        alert('Erro: Você não está associado a nenhuma organização. Entre em contato com o administrador.');
-        throw new Error('Você não está associado a nenhuma organização. Apenas membros da organização podem gerenciar convites.');
-      }
-      
-      console.log('🏢 Org ID:', orgMember.org_id);
-      setOrgId(orgMember.org_id);
+      console.log('🏢 Org ID:', organizationId);
 
       // Buscar convites
       console.log('🔄 Buscando convites...');
-      await loadInvitations(orgMember.org_id);
+      await loadInvitations(organizationId);
 
       // Buscar funcionários disponíveis
       console.log('👥 Buscando funcionários...');
       const { data: emps, error: empError } = await supabase
         .from('employees')
         .select('id, full_name, position, department')
-        .eq('organization_id', orgMember.org_id)
+        .eq('organization_id', organizationId)
         .order('full_name');
 
       console.log('📊 Funcionários encontrados:', emps?.length || 0, 'Erro:', empError);

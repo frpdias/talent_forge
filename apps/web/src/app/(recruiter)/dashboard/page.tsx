@@ -13,9 +13,11 @@ import {
   ArrowDownRight,
   MoreHorizontal,
   Clock,
+  AlertCircle,
+  CheckCircle,
   type LucideIcon,
+  Loader2,
 } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle, Button, Badge } from '@/components/ui';
 import { useOrgStore } from '@/lib/store';
 import { reportsApi } from '@/lib/api';
 import { formatDate } from '@/lib/utils';
@@ -76,24 +78,20 @@ interface StatCardConfig {
 
 const colorClasses = {
   blue: {
-    bg: 'bg-blue-50',
-    icon: 'text-blue-600',
-    ring: 'ring-blue-100',
+    bg: 'bg-[#3B82F6]/10',
+    icon: 'text-[#3B82F6]',
   },
   green: {
-    bg: 'bg-emerald-50',
-    icon: 'text-emerald-600',
-    ring: 'ring-emerald-100',
+    bg: 'bg-[#10B981]/10',
+    icon: 'text-[#10B981]',
   },
   amber: {
-    bg: 'bg-amber-50',
-    icon: 'text-amber-600',
-    ring: 'ring-amber-100',
+    bg: 'bg-[#F59E0B]/10',
+    icon: 'text-[#F59E0B]',
   },
   purple: {
-    bg: 'bg-violet-50',
-    icon: 'text-violet-600',
-    ring: 'ring-violet-100',
+    bg: 'bg-[#8B5CF6]/10',
+    icon: 'text-[#8B5CF6]',
   },
 };
 
@@ -418,343 +416,335 @@ export default function DashboardPage() {
     },
   ];
 
+  if (loading) {
+    return (
+      <div className="min-h-[60vh] flex items-center justify-center">
+        <div className="flex flex-col items-center space-y-4">
+          <Loader2 className="w-8 h-8 text-[#141042] animate-spin" />
+          <p className="text-[#666666]">Carregando dados...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-full">
-      {/* Page Header */}
-      <div className="bg-white border-b border-border">
-        <div className="px-6 py-5">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-            <div>
-              <p className="text-xs font-medium text-tf-accent uppercase tracking-wider mb-1">
-                Visão Geral
-              </p>
-              <h1 className="text-2xl font-semibold text-foreground">
-                {currentOrg?.name || 'Dashboard'}
-              </h1>
-              <p className="text-sm text-foreground-muted mt-1">
-                Acompanhe suas métricas de recrutamento em tempo real
-              </p>
+    <div className="space-y-6 sm:space-y-8 pb-20 lg:pb-0">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h2 className="text-xl sm:text-2xl font-semibold text-[#141042]">
+            {currentOrg?.name || 'Dashboard'}
+          </h2>
+          <p className="text-sm sm:text-base text-[#666666] mt-1">
+            Acompanhe suas métricas de recrutamento em tempo real
+          </p>
+        </div>
+        <div className="flex flex-col sm:flex-row gap-3">
+          <button className="flex items-center justify-center space-x-2 px-4 py-2 border border-[#E5E5DC] text-[#666666] rounded-lg hover:bg-[#FAFAF8] transition-colors">
+            <Clock className="w-4 h-4" />
+            <span>Último mês</span>
+          </button>
+          <Link href="/dashboard/jobs/new">
+            <button className="w-full sm:w-auto flex items-center justify-center space-x-2 px-4 py-2 bg-[#141042] text-white rounded-lg hover:bg-[#141042]/90 transition-colors">
+              <Plus className="w-4 h-4" />
+              <span>Nova Vaga</span>
+            </button>
+          </Link>
+        </div>
+      </div>
+
+      {/* Stats Grid */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
+        {statCards.map((stat) => {
+          const colors = colorClasses[stat.color];
+          return (
+            <div key={stat.title} className="bg-white border border-[#E5E5DC] rounded-xl sm:rounded-2xl p-4 sm:p-6 hover:shadow-lg transition-shadow">
+              <div className="flex items-start justify-between">
+                <div className="flex-1">
+                  <p className="text-sm text-[#666666]">
+                    {stat.title}
+                  </p>
+                  <div className="mt-2 flex items-baseline gap-2">
+                    <span className="text-2xl sm:text-3xl font-semibold text-[#141042]">
+                      {stat.value}
+                    </span>
+                    {stat.total !== undefined && (
+                      <span className="text-sm text-[#999]">
+                        / {stat.total}
+                      </span>
+                    )}
+                  </div>
+                  {stat.trend && (
+                    <div className={`mt-2 flex items-center gap-1 text-xs font-medium ${
+                      stat.trend.positive ? 'text-[#10B981]' : 'text-[#EF4444]'
+                    }`}>
+                      {stat.trend.positive ? (
+                        <ArrowUpRight className="w-3.5 h-3.5" />
+                      ) : (
+                        <ArrowDownRight className="w-3.5 h-3.5" />
+                      )}
+                      <span>{stat.trend.value}% vs mês anterior</span>
+                    </div>
+                  )}
+                </div>
+                <div className={`p-2.5 rounded-lg ${colors.bg}`}>
+                  <stat.icon className={`w-5 h-5 ${colors.icon}`} />
+                </div>
+              </div>
             </div>
-            <div className="flex flex-col sm:flex-row gap-3">
-              <Button variant="outline" size="md">
-                <Clock className="w-4 h-4" />
-                Último mês
-              </Button>
-              <Link href="/dashboard/jobs/new">
-                <Button variant="primary" size="md" className="w-full sm:w-auto">
-                  <Plus className="w-4 h-4" />
-                  Nova Vaga
-                </Button>
-              </Link>
-            </div>
+          );
+        })}
+      </div>
+
+      {/* Insights */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
+        <div className="bg-white border border-[#E5E5DC] rounded-xl p-4 sm:p-6">
+          <h3 className="text-base font-semibold text-[#141042] mb-4">Gargalos por Etapa</h3>
+          <div className="space-y-3">
+            {bottleneckStages.length === 0 ? (
+              <p className="text-sm text-[#666666]">Sem dados suficientes.</p>
+            ) : (
+              bottleneckStages.map((stage) => (
+                <div key={stage.label} className="flex items-center justify-between">
+                  <span className="text-sm text-[#141042]">{stage.label}</span>
+                  <span className="px-2.5 py-0.5 text-xs font-medium bg-[#FAFAF8] text-[#141042] rounded-full border border-[#E5E5DC]">
+                    {stage.count}
+                  </span>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+
+        <div className="bg-white border border-[#E5E5DC] rounded-xl p-4 sm:p-6">
+          <h3 className="text-base font-semibold text-[#141042] mb-4">Candidatos Parados</h3>
+          <div className="space-y-3">
+            {stalledApplications.length === 0 ? (
+              <p className="text-sm text-[#666666]">Nenhum candidato parado.</p>
+            ) : (
+              stalledApplications.map((item) => (
+                <div key={item.id} className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-[#141042]">{item.candidateName}</p>
+                    <p className="text-xs text-[#666666]">{item.jobTitle}</p>
+                  </div>
+                  <span className="px-2.5 py-0.5 text-xs font-medium bg-[#F59E0B]/10 text-[#F59E0B] rounded-full">
+                    {item.days} dias
+                  </span>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+
+        <div className="bg-white border border-[#E5E5DC] rounded-xl p-4 sm:p-6">
+          <h3 className="text-base font-semibold text-[#141042] mb-4">Alertas</h3>
+          <div className="space-y-3">
+            {alerts.length === 0 ? (
+              <p className="text-sm text-[#666666]">Sem alertas no momento.</p>
+            ) : (
+              alerts.map((alert, idx) => (
+                <div key={`${alert.title}-${idx}`} className="rounded-lg border border-[#E5E5DC] bg-[#FAFAF8] p-3">
+                  <p className="text-sm font-medium text-[#141042]">{alert.title}</p>
+                  <p className="text-xs text-[#666666] mt-1">{alert.description}</p>
+                </div>
+              ))
+            )}
           </div>
         </div>
       </div>
 
-      <div className="px-6 py-6 space-y-5">
-        {/* Stats Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-          {statCards.map((stat) => {
-            const colors = colorClasses[stat.color];
-            return (
-              <Card key={stat.title} hover className="relative overflow-hidden">
-                <CardContent className="p-5">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <p className="text-sm font-medium text-foreground-muted">
-                        {stat.title}
-                      </p>
-                      <div className="mt-2 flex items-baseline gap-2">
-                        <span className="text-2xl font-semibold text-foreground">
-                          {loading ? '—' : stat.value}
-                        </span>
-                        {!loading && stat.total !== undefined && (
-                          <span className="text-sm text-gray-400">
-                            / {stat.total}
-                          </span>
-                        )}
-                      </div>
-                      {stat.trend && !loading && (
-                        <div className={`mt-2 flex items-center gap-1 text-xs font-medium ${
-                          stat.trend.positive ? 'text-emerald-600' : 'text-red-600'
-                        }`}>
-                          {stat.trend.positive ? (
-                            <ArrowUpRight className="w-3.5 h-3.5" />
-                          ) : (
-                            <ArrowDownRight className="w-3.5 h-3.5" />
-                          )}
-                          <span>{stat.trend.value}% vs mês anterior</span>
-                        </div>
-                      )}
-                    </div>
-                    <div className={`p-2.5 rounded-lg ${colors.bg} ring-1 ${colors.ring}`}>
-                      <stat.icon className={`w-5 h-5 ${colors.icon}`} />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
-
-        {/* Insights */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-          <Card>
-            <CardHeader>
-              <CardTitle>Gargalos por Etapa</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {bottleneckStages.length === 0 ? (
-                <p className="text-sm text-foreground-muted">Sem dados suficientes.</p>
-              ) : (
-                bottleneckStages.map((stage) => (
-                  <div key={stage.label} className="flex items-center justify-between">
-                    <span className="text-sm text-foreground">{stage.label}</span>
-                    <Badge>{stage.count}</Badge>
-                  </div>
-                ))
-              )}
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Candidatos Parados</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {stalledApplications.length === 0 ? (
-                <p className="text-sm text-foreground-muted">Nenhum candidato parado.</p>
-              ) : (
-                stalledApplications.map((item) => (
-                  <div key={item.id} className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-foreground">{item.candidateName}</p>
-                      <p className="text-xs text-foreground-muted">{item.jobTitle}</p>
-                    </div>
-                    <Badge variant="warning">{item.days} dias</Badge>
-                  </div>
-                ))
-              )}
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Alertas</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {alerts.length === 0 ? (
-                <p className="text-sm text-foreground-muted">Sem alertas no momento.</p>
-              ) : (
-                alerts.map((alert, idx) => (
-                  <div key={`${alert.title}-${idx}`} className="rounded-lg border border-border p-3">
-                    <p className="text-sm font-medium text-foreground">{alert.title}</p>
-                    <p className="text-xs text-foreground-muted mt-1">{alert.description}</p>
-                  </div>
-                ))
-              )}
-            </CardContent>
-          </Card>
-        </div>
-
         {/* Main Content Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-          {/* Recent Activity */}
-          <div className="lg:col-span-2">
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle>Atividade Recente</CardTitle>
-                <Link href="/dashboard/reports">
-                  <Button variant="ghost" size="sm">
-                    Ver tudo
-                    <ArrowUpRight className="w-3.5 h-3.5 ml-1" />
-                  </Button>
-                </Link>
-              </CardHeader>
-              <CardContent className="p-0">
-                {loading ? (
-                  <div className="flex items-center justify-center py-12">
-                    <div className="w-6 h-6 border-2 border-tf-accent border-t-transparent rounded-full animate-spin" />
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
+        {/* Recent Activity */}
+        <div className="lg:col-span-2">
+          <div className="bg-white border border-[#E5E5DC] rounded-xl">
+            <div className="flex items-center justify-between p-4 sm:p-6 border-b border-[#E5E5DC]">
+              <h3 className="text-base font-semibold text-[#141042]">Atividade Recente</h3>
+              <Link href="/dashboard/reports" className="text-sm text-[#141042] hover:underline flex items-center gap-1">
+                Ver tudo
+                <ArrowUpRight className="w-3.5 h-3.5" />
+              </Link>
+            </div>
+            <div className="p-0">
+              {loading ? (
+                <div className="flex items-center justify-center py-12">
+                  <Loader2 className="w-6 h-6 text-[#141042] animate-spin" />
+                </div>
+              ) : recentActivity.length === 0 ? (
+                <div className="py-12 text-center">
+                  <div className="w-12 h-12 bg-[#FAFAF8] rounded-full flex items-center justify-center mx-auto mb-3">
+                    <ClipboardList className="w-6 h-6 text-[#666666]" />
                   </div>
-                ) : recentActivity.length === 0 ? (
-                  <div className="py-12 text-center">
-                    <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                      <ClipboardList className="w-6 h-6 text-gray-400" />
-                    </div>
-                    <p className="text-sm font-medium text-foreground">
-                      Nenhuma atividade ainda
-                    </p>
-                    <p className="text-xs text-foreground-muted mt-1">
-                      As atividades aparecerão aqui conforme você usa a plataforma
-                    </p>
-                  </div>
-                ) : (
-                  <div className="divide-y divide-(--divider)">
-                    {recentActivity.slice(0, 5).map((activity) => {
-                      const statusLabels: Record<string, string> = {
-                        applied: 'Aplicada',
-                        in_process: 'Em processo',
-                        hired: 'Contratada',
-                        rejected: 'Rejeitada',
-                      };
-                      const typeLabel =
-                        activity.type === 'assessment'
-                          ? 'Assessment'
-                          : activity.type === 'stage_change'
-                            ? 'Mudança de etapa'
-                            : 'Candidatura';
-                      const statusLabel = activity.status
-                        ? statusLabels[activity.status] || activity.status
-                        : null;
-                      const title =
-                        activity.description ||
-                        `${typeLabel}${statusLabel ? ` ${statusLabel}` : ''}`;
-                      const candidateLabel = activity.candidateName || 'Candidato';
-                      const jobLabel = activity.jobTitle ? ` · ${activity.jobTitle}` : '';
+                  <p className="text-sm font-medium text-[#141042]">
+                    Nenhuma atividade ainda
+                  </p>
+                  <p className="text-xs text-[#666666] mt-1">
+                    As atividades aparecerão aqui conforme você usa a plataforma
+                  </p>
+                </div>
+              ) : (
+                <div className="divide-y divide-[#E5E5DC]">
+                  {recentActivity.slice(0, 5).map((activity) => {
+                    const statusLabels: Record<string, string> = {
+                      applied: 'Aplicada',
+                      in_process: 'Em processo',
+                      hired: 'Contratada',
+                      rejected: 'Rejeitada',
+                    };
+                    const typeLabel =
+                      activity.type === 'assessment'
+                        ? 'Assessment'
+                        : activity.type === 'stage_change'
+                          ? 'Mudança de etapa'
+                          : 'Candidatura';
+                    const statusLabel = activity.status
+                      ? statusLabels[activity.status] || activity.status
+                      : null;
+                    const title =
+                      activity.description ||
+                      `${typeLabel}${statusLabel ? ` ${statusLabel}` : ''}`;
+                    const candidateLabel = activity.candidateName || 'Candidato';
+                    const jobLabel = activity.jobTitle ? ` · ${activity.jobTitle}` : '';
 
-                      return (
-                        <div
-                          key={activity.id}
-                          className="flex items-center gap-4 px-5 py-4 hover:bg-gray-50 transition-colors"
-                        >
-                          <div className={`w-2 h-2 rounded-full ${
-                            activity.type === 'application' ? 'bg-blue-500' :
-                            activity.type === 'assessment' ? 'bg-emerald-500' : 'bg-amber-500'
-                          }`} />
-                          <div className="flex-1">
-                            <p className="text-sm font-medium text-foreground">
-                              {title}
-                            </p>
-                            <p className="text-xs text-foreground-muted">
-                              por {candidateLabel}{jobLabel}
-                            </p>
-                          </div>
-                          <span className="text-xs text-foreground-muted whitespace-nowrap">
-                            {formatDate(activity.createdAt)}
-                          </span>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Quick Actions */}
-          <div className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Ações Rápidas</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-2">
-                <Link href="/dashboard/jobs/new" className="block">
-                  <div className="flex items-center gap-3 p-3 rounded-lg border border-border hover:border-tf-accent hover:bg-tf-accent-subtle transition-all group">
-                    <div className="p-2 bg-blue-50 rounded-lg group-hover:bg-blue-100 transition-colors">
-                      <Briefcase className="w-4 h-4 text-blue-600" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-foreground">
-                        Criar Nova Vaga
-                      </p>
-                      <p className="text-xs text-foreground-muted">
-                        Publique uma nova oportunidade
-                      </p>
-                    </div>
-                  </div>
-                </Link>
-
-                <Link href="/dashboard/candidates/new" className="block">
-                  <div className="flex items-center gap-3 p-3 rounded-lg border border-border hover:border-emerald-500 hover:bg-emerald-50 transition-all group">
-                    <div className="p-2 bg-emerald-50 rounded-lg group-hover:bg-emerald-100 transition-colors">
-                      <Users className="w-4 h-4 text-emerald-600" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-foreground">
-                        Adicionar Candidato
-                      </p>
-                      <p className="text-xs text-foreground-muted">
-                        Cadastre um novo talento
-                      </p>
-                    </div>
-                  </div>
-                </Link>
-
-                <Link href="/dashboard/reports" className="block">
-                  <div className="flex items-center gap-3 p-3 rounded-lg border border-border hover:border-violet-500 hover:bg-violet-50 transition-all group">
-                    <div className="p-2 bg-violet-50 rounded-lg group-hover:bg-violet-100 transition-colors">
-                      <TrendingUp className="w-4 h-4 text-violet-600" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-foreground">
-                        Ver Relatórios
-                      </p>
-                      <p className="text-xs text-foreground-muted">
-                        Analise suas métricas
-                      </p>
-                    </div>
-                  </div>
-                </Link>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle>Vagas Ativas</CardTitle>
-                <Link href="/dashboard/jobs" className="text-xs text-tf-accent hover:underline">
-                  Ver todas
-                </Link>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {loadingJobs ? (
-                  <div className="flex items-center justify-center py-6">
-                    <div className="w-6 h-6 border-2 border-tf-accent border-t-transparent rounded-full animate-spin" />
-                  </div>
-                ) : activeJobs.length === 0 ? (
-                  <div className="rounded-lg border border-border bg-gray-50 p-3 text-xs text-foreground-muted">
-                    Nenhuma vaga ativa encontrada.
-                  </div>
-                ) : (
-                  <div className="space-y-2">
-                    {activeJobs.map((job) => (
+                    return (
                       <div
-                        key={job.id}
-                        className="flex items-center justify-between rounded-lg border border-border px-3 py-2 hover:bg-gray-50"
+                        key={activity.id}
+                        className="flex items-center gap-4 px-5 py-4 hover:bg-[#FAFAF8] transition-colors"
                       >
-                        <div>
-                          <p className="text-sm font-medium text-foreground">
-                            {job.title || 'Vaga sem título'}
+                        <div className={`w-2 h-2 rounded-full ${
+                          activity.type === 'application' ? 'bg-[#3B82F6]' :
+                          activity.type === 'assessment' ? 'bg-[#10B981]' : 'bg-[#F59E0B]'
+                        }`} />
+                        <div className="flex-1">
+                          <p className="text-sm font-medium text-[#141042]">
+                            {title}
                           </p>
-                          <p className="text-xs text-foreground-muted">
-                            {job.created_at ? formatDate(job.created_at) : 'Recente'} · {job.status === 'open' ? 'Ativa' : 'Em pausa'}
+                          <p className="text-xs text-[#666666]">
+                            por {candidateLabel}{jobLabel}
                           </p>
                         </div>
-                        <MoreHorizontal className="w-4 h-4 text-foreground-muted" />
+                        <span className="text-xs text-[#666666] whitespace-nowrap">
+                          {formatDate(activity.createdAt)}
+                        </span>
                       </div>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
 
-            {/* Tip Card */}
-            <Card className="border border-border bg-white">
-              <CardContent className="p-5">
-                <div className="flex items-start gap-3">
-                  <div className="p-2 bg-[#F5F5F0] rounded-lg">
-                    <TrendingUp className="w-5 h-5 text-[#141042]" />
+        {/* Quick Actions */}
+        <div className="space-y-4 sm:space-y-6">
+          <div className="bg-white border border-[#E5E5DC] rounded-xl p-4 sm:p-6">
+            <h3 className="text-base font-semibold text-[#141042] mb-4">Ações Rápidas</h3>
+            <div className="space-y-3">
+              <Link href="/dashboard/jobs/new" className="block">
+                <div className="flex items-center gap-3 p-3 rounded-lg border border-[#E5E5DC] hover:border-[#3B82F6] hover:bg-[#3B82F6]/5 transition-all group">
+                  <div className="p-2 bg-[#3B82F6]/10 rounded-lg group-hover:bg-[#3B82F6]/20 transition-colors">
+                    <Briefcase className="w-4 h-4 text-[#3B82F6]" />
                   </div>
                   <div>
-                    <h4 className="text-sm font-semibold text-[#141042] mb-1">
-                      Dica do dia
-                    </h4>
-                    <p className="text-xs text-[#666666] leading-relaxed">
-                      Utilize os assessments DISC para entender melhor o perfil comportamental dos candidatos e aumentar o fit cultural.
+                    <p className="text-sm font-medium text-[#141042]">
+                      Criar Nova Vaga
+                    </p>
+                    <p className="text-xs text-[#666666]">
+                      Publique uma nova oportunidade
                     </p>
                   </div>
                 </div>
-              </CardContent>
-            </Card>
+              </Link>
+
+              <Link href="/dashboard/candidates/new" className="block">
+                <div className="flex items-center gap-3 p-3 rounded-lg border border-[#E5E5DC] hover:border-[#10B981] hover:bg-[#10B981]/5 transition-all group">
+                  <div className="p-2 bg-[#10B981]/10 rounded-lg group-hover:bg-[#10B981]/20 transition-colors">
+                    <Users className="w-4 h-4 text-[#10B981]" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-[#141042]">
+                      Adicionar Candidato
+                    </p>
+                    <p className="text-xs text-[#666666]">
+                      Cadastre um novo talento
+                    </p>
+                  </div>
+                </div>
+              </Link>
+
+              <Link href="/dashboard/reports" className="block">
+                <div className="flex items-center gap-3 p-3 rounded-lg border border-[#E5E5DC] hover:border-[#8B5CF6] hover:bg-[#8B5CF6]/5 transition-all group">
+                  <div className="p-2 bg-[#8B5CF6]/10 rounded-lg group-hover:bg-[#8B5CF6]/20 transition-colors">
+                    <TrendingUp className="w-4 h-4 text-[#8B5CF6]" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-[#141042]">
+                      Ver Relatórios
+                    </p>
+                    <p className="text-xs text-[#666666]">
+                      Analise suas métricas
+                    </p>
+                  </div>
+                </div>
+              </Link>
+            </div>
+          </div>
+
+          <div className="bg-white border border-[#E5E5DC] rounded-xl p-4 sm:p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-base font-semibold text-[#141042]">Vagas Ativas</h3>
+              <Link href="/dashboard/jobs" className="text-xs text-[#141042] hover:underline">
+                Ver todas
+              </Link>
+            </div>
+            <div className="space-y-3">
+              {loadingJobs ? (
+                <div className="flex items-center justify-center py-6">
+                  <Loader2 className="w-6 h-6 text-[#141042] animate-spin" />
+                </div>
+              ) : activeJobs.length === 0 ? (
+                <div className="rounded-lg border border-[#E5E5DC] bg-[#FAFAF8] p-3 text-xs text-[#666666]">
+                  Nenhuma vaga ativa encontrada.
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {activeJobs.map((job) => (
+                    <div
+                      key={job.id}
+                      className="flex items-center justify-between rounded-lg border border-[#E5E5DC] px-3 py-2 hover:bg-[#FAFAF8] transition-colors"
+                    >
+                      <div>
+                        <p className="text-sm font-medium text-[#141042]">
+                          {job.title || 'Vaga sem título'}
+                        </p>
+                        <p className="text-xs text-[#666666]">
+                          {job.created_at ? formatDate(job.created_at) : 'Recente'} · {job.status === 'open' ? 'Ativa' : 'Em pausa'}
+                        </p>
+                      </div>
+                      <MoreHorizontal className="w-4 h-4 text-[#666666]" />
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Tip Card */}
+          <div className="bg-white border border-[#E5E5DC] rounded-xl p-4 sm:p-6">
+            <div className="flex items-start gap-3">
+              <div className="p-2 bg-[#FAFAF8] rounded-lg">
+                <TrendingUp className="w-5 h-5 text-[#141042]" />
+              </div>
+              <div>
+                <h4 className="text-sm font-semibold text-[#141042] mb-1">
+                  Dica do dia
+                </h4>
+                <p className="text-xs text-[#666666] leading-relaxed">
+                  Utilize os assessments DISC para entender melhor o perfil comportamental dos candidatos e aumentar o fit cultural.
+                </p>
+              </div>
+            </div>
           </div>
         </div>
       </div>

@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
+import { useOrgStore } from '@/lib/store';
 
 interface TfciCycle {
   id: string;
@@ -17,11 +18,10 @@ interface TfciCycle {
 
 export default function TfciCyclesPage() {
   const router = useRouter();
+  const { currentOrg } = useOrgStore();
   const [cycles, setCycles] = useState<TfciCycle[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
-  const [orgId, setOrgId] = useState<string | null>(null);
-  const [orgError, setOrgError] = useState<string | null>(null);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -30,42 +30,18 @@ export default function TfciCyclesPage() {
     status: 'draft' as const,
   });
 
+  // Efeito para carregar ciclos quando org mudar
   useEffect(() => {
-    initializeAndFetch();
-  }, []);
-
-  const initializeAndFetch = async () => {
-    const supabase = createClient();
-    
-    // Buscar usuário e organização
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      router.push('/login');
-      return;
-    }
-
-    const { data: orgMember, error: orgError } = await supabase
-      .from('org_members')
-      .select('org_id')
-      .eq('user_id', user.id)
-      .maybeSingle();
-
-    if (orgError) {
-      console.error('Error fetching org member:', orgError);
-      setOrgError('Erro ao buscar sua organização.');
+    if (currentOrg?.id) {
+      console.log('[TfciCycles] Org mudou, carregando ciclos:', currentOrg.id, currentOrg.name);
+      setLoading(true);
+      setCycles([]); // Limpar ciclos antigos
+      fetchCycles(currentOrg.id);
+    } else {
       setLoading(false);
-      return;
+      setCycles([]);
     }
-
-    if (orgMember?.org_id) {
-      setOrgId(orgMember.org_id);
-      await fetchCycles(orgMember.org_id);
-      return;
-    }
-
-    setOrgError('Você não está associado a nenhuma organização.');
-    setLoading(false);
-  };
+  }, [currentOrg?.id]);
 
   const fetchCycles = async (organizationId: string) => {
     try {
@@ -79,6 +55,7 @@ export default function TfciCyclesPage() {
       if (error) {
         console.error('Error fetching cycles:', error);
       } else {
+        console.log('[TfciCycles] Ciclos carregados:', data?.length || 0);
         setCycles(data || []);
       }
     } catch (error) {
@@ -90,7 +67,7 @@ export default function TfciCyclesPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!orgId) return;
+    if (!currentOrg?.id) return;
 
     try {
       const supabase = createClient();
@@ -99,7 +76,7 @@ export default function TfciCyclesPage() {
       const { error } = await supabase
         .from('tfci_cycles')
         .insert({
-          org_id: orgId,
+          org_id: currentOrg.id,
           name: formData.name,
           start_date: formData.start_date,
           end_date: formData.end_date,
@@ -110,7 +87,7 @@ export default function TfciCyclesPage() {
       if (!error) {
         setShowForm(false);
         setFormData({ name: '', start_date: '', end_date: '', status: 'draft' });
-        fetchCycles(orgId);
+        fetchCycles(currentOrg.id);
       }
     } catch (error) {
       console.error('Error creating cycle:', error);
@@ -118,7 +95,7 @@ export default function TfciCyclesPage() {
   };
 
   const updateCycleStatus = async (cycleId: string, status: string) => {
-    if (!orgId) return;
+    if (!currentOrg?.id) return;
     
     try {
       const supabase = createClient();
@@ -126,9 +103,9 @@ export default function TfciCyclesPage() {
         .from('tfci_cycles')
         .update({ status })
         .eq('id', cycleId)
-        .eq('org_id', orgId);
+        .eq('org_id', currentOrg.id);
       
-      fetchCycles(orgId);
+      fetchCycles(currentOrg.id);
     } catch (error) {
       console.error('Error updating cycle:', error);
     }
@@ -144,27 +121,10 @@ export default function TfciCyclesPage() {
     return colors[status as keyof typeof colors] || 'bg-gray-100 text-gray-800';
   };
 
-  if (loading) {
+  if (loading && !currentOrg?.id) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#1F4ED8]"></div>
-      </div>
-    );
-  }
-
-  if (orgError) {
-    return (
-      <div className="max-w-3xl mx-auto py-12 px-4">
-        <div className="bg-white rounded-lg shadow-sm border p-8 text-center">
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">Acesso indisponível</h2>
-          <p className="text-sm text-gray-600 mb-4">{orgError}</p>
-          <button
-            onClick={() => router.push('/dashboard')}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-          >
-            Voltar ao Dashboard
-          </button>
-        </div>
       </div>
     );
   }

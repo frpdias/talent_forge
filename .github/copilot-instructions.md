@@ -1,33 +1,75 @@
-# Instruções para agentes (TalentForge)
+# Copilot Instructions — Talent Forge
 
-## Fonte da verdade (arquitetura canônica)
-- A referência oficial é [docs/ARQUITETURA_CANONICA.md](docs/ARQUITETURA_CANONICA.md); siga o esqueleto de pastas e as regras críticas antes de alterar qualquer coisa.
-- Estrutura fixa: Web em [apps/web](apps/web) (Next.js App Router) e API em [apps/api](apps/api) (NestJS). Não mover/renomear pastas.
-- Web usa grupos de rotas como (admin), (recruiter), (candidate), (public) e endpoints internos em /api/admin/* (ex.: [apps/web/src/app/api/admin/create-user/route.ts](apps/web/src/app/api/admin/create-user/route.ts)).
-- API expõe REST em /api/v1 para domínios (organizations, jobs, candidates, applications, assessments, reports). Contratos em [docs/api.md](docs/api.md).
+## 🔐 Canonical Architecture is the Source of Truth (MANDATORY)
+- Before ANY action (code, schema, endpoint, component, migration), **consult the Canonical Architecture**.
+- Source of truth: `docs/ARQUITETURA_CANONICA.md`.
+- The code MUST converge to the architecture — never the opposite.
+- If a change impacts architecture, **update the canonical doc first**, then implement.
+- If something is unclear or divergent, STOP and propose an update to the canonical architecture.
 
-## Dados, segurança e multi-tenant
-- Auth via Supabase JWT; rotas autenticadas exigem `Authorization: Bearer` + `x-org-id` (ver [docs/auth.md](docs/auth.md)).
-- Sempre filtrar por `org_id`/`tenant_id` no backend; RLS é obrigatório por tabela.
-- Exceção atual: RLS em `organizations` está desabilitado e tem TODO crítico para reativação (ver seção “Regras de Segurança” em [docs/ARQUITETURA_CANONICA.md](docs/ARQUITETURA_CANONICA.md)).
-- Storage: buckets `cv` e `videos` com prefixo `org_id/...` (ver [supabase/README.md](supabase/README.md)).
+## 🧭 Big Picture (why the system is structured this way)
+- Talent Forge is a **multi-tenant SaaS** with strict isolation by organization.
+- Core separation:
+  - `account` → who operates/contracts (admins, recruiters, Fartech)
+  - `organization` → company being evaluated (root tenant entity)
+- All business data belongs to an `organization`.
+- No shortcuts: many tables DO NOT have `org_id` and must resolve it via joins (e.g. applications → jobs → organizations).
 
-## Migrations e validação
-- Mudança de schema exige migration em [supabase/migrations](supabase/migrations) (padrão `YYYYMMDD_description.sql`).
-- Após migrations, executar validação em [supabase/VALIDATE_IMPROVEMENTS.sql](supabase/VALIDATE_IMPROVEMENTS.sql).
+## 🧩 Core Modules & Ownership
+- **Recruiter Module**: multi-org operation, jobs, candidates, pipeline, reports.
+- **Gestor Module**: organization view (teams, members, organogram, goals, results).
+- **PHP Module (People, Health & Performance)**:
+  - Integrates TFCI (30%) + NR-1 (40%) + COPC Adapted (30).
+  - Activation is per-organization and Fartech-admin controlled.
+  - Protected by `PhpModuleGuard`.
 
-## Workflows de desenvolvimento
-- Dev monorepo: `npm run dev` (API + Web).
-- Web: `npm run dev -w tf-web` (porta 3000). API: `npm run start:dev -w tf-api` (porta 3001, Swagger em /docs).
-- Build/Lint/Test: `npm run build`, `npm run lint`, `npm run test` (API) — scripts em [package.json](package.json).
+## 🗄️ Data & Security Rules (NON-NEGOTIABLE)
+- RLS is mandatory on ALL tables and views.
+- Never bypass RLS except in approved migrations.
+- `is_org_member()` is the single source of truth for membership checks — NEVER modify lightly.
+- `service_role` is backend-only (admin ops, migrations, batch jobs).
+- Headers required on protected routes:
+  - `Authorization: Bearer <JWT>`
+  - `x-org-id: <UUID>`
 
-## Convenções do projeto
-- Nomes: pastas em `kebab-case`, componentes React `PascalCase.tsx`, migrations `YYYYMMDD_*` (ver “Convenções” em [docs/ARQUITETURA_CANONICA.md](docs/ARQUITETURA_CANONICA.md)).
-- Tipos compartilhados devem viver em [packages/types](packages/types).
-- Web usa `@supabase/ssr` com cookies/middleware para auth SSR (ver [docs/architecture.md](docs/architecture.md)).
+## 📁 Project Structure (DO NOT CHANGE)
+- Monorepo layout is fixed:
+  - `apps/api` → NestJS 11 (BFF + domain services)
+  - `apps/web` → Next.js 15 App Router
+  - `supabase/migrations` → canonical DB evolution
+  - `docs/*` → architectural and decision records
+- Never create files or folders outside the defined structure.
 
-## Referências rápidas
-- Arquitetura canônica: [docs/ARQUITETURA_CANONICA.md](docs/ARQUITETURA_CANONICA.md)
-- Contratos da API: [docs/api.md](docs/api.md)
-- Auth/tenant: [docs/auth.md](docs/auth.md)
-- Deploy: [docs/DEPLOY_VERCEL.md](docs/DEPLOY_VERCEL.md)
+## 🧠 Schema Navigation (critical patterns)
+- Tables WITH `org_id`: `organizations`, `org_members`, `jobs`, `teams`, PHP tables.
+- Tables WITHOUT `org_id` (resolve via joins):
+  - `applications`, `assessments`, `application_events`, `pipeline_stages`
+- Always resolve organization scope correctly before querying or applying RLS logic.
+
+## 🚀 Development Workflow (expected by the project)
+- Dev:
+  - `npm run dev` → api + web
+  - `npm run dev:api` → API only (3001)
+  - `npm run dev:web` → Web only (3000)
+- Schema changes:
+  - Create migration in `supabase/migrations/YYYYMMDD_description.sql`
+  - Apply and run `VALIDATE_IMPROVEMENTS.sql`
+- Pre-merge checks:
+  - `npm run build`
+  - `npm run lint`
+  - `npm run type-check`
+
+## 🎨 UI & Conventions
+- Follow `docs/design-system.md` strictly (colors, typography, components).
+- Next.js App Router patterns only (`app/`, `layout.tsx`, route segments).
+- Components: PascalCase; utilities: camelCase; DB objects: snake_case.
+
+## 🧪 Tests & Validation
+- PHP Module must pass:
+  - `scripts/test-php-module.js`
+  - `scripts/test-tfci-e2e.js`
+  - `scripts/test-ai-e2e.js`
+- Never assume correctness without running or preserving these validations.
+
+## 🛑 Final Rule
+- If your change violates ANY rule above, it is incorrect — even if it "works".

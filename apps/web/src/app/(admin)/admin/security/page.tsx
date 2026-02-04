@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Shield, AlertTriangle, Lock, Eye, Activity, Clock, Globe, Terminal, RefreshCw, TrendingUp, Server, Database } from 'lucide-react';
+import { Shield, AlertTriangle, Lock, Eye, Activity, Clock, Globe, Terminal, RefreshCw, TrendingUp, Server, Database, Users, FileText, Unlock, ChevronDown, ChevronUp, Ban, UserCheck } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 
 interface SecurityEvent {
@@ -46,6 +46,34 @@ interface SecurityScore {
   }>;
 }
 
+interface BlockedIP {
+  id: string;
+  ip_address: string;
+  reason: string;
+  blocked_at: string;
+  blocked_until: string | null;
+  is_active: boolean;
+  metadata: any;
+}
+
+interface AuditLog {
+  id: string;
+  actor_id: string;
+  action: string;
+  resource: string;
+  metadata: any;
+  created_at: string;
+  actor_email?: string;
+}
+
+interface ActiveSession {
+  user_id: string;
+  email: string;
+  user_type: string;
+  last_sign_in_at: string;
+  created_at: string;
+}
+
 export default function SecurityDashboard() {
   const [loading, setLoading] = useState(true);
   const [metrics, setMetrics] = useState<SecurityMetrics>({
@@ -64,6 +92,14 @@ export default function SecurityDashboard() {
     status: 'warning',
     breakdown: { pass: 0, warning: 0, fail: 0 },
     recommendations: [],
+  });
+  const [blockedIPs, setBlockedIPs] = useState<BlockedIP[]>([]);
+  const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
+  const [activeSessions, setActiveSessions] = useState<ActiveSession[]>([]);
+  const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
+    blockedIPs: false,
+    auditLogs: false,
+    activeSessions: false,
   });
 
   useEffect(() => {
@@ -129,11 +165,70 @@ export default function SecurityDashboard() {
           setSecurityScore(scoreData.score);
         }
       }
+
+      // Fetch additional data: blocked IPs, audit logs, active sessions
+      const [blockedIPsRes, auditLogsRes, sessionsRes] = await Promise.all([
+        supabase
+          .from('blocked_ips')
+          .select('*')
+          .order('created_at', { ascending: false })
+          .limit(20),
+        supabase
+          .from('audit_logs')
+          .select('*')
+          .order('created_at', { ascending: false })
+          .limit(30),
+        fetch('/api/admin/security/sessions'),
+      ]);
+
+      if (!blockedIPsRes.error) {
+        setBlockedIPs(blockedIPsRes.data || []);
+      }
+
+      if (!auditLogsRes.error) {
+        setAuditLogs(auditLogsRes.data || []);
+      }
+
+      if (sessionsRes.ok) {
+        const sessionsData = await sessionsRes.json();
+        if (sessionsData.success) {
+          setActiveSessions(sessionsData.sessions || []);
+        }
+      }
     } catch (error) {
       console.error('Error fetching security data:', error);
     } finally {
       setLoading(false);
     }
+  }
+
+  async function handleUnblockIP(ipId: string) {
+    if (!confirm('Tem certeza que deseja desbloquear este IP?')) return;
+    
+    try {
+      const supabase = createClient();
+      const { error } = await supabase
+        .from('blocked_ips')
+        .update({ is_active: false, updated_at: new Date().toISOString() })
+        .eq('id', ipId);
+      
+      if (error) throw error;
+      
+      // Atualizar lista
+      setBlockedIPs(prev => prev.map(ip => 
+        ip.id === ipId ? { ...ip, is_active: false } : ip
+      ));
+    } catch (error) {
+      console.error('Erro ao desbloquear IP:', error);
+      alert('Erro ao desbloquear IP');
+    }
+  }
+
+  function toggleSection(section: string) {
+    setExpandedSections(prev => ({
+      ...prev,
+      [section]: !prev[section]
+    }));
   }
 
   function getSeverityColor(severity: string) {
@@ -403,6 +498,225 @@ export default function SecurityDashboard() {
                 <p className="text-sm text-[#666666]">{rec.description}</p>
               </div>
             ))}
+          </div>
+        )}
+      </div>
+
+      {/* IPs Bloqueados - Expandível */}
+      <div className="bg-white border border-[#E5E5DC] rounded-xl sm:rounded-2xl overflow-hidden">
+        <button
+          onClick={() => toggleSection('blockedIPs')}
+          className="w-full flex items-center justify-between p-6 hover:bg-[#FAFAF8] transition-colors"
+        >
+          <div className="flex items-center space-x-3">
+            <Ban className="w-5 h-5 text-[#EF4444]" />
+            <h3 className="text-lg font-semibold text-[#141042]">IPs Bloqueados</h3>
+            <span className="px-2 py-0.5 bg-[#EF4444]/10 text-[#EF4444] text-sm font-medium rounded">
+              {blockedIPs.filter(ip => ip.is_active).length} ativos
+            </span>
+          </div>
+          {expandedSections.blockedIPs ? (
+            <ChevronUp className="w-5 h-5 text-[#666666]" />
+          ) : (
+            <ChevronDown className="w-5 h-5 text-[#666666]" />
+          )}
+        </button>
+        
+        {expandedSections.blockedIPs && (
+          <div className="border-t border-[#E5E5DC] p-6">
+            {blockedIPs.length === 0 ? (
+              <div className="text-center py-6 text-[#666666]">
+                <Globe className="w-10 h-10 mx-auto mb-2 text-[#10B981]" />
+                <p>Nenhum IP bloqueado</p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b border-[#E5E5DC]">
+                      <th className="text-left py-3 px-4 text-xs font-semibold text-[#666666] uppercase">IP</th>
+                      <th className="text-left py-3 px-4 text-xs font-semibold text-[#666666] uppercase">Motivo</th>
+                      <th className="text-left py-3 px-4 text-xs font-semibold text-[#666666] uppercase">Bloqueado em</th>
+                      <th className="text-left py-3 px-4 text-xs font-semibold text-[#666666] uppercase">Expira em</th>
+                      <th className="text-left py-3 px-4 text-xs font-semibold text-[#666666] uppercase">Status</th>
+                      <th className="text-right py-3 px-4 text-xs font-semibold text-[#666666] uppercase">Ações</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {blockedIPs.map((ip) => (
+                      <tr key={ip.id} className="border-b border-[#E5E5DC] hover:bg-[#FAFAF8]">
+                        <td className="py-3 px-4">
+                          <span className="font-mono text-sm text-[#141042]">{ip.ip_address}</span>
+                        </td>
+                        <td className="py-3 px-4 text-sm text-[#666666]">{ip.reason}</td>
+                        <td className="py-3 px-4 text-sm text-[#666666]">
+                          {new Date(ip.blocked_at).toLocaleString('pt-BR')}
+                        </td>
+                        <td className="py-3 px-4 text-sm text-[#666666]">
+                          {ip.blocked_until 
+                            ? new Date(ip.blocked_until).toLocaleString('pt-BR')
+                            : 'Permanente'}
+                        </td>
+                        <td className="py-3 px-4">
+                          <span className={`px-2 py-1 text-xs font-medium rounded ${
+                            ip.is_active 
+                              ? 'bg-[#EF4444]/10 text-[#EF4444]' 
+                              : 'bg-[#10B981]/10 text-[#10B981]'
+                          }`}>
+                            {ip.is_active ? 'Bloqueado' : 'Desbloqueado'}
+                          </span>
+                        </td>
+                        <td className="py-3 px-4 text-right">
+                          {ip.is_active && (
+                            <button
+                              onClick={() => handleUnblockIP(ip.id)}
+                              className="p-2 text-[#3B82F6] hover:bg-[#3B82F6]/10 rounded-lg transition-colors"
+                              title="Desbloquear IP"
+                            >
+                              <Unlock className="w-4 h-4" />
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Audit Logs - Expandível */}
+      <div className="bg-white border border-[#E5E5DC] rounded-xl sm:rounded-2xl overflow-hidden">
+        <button
+          onClick={() => toggleSection('auditLogs')}
+          className="w-full flex items-center justify-between p-6 hover:bg-[#FAFAF8] transition-colors"
+        >
+          <div className="flex items-center space-x-3">
+            <FileText className="w-5 h-5 text-[#3B82F6]" />
+            <h3 className="text-lg font-semibold text-[#141042]">Audit Logs</h3>
+            <span className="px-2 py-0.5 bg-[#3B82F6]/10 text-[#3B82F6] text-sm font-medium rounded">
+              Últimas {auditLogs.length} ações
+            </span>
+          </div>
+          {expandedSections.auditLogs ? (
+            <ChevronUp className="w-5 h-5 text-[#666666]" />
+          ) : (
+            <ChevronDown className="w-5 h-5 text-[#666666]" />
+          )}
+        </button>
+        
+        {expandedSections.auditLogs && (
+          <div className="border-t border-[#E5E5DC] p-6">
+            {auditLogs.length === 0 ? (
+              <div className="text-center py-6 text-[#666666]">
+                <FileText className="w-10 h-10 mx-auto mb-2 text-[#666666]" />
+                <p>Nenhum log de auditoria</p>
+              </div>
+            ) : (
+              <div className="space-y-3 max-h-96 overflow-y-auto">
+                {auditLogs.map((log) => (
+                  <div key={log.id} className="flex items-start justify-between p-3 bg-[#FAFAF8] rounded-lg">
+                    <div className="flex-1">
+                      <div className="flex items-center space-x-2 mb-1">
+                        <span className={`text-xs px-2 py-0.5 rounded font-medium ${
+                          log.action.includes('delete') ? 'bg-[#EF4444]/10 text-[#EF4444]' :
+                          log.action.includes('create') ? 'bg-[#10B981]/10 text-[#10B981]' :
+                          log.action.includes('update') ? 'bg-[#F59E0B]/10 text-[#F59E0B]' :
+                          'bg-[#3B82F6]/10 text-[#3B82F6]'
+                        }`}>
+                          {log.action.toUpperCase()}
+                        </span>
+                        <span className="text-sm font-semibold text-[#141042]">{log.resource}</span>
+                      </div>
+                      <p className="text-xs text-[#666666] font-mono">
+                        Actor: {log.actor_id?.substring(0, 8)}...
+                      </p>
+                      {log.metadata && Object.keys(log.metadata).length > 0 && (
+                        <p className="text-xs text-[#999] mt-1 truncate max-w-md">
+                          {JSON.stringify(log.metadata).substring(0, 80)}...
+                        </p>
+                      )}
+                    </div>
+                    <span className="text-xs text-[#999] ml-4 whitespace-nowrap">
+                      {formatTimeAgo(log.created_at)}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Sessões Ativas - Expandível */}
+      <div className="bg-white border border-[#E5E5DC] rounded-xl sm:rounded-2xl overflow-hidden">
+        <button
+          onClick={() => toggleSection('activeSessions')}
+          className="w-full flex items-center justify-between p-6 hover:bg-[#FAFAF8] transition-colors"
+        >
+          <div className="flex items-center space-x-3">
+            <UserCheck className="w-5 h-5 text-[#10B981]" />
+            <h3 className="text-lg font-semibold text-[#141042]">Sessões Ativas</h3>
+            <span className="px-2 py-0.5 bg-[#10B981]/10 text-[#10B981] text-sm font-medium rounded">
+              {activeSessions.length} usuários online
+            </span>
+          </div>
+          {expandedSections.activeSessions ? (
+            <ChevronUp className="w-5 h-5 text-[#666666]" />
+          ) : (
+            <ChevronDown className="w-5 h-5 text-[#666666]" />
+          )}
+        </button>
+        
+        {expandedSections.activeSessions && (
+          <div className="border-t border-[#E5E5DC] p-6">
+            {activeSessions.length === 0 ? (
+              <div className="text-center py-6 text-[#666666]">
+                <Users className="w-10 h-10 mx-auto mb-2 text-[#666666]" />
+                <p>Nenhuma sessão ativa no momento</p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b border-[#E5E5DC]">
+                      <th className="text-left py-3 px-4 text-xs font-semibold text-[#666666] uppercase">Usuário</th>
+                      <th className="text-left py-3 px-4 text-xs font-semibold text-[#666666] uppercase">Tipo</th>
+                      <th className="text-left py-3 px-4 text-xs font-semibold text-[#666666] uppercase">Último Login</th>
+                      <th className="text-left py-3 px-4 text-xs font-semibold text-[#666666] uppercase">Conta Criada</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {activeSessions.map((session, i) => (
+                      <tr key={i} className="border-b border-[#E5E5DC] hover:bg-[#FAFAF8]">
+                        <td className="py-3 px-4">
+                          <span className="text-sm text-[#141042]">{session.email}</span>
+                        </td>
+                        <td className="py-3 px-4">
+                          <span className={`px-2 py-1 text-xs font-medium rounded ${
+                            session.user_type === 'admin' ? 'bg-[#8B5CF6]/10 text-[#8B5CF6]' :
+                            session.user_type === 'recruiter' ? 'bg-[#3B82F6]/10 text-[#3B82F6]' :
+                            'bg-[#10B981]/10 text-[#10B981]'
+                          }`}>
+                            {session.user_type}
+                          </span>
+                        </td>
+                        <td className="py-3 px-4 text-sm text-[#666666]">
+                          {session.last_sign_in_at 
+                            ? new Date(session.last_sign_in_at).toLocaleString('pt-BR')
+                            : '—'}
+                        </td>
+                        <td className="py-3 px-4 text-sm text-[#666666]">
+                          {new Date(session.created_at).toLocaleDateString('pt-BR')}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
         )}
       </div>

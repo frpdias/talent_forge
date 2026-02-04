@@ -16,6 +16,9 @@ import { PiAssessmentsModule } from './pi-assessments/pi-assessments.module';
 import { IamModule } from './iam/iam.module';
 import { InviteLinksModule } from './invite-links/invite-links.module';
 
+// PHP Module - Employees
+import { EmployeesModule } from './php/employees/employees.module';
+
 // Guards
 import { SupabaseAuthGuard } from './auth/guards/supabase-auth.guard';
 
@@ -37,6 +40,7 @@ import { SupabaseAuthGuard } from './auth/guards/supabase-auth.guard';
     PiAssessmentsModule,
     IamModule,
     InviteLinksModule,
+    EmployeesModule,
   ],
   providers: [
     {

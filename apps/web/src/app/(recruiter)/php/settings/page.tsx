@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { createBrowserClient } from '@supabase/ssr';
 import { Save, RotateCcw, AlertTriangle, CheckCircle, Settings2, Bell, Brain, Sliders } from 'lucide-react';
+import { useCurrentOrg } from '@/lib/hooks/useCurrentOrg';
 
 interface PhpSettings {
   weights: {
@@ -52,47 +53,35 @@ const DEFAULT_SETTINGS: PhpSettings = {
 };
 
 export default function SettingsPage() {
+  const { orgId, loading: orgLoading, error: orgError } = useCurrentOrg();
   const [settings, setSettings] = useState<PhpSettings>(DEFAULT_SETTINGS);
   const [originalSettings, setOriginalSettings] = useState<PhpSettings>(DEFAULT_SETTINGS);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [orgId, setOrgId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'weights' | 'thresholds' | 'notifications' | 'advanced'>('weights');
 
   useEffect(() => {
-    loadSettings();
-  }, []);
+    if (orgId) {
+      loadSettings(orgId);
+    } else if (!orgLoading) {
+      setLoading(false);
+    }
+  }, [orgId, orgLoading]);
 
-  async function loadSettings() {
+  async function loadSettings(organizationId: string) {
     const supabase = createBrowserClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
     );
 
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
-
-    const { data: member } = await supabase
-      .from('org_members')
-      .select('org_id')
-      .eq('user_id', user.id)
-      .maybeSingle();
-
-    if (!member?.org_id) {
-      setLoading(false);
-      return;
-    }
-
-    setOrgId(member.org_id);
-
     // Get settings from php_module_activations
     const { data } = await supabase
       .from('php_module_activations')
       .select('settings')
-      .eq('org_id', member.org_id)
-      .single();
+      .eq('org_id', organizationId)
+      .maybeSingle();
 
     if (data?.settings) {
       const merged = {

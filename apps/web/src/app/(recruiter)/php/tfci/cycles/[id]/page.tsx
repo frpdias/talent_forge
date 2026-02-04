@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import { createClient } from '@/lib/supabase/client';
 
 interface TfciCycle {
   id: string;
@@ -42,19 +43,32 @@ export default function CycleDetailPage() {
 
   const fetchCycleData = async () => {
     try {
-      const [cycleRes, assessmentsRes] = await Promise.all([
-        fetch(`/api/v1/php/tfci/cycles/${cycleId}`),
-        fetch(`/api/v1/php/tfci/cycles/${cycleId}/assessments`),
-      ]);
-
-      if (cycleRes.ok) {
-        const cycleData = await cycleRes.json();
+      const supabase = createClient();
+      
+      // Buscar ciclo
+      const { data: cycleData, error: cycleError } = await supabase
+        .from('tfci_cycles')
+        .select('*')
+        .eq('id', cycleId)
+        .single();
+      
+      if (cycleError) {
+        console.error('Error fetching cycle:', cycleError);
+      } else {
         setCycle(cycleData);
       }
-
-      if (assessmentsRes.ok) {
-        const assessmentsData = await assessmentsRes.json();
-        setAssessments(assessmentsData);
+      
+      // Buscar assessments
+      const { data: assessmentsData, error: assessmentsError } = await supabase
+        .from('tfci_assessments')
+        .select('*')
+        .eq('cycle_id', cycleId)
+        .order('created_at', { ascending: false });
+      
+      if (assessmentsError) {
+        console.error('Error fetching assessments:', assessmentsError);
+      } else {
+        setAssessments(assessmentsData || []);
       }
     } catch (error) {
       console.error('Error fetching cycle data:', error);

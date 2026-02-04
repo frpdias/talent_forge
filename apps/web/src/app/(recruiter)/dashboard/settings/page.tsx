@@ -49,7 +49,7 @@ export default function SettingsPage() {
         .from('user_profiles')
         .select('*')
         .eq('id', user.id)
-        .single();
+        .maybeSingle();
 
       if (profile) {
         setUserData({

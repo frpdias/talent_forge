@@ -22,6 +22,7 @@ const color_assessments_module_1 = require("./color-assessments/color-assessment
 const pi_assessments_module_1 = require("./pi-assessments/pi-assessments.module");
 const iam_module_1 = require("./iam/iam.module");
 const invite_links_module_1 = require("./invite-links/invite-links.module");
+const employees_module_1 = require("./php/employees/employees.module");
 const supabase_auth_guard_1 = require("./auth/guards/supabase-auth.guard");
 let AppModule = class AppModule {
 };
@@ -45,6 +46,7 @@ exports.AppModule = AppModule = __decorate([
             pi_assessments_module_1.PiAssessmentsModule,
             iam_module_1.IamModule,
             invite_links_module_1.InviteLinksModule,
+            employees_module_1.EmployeesModule,
         ],
         providers: [
             {

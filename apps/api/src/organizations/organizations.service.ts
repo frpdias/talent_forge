@@ -119,12 +119,28 @@ export class OrganizationsService {
       );
     }
 
+    // Build update object - only include fields that are provided
+    const updateData: Record<string, any> = {
+      updated_at: new Date().toISOString(),
+    };
+
+    if (dto.name !== undefined) updateData.name = dto.name;
+    if (dto.cnpj !== undefined) updateData.cnpj = dto.cnpj;
+    if (dto.industry !== undefined) updateData.industry = dto.industry;
+    if (dto.size !== undefined) updateData.size = dto.size;
+    if (dto.email !== undefined) updateData.email = dto.email;
+    if (dto.phone !== undefined) updateData.phone = dto.phone;
+    if (dto.website !== undefined) updateData.website = dto.website;
+    if (dto.address !== undefined) updateData.address = dto.address;
+    if (dto.city !== undefined) updateData.city = dto.city;
+    if (dto.state !== undefined) updateData.state = dto.state;
+    if (dto.zipCode !== undefined) updateData.zip_code = dto.zipCode;
+    if (dto.description !== undefined) updateData.description = dto.description;
+    if (dto.logoUrl !== undefined) updateData.logo_url = dto.logoUrl;
+
     const { data, error } = await supabase
       .from('organizations')
-      .update({
-        name: dto.name,
-        updated_at: new Date().toISOString(),
-      })
+      .update(updateData)
       .eq('id', id)
       .select()
       .single();
@@ -189,6 +205,21 @@ export class OrganizationsService {
       name: org.name,
       orgType: org.org_type,
       slug: org.slug,
+      // Campos corporativos
+      cnpj: org.cnpj,
+      industry: org.industry,
+      size: org.size,
+      email: org.email,
+      phone: org.phone,
+      website: org.website,
+      address: org.address,
+      city: org.city,
+      state: org.state,
+      zipCode: org.zip_code,
+      description: org.description,
+      logoUrl: org.logo_url,
+      parentOrgId: org.parent_org_id,
+      // Timestamps
       createdAt: org.created_at,
       updatedAt: org.updated_at,
     };

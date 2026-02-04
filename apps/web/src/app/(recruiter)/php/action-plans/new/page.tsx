@@ -43,7 +43,8 @@ export default function NewActionPlanPage() {
         .from('org_members')
         .select('org_id')
         .eq('user_id', user.id)
-        .maybeSingle();
+        .limit(1)
+        .single();
 
       if (!member?.org_id) throw new Error('Organização não encontrada');
 

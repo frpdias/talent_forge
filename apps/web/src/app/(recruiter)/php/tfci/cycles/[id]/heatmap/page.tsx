@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import { createClient } from '@/lib/supabase/client';
 
 interface HeatmapData {
   user_id: string;
@@ -39,11 +40,69 @@ export default function CycleHeatmapPage() {
 
   const fetchHeatmapData = async () => {
     try {
-      const response = await fetch(`/api/v1/php/tfci/cycles/${cycleId}/heatmap`);
-      if (response.ok) {
-        const data = await response.json();
-        setHeatmapData(data);
+      const supabase = createClient();
+      
+      // Buscar assessments do ciclo e agregar por target_user
+      const { data: assessments, error } = await supabase
+        .from('tfci_assessments')
+        .select('*')
+        .eq('cycle_id', cycleId);
+      
+      if (error) {
+        console.error('Error fetching assessments:', error);
+        return;
       }
+      
+      // Agregar dados por usuário avaliado
+      const userMap = new Map<string, {
+        scores: { col: number[], com: number[], ada: number[], acc: number[], lid: number[] },
+        name: string
+      }>();
+      
+      for (const a of assessments || []) {
+        const userId = a.target_user_id || a.id;
+        const userName = a.target_user_name || 'Usuário';
+        
+        if (!userMap.has(userId)) {
+          userMap.set(userId, { 
+            scores: { col: [], com: [], ada: [], acc: [], lid: [] },
+            name: userName
+          });
+        }
+        
+        const user = userMap.get(userId)!;
+        if (a.collaboration_score) user.scores.col.push(a.collaboration_score);
+        if (a.communication_score) user.scores.com.push(a.communication_score);
+        if (a.adaptability_score) user.scores.ada.push(a.adaptability_score);
+        if (a.accountability_score) user.scores.acc.push(a.accountability_score);
+        if (a.leadership_score) user.scores.lid.push(a.leadership_score);
+      }
+      
+      // Converter para formato do heatmap
+      const heatmap: HeatmapData[] = [];
+      userMap.forEach((data, id) => {
+        const avg = (arr: number[]) => arr.length ? arr.reduce((a,b) => a+b, 0) / arr.length : 0;
+        const colAvg = avg(data.scores.col);
+        const comAvg = avg(data.scores.com);
+        const adaAvg = avg(data.scores.ada);
+        const accAvg = avg(data.scores.acc);
+        const lidAvg = avg(data.scores.lid);
+        const overall = (colAvg + comAvg + adaAvg + accAvg + lidAvg) / 5;
+        
+        heatmap.push({
+          user_id: id,
+          user_name: data.name,
+          collaboration_avg: Math.round(colAvg * 10) / 10,
+          communication_avg: Math.round(comAvg * 10) / 10,
+          adaptability_avg: Math.round(adaAvg * 10) / 10,
+          accountability_avg: Math.round(accAvg * 10) / 10,
+          leadership_avg: Math.round(lidAvg * 10) / 10,
+          overall_avg: Math.round(overall * 10) / 10,
+          assessment_count: data.scores.col.length,
+        });
+      });
+      
+      setHeatmapData(heatmap);
     } catch (error) {
       console.error('Error fetching heatmap data:', error);
     } finally {

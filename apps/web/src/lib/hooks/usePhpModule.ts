@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
+import { useCurrentOrg } from '@/lib/hooks/useCurrentOrg';
 
 interface PhpModuleStatus {
   isActive: boolean;
@@ -11,43 +12,40 @@ interface PhpModuleStatus {
 }
 
 export function usePhpModule() {
+  const { orgId, loading: orgLoading, error: orgError } = useCurrentOrg();
   const [status, setStatus] = useState<PhpModuleStatus>({
     isActive: false,
     loading: true,
   });
 
-  const fetchStatus = async () => {
+  useEffect(() => {
+    if (orgLoading) {
+      return; // Aguardar org carregar
+    }
+
+    if (orgError || !orgId) {
+      setStatus({
+        isActive: false,
+        loading: false,
+        error: orgError || 'Organização não encontrada',
+      });
+      return;
+    }
+
+    fetchStatus(orgId);
+  }, [orgId, orgLoading, orgError]);
+
+  const fetchStatus = async (organizationId: string) => {
     try {
       setStatus(prev => ({ ...prev, loading: true, error: undefined }));
       
       const supabase = createClient();
-      
-      // Buscar usuário autenticado
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        throw new Error('Usuário não autenticado');
-      }
-
-      // Buscar organização do usuário
-      const { data: orgMember, error: orgError } = await supabase
-        .from('org_members')
-        .select('org_id')
-        .eq('user_id', user.id)
-        .maybeSingle();
-
-      if (orgError) {
-        throw new Error('Erro ao buscar organização do usuário');
-      }
-
-      if (!orgMember?.org_id) {
-        throw new Error('Usuário não pertence a nenhuma organização');
-      }
 
       // Buscar status do módulo PHP
       const { data: activation } = await supabase
         .from('php_module_activations')
         .select('is_active, activation_plan, activated_at, settings')
-        .eq('org_id', orgMember.org_id)
+        .eq('org_id', organizationId)
         .maybeSingle();
 
       setStatus({
@@ -64,15 +62,12 @@ export function usePhpModule() {
     }
   };
 
-  useEffect(() => {
-    fetchStatus();
-  }, []);
-
   return {
     isActive: status.isActive,
     activationPlan: status.activationPlan,
-    loading: status.loading,
+    loading: status.loading || orgLoading,
     error: status.error,
-    refetch: fetchStatus,
+    orgId,
+    refetch: () => orgId && fetchStatus(orgId),
   };
 }

@@ -75,7 +75,7 @@ export default function TeamPage() {
         .from('user_profiles')
         .select('organization_id')
         .eq('id', user.id)
-        .single();
+        .maybeSingle();
 
       if (!profile?.organization_id) return;
 

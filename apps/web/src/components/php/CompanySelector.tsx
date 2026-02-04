@@ -3,21 +3,20 @@
 import { useEffect, useState } from 'react';
 import { createBrowserClient } from '@supabase/ssr';
 import { Building2, ChevronDown, Check, AlertCircle } from 'lucide-react';
+import { useOrgStore } from '@/lib/store';
 
 interface Organization {
   id: string;
   name: string;
   slug: string;
-  status: string;
-  php_module_active: boolean;
+  orgType: string;
 }
 
 export function CompanySelector() {
+  const { currentOrg, setCurrentOrg } = useOrgStore();
   const [organizations, setOrganizations] = useState<Organization[]>([]);
-  const [selectedOrg, setSelectedOrg] = useState<Organization | null>(null);
   const [loading, setLoading] = useState(true);
   const [isOpen, setIsOpen] = useState(false);
-  const [activating, setActivating] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const supabase = createBrowserClient(
@@ -63,12 +62,36 @@ export function CompanySelector() {
       }
 
       const orgIds = memberships.map(m => m.org_id);
+      console.log('[CompanySelector] Orgs do usuário:', orgIds);
 
-      // Buscar dados das organizações
+      // Buscar quais orgs têm PHP ativo na tabela php_module_activations
+      const { data: activations, error: activationsError } = await supabase
+        .from('php_module_activations')
+        .select('org_id')
+        .in('org_id', orgIds)
+        .eq('is_active', true);
+
+      console.log('[CompanySelector] Ativações PHP encontradas:', activations);
+
+      if (activationsError) {
+        console.error('Erro ao buscar ativações PHP:', activationsError);
+      }
+
+      const activePhpOrgIds = new Set((activations || []).map(a => a.org_id));
+      console.log('[CompanySelector] Orgs com PHP ativo:', Array.from(activePhpOrgIds));
+
+      // Se não há orgs com PHP ativo, mostrar mensagem
+      if (activePhpOrgIds.size === 0) {
+        setOrganizations([]);
+        setLoading(false);
+        return;
+      }
+
+      // Buscar dados apenas das organizações com PHP ativo
       const { data: orgs, error: orgsError } = await supabase
         .from('organizations')
-        .select('id, name, slug, status, php_module_active')
-        .in('id', orgIds)
+        .select('id, name, slug, org_type')
+        .in('id', Array.from(activePhpOrgIds))
         .eq('status', 'active');
 
       if (orgsError) {
@@ -78,12 +101,27 @@ export function CompanySelector() {
         return;
       }
 
-      setOrganizations(orgs || []);
+      // Mapear para interface correta do store
+      const phpActiveOrgs: Organization[] = (orgs || []).map(org => ({
+        id: org.id,
+        name: org.name,
+        slug: org.slug,
+        orgType: org.org_type || 'client'
+      }));
+
+      console.log('[CompanySelector] Orgs com PHP ativo:', phpActiveOrgs.length, phpActiveOrgs.map(o => o.name));
       
-      // Selecionar a primeira org ativa ou a que tem PHP ativo
-      if (orgs && orgs.length > 0) {
-        const activePhp = orgs.find(o => o.php_module_active);
-        setSelectedOrg(activePhp || orgs[0]);
+      setOrganizations(phpActiveOrgs);
+      
+      // Selecionar org: priorizar a já selecionada se tiver PHP ativo, senão primeira
+      if (phpActiveOrgs.length > 0) {
+        const currentOrgHasPhp = currentOrg && phpActiveOrgs.find(o => o.id === currentOrg.id);
+        if (!currentOrgHasPhp) {
+          console.log('[CompanySelector] Selecionando primeira org:', phpActiveOrgs[0].name);
+          setCurrentOrg(phpActiveOrgs[0]);
+        } else {
+          console.log('[CompanySelector] Org atual já tem PHP:', currentOrg?.name);
+        }
       }
     } catch (err) {
       console.error('Erro inesperado:', err);
@@ -93,42 +131,9 @@ export function CompanySelector() {
     setLoading(false);
   }
 
-  async function handleSelectOrg(org: Organization) {
-    setSelectedOrg(org);
+  function handleSelectOrg(org: Organization) {
+    setCurrentOrg(org);
     setIsOpen(false);
-    
-    // Salvar no localStorage para persistir entre páginas
-    localStorage.setItem('php_selected_org', org.id);
-  }
-
-  async function handleActivatePhp(org: Organization) {
-    setActivating(true);
-    setError(null);
-
-    try {
-      const { error: updateError } = await supabase
-        .from('organizations')
-        .update({ php_module_active: true })
-        .eq('id', org.id);
-
-      if (updateError) {
-        console.error('Erro ao ativar PHP:', updateError);
-        setError('Erro ao ativar módulo PHP');
-        setActivating(false);
-        return;
-      }
-
-      // Atualizar lista local
-      setOrganizations(prev => 
-        prev.map(o => o.id === org.id ? { ...o, php_module_active: true } : o)
-      );
-      setSelectedOrg({ ...org, php_module_active: true });
-    } catch (err) {
-      console.error('Erro inesperado:', err);
-      setError('Erro ao ativar módulo');
-    }
-
-    setActivating(false);
   }
 
   if (loading) {
@@ -169,7 +174,7 @@ export function CompanySelector() {
         <div className="max-w-7xl mx-auto px-4 py-3">
           <div className="flex items-center gap-2 text-yellow-700">
             <AlertCircle className="w-4 h-4" />
-            <span className="text-sm">Nenhuma empresa encontrada. Entre em contato com o administrador.</span>
+            <span className="text-sm">Nenhuma empresa com módulo PHP ativo. Entre em contato com o administrador.</span>
           </div>
         </div>
       </div>
@@ -193,67 +198,47 @@ export function CompanySelector() {
                 className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg shadow-sm hover:border-blue-300 hover:shadow transition-all min-w-[200px]"
               >
                 <span className="font-medium text-gray-900 truncate">
-                  {selectedOrg?.name || 'Selecione...'}
+                  {currentOrg?.name || 'Selecione...'}
                 </span>
                 <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
               </button>
 
               {isOpen && (
-                <div className="absolute top-full left-0 mt-1 w-full min-w-[280px] bg-white border border-gray-200 rounded-lg shadow-lg z-50 overflow-hidden">
-                  {organizations.map(org => (
-                    <button
-                      key={org.id}
-                      onClick={() => handleSelectOrg(org)}
-                      className={`w-full flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition-colors ${
-                        selectedOrg?.id === org.id ? 'bg-blue-50' : ''
-                      }`}
-                    >
-                      <div className="flex flex-col items-start">
-                        <span className="font-medium text-gray-900">{org.name}</span>
-                        <span className="text-xs text-gray-500">{org.slug}</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        {org.php_module_active && (
-                          <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">
-                            PHP Ativo
-                          </span>
-                        )}
-                        {selectedOrg?.id === org.id && (
-                          <Check className="w-4 h-4 text-blue-600" />
-                        )}
-                      </div>
-                    </button>
-                  ))}
-                </div>
+                <>
+                  <div 
+                    className="fixed inset-0 z-40" 
+                    onClick={() => setIsOpen(false)}
+                  />
+                  <div className="absolute top-full left-0 mt-1 w-full min-w-[280px] bg-white border border-gray-200 rounded-lg shadow-lg z-50 overflow-hidden">
+                    {organizations.map(org => (
+                      <button
+                        key={org.id}
+                        onClick={() => handleSelectOrg(org)}
+                        className={`w-full flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition-colors ${
+                          currentOrg?.id === org.id ? 'bg-blue-50' : ''
+                        }`}
+                      >
+                        <div className="flex flex-col items-start">
+                          <span className="font-medium text-gray-900">{org.name}</span>
+                          <span className="text-xs text-gray-500">{org.slug}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {currentOrg?.id === org.id && (
+                            <Check className="w-4 h-4 text-blue-600" />
+                          )}
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </>
               )}
             </div>
           </div>
 
-          {/* Status e Ação */}
-          <div className="flex items-center gap-3">
-            {selectedOrg && !selectedOrg.php_module_active ? (
-              <button
-                onClick={() => handleActivatePhp(selectedOrg)}
-                disabled={activating}
-                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
-              >
-                {activating ? (
-                  <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
-                    <span>Ativando...</span>
-                  </>
-                ) : (
-                  <>
-                    <span>Ativar Módulo PHP</span>
-                  </>
-                )}
-              </button>
-            ) : selectedOrg?.php_module_active ? (
-              <div className="flex items-center gap-2 px-3 py-1.5 bg-green-100 text-green-700 rounded-full text-sm font-medium">
-                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                <span>Módulo PHP Ativo</span>
-              </div>
-            ) : null}
+          {/* Status PHP Ativo */}
+          <div className="flex items-center gap-2 px-3 py-1.5 bg-green-100 text-green-700 rounded-full text-sm font-medium">
+            <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+            <span>Módulo PHP Ativo</span>
           </div>
         </div>
       </div>
