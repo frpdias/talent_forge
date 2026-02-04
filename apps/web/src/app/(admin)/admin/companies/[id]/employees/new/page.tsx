@@ -8,7 +8,8 @@ import {
   SENIORITY_LEVELS, 
   CAREER_TRACKS, 
   getDepartmentsByLevel,
-  canBeManager 
+  canBeManager,
+  getHierarchyLevel
 } from '@/lib/hierarchy-constants';
 
 interface Manager {
@@ -402,8 +403,8 @@ export default function NewEmployeePage() {
                 >
                   <option value="">Selecione...</option>
                   {SENIORITY_LEVELS.map((level) => (
-                    <option key={level} value={level}>
-                      {level}
+                    <option key={level.code} value={level.code}>
+                      {level.name}
                     </option>
                   ))}
                 </select>

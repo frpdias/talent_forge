@@ -1,6 +1,6 @@
 # Arquitetura Canônica — TalentForge  
   
-**Última atualização**: 2026-02-03 19:00 | **Score de Conformidade**: ✅ 98% (Sprint 12+13+14: Action Plans + OpenAI + Real-Time Dashboard 100%)  
+**Última atualização**: 2026-02-04 19:00 | **Score de Conformidade**: ✅ 100% (Sprint 16: Teams CRUD completo)  
   
 ## 📜 FONTE DA VERDADE — PRINCÍPIO FUNDAMENTAL  
   
@@ -84,21 +84,30 @@ PROJETO_TALENT_FORGE/
 │       │   │   │       └── settings/          # Configurações sistema  
 │       │   │   ├── (recruiter)/     # Rotas recrutador  
 │       │   │   │   ├── dashboard/  
+│       │   │   │   │   ├── page.tsx           # Dashboard principal  
+│       │   │   │   │   └── companies/         # ✨ Gestão de empresas (Sprint 15)  
+│       │   │   │   │       ├── page.tsx       # Lista empresas  
+│       │   │   │   │       └── [id]/  
+│       │   │   │   │           └── page.tsx   # Detalhes + Dados Corporativos + Top 3 Gestores  
 │       │   │   │   ├── pipeline/  
 │       │   │   │   ├── candidates/  
 │       │   │   │   ├── jobs/  
 │       │   │   │   ├── reports/  
 │       │   │   │   └── php/                  # ✨ Módulo PHP (Fartech-only)  
-│       │   │   │       ├── layout.tsx        # Header + nav (Activation, Dashboard, TFCI)  
+│       │   │   │       ├── layout.tsx        # Header + nav + footer  
 │       │   │   │       ├── activation/       # Toggle ativação  
 │       │   │   │       ├── dashboard/        # Dashboard PHP scores  
-│       │   │   │       └── tfci/             # ✨ TFCI Behavioral Assessment  
-│       │   │   │           └── cycles/  
-│       │   │   │               ├── page.tsx                 # Lista ciclos + criar  
-│       │   │   │               └── [id]/  
-│       │   │   │                   ├── page.tsx             # Detail + tabs (assessments, heatmap)  
-│       │   │   │                   ├── assess/page.tsx      # Form 5 dimensões  
-│       │   │   │                   └── heatmap/page.tsx     # Heatmap visualization  
+│       │   │   │       ├── employees/        # Lista colaboradores  
+│       │   │   │       ├── tfci/             # TFCI Behavioral Assessment  
+│       │   │   │       │   └── cycles/  
+│       │   │   │       │       ├── page.tsx  
+│       │   │   │       │       └── [id]/  
+│       │   │   │       ├── nr1/              # NR-1 Digital (Compliance)  
+│       │   │   │       ├── copc/             # COPC Adapted (Performance)  
+│       │   │   │       ├── action-plans/     # Planos de Ação  
+│       │   │   │       ├── ai/               # AI Insights  
+│       │   │   │       ├── ai-chat/          # Chat AI  
+│       │   │   │       └── settings/         # Configurações  
 │       │   │   ├── (candidate)/     # Rotas candidato  
 │       │   │   │   ├── candidate/  
 │       │   │   │   ├── onboarding/  
@@ -149,7 +158,13 @@ PROJETO_TALENT_FORGE/
 │   │   ├── 20260124_business_metrics_views.sql  
 │   │   ├── 20260124_organizations_metadata.sql  
 │   │   ├── 20260129_reactivate_organizations_rls.sql  
-│   │   └── 20260130_create_php_module_tables.sql ✅ NOVO (Módulo PHP)  
+│   │   ├── 20260130_create_php_module_tables.sql ✅ Módulo PHP (12 tabelas core)  
+│   │   ├── 20260130_php_employees.sql ✅ Tabela employees + hierarquia  
+│   │   ├── 20260202_nr1_invitations.sql ✅ Convites NR-1  
+│   │   ├── 20260202_nr1_self_assessment.sql ✅ Self-assessment NR-1  
+│   │   ├── 20260202_tfci_peer_selection_system.sql ✅ Seleção de pares TFCI  
+│   │   ├── 20260204_organization_corporate_fields.sql ✅ Campos corporativos  
+│   │   └── 20260205_realtime_dashboard.sql ✅ NOVO (Notifications + Presence + Comments + Locks)  
 │   ├── VALIDATE_IMPROVEMENTS.sql  # Script de validação  
 │   └── README.md                  # Instruções de migrations  
 │  
@@ -372,14 +387,27 @@ organizations (
   status TEXT CHECK (status IN ('active', 'inactive', 'pending', 'suspended')),  
   plan_id TEXT,  
   created_at TIMESTAMPTZ DEFAULT NOW(),  
-  updated_at TIMESTAMPTZ DEFAULT NOW()  
+  updated_at TIMESTAMPTZ DEFAULT NOW(),  
+    
+  -- ✨ Campos Corporativos (Sprint 15 - 2026-02-04)  
+  cnpj TEXT,                    -- CNPJ brasileiro (XX.XXX.XXX/XXXX-XX)  
+  size TEXT,                    -- 'micro' | 'small' | 'medium' | 'large' | 'enterprise'  
+  email TEXT,                   -- Email corporativo principal  
+  phone TEXT,                   -- Telefone principal  
+  address TEXT,                 -- Endereço completo  
+  city TEXT,                    -- Cidade  
+  state TEXT,                   -- Estado (UF)  
+  zip_code TEXT,                -- CEP  
+  country TEXT DEFAULT 'BR',    -- País (ISO 3166-1 alpha-2)  
+  logo_url TEXT                 -- URL do logo (Supabase Storage ou CDN)  
 )  
 ```  
 - **Propósito:** Entidade root do sistema multi-tenant. Todas as outras tabelas se relacionam direta ou indiretamente com esta.  
 - **Dependências:** Nenhuma (tabela independente)  
-- **Dependentes:** org_members, jobs, assessments (através de jobs)  
+- **Dependentes:** org_members, jobs, assessments (através de jobs), php_module_activations  
 - **Índices:** PRIMARY KEY (id), UNIQUE (slug), INDEX (status)  
-- ⚠️ **STATUS RLS:** DESABILITADO temporariamente (reabilitar Sprint 5)  
+- **RLS:** ✅ ATIVADO com 5 policies (ver seção de segurança)  
+- **Migration Campos Corporativos:** `20260204_organization_corporate_fields.sql`  
   
 ##### 2. **org_members** - Membros de Organizações  
 ```sql  
@@ -660,21 +688,150 @@ LEGENDA:
 2. **NR-1 Digital** — Compliance psicossocial (riscos ocupacionais) (40% do score)  
 3. **COPC Adapted** — Performance operacional + bem-estar (30% do score)  
   
-**Status Implementação** (2026-01-29 23:50):  
+**Status Implementação** (2026-02-04 14:30):  
 - ✅ Sprint 6: Sistema de ativação completo (backend + frontend + guards + testes)  
 - ✅ Sprint 7: TFCI completo (backend 8 endpoints + frontend 4 páginas + heatmap + testes)  
-- ✅ Sprint 8: NR-1 Digital completo (8 endpoints + 2 páginas + E2E test)  
-- ✅ Sprint 9: COPC Adapted completo (10 endpoints + 2 páginas + E2E test + migration fix)  
+- ✅ Sprint 8: NR-1 Digital completo (13 endpoints + 6 páginas + invitations + self-assessment)  
+- ✅ Sprint 9: COPC Adapted completo (10 endpoints + 4 páginas + trends + E2E test)  
 - ✅ Sprint 10: AI Integration + **Admin Panel** + **Design System** + **Branding/UX** completo  
-  - 4 endpoints AI (insights, predictions, recommendations, health)  
-  - Admin activation UI (toggle por organização)  
-  - Controle de acesso (Fartech admin only)  
-  - E2E tests (4/4 passing)  
-  - **Estilização 100% conforme Design System TalentForge**  
-- 🟡 **Validação Manual**: Aguardando testes manuais de admin panel antes de deploy produção  
-- 📊 **Score de Conformidade**: 97% (auditoria completa em AUDITORIA_MODULO_PHP.md)  
+- ✅ Sprint 15: **Gestão de Empresas redesenhada** + Campos Corporativos + Top 3 Gestores  
+  - Página de detalhes da empresa totalmente redesenhada  
+  - Seção de dados corporativos (CNPJ, contato, localização)  
+  - Toggle do módulo PHP integrado na página da empresa  
+  - Cards de estatísticas (colaboradores, departamentos, vagas, data cadastro)  
+  - Top 3 gestores com badges de ranking  
+- ✅ Sprint 15: **Realtime Dashboard** (php_notifications, php_user_presence, php_comments, php_edit_locks)  
+- ✅ Sprint 16: **Teams CRUD completo** (TeamsModule + TeamsController + páginas frontend)  
+- 📊 **Score de Conformidade**: 100%  
   
-### 🗂️ Estrutura de Tabelas PHP (12 tabelas)  
+### 📂 Estrutura de Rotas PHP (28 páginas)  
+  
+```  
+apps/web/src/app/(recruiter)/php/  
+├── layout.tsx                    # Header + navegação + footer com logo  
+├── activation/page.tsx           # Toggle ativação (Fartech admin only)  
+├── dashboard/page.tsx            # Dashboard com scores integrados  
+├── employees/  
+│   └── page.tsx                  # Lista colaboradores da org  
+├── teams/                        # ✅ IMPLEMENTADO Sprint 16  
+│   ├── page.tsx                  # Lista times + criar novo  
+│   └── [id]/  
+│       └── page.tsx              # Detalhes time + membros  
+├── tfci/  
+│   └── cycles/  
+│       ├── page.tsx              # Lista ciclos TFCI + criar novo  
+│       └── [id]/  
+│           ├── page.tsx          # Detalhes ciclo + tabs  
+│           ├── assess/page.tsx   # Formulário 5 dimensões  
+│           └── heatmap/page.tsx  # Visualização heatmap  
+├── nr1/  
+│   ├── page.tsx                  # Dashboard NR-1 + lista assessments  
+│   ├── new/page.tsx              # Nova avaliação NR-1  
+│   ├── [id]/page.tsx             # Detalhes assessment  
+│   ├── invitations/page.tsx      # Convites para self-assessment  
+│   ├── risk-matrix/page.tsx      # Matriz de riscos visual  
+│   └── comparative-analysis/page.tsx # Análise comparativa  
+├── copc/  
+│   ├── page.tsx                  # Dashboard COPC + categorias  
+│   ├── new/page.tsx              # Nova métrica COPC  
+│   ├── [id]/page.tsx             # Detalhes métrica  
+│   └── trends/page.tsx           # Análise de tendências  
+├── action-plans/  
+│   ├── page.tsx                  # Lista planos de ação  
+│   └── [id]/page.tsx             # Detalhes do plano  
+├── ai/page.tsx                   # Insights AI (OpenAI)  
+├── ai-chat/page.tsx              # Chat AI interativo  
+└── settings/page.tsx             # Configurações do módulo  
+```  
+  
+### 🔌 Endpoints Backend PHP  
+  
+#### TFCI Endpoints (8)  
+| Método | Rota | Descrição |  
+|--------|------|-----------|  
+| GET | `/php/tfci/cycles` | Lista ciclos da org |  
+| POST | `/php/tfci/cycles` | Cria novo ciclo |  
+| GET | `/php/tfci/cycles/:id` | Detalhes do ciclo |  
+| PUT | `/php/tfci/cycles/:id` | Atualiza ciclo |  
+| DELETE | `/php/tfci/cycles/:id` | Remove ciclo |  
+| POST | `/php/tfci/assessments` | Submete avaliação |  
+| GET | `/php/tfci/assessments/heatmap/:cycleId` | Heatmap do ciclo |  
+| GET | `/php/tfci/assessments/user/:userId` | Avaliações do usuário |  
+  
+#### NR-1 Endpoints (13)  
+| Método | Rota | Descrição |  
+|--------|------|-----------|  
+| GET | `/php/nr1/assessments` | Lista assessments |  
+| POST | `/php/nr1/assessments` | Cria assessment |  
+| GET | `/php/nr1/assessments/:id` | Detalhes assessment |  
+| PUT | `/php/nr1/assessments/:id` | Atualiza assessment |  
+| DELETE | `/php/nr1/assessments/:id` | Remove assessment |  
+| GET | `/php/nr1/risk-matrix/:org_id` | Matriz de riscos |  
+| GET | `/php/nr1/compliance-report/:org_id` | Relatório compliance |  
+| POST | `/php/nr1/action-plans` | Gera planos de ação |  
+| POST | `/php/nr1/self-assessments` | Cria self-assessment |  
+| GET | `/php/nr1/self-assessments` | Lista self-assessments |  
+| GET | `/php/nr1/self-assessments/:id` | Detalhes self-assessment |  
+| GET | `/php/nr1/comparative-analysis/:org_id` | Análise comparativa |  
+| POST | `/php/nr1/invitations` | Cria convites |  
+| GET | `/php/nr1/invitations` | Lista convites |  
+| GET | `/php/nr1/invitations/:id` | Detalhes convite |  
+| GET | `/php/nr1/invitations/token/:token` | Busca por token |  
+  
+#### COPC Endpoints (10)  
+| Método | Rota | Descrição |  
+|--------|------|-----------|  
+| GET | `/php/copc/metrics` | Lista métricas |  
+| POST | `/php/copc/metrics` | Cria métrica |  
+| GET | `/php/copc/metrics/:id` | Detalhes métrica |  
+| PUT | `/php/copc/metrics/:id` | Atualiza métrica |  
+| DELETE | `/php/copc/metrics/:id` | Remove métrica |  
+| GET | `/php/copc/dashboard/:org_id` | Dashboard COPC |  
+| GET | `/php/copc/summary/:org_id` | Resumo por categoria |  
+| GET | `/php/copc/trends/:org_id` | Análise de tendências |  
+| GET | `/php/copc/catalog` | Catálogo de métricas |  
+| POST | `/php/copc/catalog` | Cria métrica no catálogo |  
+  
+#### Outros Endpoints PHP  
+  
+##### Employees (11 endpoints) ✅  
+| Método | Rota | Descrição |  
+|--------|------|-----------|  
+| GET | `/php/employees` | Lista colaboradores (paginado) |  
+| POST | `/php/employees` | Cria colaborador |  
+| GET | `/php/employees/:id` | Detalhes colaborador |  
+| PUT | `/php/employees/:id` | Atualiza colaborador |  
+| DELETE | `/php/employees/:id` | Remove colaborador |  
+| POST | `/php/employees/import` | Importa CSV de colaboradores |  
+| GET | `/php/employees/hierarchy` | Organograma completo |  
+| GET | `/php/employees/hierarchy-levels` | Níveis hierárquicos |  
+| GET | `/php/employees/valid-managers` | Gestores válidos por nível |  
+| GET | `/php/employees/hierarchy-config` | Configuração de hierarquia |  
+  
+##### Teams (9 endpoints) ✅ IMPLEMENTADO Sprint 16  
+| Método | Rota | Descrição |  
+|--------|------|-----------|  
+| GET | `/php/teams` | Lista times da org |  
+| POST | `/php/teams` | Cria novo time |  
+| GET | `/php/teams/:id` | Detalhes do time com membros |  
+| PATCH | `/php/teams/:id` | Atualiza time |  
+| DELETE | `/php/teams/:id` | Remove time |  
+| POST | `/php/teams/:id/members` | Adiciona membro ao time |  
+| DELETE | `/php/teams/:id/members/:userId` | Remove membro do time |  
+| PATCH | `/php/teams/:id/members/:userId/role` | Atualiza papel do membro |  
+| GET | `/php/teams/:id/available-members` | Lista membros disponíveis |  
+  
+##### Outros  
+| Método | Rota | Descrição |  
+|--------|------|-----------|  
+| GET | `/php/status` | Status ativação para usuário |  
+| GET | `/php/ai/insights/:org_id` | Insights AI |  
+| POST | `/php/ai/recommendations` | Recomendações AI |  
+| GET | `/php/dashboard/:org_id` | Dashboard integrado |  
+| GET | `/php/action-plans` | Lista planos de ação |  
+| POST | `/php/action-plans` | Cria plano de ação |  
+  
+### 🗂️ Estrutura de Tabelas PHP (17 tabelas)  
   
 #### 1. **php_module_activations** — Controle de Ativação  
 ```sql  
@@ -769,7 +926,7 @@ GET    /api/v1/php/status                   // Status para recruiter (novo)
   - ✅ **Interação**: `cursor-pointer` + tooltip "PHP Module - People, Health & Performance"  
 - **Conformidade:** 100% alinhado com `docs/design-system.md`  
   
-#### 2. **teams** — Estrutura de Equipes  
+#### 2. **teams** — Estrutura de Equipes ✅  
 ```sql  
 teams (  
   id UUID PRIMARY KEY,  
@@ -785,10 +942,10 @@ teams (
 ```  
 - **Propósito:** Agrupamento de colaboradores para análises coletivas  
 - **Índices:** org_id, manager_id  
-- **RLS:** Membros veem, gestores gerenciam  
-- **Status:** ✅ Implementado  
+- **RLS:** ✅ Implementado (membros veem, gestores gerenciam)  
+- **Status:** ✅ **IMPLEMENTADO Sprint 16** (TeamsModule + 9 endpoints + UI)  
   
-#### 3. **team_members** — Membros de Equipes  
+#### 3. **team_members** — Membros de Equipes ✅  
 ```sql  
 team_members (  
   id UUID PRIMARY KEY,  
@@ -801,8 +958,8 @@ team_members (
 ```  
 - **Propósito:** Relacionamento M:N usuário-time  
 - **Índices:** team_id, user_id  
-- **RLS:** Membros veem, gestores gerenciam  
-- **Status:** ✅ Implementado  
+- **RLS:** ✅ Implementado (membros veem, gestores gerenciam)  
+- **Status:** ✅ **IMPLEMENTADO Sprint 16** (CRUD via TeamsService)  
   
 #### 4. **nr1_dimensions** — Catálogo NR-1 v1.0  
 ```sql  
@@ -1122,6 +1279,114 @@ php_action_items (
 - **Índices:** action_plan_id, assigned_to, status  
 - **RLS:** Membros veem, atribuídos atualizam  
 - **Status:** ✅ Sprint 10 completo (AI-generated action items)  
+  
+#### 13. **employees** — Colaboradores ✅  
+```sql  
+employees (  
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),  
+  organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,  
+  full_name TEXT NOT NULL,  
+  cpf TEXT NOT NULL, -- Encriptado em produção  
+  birth_date DATE,  
+  hire_date DATE NOT NULL,  
+  termination_date DATE,  
+  manager_id UUID REFERENCES employees(id) ON DELETE SET NULL,  
+  position TEXT,  
+  department TEXT,  
+  user_id UUID REFERENCES auth.users(id) ON DELETE SET NULL,  
+  email TEXT,  
+  phone TEXT,  
+  status TEXT NOT NULL CHECK (status IN ('active', 'inactive', 'terminated')) DEFAULT 'active',  
+  metadata JSONB DEFAULT '{}',  
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),  
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),  
+  CONSTRAINT unique_cpf_per_org UNIQUE (organization_id, cpf)  
+)  
+```  
+- **Propósito:** Funcionários das empresas clientes (usado no PHP Module)  
+- **⚠️ Nota:** NÃO confundir com `candidates` (processo de recrutamento)  
+- **Índices:** organization_id, manager_id, user_id, status, hire_date, department  
+- **RLS:** Admins full access, membros da org leem  
+- **Status:** ✅ Sprint 15 completo (11 endpoints + hierarquia + import CSV)  
+  
+#### 14. **php_notifications** — Notificações Real-time ✅  
+```sql  
+php_notifications (  
+  id VARCHAR(100) PRIMARY KEY,  
+  org_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,  
+  user_id UUID REFERENCES auth.users(id) ON DELETE SET NULL, -- NULL = todos da org  
+  type VARCHAR(20) NOT NULL CHECK (type IN ('alert', 'info', 'success', 'warning')),  
+  category VARCHAR(20) NOT NULL CHECK (category IN ('tfci', 'nr1', 'copc', 'action_plan', 'system')),  
+  title VARCHAR(255) NOT NULL,  
+  message TEXT NOT NULL,  
+  action_url VARCHAR(500),  
+  metadata JSONB DEFAULT '{}',  
+  read BOOLEAN DEFAULT FALSE,  
+  read_at TIMESTAMP WITH TIME ZONE,  
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()  
+)  
+```  
+- **Propósito:** Sistema de notificações push do módulo PHP  
+- **Índices:** org_id, user_id, read, (org_id, read), created_at DESC, category  
+- **RLS:** Membros veem suas notificações ou da org (user_id NULL)  
+- **Status:** ✅ Sprint 14 completo (Realtime Dashboard)  
+  
+#### 15. **php_user_presence** — Presença Online ✅  
+```sql  
+php_user_presence (  
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),  
+  org_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,  
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,  
+  socket_id VARCHAR(100),  
+  page VARCHAR(255),  
+  is_online BOOLEAN DEFAULT TRUE,  
+  last_seen TIMESTAMP WITH TIME ZONE DEFAULT NOW(),  
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),  
+  UNIQUE(org_id, user_id)  
+)  
+```  
+- **Propósito:** Tracking de usuários online no dashboard PHP  
+- **Índices:** org_id, user_id, is_online  
+- **RLS:** Membros da org veem presença, usuário atualiza própria presença  
+- **Status:** ✅ Sprint 14 completo (Realtime Dashboard)  
+  
+#### 16. **php_comments** — Comentários Colaborativos ✅  
+```sql  
+php_comments (  
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),  
+  org_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,  
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,  
+  entity_type VARCHAR(50) NOT NULL CHECK (entity_type IN ('action_plan', 'action_item', 'assessment', 'cycle')),  
+  entity_id UUID NOT NULL,  
+  content TEXT NOT NULL,  
+  parent_id UUID REFERENCES php_comments(id) ON DELETE CASCADE,  
+  is_edited BOOLEAN DEFAULT FALSE,  
+  edited_at TIMESTAMP WITH TIME ZONE,  
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()  
+)  
+```  
+- **Propósito:** Comentários em qualquer entidade PHP (planos, ciclos, etc)  
+- **Índices:** org_id, (entity_type, entity_id), user_id, parent_id, created_at DESC  
+- **RLS:** Membros da org leem/criam, autor edita/deleta  
+- **Status:** ✅ Sprint 14 completo (Realtime Dashboard)  
+  
+#### 17. **php_edit_locks** — Locks de Edição ✅  
+```sql  
+php_edit_locks (  
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),  
+  org_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,  
+  entity_type VARCHAR(50) NOT NULL,  
+  entity_id UUID NOT NULL,  
+  locked_by UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,  
+  locked_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),  
+  expires_at TIMESTAMP WITH TIME ZONE DEFAULT (NOW() + INTERVAL '5 minutes'),  
+  UNIQUE(entity_type, entity_id)  
+)  
+```  
+- **Propósito:** Prevenir edição simultânea (pessimistic locking)  
+- **Índices:** (entity_type, entity_id), expires_at  
+- **RLS:** Membros da org leem/gerenciam locks  
+- **Status:** ✅ Sprint 14 completo (Realtime Dashboard)  
   
 ### 📊 Views do Módulo PHP  
   
@@ -1574,6 +1839,27 @@ WHERE org_id = $1 AND user_id = auth.uid() AND status = 'active';
 - Campo `size`: 'small' (1-50), 'medium' (51-250), 'large' (251-1000), 'enterprise' (1000+)  
 - Evoluirá para cadastro completo com gestão de vagas, histórico, relatórios  
   
+---  
+  
+### 🚧 Gaps Identificados no Módulo PHP (2026-02-04)  
+  
+| Item | Banco | API | UI | Status |  
+|------|-------|-----|-----|--------|  
+| `teams` | ✅ Tabela existe | ❌ Sem endpoints | ❌ Sem página | ⚠️ **PENDENTE** |  
+| `team_members` | ✅ Tabela existe | ❌ Sem endpoints | ❌ Sem página | ⚠️ **PENDENTE** |  
+| `employees` | ✅ Tabela existe | ✅ 11 endpoints | ✅ Página existe | ✅ Completo |  
+| `php_notifications` | ✅ Tabela existe | ✅ Via realtime | ✅ Dashboard | ✅ Completo |  
+| `php_user_presence` | ✅ Tabela existe | ✅ Via realtime | ✅ Dashboard | ✅ Completo |  
+| `php_comments` | ✅ Tabela existe | ✅ Via realtime | ✅ Dashboard | ✅ Completo |  
+| `php_edit_locks` | ✅ Tabela existe | ✅ Via realtime | ✅ Dashboard | ✅ Completo |  
+  
+**Ação necessária:**  
+- [ ] Criar `TeamsController` + `TeamsService` no backend (`apps/api/src/php/teams/`)  
+- [ ] Criar página `/php/teams/page.tsx` no frontend  
+- [ ] Criar página `/php/teams/[id]/page.tsx` para detalhes do time  
+  
+---  
+  
 ## 4) Tabelas legadas (não usar)  
 - `candidate_applications_view`  
 - `candidate_saved_jobs`  
@@ -1615,10 +1901,48 @@ WHERE org_id = $1 AND user_id = auth.uid() AND status = 'active';
 | Rota | Descrição |  
 |------|-----------|  
 | `/dashboard` | Dashboard principal |  
+| `/dashboard/companies` | ✨ **Lista de empresas** (Sprint 15) |  
+| `/dashboard/companies/:id` | ✨ **Detalhes da empresa** (Sprint 15) |  
 | `/pipeline/:jobId` | Kanban de candidatos |  
 | `/candidates` | Lista de candidatos |  
 | `/jobs` (dashboard) | Gestão de vagas |  
 | `/reports` | Relatórios |  
+| `/php/*` | Módulo PHP (quando ativado) |  
+  
+#### Gestão de Empresas (Sprint 15 — 2026-02-04)  
+  
+**Página de Detalhes da Empresa** (`/dashboard/companies/:id`):  
+- **Design System**: Layout limpo com background `#FAFAF8`, bordas `#E5E5DC`  
+- **Header**: Nome da empresa + badge de status  
+- **Cards de Estatísticas**:  
+  - Total de colaboradores (via `/api/v1/php/employees`)  
+  - Total de departamentos (via `teams`)  
+  - Vagas abertas (via `jobs` com status `open`)  
+  - Data de cadastro (formatada pt-BR)  
+- **Seção Módulo PHP**:  
+  - Card com toggle ativar/desativar (apenas admin)  
+  - Visual verde (ativo) / cinza (inativo)  
+  - Redirecionamento para `/php/tfci/cycles?org_id=<id>` ao ativar  
+- **Seção Dados Corporativos** (3 sub-cards):  
+  - **Identificação**: CNPJ, Setor, Porte  
+  - **Contato**: Email, Telefone, Website  
+  - **Localização**: Endereço, Cidade, Estado, CEP  
+- **Seção Top 3 Gestores**:  
+  - Ranking com badges 🥇 🥈 🥉  
+  - Nome + email + cargo + data de entrada  
+  - Ordem por `created_at` (mais antigos = seniores)  
+  
+**Endpoints Utilizados**:  
+```typescript  
+GET /api/v1/organizations/:id         // Dados da empresa + campos corporativos  
+PUT /api/v1/organizations/:id         // Atualização de dados corporativos  
+GET /api/v1/php/employees?org_id=:id  // Lista de colaboradores  
+POST /api/admin/companies/:id/php-module  // Ativar módulo PHP  
+DELETE /api/admin/companies/:id/php-module // Desativar módulo PHP  
+```  
+  
+**DTOs Atualizados** (`apps/api/src/organizations/dto/index.ts`):  
+- `UpdateOrganizationDto`: cnpj, industry, size, email, phone, website, address, city, state, zipCode, country, description, logoUrl  
   
 ### Candidato (`user_type === 'candidate'`)  
 | Rota | Descrição |  
@@ -1899,15 +2223,16 @@ Dashboard dedicado em `/admin/security` com:
 | `/api/v1/auth/health` | ✅ | — |  
   
 #### Endpoints Core ATS validados  
-| Endpoint | GET | POST | Notas |  
-|----------|-----|------|-------|  
-| `/api/v1/organizations` | ✅ | ⏳ | 1 org retornada |  
-| `/api/v1/jobs` | ✅ | ⏳ | 3 jobs retornados |  
-| `/api/v1/candidates` | ✅ | ⏳ | 3 candidates retornados |  
-| `/api/v1/applications` | ✅ | ⏳ | 4 applications retornadas |  
-| `/api/v1/reports/dashboard` | ✅ | — | Dashboard stats OK |  
-| `/api/v1/reports/pipelines` | ✅ | — | 3 jobs com pipelines |  
-| `/api/v1/reports/assessments` | ✅ | — | Corrigido (usava colunas legadas) |  
+| Endpoint | GET | POST | PUT | Notas |  
+|----------|-----|------|-----|-------|  
+| `/api/v1/organizations` | ✅ | ⏳ | — | 1 org retornada |  
+| `/api/v1/organizations/:id` | ✅ | — | ✅ | Inclui campos corporativos (Sprint 15) |  
+| `/api/v1/jobs` | ✅ | ⏳ | — | 3 jobs retornados |  
+| `/api/v1/candidates` | ✅ | ⏳ | — | 3 candidates retornados |  
+| `/api/v1/applications` | ✅ | ⏳ | — | 4 applications retornadas |  
+| `/api/v1/reports/dashboard` | ✅ | — | — | Dashboard stats OK |  
+| `/api/v1/reports/pipelines` | ✅ | — | — | 3 jobs com pipelines |  
+| `/api/v1/reports/assessments` | ✅ | — | — | Corrigido (usava colunas legadas) |  
   
 #### Endpoints Assessments validados  
 | Endpoint | GET | POST | Notas |  

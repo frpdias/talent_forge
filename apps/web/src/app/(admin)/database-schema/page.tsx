@@ -61,48 +61,66 @@ export default function DatabaseSchemaPage() {
           .select('*', { count: 'exact', head: true });
 
         // Buscar policies
-        const { data: policies } = await supabase.rpc('exec_sql', {
-          query: `
-            SELECT policyname, cmd
-            FROM pg_policies
-            WHERE tablename = '${tableName}'
-            ORDER BY cmd, policyname
-          `
-        }).catch(() => ({ data: [] }));
+        let policies: any[] = [];
+        try {
+          const { data: policiesData } = await supabase.rpc('exec_sql', {
+            query: `
+              SELECT policyname, cmd
+              FROM pg_policies
+              WHERE tablename = '${tableName}'
+              ORDER BY cmd, policyname
+            `
+          });
+          policies = policiesData || [];
+        } catch {
+          policies = [];
+        }
 
         // Verificar RLS status
-        const { data: rlsData } = await supabase.rpc('exec_sql', {
-          query: `
-            SELECT relrowsecurity as rls_enabled
-            FROM pg_class
-            WHERE relname = '${tableName}'
-          `
-        }).catch(() => ({ data: [{ rls_enabled: false }] }));
+        let rlsEnabled = false;
+        try {
+          const { data: rlsData } = await supabase.rpc('exec_sql', {
+            query: `
+              SELECT relrowsecurity as rls_enabled
+              FROM pg_class
+              WHERE relname = '${tableName}'
+            `
+          });
+          rlsEnabled = rlsData?.[0]?.rls_enabled || false;
+        } catch {
+          rlsEnabled = false;
+        }
 
         tablesData.push({
           name: tableName,
           column_count: 0,
           row_count: count || 0,
-          policies: policies || [],
-          rls_enabled: rlsData?.[0]?.rls_enabled || false
+          policies: policies,
+          rls_enabled: rlsEnabled
         });
       }
 
       setTables(tablesData);
 
       // Buscar functions
-      const { data: functionsData } = await supabase.rpc('exec_sql', {
-        query: `
-          SELECT routine_name as name, data_type as return_type
-          FROM information_schema.routines
-          WHERE routine_schema = 'public'
-          AND routine_type = 'FUNCTION'
-          AND routine_name LIKE 'is_%'
-          ORDER BY routine_name
-        `
-      }).catch(() => ({ data: [] }));
+      let functionsData: any[] = [];
+      try {
+        const { data: funcData } = await supabase.rpc('exec_sql', {
+          query: `
+            SELECT routine_name as name, data_type as return_type
+            FROM information_schema.routines
+            WHERE routine_schema = 'public'
+            AND routine_type = 'FUNCTION'
+            AND routine_name LIKE 'is_%'
+            ORDER BY routine_name
+          `
+        });
+        functionsData = funcData || [];
+      } catch {
+        functionsData = [];
+      }
 
-      setFunctions(functionsData || []);
+      setFunctions(functionsData);
     } catch (error) {
       console.error('Error fetching schema:', error);
     } finally {
@@ -112,20 +130,26 @@ export default function DatabaseSchemaPage() {
 
   const fetchTableColumns = async (tableName: string) => {
     const supabase = createClient();
-    const { data } = await supabase.rpc('exec_sql', {
-      query: `
-        SELECT 
-          column_name,
-          data_type,
-          is_nullable,
-          column_default
-        FROM information_schema.columns
-        WHERE table_name = '${tableName}'
-        ORDER BY ordinal_position
-      `
-    }).catch(() => ({ data: [] }));
+    let columnsData: any[] = [];
+    try {
+      const { data } = await supabase.rpc('exec_sql', {
+        query: `
+          SELECT 
+            column_name,
+            data_type,
+            is_nullable,
+            column_default
+          FROM information_schema.columns
+          WHERE table_name = '${tableName}'
+          ORDER BY ordinal_position
+        `
+      });
+      columnsData = data || [];
+    } catch {
+      columnsData = [];
+    }
 
-    setTableColumns(data || []);
+    setTableColumns(columnsData);
   };
 
   const handleTableClick = (tableName: string) => {
@@ -418,11 +442,11 @@ export default function DatabaseSchemaPage() {
                 )}
 
                 {/* Policies */}
-                {tables.find(t => t.name === selectedTable)?.policies.length > 0 && (
+                {(tables.find(t => t.name === selectedTable)?.policies?.length ?? 0) > 0 && (
                   <div className="bg-white rounded-lg shadow-sm border border-gray-200">
                     <div className="border-b border-gray-200 px-6 py-3">
                       <h3 className="font-semibold text-gray-900">
-                        Policies RLS ({tables.find(t => t.name === selectedTable)?.policies.length})
+                        Policies RLS ({tables.find(t => t.name === selectedTable)?.policies?.length ?? 0})
                       </h3>
                     </div>
                     <div className="p-6 space-y-3">

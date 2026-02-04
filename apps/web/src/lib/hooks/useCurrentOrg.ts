@@ -61,7 +61,7 @@ export function useCurrentOrg(): CurrentOrgResult {
         return;
       }
 
-      const org = orgMember.organizations as { id: string; name: string } | null;
+      const org = orgMember.organizations as unknown as { id: string; name: string } | null;
       setDbOrg({ id: orgMember.org_id, name: org?.name || '' });
       setLoading(false);
     } catch (err) {

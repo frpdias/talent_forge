@@ -10,7 +10,18 @@ import { DashboardHeader } from '@/components/DashboardHeader';
 import { 
   Calendar,
   Star,
-  Search
+  Search,
+  Users,
+  TrendingUp,
+  Clock,
+  CheckCircle2,
+  XCircle,
+  ArrowRight,
+  MoreVertical,
+  Mail,
+  Briefcase,
+  Filter,
+  RefreshCw
 } from 'lucide-react';
 import { createBrowserClient } from '@supabase/ssr';
 import { applicationsApi } from '@/lib/api';
@@ -34,20 +45,20 @@ interface Column {
 }
 
 const STATUS_COLUMNS = [
-  { id: 'applied', title: 'Novas', color: 'bg-blue-50 border-blue-200' },
-  { id: 'in_process', title: 'Em Processo', color: 'bg-yellow-50 border-yellow-200' },
-  { id: 'hired', title: 'Contratado', color: 'bg-emerald-50 border-emerald-200' },
-  { id: 'rejected', title: 'Rejeitado', color: 'bg-red-50 border-red-200' },
+  { id: 'applied', title: 'Novas Candidaturas', color: 'from-blue-500 to-blue-600', bgColor: 'bg-blue-50', borderColor: 'border-blue-200', icon: Users },
+  { id: 'in_process', title: 'Em Avaliação', color: 'from-amber-500 to-amber-600', bgColor: 'bg-amber-50', borderColor: 'border-amber-200', icon: Clock },
+  { id: 'hired', title: 'Contratados', color: 'from-emerald-500 to-emerald-600', bgColor: 'bg-emerald-50', borderColor: 'border-emerald-200', icon: CheckCircle2 },
+  { id: 'rejected', title: 'Não Aprovados', color: 'from-red-500 to-red-600', bgColor: 'bg-red-50', borderColor: 'border-red-200', icon: XCircle },
 ];
 
 const STAGE_COLORS = [
-  'bg-blue-50 border-blue-200',
-  'bg-yellow-50 border-yellow-200',
-  'bg-purple-50 border-purple-200',
-  'bg-green-50 border-green-200',
-  'bg-emerald-50 border-emerald-200',
-  'bg-pink-50 border-pink-200',
-  'bg-indigo-50 border-indigo-200',
+  { color: 'from-blue-500 to-blue-600', bgColor: 'bg-blue-50', borderColor: 'border-blue-200' },
+  { color: 'from-violet-500 to-violet-600', bgColor: 'bg-violet-50', borderColor: 'border-violet-200' },
+  { color: 'from-cyan-500 to-cyan-600', bgColor: 'bg-cyan-50', borderColor: 'border-cyan-200' },
+  { color: 'from-amber-500 to-amber-600', bgColor: 'bg-amber-50', borderColor: 'border-amber-200' },
+  { color: 'from-emerald-500 to-emerald-600', bgColor: 'bg-emerald-50', borderColor: 'border-emerald-200' },
+  { color: 'from-pink-500 to-pink-600', bgColor: 'bg-pink-50', borderColor: 'border-pink-200' },
+  { color: 'from-indigo-500 to-indigo-600', bgColor: 'bg-indigo-50', borderColor: 'border-indigo-200' },
 ];
 
 export default function PipelinePage() {
@@ -67,6 +78,7 @@ export default function PipelinePage() {
   const [selectedJob, setSelectedJob] = useState<string>('');
   const [recruiters, setRecruiters] = useState<{ id: string; name: string }[]>([]);
   const [selectedRecruiter, setSelectedRecruiter] = useState<string>('');
+  const [showFilters, setShowFilters] = useState(false);
   const [pendingChanges, setPendingChanges] = useState<
     Record<string, { type: 'stage' | 'status'; toStageId?: string; status?: string }>
   >({});
@@ -232,7 +244,7 @@ export default function PipelinePage() {
       const newColumns = sortedStages.map((stage: any, index: number) => ({
         id: stage.id,
         title: stage.name,
-        color: STAGE_COLORS[index % STAGE_COLORS.length],
+        color: STAGE_COLORS[index % STAGE_COLORS.length].color,
         applications: filteredApplications
           .filter((app: any) => app.current_stage_id === stage.id)
           .map((app: any) => ({
@@ -250,7 +262,9 @@ export default function PipelinePage() {
     }
 
     const fallbackColumns = STATUS_COLUMNS.map(stage => ({
-      ...stage,
+      id: stage.id,
+      title: stage.title,
+      color: stage.color,
       applications: filteredApplications
         .filter((app: any) => app.status === stage.id)
         .map((app: any) => ({
@@ -370,162 +384,354 @@ export default function PipelinePage() {
     });
   };
 
+  // Calculate stats
+  const totalCandidates = applicationsCache.length;
+  const inProcessCount = applicationsCache.filter(a => a.status === 'in_process').length;
+  const hiredCount = applicationsCache.filter(a => a.status === 'hired').length;
+  const conversionRate = totalCandidates > 0 ? Math.round((hiredCount / totalCandidates) * 100) : 0;
+
   return (
-    <div className="min-h-full">
-      <DashboardHeader
-        title="Pipeline de Recrutamento"
-        subtitle="Gerencie o status das candidaturas"
-        actions={
-          <div className="flex items-center gap-2">
-            {Object.keys(pendingChanges).length > 0 && (
-              <Badge variant="warning">
-                {Object.keys(pendingChanges).length} pendente(s)
-              </Badge>
-            )}
+    <div className="min-h-full bg-gradient-to-br from-gray-50 to-gray-100">
+      {/* Header Section */}
+      <div className="bg-white border-b border-gray-200 sticky top-0 z-10">
+        <div className="px-6 py-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">Pipeline de Recrutamento</h1>
+              <p className="text-sm text-gray-500 mt-1">Gerencie e acompanhe o progresso das candidaturas</p>
+            </div>
+            <div className="flex items-center gap-3">
+              {pendingChanges && Object.keys(pendingChanges).length > 0 && (
+                <Badge className="bg-amber-100 text-amber-800 border border-amber-200">
+                  <Clock className="h-3 w-3 mr-1" />
+                  {Object.keys(pendingChanges).length} alteração(ões) pendente(s)
+                </Badge>
+              )}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => loadApplications()}
+                disabled={loading}
+              >
+                <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+                Atualizar
+              </Button>
+              <Button
+                onClick={handleSaveChanges}
+                disabled={saving || !pendingChanges || Object.keys(pendingChanges).length === 0}
+                className="bg-[#1F4ED8] hover:bg-[#1a3fb3]"
+              >
+                {saving ? (
+                  <>
+                    <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                    Salvando...
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle2 className="h-4 w-4 mr-2" />
+                    Salvar Alterações
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
+        </div>
+
+        {/* Stats Bar */}
+        <div className="px-6 pb-4">
+          <div className="grid grid-cols-4 gap-4">
+            <div className="bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl p-4 text-white">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-blue-100 text-xs font-medium uppercase tracking-wider">Total de Candidatos</p>
+                  <p className="text-3xl font-bold mt-1">{totalCandidates}</p>
+                </div>
+                <div className="bg-white/20 rounded-lg p-2">
+                  <Users className="h-6 w-6" />
+                </div>
+              </div>
+            </div>
+            <div className="bg-gradient-to-r from-amber-500 to-amber-600 rounded-xl p-4 text-white">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-amber-100 text-xs font-medium uppercase tracking-wider">Em Avaliação</p>
+                  <p className="text-3xl font-bold mt-1">{inProcessCount}</p>
+                </div>
+                <div className="bg-white/20 rounded-lg p-2">
+                  <Clock className="h-6 w-6" />
+                </div>
+              </div>
+            </div>
+            <div className="bg-gradient-to-r from-emerald-500 to-emerald-600 rounded-xl p-4 text-white">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-emerald-100 text-xs font-medium uppercase tracking-wider">Contratados</p>
+                  <p className="text-3xl font-bold mt-1">{hiredCount}</p>
+                </div>
+                <div className="bg-white/20 rounded-lg p-2">
+                  <CheckCircle2 className="h-6 w-6" />
+                </div>
+              </div>
+            </div>
+            <div className="bg-gradient-to-r from-violet-500 to-violet-600 rounded-xl p-4 text-white">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-violet-100 text-xs font-medium uppercase tracking-wider">Taxa de Conversão</p>
+                  <p className="text-3xl font-bold mt-1">{conversionRate}%</p>
+                </div>
+                <div className="bg-white/20 rounded-lg p-2">
+                  <TrendingUp className="h-6 w-6" />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Search & Filters */}
+        <div className="px-6 pb-4">
+          <div className="flex items-center gap-3">
+            <div className="flex-1 relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Buscar por nome, email ou vaga..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1F4ED8] focus:border-transparent transition-all"
+              />
+            </div>
             <Button
-              onClick={handleSaveChanges}
-              disabled={saving || Object.keys(pendingChanges).length === 0}
+              variant="outline"
+              onClick={() => setShowFilters(!showFilters)}
+              className={showFilters ? 'bg-gray-100' : ''}
             >
-              {saving ? 'Salvando...' : 'Salvar alterações'}
+              <Filter className="h-4 w-4 mr-2" />
+              Filtros
+              {(selectedJob || selectedRecruiter) && (
+                <Badge className="ml-2 bg-[#1F4ED8] text-white text-xs">
+                  {(selectedJob ? 1 : 0) + (selectedRecruiter ? 1 : 0)}
+                </Badge>
+              )}
             </Button>
           </div>
-        }
-      />
 
-      <div className="px-6 py-6">
-        {/* Filters */}
-        <Card className="mb-6">
-          <CardContent className="p-4">
-            <div className="flex flex-col gap-4 lg:flex-row">
-              <div className="flex-1 relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                <input
-                  type="text"
-                  placeholder="Buscar candidatos..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#141042]"
-                />
+          {/* Expandable Filters */}
+          {showFilters && (
+            <div className="mt-3 p-4 bg-gray-50 rounded-lg border border-gray-200 animate-in slide-in-from-top-2 duration-200">
+              <div className="flex items-center gap-4">
+                <div className="flex-1">
+                  <label className="text-xs font-medium text-gray-600 uppercase tracking-wider mb-1.5 block">
+                    Vaga
+                  </label>
+                  <select
+                    value={selectedJob}
+                    onChange={(e) => setSelectedJob(e.target.value)}
+                    className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1F4ED8]"
+                  >
+                    <option value="">Todas as vagas</option>
+                    {jobs.map((job) => (
+                      <option key={job.id} value={job.id}>
+                        {job.title}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="flex-1">
+                  <label className="text-xs font-medium text-gray-600 uppercase tracking-wider mb-1.5 block">
+                    Recrutador
+                  </label>
+                  <select
+                    value={selectedRecruiter}
+                    onChange={(e) => setSelectedRecruiter(e.target.value)}
+                    className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1F4ED8]"
+                  >
+                    <option value="">Todos os recrutadores</option>
+                    {recruiters.map((recruiter) => (
+                      <option key={recruiter.id} value={recruiter.id}>
+                        {recruiter.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                {(selectedJob || selectedRecruiter) && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      setSelectedJob('');
+                      setSelectedRecruiter('');
+                    }}
+                    className="mt-6 text-gray-500 hover:text-gray-700"
+                  >
+                    Limpar filtros
+                  </Button>
+                )}
               </div>
-              <select
-                value={selectedJob}
-                onChange={(e) => setSelectedJob(e.target.value)}
-                className="px-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#141042]"
-              >
-                <option value="">Todas as vagas</option>
-                {jobs.map((job) => (
-                  <option key={job.id} value={job.id}>
-                    {job.title}
-                  </option>
-                ))}
-              </select>
-              <select
-                value={selectedRecruiter}
-                onChange={(e) => setSelectedRecruiter(e.target.value)}
-                className="px-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#141042]"
-              >
-                <option value="">Todos recrutadores</option>
-                {recruiters.map((recruiter) => (
-                  <option key={recruiter.id} value={recruiter.id}>
-                    {recruiter.name}
-                  </option>
-                ))}
-              </select>
             </div>
-          </CardContent>
-        </Card>
+          )}
+        </div>
+      </div>
 
+      {/* Pipeline Board */}
+      <div className="p-6">
         {loading ? (
-          <div className="text-center py-12">
-            <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-gray-200 border-t-[#141042]" />
+          <div className="flex items-center justify-center py-20">
+            <div className="text-center">
+              <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-gray-200 border-t-[#1F4ED8] mb-4" />
+              <p className="text-gray-500">Carregando pipeline...</p>
+            </div>
           </div>
         ) : (
           <DragDropContext onDragEnd={handleDragEnd}>
-            <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
-              {columns.map((column) => (
-                <Droppable key={column.id} droppableId={column.id}>
-                  {(provided, snapshot) => (
-                    <div
-                      ref={provided.innerRef}
-                      {...provided.droppableProps}
-                      className={`rounded-lg border-2 ${column.color} ${
-                        snapshot.isDraggingOver ? 'ring-2 ring-[#141042]' : ''
-                      }`}
-                    >
-                      <div className="p-3 border-b">
-                        <h3 className="font-semibold text-gray-900 text-sm">
-                          {column.title}
-                        </h3>
-                        <p className="text-xs text-gray-500 mt-1">
-                          {column.applications.length} candidato(s)
-                        </p>
-                      </div>
+            <div className="flex gap-4 overflow-x-auto pb-4">
+              {columns.map((column, columnIndex) => {
+                const columnConfig = STATUS_COLUMNS.find(s => s.id === column.id) || {
+                  color: STAGE_COLORS[columnIndex % STAGE_COLORS.length].color,
+                  bgColor: STAGE_COLORS[columnIndex % STAGE_COLORS.length].bgColor,
+                  borderColor: STAGE_COLORS[columnIndex % STAGE_COLORS.length].borderColor,
+                  icon: Users
+                };
+                const IconComponent = columnConfig.icon || Users;
 
-                      <div className="p-2 space-y-2 min-h-50">
-                        {column.applications.map((app, index) => (
-                          <Draggable
-                            key={app.id}
-                            draggableId={app.id}
-                            index={index}
-                          >
-                            {(provided, snapshot) => (
-                              <div
-                                ref={provided.innerRef}
-                                {...provided.draggableProps}
-                                {...provided.dragHandleProps}
-                                className={`bg-white rounded-lg border border-gray-200 p-3 hover:shadow-md transition-shadow cursor-move ${
-                                  snapshot.isDragging ? 'shadow-lg' : ''
-                                }`}
-                              >
-                                <div className="flex items-start gap-2 mb-2">
-                                  <Avatar className="h-8 w-8">
-                                    <AvatarFallback className="bg-[#141042] text-white text-xs">
-                                      {app.candidate_name
-                                        .split(' ')
-                                        .map(n => n[0])
-                                        .join('')
-                                        .slice(0, 2)}
-                                    </AvatarFallback>
-                                  </Avatar>
-                                  <div className="flex-1 min-w-0">
-                                    <p className="font-medium text-sm text-gray-900 truncate">
-                                      {app.candidate_name}
-                                    </p>
-                                    <p className="text-xs text-gray-500 truncate">
-                                      {app.job_title}
-                                    </p>
-                                  </div>
-                                </div>
+                return (
+                  <Droppable key={column.id} droppableId={column.id}>
+                    {(provided, snapshot) => (
+                      <div
+                        ref={provided.innerRef}
+                        {...provided.droppableProps}
+                        className={`flex-shrink-0 w-80 rounded-xl border-2 transition-all duration-200 ${
+                          snapshot.isDraggingOver 
+                            ? 'ring-2 ring-[#1F4ED8] ring-offset-2 border-[#1F4ED8] shadow-lg' 
+                            : `${columnConfig.borderColor} border-opacity-50`
+                        } bg-white shadow-sm`}
+                      >
+                        {/* Column Header */}
+                        <div className={`bg-gradient-to-r ${columnConfig.color} rounded-t-lg p-4`}>
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                              <div className="bg-white/20 rounded-lg p-2">
+                                <IconComponent className="h-5 w-5 text-white" />
+                              </div>
+                              <div>
+                                <h3 className="font-semibold text-white text-sm">
+                                  {column.title}
+                                </h3>
+                                <p className="text-white/80 text-xs mt-0.5">
+                                  {column.applications.length} candidato{column.applications.length !== 1 ? 's' : ''}
+                                </p>
+                              </div>
+                            </div>
+                            <button className="p-1 hover:bg-white/20 rounded-lg transition-colors">
+                              <MoreVertical className="h-4 w-4 text-white/80" />
+                            </button>
+                          </div>
+                        </div>
 
-                                <div className="flex items-center gap-1 text-xs text-gray-400 mt-2">
-                                  <Calendar className="h-3 w-3" />
-                                  <span>{formatDate(app.applied_at)}</span>
-                                </div>
+                        {/* Column Content */}
+                        <div className="p-3 space-y-3 min-h-[400px] max-h-[calc(100vh-400px)] overflow-y-auto">
+                          {column.applications.length === 0 ? (
+                            <div className={`${columnConfig.bgColor} rounded-lg border-2 border-dashed ${columnConfig.borderColor} p-6 text-center`}>
+                              <div className={`inline-flex items-center justify-center w-12 h-12 rounded-full ${columnConfig.bgColor} mb-3`}>
+                                <IconComponent className="h-6 w-6 text-gray-400" />
+                              </div>
+                              <p className="text-gray-500 text-sm">
+                                Nenhum candidato nesta etapa
+                              </p>
+                              <p className="text-gray-400 text-xs mt-1">
+                                Arraste candidatos para cá
+                              </p>
+                            </div>
+                          ) : (
+                            column.applications.map((app, index) => (
+                              <Draggable key={app.id} draggableId={app.id} index={index}>
+                                {(provided, snapshot) => (
+                                  <div
+                                    ref={provided.innerRef}
+                                    {...provided.draggableProps}
+                                    {...provided.dragHandleProps}
+                                    className={`bg-white rounded-xl border border-gray-200 p-4 transition-all duration-200 cursor-grab active:cursor-grabbing group ${
+                                      snapshot.isDragging 
+                                        ? 'shadow-xl ring-2 ring-[#1F4ED8] rotate-2 scale-105' 
+                                        : 'hover:shadow-md hover:border-gray-300'
+                                    }`}
+                                  >
+                                    {/* Card Header */}
+                                    <div className="flex items-start gap-3">
+                                      <Avatar className="h-10 w-10 ring-2 ring-gray-100">
+                                        <AvatarFallback className="bg-gradient-to-br from-[#1F4ED8] to-[#3b82f6] text-white text-sm font-medium">
+                                          {app.candidate_name
+                                            .split(' ')
+                                            .map((n: string) => n[0])
+                                            .join('')
+                                            .slice(0, 2)
+                                            .toUpperCase()}
+                                        </AvatarFallback>
+                                      </Avatar>
+                                      <div className="flex-1 min-w-0">
+                                        <p className="font-semibold text-gray-900 truncate">
+                                          {app.candidate_name}
+                                        </p>
+                                        <div className="flex items-center gap-1 text-xs text-gray-500 mt-0.5">
+                                          <Mail className="h-3 w-3" />
+                                          <span className="truncate">{app.candidate_email}</span>
+                                        </div>
+                                      </div>
+                                    </div>
 
-                                {app.rating && (
-                                  <div className="flex items-center gap-1 mt-2">
-                                    {[...Array(5)].map((_, i) => (
-                                      <Star
-                                        key={i}
-                                        className={`h-3 w-3 ${
-                                          i < app.rating!
-                                            ? 'fill-yellow-400 text-yellow-400'
-                                            : 'text-gray-300'
-                                        }`}
-                                      />
-                                    ))}
+                                    {/* Job Badge */}
+                                    <div className="mt-3">
+                                      <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-gray-100 rounded-full">
+                                        <Briefcase className="h-3 w-3 text-gray-500" />
+                                        <span className="text-xs font-medium text-gray-600 truncate max-w-[180px]">
+                                          {app.job_title}
+                                        </span>
+                                      </div>
+                                    </div>
+
+                                    {/* Card Footer */}
+                                    <div className="mt-3 pt-3 border-t border-gray-100 flex items-center justify-between">
+                                      <div className="flex items-center gap-1.5 text-xs text-gray-400">
+                                        <Calendar className="h-3.5 w-3.5" />
+                                        <span>{formatDate(app.applied_at)}</span>
+                                      </div>
+                                      
+                                      {app.rating && (
+                                        <div className="flex items-center gap-0.5">
+                                          {[...Array(5)].map((_, i) => (
+                                            <Star
+                                              key={i}
+                                              className={`h-3.5 w-3.5 ${
+                                                i < app.rating!
+                                                  ? 'fill-amber-400 text-amber-400'
+                                                  : 'text-gray-200'
+                                              }`}
+                                            />
+                                          ))}
+                                        </div>
+                                      )}
+                                    </div>
+
+                                    {/* Hover Actions */}
+                                    <div className="mt-2 pt-2 border-t border-gray-100 opacity-0 group-hover:opacity-100 transition-opacity">
+                                      <div className="flex items-center justify-between">
+                                        <button className="text-xs text-[#1F4ED8] hover:text-[#1a3fb3] font-medium">
+                                          Ver perfil
+                                        </button>
+                                        <ArrowRight className="h-4 w-4 text-gray-300" />
+                                      </div>
+                                    </div>
                                   </div>
                                 )}
-                              </div>
-                            )}
-                          </Draggable>
-                        ))}
-                        {provided.placeholder}
+                              </Draggable>
+                            ))
+                          )}
+                          {provided.placeholder}
+                        </div>
                       </div>
-                    </div>
-                  )}
-                </Droppable>
-              ))}
+                    )}
+                  </Droppable>
+                );
+              })}
             </div>
           </DragDropContext>
         )}

@@ -15,6 +15,7 @@ interface Employee {
   phone?: string;
   birth_date?: string;
   hire_date: string;
+  termination_date?: string;
   position?: string;
   department?: string;
   manager_id?: string;

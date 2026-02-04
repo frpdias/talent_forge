@@ -1,12 +1,13 @@
-import { createServerClient } from '@/lib/supabase/server';
+import { createClient } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const supabase = await createServerClient();
+    const { id } = await params;
+    const supabase = await createClient();
     
     // Verificar autenticação
     const { data: { session }, error: authError } = await supabase.auth.getSession();
@@ -18,7 +19,7 @@ export async function POST(
       );
     }
 
-    const companyId = params.id;
+    const companyId = id;
 
     // Verificar se a empresa existe e se o usuário tem permissão
     const { data: company, error: companyError } = await supabase

@@ -3,7 +3,18 @@
 import { useState, useEffect } from 'react';
 import { Plus, Search, Users, Building2, UserCheck, UserX } from 'lucide-react';
 import { useOrgStore } from '@/lib/store';
-import type { Employee } from '@repo/types';
+
+interface Employee {
+  id: string;
+  full_name: string;
+  cpf?: string;
+  email?: string;
+  phone?: string;
+  position?: string;
+  department?: string;
+  hire_date?: string;
+  status: 'active' | 'inactive' | 'terminated';
+}
 
 export default function EmployeesPage() {
   const { currentOrg } = useOrgStore();
@@ -48,7 +59,7 @@ export default function EmployeesPage() {
 
   const filteredEmployees = employees.filter(emp =>
     emp.full_name.toLowerCase().includes(search.toLowerCase()) ||
-    emp.cpf.includes(search) ||
+    emp.cpf?.includes(search) ||
     emp.position?.toLowerCase().includes(search.toLowerCase())
   );
 
@@ -206,7 +217,7 @@ export default function EmployeesPage() {
                       </div>
                       <div>
                         <p className="font-medium text-gray-900">{employee.full_name}</p>
-                        <p className="text-sm text-gray-500">CPF: {employee.cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4')}</p>
+                        <p className="text-sm text-gray-500">CPF: {employee.cpf?.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4') || '-'}</p>
                       </div>
                     </div>
                   </td>
@@ -217,7 +228,7 @@ export default function EmployeesPage() {
                     {employee.department || '-'}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                    {new Date(employee.hire_date).toLocaleDateString('pt-BR')}
+                    {employee.hire_date ? new Date(employee.hire_date).toLocaleDateString('pt-BR') : '-'}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${

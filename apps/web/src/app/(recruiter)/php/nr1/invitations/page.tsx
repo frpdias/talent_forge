@@ -117,7 +117,7 @@ export default function InvitationsPage() {
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
-          'x-org-id': orgId,
+          'x-org-id': orgId || '',
         },
         body: JSON.stringify({
           org_id: orgId,
@@ -132,7 +132,7 @@ export default function InvitationsPage() {
 
       alert('Convites enviados com sucesso!');
       setSelectedEmployees([]);
-      await loadInvitations(orgId);
+      if (orgId) await loadInvitations(orgId);
     } catch (error: any) {
       alert(error.message);
     } finally {
@@ -154,13 +154,13 @@ export default function InvitationsPage() {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${token}`,
-          'x-org-id': orgId,
+          'x-org-id': orgId || '',
         },
       });
 
       if (!res.ok) throw new Error('Erro ao reenviar convite');
       alert('Convite reenviado! Novo link gerado.');
-      await loadInvitations(orgId);
+      if (orgId) await loadInvitations(orgId);
     } catch (error: any) {
       alert(error.message);
     }
@@ -175,13 +175,13 @@ export default function InvitationsPage() {
         method: 'DELETE',
         headers: {
           Authorization: `Bearer ${token}`,
-          'x-org-id': orgId,
+          'x-org-id': orgId || '',
         },
       });
 
       if (!res.ok) throw new Error('Erro ao cancelar convite');
       alert('Convite cancelado com sucesso');
-      await loadInvitations(orgId);
+      if (orgId) await loadInvitations(orgId);
     } catch (error: any) {
       alert(error.message);
     }
