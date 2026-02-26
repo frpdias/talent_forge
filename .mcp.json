@@ -1,14 +1,10 @@
 {
   "mcpServers": {
     "talentforge": {
-      "command": "node",
+      "command": "bash",
       "args": [
-        "./packages/mcp/dist/server.js"
-      ],
-      "env": {
-        "SUPABASE_URL": "${SUPABASE_URL}",
-        "SUPABASE_SERVICE_ROLE_KEY": "${SUPABASE_SERVICE_ROLE_KEY}"
-      }
+        "./packages/mcp/start.sh"
+      ]
     }
   }
 }
