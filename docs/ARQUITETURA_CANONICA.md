@@ -141,9 +141,20 @@ PROJETO_TALENT_FORGE/
 │       └── public/                 # Static assets
 │
 ├── packages/
-│   └── types/                      # Shared TypeScript types
-│       └── src/
-│           └── index.ts           # Exported types
+│   ├── types/                      # Shared TypeScript types
+│   │   └── src/
+│   │       └── index.ts           # Exported types
+│   └── mcp/                        # TalentForge MCP Server (@talentforge/mcp)
+│       ├── src/
+│       │   ├── server.ts           # Entry point — Server MCP + handlers stdio
+│       │   ├── lib/
+│       │   │   └── supabase.ts     # Cliente Supabase service role + validateOrg()
+│       │   └── tools/
+│       │       ├── recruitment.ts  # search-candidates, get-pipeline-status, move-candidate, get-candidate-profile
+│       │       ├── assessments.ts  # analyze-disc-profile, compare-candidates, get-team-health
+│       │       └── people.ts       # get-recruitment-metrics, get-employee-list, predict-retention-risk
+│       ├── package.json            # name: @talentforge/mcp, bin: talentforge-mcp
+│       └── tsconfig.json           # ES2022, NodeNext, strict
 │
 ├── supabase/
 │   ├── migrations/                # Database migrations (ordem cronológica)
@@ -4436,3 +4447,80 @@ CREATE TYPE alert_level AS ENUM ('none', 'watch', 'warning', 'critical');
 ---
 
 ## 12) Design System e Padrões Visuais
+
+---
+
+## 13) Módulo MCP — TalentForge AI Brain (v1.0, 2026-02-26)
+
+### Visão Geral
+O `packages/mcp` implementa o **TalentForge MCP Server** — uma interface Model Context Protocol (Anthropic) que expõe as capacidades de RH do TalentForge para agentes de IA (Claude Desktop, claude-code, e outros clientes MCP compatíveis).
+
+**Posicionamento estratégico**: em vez de competir com ERP de Ponto/Folha, o TalentForge se posiciona como o **cérebro de RH analítico e comportamental**, conectável a qualquer sistema via MCP.
+
+### Package: `@talentforge/mcp`
+- **Localização**: `packages/mcp/`
+- **Entry point**: `packages/mcp/src/server.ts`
+- **Binário**: `talentforge-mcp` (executa via stdio)
+- **Transporte**: stdio (padrão MCP — compatível com Claude Desktop e claude-code)
+- **Conexão DB**: Supabase service role direto (não passa pela API NestJS)
+- **Build tool**: esbuild (TS 5.9 + zod 3.25 causam hang no tsc)
+
+### Regras Canônicas do MCP
+1. **Toda tool DEVE chamar `validateOrg(org_id)` antes de qualquer query** — garante multi-tenant
+2. **Nenhuma tool expõe dados fora do escopo da org** — `owner_org_id` ou join via `jobs.org_id`
+3. **`applications` não tem `org_id` direto** — acesso sempre via `jobs!inner(org_id)` (path canônico)
+4. **Operações de escrita** devem registrar audit trail em `application_events`
+5. **Erros retornam `isError: true`** no response MCP — nunca lançam exceção não tratada
+6. **Logs apenas em `stderr`** — stdout é reservado para o protocolo MCP (stdio)
+
+### Catálogo de Tools (v1.0)
+
+#### Recrutamento (`tools/recruitment.ts`)
+| Tool | Descrição | Tabelas principais |
+|------|-----------|-------------------|
+| `search-candidates` | Busca candidatos por texto, tags, localização | `candidates`, `assessments` |
+| `get-pipeline-status` | Status do pipeline de uma vaga com candidatos por estágio | `jobs`, `pipeline_stages`, `applications` |
+| `move-candidate` | Move candidatura para outro estágio (escreve audit trail) | `applications`, `application_events` |
+| `get-candidate-profile` | Perfil completo: assessments, candidaturas, notas | `candidates`, `assessments`, `applications` |
+
+#### Assessments / Comportamental (`tools/assessments.ts`)
+| Tool | Descrição | Tabelas principais |
+|------|-----------|-------------------|
+| `analyze-disc-profile` | Análise DISC com traço primário/secundário, pontos fortes e atenção | `disc_assessments`, `assessments` |
+| `compare-candidates` | Ranking de candidatos por score — ideal para decisão entre finalistas | `candidates`, `assessments` |
+| `get-team-health` | Score integrado PHP (TFCI + NR-1 + COPC) + último ciclo e avaliação | `php_integrated_scores`, `tfci_cycles` |
+
+#### People Analytics (`tools/people.ts`)
+| Tool | Descrição | Tabelas principais |
+|------|-----------|-------------------|
+| `get-recruitment-metrics` | Vagas, candidatos, conversão, time-to-hire no período | `jobs`, `candidates`, `applications` |
+| `get-employee-list` | Lista colaboradores com filtro por departamento ou time | `employees`, `team_members` |
+| `predict-retention-risk` | Top colaboradores em risco de turnover/burnout (PHP scores + fallback NR-1) | `php_integrated_scores`, `nr1_risk_assessments` |
+
+### Build e Execução
+```bash
+npm run build:mcp        # compila com esbuild (~10ms)
+npm run mcp:inspect      # UI visual para testar as tools
+npm run mcp:start        # inicia servidor (stdio)
+
+# Variáveis obrigatórias
+SUPABASE_URL=https://xxx.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=eyJ...
+```
+
+### Integração com Claude Desktop
+Adicionar em `~/.config/claude/claude_desktop_config.json`:
+```json
+{
+  "mcpServers": {
+    "talentforge": {
+      "command": "node",
+      "args": ["/path/to/packages/mcp/dist/server.js"],
+      "env": {
+        "SUPABASE_URL": "...",
+        "SUPABASE_SERVICE_ROLE_KEY": "..."
+      }
+    }
+  }
+}
+```
