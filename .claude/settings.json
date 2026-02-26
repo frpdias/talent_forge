@@ -1,0 +1,22 @@
+{
+  "enableAllProjectMcpServers": true,
+  "permissions": {
+    "allow": [
+      "Bash(npm run dev:api)",
+      "Read(//Users/fernandodias/Desktop/PROJETO_TALENT_FORGE/**)",
+      "Bash(lsof -p 10518)",
+      "Bash(pgrep -P 10518)",
+      "Bash(xargs -I{} ps -p {} -o pid,command)",
+      "Bash(lsof -i :3001)",
+      "Bash(node dist/main)",
+      "Bash(node /Users/fernandodias/Desktop/PROJETO_TALENT_FORGE/apps/api/dist/main.js)",
+      "Bash(done)",
+      "Bash(npm show @modelcontextprotocol/sdk version)",
+      "Bash(npm install -w @talentforge/mcp)",
+      "Bash(gtimeout 15 node /Users/fernandodias/Desktop/PROJETO_TALENT_FORGE/node_modules/typescript/bin/tsc --version)",
+      "Bash(node /Users/fernandodias/Desktop/PROJETO_TALENT_FORGE/node_modules/typescript/bin/tsc --version)",
+      "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\(json.dumps\\(d.get\\(''peerDependencies'',{}\\), indent=2\\)\\); print\\(json.dumps\\(d.get\\(''dependencies'',{}\\), indent=2\\)\\)\")",
+      "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\(d[''version'']\\)\")"
+    ]
+  }
+}

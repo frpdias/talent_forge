@@ -24,6 +24,7 @@ supabase/.temp/
 # Env/config
 .env
 .env.*
+!.env.example
 
 # Supabase debug/maintenance scripts (local only)
 supabase/scripts/
