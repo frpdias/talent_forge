@@ -191,7 +191,7 @@ export function usePhpRealtime(options: UsePhpRealtimeOptions): UsePhpRealtimeRe
     if (socketRef.current?.connected) return;
 
     const socket = io(`${getApiUrl()}/php`, {
-      transports: ['websocket', 'polling'],
+      transports: ['websocket', 'polling'] as string[],
       query: {
         userId,
         userName,

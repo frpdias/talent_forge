@@ -5,6 +5,18 @@ import { useRouter } from 'next/navigation';
 import { ArrowLeft, TrendingUp, TrendingDown, Minus, AlertCircle } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { useOrgStore } from '@/lib/store';
+import {
+  LineChart,
+  Line,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+} from 'recharts';
 
 interface CopcMetric {
   id: string;
@@ -51,7 +63,7 @@ export default function CopcTrendsPage() {
       }
 
       const response = await fetch(
-        `http://localhost:3001/api/v1/php/copc/metrics?org_id=${currentOrg.id}&period=${period}`,
+        `/api/v1/php/copc/metrics?org_id=${currentOrg.id}&period=${period}`,
         {
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -207,6 +219,74 @@ export default function CopcTrendsPage() {
             </p>
           </div>
         </div>
+
+        {/* Line Chart — Evolução temporal */}
+        {metrics.length >= 2 && (
+          <div className="bg-white rounded-lg border border-[#E5E5DC] p-6 mb-6">
+            <h2 className="text-xl font-semibold text-[#141042] mb-4">
+              Evolução do Score Geral (COPC)
+            </h2>
+            <ResponsiveContainer width="100%" height={280}>
+              <LineChart
+                data={[...metrics]
+                  .sort((a, b) => new Date(a.metric_date).getTime() - new Date(b.metric_date).getTime())
+                  .map((m) => ({
+                    data: new Date(m.metric_date).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }),
+                    Geral: m.overall_performance_score?.toFixed(1),
+                    Qualidade: m.quality_score?.toFixed(1),
+                    Eficiência: m.efficiency_score?.toFixed(1),
+                    Efetividade: m.effectiveness_score?.toFixed(1),
+                    CX: m.cx_score?.toFixed(1),
+                    People: m.people_score?.toFixed(1),
+                  }))}
+                margin={{ top: 5, right: 20, left: 0, bottom: 5 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" stroke="#E5E5DC" />
+                <XAxis dataKey="data" tick={{ fontSize: 12, fill: '#666666' }} />
+                <YAxis domain={[0, 100]} tick={{ fontSize: 12, fill: '#666666' }} />
+                <Tooltip
+                  contentStyle={{ borderColor: '#E5E5DC', borderRadius: 8, fontSize: 12 }}
+                />
+                <Legend wrapperStyle={{ fontSize: 12 }} />
+                <Line type="monotone" dataKey="Geral" stroke="#141042" strokeWidth={2} dot={{ r: 3 }} />
+                <Line type="monotone" dataKey="Qualidade" stroke="#10B981" strokeWidth={1.5} dot={false} />
+                <Line type="monotone" dataKey="Eficiência" stroke="#3B82F6" strokeWidth={1.5} dot={false} />
+                <Line type="monotone" dataKey="Efetividade" stroke="#8B5CF6" strokeWidth={1.5} dot={false} />
+                <Line type="monotone" dataKey="CX" stroke="#F59E0B" strokeWidth={1.5} dot={false} />
+                <Line type="monotone" dataKey="People" stroke="#EC4899" strokeWidth={1.5} dot={false} />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        )}
+
+        {/* Bar Chart — Comparação atual vs anterior */}
+        {trends.length > 0 && (
+          <div className="bg-white rounded-lg border border-[#E5E5DC] p-6 mb-6">
+            <h2 className="text-xl font-semibold text-[#141042] mb-4">
+              Comparação por Categoria (Atual vs Anterior)
+            </h2>
+            <ResponsiveContainer width="100%" height={280}>
+              <BarChart
+                data={trends.map((t) => ({
+                  categoria: t.category,
+                  Atual: Number(t.current.toFixed(1)),
+                  Anterior: Number(t.previous.toFixed(1)),
+                }))}
+                margin={{ top: 5, right: 20, left: 0, bottom: 5 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" stroke="#E5E5DC" />
+                <XAxis dataKey="categoria" tick={{ fontSize: 11, fill: '#666666' }} />
+                <YAxis domain={[0, 100]} tick={{ fontSize: 12, fill: '#666666' }} />
+                <Tooltip
+                  contentStyle={{ borderColor: '#E5E5DC', borderRadius: 8, fontSize: 12 }}
+                />
+                <Legend wrapperStyle={{ fontSize: 12 }} />
+                <Bar dataKey="Atual" fill="#141042" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="Anterior" fill="#E5E5DC" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        )}
 
         {/* Trends Table */}
         {trends.length === 0 ? (

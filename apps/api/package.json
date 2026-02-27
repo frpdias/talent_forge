@@ -8,6 +8,7 @@
   "scripts": {
     "build": "nest build",
     "build:api": "npm run build",
+    "dev:api": "nest start --watch",
     "vercel-build": "nest build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "nest start",
@@ -22,6 +23,8 @@
     "test:e2e": "jest --config ./test/jest-e2e.json"
   },
   "dependencies": {
+    "@isaacs/balanced-match": "^4.0.1",
+    "@isaacs/brace-expansion": "^5.0.1",
     "@nestjs/common": "^11.0.1",
     "@nestjs/config": "^4.0.0",
     "@nestjs/core": "^11.0.1",
@@ -30,9 +33,12 @@
     "@nestjs/swagger": "^11.0.0",
     "@nestjs/websockets": "^11.1.13",
     "@supabase/supabase-js": "^2.39.0",
+    "@talentforge/types": "*",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.1",
+    "lru-cache": "^11.2.6",
     "openai": "^4.77.0",
+    "path-scurry": "^2.0.2",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
     "socket.io": "^4.8.3"

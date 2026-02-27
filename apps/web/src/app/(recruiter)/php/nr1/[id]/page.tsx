@@ -77,7 +77,7 @@ export default function Nr1DetailPage() {
       }
 
       const response = await fetch(
-        `http://localhost:3001/api/v1/php/nr1/assessments/${assessmentId}`,
+        `/api/v1/php/nr1/assessments/${assessmentId}`,
         {
           headers: {
             'Authorization': `Bearer ${token}`,

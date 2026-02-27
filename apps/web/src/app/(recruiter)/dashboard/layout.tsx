@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { createBrowserClient } from '@supabase/ssr';
-import { useOrgStore } from '@/lib/store';
+import { useOrgStore, Organization } from '@/lib/store';
 import { 
   LayoutDashboard, 
   Briefcase, 
@@ -241,7 +241,7 @@ export default function RecruiterLayout({ children }: { children: React.ReactNod
                   Carregando empresas...
                 </div>
               ) : (
-                organizations.map((org) => (
+                organizations.map((org: Organization) => (
                   <button
                     key={org.id}
                     onClick={() => {

@@ -57,7 +57,7 @@ export default function CopcMetricDetailPage() {
       }
 
       const response = await fetch(
-        `http://localhost:3001/api/v1/php/copc/metrics/${metricId}`,
+        `/api/v1/php/copc/metrics/${metricId}`,
         {
           headers: {
             'Authorization': `Bearer ${token}`,

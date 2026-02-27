@@ -4448,6 +4448,110 @@ CREATE TYPE alert_level AS ENUM ('none', 'watch', 'warning', 'critical');
 
 ## 12) Design System e Padrões Visuais
 
+### 🎨 Paleta de Cores (NUNCA ALTERAR)
+
+| Token | HEX | Uso |
+|-------|-----|-----|
+| Primary | `#141042` | Roxo escuro — texto principal, botões primários, headers |
+| Secondary | `#10B981` | Verde — sucesso, confirmação, status ativo |
+| Accent | `#3B82F6` | Azul — informativo, links, badges |
+| Warning | `#F59E0B` | Laranja — avisos, alertas médios |
+| Danger | `#EF4444` | Vermelho — erros, risco alto, exclusão |
+| Purple | `#8B5CF6` | Roxo alternativo — assessments, badges especiais |
+| Pink | `#EC4899` | Rosa — People/bem-estar no COPC |
+| Cyan | `#06B6D4` | Ciano — métricas complementares |
+| Background main | `#FFFFFF` | Fundo de cards e modais |
+| Background alt | `#FAFAF8` | Fundo de páginas e seções |
+| Border | `#E5E5DC` | Bordas de cards e divisores |
+| Text primary | `#141042` | Texto principal |
+| Text secondary | `#666666` | Texto auxiliar / labels |
+| Text muted | `#999999` | Placeholders / metadados |
+
+**Branding do Logotipo (Módulo PHP e páginas admin):**
+- `TALENT` → `#1F4ED8` Montserrat SemiBold `tracking-tight`
+- `FORGE` → `#F97316` Montserrat Bold `tracking-wider`
+
+### 🖋️ Tipografia
+
+- **Família**: Montserrat (Google Fonts) — configurada via `@import` em `globals.css`
+- **Pesos**: 400 Regular · 500 Medium · 600 SemiBold · 700 Bold
+- **Títulos H1**: `text-3xl font-bold text-[#141042]`
+- **Títulos H2**: `text-xl font-semibold text-[#141042]`
+- **Labels**: `text-sm text-[#666666]`
+- **Metadados**: `text-xs text-[#999999]`
+
+### 🧱 Componentes Padrão
+
+#### Cards
+```tsx
+<div className="bg-white border border-[#E5E5DC] rounded-xl shadow-sm hover:shadow-md transition-shadow p-6">
+```
+
+#### Botão Primário
+```tsx
+<button className="px-4 py-2 bg-[#141042] text-white rounded-lg hover:bg-[#1a1554] transition-colors">
+```
+
+#### Botão Secundário
+```tsx
+<button className="px-4 py-2 border border-[#E5E5DC] text-[#141042] rounded-lg hover:bg-[#FAFAF8] transition-colors">
+```
+
+#### Botão Perigo
+```tsx
+<button className="px-4 py-2 bg-[#EF4444] text-white rounded-lg hover:bg-red-700 transition-colors">
+```
+
+#### Input
+```tsx
+<input className="w-full px-3 py-2 border border-[#E5E5DC] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#141042]" />
+```
+
+#### Badge de Status
+```tsx
+// Sucesso
+<span className="px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">Ativo</span>
+// Risco Alto
+<span className="px-3 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">Alto</span>
+// Informativo
+<span className="px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">Info</span>
+```
+
+#### Spinner de Loading
+```tsx
+<div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#141042]"></div>
+```
+
+#### Empty State
+```tsx
+<div className="text-center py-12">
+  <IconComponent className="w-12 h-12 text-[#E5E5DC] mx-auto mb-4" />
+  <p className="text-[#999999]">Nenhum item encontrado</p>
+</div>
+```
+
+### 📐 Layout e Espaçamento
+
+- **Max-width páginas**: `max-w-7xl mx-auto px-4 sm:px-6 lg:px-8`
+- **Padding de seções**: `py-8`
+- **Gap de grids**: `gap-6`
+- **Grids responsivos**: `grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6`
+
+### ⚙️ Implementação Técnica (Tailwind 4)
+
+- **Approach**: CSS-first via `@import "tailwindcss"` + `@theme inline` em `globals.css`
+- **SEM** `tailwind.config.ts` — configuração direta via CSS variables
+- **Cores via CSS var**: `--color-primary: #141042` etc. (definido em `globals.css`)
+- **Arquivo principal**: `apps/web/src/app/globals.css`
+
+### 🚫 Proibições do Design System
+
+1. Não usar classes Tailwind genéricas (`bg-blue-500`, `text-gray-900`) em componentes novos — usar valores HEX do sistema
+2. Não criar novos tokens de cor sem aprovação
+3. Não alterar `globals.css` sem atualizar este documento
+4. Não usar `rounded-full` em cards — somente `rounded-xl` ou `rounded-lg`
+5. Não usar sombras pesadas — máximo `shadow-md` em hover
+
 ---
 
 ## 13) Módulo MCP — TalentForge AI Brain (v1.0, 2026-02-26)

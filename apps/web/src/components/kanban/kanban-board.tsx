@@ -197,7 +197,8 @@ export function KanbanBoard({ columns: initialColumns, onMoveCard }: KanbanBoard
           </KanbanColumn>
         ))}
       </div>
-      <DragOverlay>
+      {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+      <DragOverlay {...({} as any)}>
         {activeItem ? <KanbanCard item={activeItem} isDragging /> : null}
       </DragOverlay>
     </DndContext>

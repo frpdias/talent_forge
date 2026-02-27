@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useOrgStore } from '@/lib/store';
+import { createClient } from '@/lib/supabase/client';
 
 export default function NewCopcMetric() {
   const router = useRouter();
@@ -91,7 +92,8 @@ export default function NewCopcMetric() {
     setLoading(true);
 
     try {
-      const token = localStorage.getItem('supabase_token');
+      const { data: { session } } = await createClient().auth.getSession();
+      const token = session?.access_token || '';
 
       const payload = {
         org_id: currentOrg.id,

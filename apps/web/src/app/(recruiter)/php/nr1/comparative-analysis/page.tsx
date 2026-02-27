@@ -60,7 +60,7 @@ export default function ComparativeAnalysisPage() {
       if (!token || !currentOrg?.id) return;
 
       const response = await fetch(
-        `http://localhost:3001/api/v1/php/nr1/comparative-analysis/${currentOrg.id}`,
+        `/api/v1/php/nr1/comparative-analysis/${currentOrg.id}`,
         {
           headers: {
             'Authorization': `Bearer ${token}`,

@@ -17,6 +17,7 @@ import {
   Check,
 } from 'lucide-react';
 import { useOrgStore } from '@/lib/store';
+import { createClient } from '@/lib/supabase/client';
 
 interface TeamMember {
   id: string;
@@ -101,12 +102,13 @@ export default function TeamDetailsPage() {
 
   const loadTeam = useCallback(async () => {
     if (!currentOrg?.id || !teamId) return;
-    
+
     try {
       setLoading(true);
+      const { data: { session } } = await createClient().auth.getSession();
       const res = await fetch(`/api/v1/php/teams/${teamId}`, {
         headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`,
+          Authorization: `Bearer ${session?.access_token || ''}`,
           'x-org-id': currentOrg.id,
         },
       });
@@ -127,12 +129,13 @@ export default function TeamDetailsPage() {
 
   const loadAvailableEmployees = useCallback(async () => {
     if (!currentOrg?.id || !teamId) return;
-    
+
     try {
       setLoadingAvailable(true);
+      const { data: { session } } = await createClient().auth.getSession();
       const res = await fetch(`/api/v1/php/teams/${teamId}/available-members`, {
         headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`,
+          Authorization: `Bearer ${session?.access_token || ''}`,
           'x-org-id': currentOrg.id,
         },
       });
@@ -160,14 +163,15 @@ export default function TeamDetailsPage() {
 
   const handleSaveEdit = async () => {
     if (!currentOrg?.id || !team) return;
-    
+
     try {
       setSaving(true);
+      const { data: { session } } = await createClient().auth.getSession();
       const res = await fetch(`/api/v1/php/teams/${team.id}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${localStorage.getItem('token')}`,
+          Authorization: `Bearer ${session?.access_token || ''}`,
           'x-org-id': currentOrg.id,
         },
         body: JSON.stringify({
@@ -192,14 +196,15 @@ export default function TeamDetailsPage() {
 
   const handleAddMember = async (employeeId: string) => {
     if (!currentOrg?.id || !team) return;
-    
+
     try {
       setAddingMember(true);
+      const { data: { session } } = await createClient().auth.getSession();
       const res = await fetch(`/api/v1/php/teams/${team.id}/members`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${localStorage.getItem('token')}`,
+          Authorization: `Bearer ${session?.access_token || ''}`,
           'x-org-id': currentOrg.id,
         },
         body: JSON.stringify({
@@ -225,12 +230,13 @@ export default function TeamDetailsPage() {
   const handleRemoveMember = async (memberId: string, memberName: string) => {
     if (!currentOrg?.id || !team) return;
     if (!confirm(`Remover ${memberName} do time?`)) return;
-    
+
     try {
+      const { data: { session } } = await createClient().auth.getSession();
       const res = await fetch(`/api/v1/php/teams/${team.id}/members/${memberId}`, {
         method: 'DELETE',
         headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`,
+          Authorization: `Bearer ${session?.access_token || ''}`,
           'x-org-id': currentOrg.id,
         },
       });
@@ -248,12 +254,13 @@ export default function TeamDetailsPage() {
 
   const handleUpdateRole = async (memberId: string, newRole: 'member' | 'lead' | 'coordinator') => {
     if (!currentOrg?.id || !team) return;
-    
+
     try {
+      const { data: { session } } = await createClient().auth.getSession();
       const res = await fetch(`/api/v1/php/teams/${team.id}/members/${memberId}/role?role=${newRole}`, {
         method: 'PATCH',
         headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`,
+          Authorization: `Bearer ${session?.access_token || ''}`,
           'x-org-id': currentOrg.id,
         },
       });
@@ -274,10 +281,11 @@ export default function TeamDetailsPage() {
     if (!confirm(`Tem certeza que deseja excluir o time "${team.name}"? Esta ação não pode ser desfeita.`)) return;
 
     try {
+      const { data: { session } } = await createClient().auth.getSession();
       const res = await fetch(`/api/v1/php/teams/${team.id}`, {
         method: 'DELETE',
         headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`,
+          Authorization: `Bearer ${session?.access_token || ''}`,
           'x-org-id': currentOrg.id,
         },
       });

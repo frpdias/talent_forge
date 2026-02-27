@@ -59,7 +59,7 @@ export default function RiskMatrixPage() {
       }
 
       const response = await fetch(
-        `http://localhost:3001/api/v1/php/nr1/assessments?org_id=${currentOrg.id}`,
+        `/api/v1/php/nr1/assessments?org_id=${currentOrg.id}`,
         {
           headers: {
             'Authorization': `Bearer ${token}`,

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Plus, Search, Users, Building2, UserCheck, UserX } from 'lucide-react';
 import { useOrgStore } from '@/lib/store';
+import { createClient } from '@/lib/supabase/client';
 
 interface Employee {
   id: string;
@@ -32,6 +33,7 @@ export default function EmployeesPage() {
   const loadEmployees = async () => {
     try {
       setLoading(true);
+      const { data: { session } } = await createClient().auth.getSession();
       const params = new URLSearchParams({
         organization_id: currentOrg!.id,
       });
@@ -41,7 +43,7 @@ export default function EmployeesPage() {
 
       const res = await fetch(`/api/v1/php/employees?${params}`, {
         headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`,
+          Authorization: `Bearer ${session?.access_token || ''}`,
           'x-org-id': currentOrg!.id,
         },
       });
