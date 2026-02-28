@@ -458,7 +458,7 @@ export default function DashboardPage() {
         {statCards.map((stat) => {
           const colors = colorClasses[stat.color];
           return (
-            <div key={stat.title} className="bg-white border border-[#E5E5DC] rounded-xl sm:rounded-2xl p-4 sm:p-6 hover:shadow-lg transition-shadow">
+            <div key={stat.title} className="bg-white border border-[#E5E5DC] rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-[0_2px_8px_rgba(20,16,66,0.06),0_1px_2px_rgba(20,16,66,0.04)] hover:shadow-[0_8px_32px_rgba(20,16,66,0.10),0_2px_8px_rgba(20,16,66,0.06)] hover:-translate-y-0.5 transition-all duration-300">
               <div className="flex items-start justify-between">
                 <div className="flex-1">
                   <p className="text-sm text-[#666666]">
@@ -498,7 +498,7 @@ export default function DashboardPage() {
 
       {/* Insights */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
-        <div className="bg-white border border-[#E5E5DC] rounded-xl p-4 sm:p-6">
+        <div className="bg-white border border-[#E5E5DC] rounded-xl p-4 sm:p-6 shadow-[0_2px_8px_rgba(20,16,66,0.06),0_1px_2px_rgba(20,16,66,0.04)]">
           <h3 className="text-base font-semibold text-[#141042] mb-4">Gargalos por Etapa</h3>
           <div className="space-y-3">
             {bottleneckStages.length === 0 ? (
@@ -516,7 +516,7 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        <div className="bg-white border border-[#E5E5DC] rounded-xl p-4 sm:p-6">
+        <div className="bg-white border border-[#E5E5DC] rounded-xl p-4 sm:p-6 shadow-[0_2px_8px_rgba(20,16,66,0.06),0_1px_2px_rgba(20,16,66,0.04)]">
           <h3 className="text-base font-semibold text-[#141042] mb-4">Candidatos Parados</h3>
           <div className="space-y-3">
             {stalledApplications.length === 0 ? (
@@ -537,7 +537,7 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        <div className="bg-white border border-[#E5E5DC] rounded-xl p-4 sm:p-6">
+        <div className="bg-white border border-[#E5E5DC] rounded-xl p-4 sm:p-6 shadow-[0_2px_8px_rgba(20,16,66,0.06),0_1px_2px_rgba(20,16,66,0.04)]">
           <h3 className="text-base font-semibold text-[#141042] mb-4">Alertas</h3>
           <div className="space-y-3">
             {alerts.length === 0 ? (
@@ -558,7 +558,7 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
         {/* Recent Activity */}
         <div className="lg:col-span-2">
-          <div className="bg-white border border-[#E5E5DC] rounded-xl">
+          <div className="bg-white border border-[#E5E5DC] rounded-xl shadow-[0_2px_8px_rgba(20,16,66,0.06),0_1px_2px_rgba(20,16,66,0.04)]">
             <div className="flex items-center justify-between p-4 sm:p-6 border-b border-[#E5E5DC]">
               <h3 className="text-base font-semibold text-[#141042]">Atividade Recente</h3>
               <Link href="/dashboard/reports" className="text-sm text-[#141042] hover:underline flex items-center gap-1">
@@ -638,7 +638,7 @@ export default function DashboardPage() {
 
         {/* Quick Actions */}
         <div className="space-y-4 sm:space-y-6">
-          <div className="bg-white border border-[#E5E5DC] rounded-xl p-4 sm:p-6">
+          <div className="bg-white border border-[#E5E5DC] rounded-xl p-4 sm:p-6 shadow-[0_2px_8px_rgba(20,16,66,0.06),0_1px_2px_rgba(20,16,66,0.04)]">
             <h3 className="text-base font-semibold text-[#141042] mb-4">Ações Rápidas</h3>
             <div className="space-y-3">
               <Link href="/dashboard/jobs/new" className="block">
@@ -691,7 +691,7 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          <div className="bg-white border border-[#E5E5DC] rounded-xl p-4 sm:p-6">
+          <div className="bg-white border border-[#E5E5DC] rounded-xl p-4 sm:p-6 shadow-[0_2px_8px_rgba(20,16,66,0.06),0_1px_2px_rgba(20,16,66,0.04)]">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-base font-semibold text-[#141042]">Vagas Ativas</h3>
               <Link href="/dashboard/jobs" className="text-xs text-[#141042] hover:underline">
@@ -731,7 +731,7 @@ export default function DashboardPage() {
           </div>
 
           {/* Tip Card */}
-          <div className="bg-white border border-[#E5E5DC] rounded-xl p-4 sm:p-6">
+          <div className="bg-white border border-[#E5E5DC] rounded-xl p-4 sm:p-6 shadow-[0_2px_8px_rgba(20,16,66,0.06),0_1px_2px_rgba(20,16,66,0.04)]">
             <div className="flex items-start gap-3">
               <div className="p-2 bg-[#FAFAF8] rounded-lg">
                 <TrendingUp className="w-5 h-5 text-[#141042]" />

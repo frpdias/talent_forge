@@ -19,8 +19,8 @@ export function Card({ children, className, hover = false, padding = 'none' }: C
   return (
     <div className={cn(
       'bg-white rounded-xl border border-[var(--border)]',
-      'shadow-[var(--shadow-xs)]',
-      hover && 'transition-all duration-200 hover:shadow-[var(--shadow-md)] hover:border-[var(--border-hover)]',
+      'shadow-[var(--shadow-sm)]',
+      hover && 'transition-all duration-300 hover:shadow-[var(--shadow-lg)] hover:-translate-y-px hover:border-[var(--border-hover)]',
       paddingStyles[padding],
       className
     )}>
@@ -47,7 +47,7 @@ export function CardContent({ children, className }: { children: ReactNode; clas
 
 export function CardFooter({ children, className }: { children: ReactNode; className?: string }) {
   return (
-    <div className={cn('px-5 py-4 border-t border-[var(--border)] bg-[var(--tf-gray-50)]', className)}>
+    <div className={cn('px-5 py-4 border-t border-[var(--border)] bg-[rgba(20,16,66,0.02)]', className)}>
       {children}
     </div>
   );

@@ -1,6 +1,6 @@
 # Arquitetura Canônica — TalentForge
 
-**Última atualização**: 2026-02-28 | **Score de Conformidade**: ✅ 100% (Sprint 17: Design System restaurado + @types/react fix + Build 88/88 pages estáticas)
+**Última atualização**: 2026-02-28 | **Score de Conformidade**: ✅ 100% (Sprint 18: Deploy padronizado + Glass tokens + Layout refinado)
 
 ## 📜 FONTE DA VERDADE — PRINCÍPIO FUNDAMENTAL
 
@@ -4835,7 +4835,7 @@ Próxima revisão: Sprint 12 (Action Plans + Settings)
 
 ---
 
-**FIM DO DOCUMENTO** — Versão 3.6 (Sprint 17 + Design System Restaurado + @types/react Override + Build 88/88)
+**FIM DO DOCUMENTO** — Versão 3.7 (Sprint 18 + Deploy Padronizado + Glass Tokens + Layout Refinado)
 ```sql
 CREATE TYPE risk_level AS ENUM ('low', 'medium', 'high', 'critical');
 CREATE TYPE assessment_status AS ENUM ('draft', 'active', 'completed', 'cancelled');
@@ -4876,6 +4876,18 @@ CREATE TYPE alert_level AS ENUM ('none', 'watch', 'warning', 'critical');
 ---
 
 ## 📝 Histórico de Versões
+
+### v3.7 (2026-02-28)
+- ✅ **Score de Conformidade**: 100% mantido (Sprint 18)
+- ✅ **Deploy padronizado**: URLs estáveis Vercel documentadas; GitHub integrado ao projeto web; `api-config.ts` centraliza URL da API
+- ✅ **Glass tokens**: `--glass-*` adicionados em `globals.css` (Apple Liquid Glass)
+- ✅ **Shadows tintadas**: shadows com `rgba(20,16,66,...)` substituem sombras genéricas do Tailwind
+- ✅ **Easing curves**: `--ease-spring` e `--ease-smooth` adicionadas como tokens
+- ✅ **Sidebar corrigida**: `bg-gray-900` → `bg-[#141042]` (cor canônica)
+- ✅ **Header sticky glass**: `sticky top-0` + `backdrop-blur-xl` + `bg-white/85`
+- ✅ **Dashboard background**: gradiente sutil `bg-linear-to-br from-[#FAFAF8] via-[#F5F4FB]`
+- ✅ **Vercel team**: documentado `fernando-dias-projects-e4b4044b` / orgId `team_lwke1raX8NIzKHkR5z2CPFR5`
+- ✅ **API URL**: `NEXT_PUBLIC_API_BASE_URL` sem `/api/v1`; `api-config.ts` compõe `API_V1_URL`
 
 ### v3.6 (2026-02-28)
 - ✅ **Score de Conformidade**: 100% mantido (Sprint 17)
@@ -5039,13 +5051,68 @@ CREATE TYPE alert_level AS ENUM ('none', 'watch', 'warning', 'critical');
 - **Cores via CSS var**: `--color-primary: #141042` etc. (definido em `globals.css`)
 - **Arquivo principal**: `apps/web/src/app/globals.css`
 
+### 🪟 Glass Tokens — Apple Liquid Glass (Sprint 18)
+
+Tokens de glassmorphism adicionados em `globals.css`:
+
+| Token | Valor | Uso |
+|-------|-------|-----|
+| `--glass-bg` | `rgba(255,255,255,0.80)` | Fundo glass padrão |
+| `--glass-bg-heavy` | `rgba(255,255,255,0.92)` | Glass opaco (header sticky) |
+| `--glass-bg-tinted` | `rgba(20,16,66,0.04)` | Glass levemente tintado de primary |
+| `--glass-border` | `rgba(255,255,255,0.50)` | Borda glass clara |
+| `--glass-border-subtle` | `rgba(20,16,66,0.08)` | Borda glass sutil (primary) |
+| `--glass-specular` | `inset 0 1px 0 rgba(255,255,255,0.70)` | Reflexo especular |
+| `--glass-shadow` | composto | Sombra + reflexo combinados |
+
+**Easing curves:**
+- `--ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1)` — animações com overshoot
+- `--ease-smooth: cubic-bezier(0.25, 0.46, 0.45, 0.94)` — transições suaves
+
+**Shadows tintadas (primary):**
+```css
+--shadow-xs: 0 1px 3px rgba(20, 16, 66, 0.04);
+--shadow-sm: 0 2px 8px rgba(20, 16, 66, 0.06), 0 1px 2px rgba(20, 16, 66, 0.04);
+--shadow-md: 0 4px 16px rgba(20, 16, 66, 0.08), 0 2px 4px rgba(20, 16, 66, 0.05);
+--shadow-lg: 0 8px 32px rgba(20, 16, 66, 0.10), 0 2px 8px rgba(20, 16, 66, 0.06);
+--shadow-xl: 0 16px 48px rgba(20, 16, 66, 0.12), 0 4px 16px rgba(20, 16, 66, 0.08);
+```
+> Sombras tintadas com `#141042` dão profundidade cromática sem pesar visualmente.
+
+### 🏗️ Padrões de Layout (Sprint 18)
+
+#### Sidebar
+```tsx
+// Cor canônica: bg-[#141042] (não gray-900)
+<aside className="fixed inset-y-0 left-0 z-40 w-64 bg-[#141042] text-white flex flex-col shadow-[4px_0_24px_rgba(20,16,66,0.15)]">
+  <div className="flex h-16 items-center px-6 border-b border-white/10">
+    {/* Logo */}
+  </div>
+</aside>
+```
+
+#### Header Sticky (Glass)
+```tsx
+// Header com backdrop-blur (Apple-style)
+<header className="sticky top-0 z-30 h-16 border-b border-[#E5E5DC] bg-white/85 backdrop-blur-xl flex items-center justify-between px-6">
+  <h1 className="text-xl font-semibold text-[#141042]">{title}</h1>
+</header>
+```
+
+#### Dashboard Background
+```tsx
+// Gradiente sutil em vez de bg-gray-50
+<div className="min-h-screen bg-linear-to-br from-[#FAFAF8] via-[#F5F4FB] to-[#FAFAF8]">
+```
+
 ### 🚫 Proibições do Design System
 
-1. Não usar classes Tailwind genéricas (`bg-blue-500`, `text-gray-900`) em componentes novos — usar valores HEX do sistema
+1. Não usar classes Tailwind genéricas (`bg-blue-500`, `text-gray-900`, `bg-gray-50`) em componentes novos — usar valores HEX do sistema
 2. Não criar novos tokens de cor sem aprovação
 3. Não alterar `globals.css` sem atualizar este documento
 4. Não usar `rounded-full` em cards — somente `rounded-xl` ou `rounded-lg`
-5. Não usar sombras pesadas — máximo `shadow-md` em hover
+5. Não usar `bg-gray-900` na sidebar — usar `bg-[#141042]` (cor canônica primária)
+6. Sombras em hover: usar `shadow-[var(--shadow-lg)]` das CSS vars tintadas (não `shadow-md` hardcoded do Tailwind)
 
 ---
 

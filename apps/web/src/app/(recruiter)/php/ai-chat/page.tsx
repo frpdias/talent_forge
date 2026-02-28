@@ -390,7 +390,7 @@ export default function AiChatPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="prose dark:prose-invert max-w-none">
+                <div className="prose max-w-none">
                   <div className="whitespace-pre-wrap">{report.content}</div>
                 </div>
                 {report.recommendations.length > 0 && (

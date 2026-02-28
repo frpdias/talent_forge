@@ -391,14 +391,14 @@ export default function PipelinePage() {
   const conversionRate = totalCandidates > 0 ? Math.round((hiredCount / totalCandidates) * 100) : 0;
 
   return (
-    <div className="min-h-full bg-gradient-to-br from-gray-50 to-gray-100">
+    <div className="min-h-full">
       {/* Header Section */}
-      <div className="bg-white border-b border-gray-200 sticky top-0 z-10">
+      <div className="bg-white/85 backdrop-blur-xl border-b border-[#E5E5DC] sticky top-0 z-10">
         <div className="px-6 py-4">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Pipeline de Recrutamento</h1>
-              <p className="text-sm text-gray-500 mt-1">Gerencie e acompanhe o progresso das candidaturas</p>
+              <h1 className="text-2xl font-bold text-[#141042]">Pipeline de Recrutamento</h1>
+              <p className="text-sm text-[#666666] mt-1">Gerencie e acompanhe o progresso das candidaturas</p>
             </div>
             <div className="flex items-center gap-3">
               {pendingChanges && Object.keys(pendingChanges).length > 0 && (
@@ -419,7 +419,7 @@ export default function PipelinePage() {
               <Button
                 onClick={handleSaveChanges}
                 disabled={saving || !pendingChanges || Object.keys(pendingChanges).length === 0}
-                className="bg-[#1F4ED8] hover:bg-[#1a3fb3]"
+                className="bg-[#141042] hover:bg-[#1a164f]"
               >
                 {saving ? (
                   <>
@@ -491,24 +491,24 @@ export default function PipelinePage() {
         <div className="px-6 pb-4">
           <div className="flex items-center gap-3">
             <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#94A3B8]" />
               <input
                 type="text"
                 placeholder="Buscar por nome, email ou vaga..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1F4ED8] focus:border-transparent transition-all"
+                className="w-full pl-10 pr-4 py-2.5 bg-[#FAFAF8] border border-[#E5E5DC] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#141042] focus:border-transparent transition-all"
               />
             </div>
             <Button
               variant="outline"
               onClick={() => setShowFilters(!showFilters)}
-              className={showFilters ? 'bg-gray-100' : ''}
+              className={showFilters ? 'bg-[rgba(20,16,66,0.06)]' : ''}
             >
               <Filter className="h-4 w-4 mr-2" />
               Filtros
               {(selectedJob || selectedRecruiter) && (
-                <Badge className="ml-2 bg-[#1F4ED8] text-white text-xs">
+                <Badge className="ml-2 bg-[#141042] text-white text-xs">
                   {(selectedJob ? 1 : 0) + (selectedRecruiter ? 1 : 0)}
                 </Badge>
               )}
@@ -517,16 +517,16 @@ export default function PipelinePage() {
 
           {/* Expandable Filters */}
           {showFilters && (
-            <div className="mt-3 p-4 bg-gray-50 rounded-lg border border-gray-200 animate-in slide-in-from-top-2 duration-200">
+            <div className="mt-3 p-4 bg-[#FAFAF8] rounded-lg border border-[#E5E5DC] animate-in slide-in-from-top-2 duration-200">
               <div className="flex items-center gap-4">
                 <div className="flex-1">
-                  <label className="text-xs font-medium text-gray-600 uppercase tracking-wider mb-1.5 block">
+                  <label className="text-xs font-medium text-[#666666] uppercase tracking-wider mb-1.5 block">
                     Vaga
                   </label>
                   <select
                     value={selectedJob}
                     onChange={(e) => setSelectedJob(e.target.value)}
-                    className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1F4ED8]"
+                    className="w-full px-3 py-2 bg-white border border-[#E5E5DC] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#141042]"
                   >
                     <option value="">Todas as vagas</option>
                     {jobs.map((job) => (
@@ -537,13 +537,13 @@ export default function PipelinePage() {
                   </select>
                 </div>
                 <div className="flex-1">
-                  <label className="text-xs font-medium text-gray-600 uppercase tracking-wider mb-1.5 block">
+                  <label className="text-xs font-medium text-[#666666] uppercase tracking-wider mb-1.5 block">
                     Recrutador
                   </label>
                   <select
                     value={selectedRecruiter}
                     onChange={(e) => setSelectedRecruiter(e.target.value)}
-                    className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1F4ED8]"
+                    className="w-full px-3 py-2 bg-white border border-[#E5E5DC] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#141042]"
                   >
                     <option value="">Todos os recrutadores</option>
                     {recruiters.map((recruiter) => (
@@ -561,7 +561,7 @@ export default function PipelinePage() {
                       setSelectedJob('');
                       setSelectedRecruiter('');
                     }}
-                    className="mt-6 text-gray-500 hover:text-gray-700"
+                    className="mt-6 text-[#666666] hover:text-[#141042]"
                   >
                     Limpar filtros
                   </Button>
@@ -577,8 +577,8 @@ export default function PipelinePage() {
         {loading ? (
           <div className="flex items-center justify-center py-20">
             <div className="text-center">
-              <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-gray-200 border-t-[#1F4ED8] mb-4" />
-              <p className="text-gray-500">Carregando pipeline...</p>
+              <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-[#E5E5DC] border-t-[#141042] mb-4" />
+              <p className="text-[#666666]">Carregando pipeline...</p>
             </div>
           </div>
         ) : (
@@ -600,10 +600,10 @@ export default function PipelinePage() {
                         ref={provided.innerRef}
                         {...provided.droppableProps}
                         className={`flex-shrink-0 w-80 rounded-xl border-2 transition-all duration-200 ${
-                          snapshot.isDraggingOver 
-                            ? 'ring-2 ring-[#1F4ED8] ring-offset-2 border-[#1F4ED8] shadow-lg' 
+                          snapshot.isDraggingOver
+                            ? 'ring-2 ring-[#141042] ring-offset-2 border-[#141042] shadow-lg'
                             : `${columnConfig.borderColor} border-opacity-50`
-                        } bg-white shadow-sm`}
+                        } bg-white shadow-[var(--shadow-sm)]`}
                       >
                         {/* Column Header */}
                         <div className={`bg-gradient-to-r ${columnConfig.color} rounded-t-lg p-4`}>
@@ -632,12 +632,12 @@ export default function PipelinePage() {
                           {column.applications.length === 0 ? (
                             <div className={`${columnConfig.bgColor} rounded-lg border-2 border-dashed ${columnConfig.borderColor} p-6 text-center`}>
                               <div className={`inline-flex items-center justify-center w-12 h-12 rounded-full ${columnConfig.bgColor} mb-3`}>
-                                <IconComponent className="h-6 w-6 text-gray-400" />
+                                <IconComponent className="h-6 w-6 text-[#94A3B8]" />
                               </div>
-                              <p className="text-gray-500 text-sm">
+                              <p className="text-[#666666] text-sm">
                                 Nenhum candidato nesta etapa
                               </p>
-                              <p className="text-gray-400 text-xs mt-1">
+                              <p className="text-[#94A3B8] text-xs mt-1">
                                 Arraste candidatos para cá
                               </p>
                             </div>
@@ -649,15 +649,15 @@ export default function PipelinePage() {
                                     ref={provided.innerRef}
                                     {...provided.draggableProps}
                                     {...provided.dragHandleProps}
-                                    className={`bg-white rounded-xl border border-gray-200 p-4 transition-all duration-200 cursor-grab active:cursor-grabbing group ${
-                                      snapshot.isDragging 
-                                        ? 'shadow-xl ring-2 ring-[#1F4ED8] rotate-2 scale-105' 
-                                        : 'hover:shadow-md hover:border-gray-300'
+                                    className={`bg-white rounded-xl border border-[#E5E5DC] p-4 transition-all duration-300 cursor-grab active:cursor-grabbing group ${
+                                      snapshot.isDragging
+                                        ? 'shadow-xl ring-2 ring-[#141042] rotate-2 scale-105'
+                                        : 'hover:shadow-[var(--shadow-md)] hover:-translate-y-px hover:border-[#141042]/20'
                                     }`}
                                   >
                                     {/* Card Header */}
                                     <div className="flex items-start gap-3">
-                                      <Avatar className="h-10 w-10 ring-2 ring-gray-100">
+                                      <Avatar className="h-10 w-10 ring-2 ring-[#E5E5DC]">
                                         <AvatarFallback className="bg-gradient-to-br from-[#1F4ED8] to-[#3b82f6] text-white text-sm font-medium">
                                           {app.candidate_name
                                             .split(' ')
@@ -668,10 +668,10 @@ export default function PipelinePage() {
                                         </AvatarFallback>
                                       </Avatar>
                                       <div className="flex-1 min-w-0">
-                                        <p className="font-semibold text-gray-900 truncate">
+                                        <p className="font-semibold text-[#141042] truncate">
                                           {app.candidate_name}
                                         </p>
-                                        <div className="flex items-center gap-1 text-xs text-gray-500 mt-0.5">
+                                        <div className="flex items-center gap-1 text-xs text-[#666666] mt-0.5">
                                           <Mail className="h-3 w-3" />
                                           <span className="truncate">{app.candidate_email}</span>
                                         </div>
@@ -680,17 +680,17 @@ export default function PipelinePage() {
 
                                     {/* Job Badge */}
                                     <div className="mt-3">
-                                      <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-gray-100 rounded-full">
-                                        <Briefcase className="h-3 w-3 text-gray-500" />
-                                        <span className="text-xs font-medium text-gray-600 truncate max-w-[180px]">
+                                      <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-[rgba(20,16,66,0.05)] rounded-full">
+                                        <Briefcase className="h-3 w-3 text-[#666666]" />
+                                        <span className="text-xs font-medium text-[#444444] truncate max-w-[180px]">
                                           {app.job_title}
                                         </span>
                                       </div>
                                     </div>
 
                                     {/* Card Footer */}
-                                    <div className="mt-3 pt-3 border-t border-gray-100 flex items-center justify-between">
-                                      <div className="flex items-center gap-1.5 text-xs text-gray-400">
+                                    <div className="mt-3 pt-3 border-t border-[#E5E5DC]/60 flex items-center justify-between">
+                                      <div className="flex items-center gap-1.5 text-xs text-[#94A3B8]">
                                         <Calendar className="h-3.5 w-3.5" />
                                         <span>{formatDate(app.applied_at)}</span>
                                       </div>
@@ -703,7 +703,7 @@ export default function PipelinePage() {
                                               className={`h-3.5 w-3.5 ${
                                                 i < app.rating!
                                                   ? 'fill-amber-400 text-amber-400'
-                                                  : 'text-gray-200'
+                                                  : 'text-[#E5E5DC]'
                                               }`}
                                             />
                                           ))}
@@ -712,12 +712,12 @@ export default function PipelinePage() {
                                     </div>
 
                                     {/* Hover Actions */}
-                                    <div className="mt-2 pt-2 border-t border-gray-100 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <div className="mt-2 pt-2 border-t border-[#E5E5DC]/60 opacity-0 group-hover:opacity-100 transition-opacity">
                                       <div className="flex items-center justify-between">
-                                        <button className="text-xs text-[#1F4ED8] hover:text-[#1a3fb3] font-medium">
+                                        <button className="text-xs text-[#141042] hover:text-[#3B82F6] font-medium transition-colors">
                                           Ver perfil
                                         </button>
-                                        <ArrowRight className="h-4 w-4 text-gray-300" />
+                                        <ArrowRight className="h-4 w-4 text-[#94A3B8]" />
                                       </div>
                                     </div>
                                   </div>
