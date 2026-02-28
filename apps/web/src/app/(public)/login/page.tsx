@@ -2,10 +2,9 @@
 
 import { useState, Suspense } from 'react';
 import Link from 'next/link';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import { Mail, Lock, Eye, EyeOff, ArrowRight } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
-import { UserAvatar } from '@/components/UserAvatar';
 
 export default function LoginPage() {
   return (
@@ -16,7 +15,6 @@ export default function LoginPage() {
 }
 
 function LoginContent() {
-  const router = useRouter();
   useSearchParams(); // kept for potential redirect use; currently not needed for logic
   
   const [email, setEmail] = useState('');
@@ -102,7 +100,7 @@ function LoginContent() {
             </div>
             <div className="flex flex-col -space-y-0.5">
               <span className="text-white/90 font-semibold text-lg tracking-tight">TALENT</span>
-              <span className="text-(--tf-accent-light) font-bold text-lg tracking-wide">FORGE</span>
+              <span className="text-[#F97316] font-bold text-lg tracking-wide">FORGE</span>
             </div>
           </Link>
           
@@ -144,8 +142,8 @@ function LoginContent() {
                 <span className="text-white font-bold">TF</span>
               </div>
               <div className="flex flex-col items-start -space-y-0.5">
-                <span className="text-tf-primary font-semibold text-lg tracking-tight">TALENT</span>
-                <span className="text-tf-accent font-bold text-lg tracking-wide">FORGE</span>
+                <span className="text-[#1F4ED8] font-semibold text-lg tracking-tight">TALENT</span>
+                <span className="text-[#F97316] font-bold text-lg tracking-wide">FORGE</span>
               </div>
             </Link>
           </div>

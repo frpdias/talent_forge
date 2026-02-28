@@ -5,7 +5,10 @@
 Score de conformidade atual: ✅ 100% (Sprint 16 + MCP v1.0)
 
 ## Stack
-- **Frontend**: Next.js 15.3.9 + React 18 + Tailwind CSS 4 (CSS-first) + Supabase JS
+- **Frontend**: Next.js 15.5.x + React 18 + Tailwind CSS 4 (CSS-first) + Supabase JS
+  - ⚠️ Next.js 16 é INCOMPATÍVEL (requer React 19). Não usar.
+  - ⚠️ `eslint-config-next` DEVE ser versão igual ao `next` (ex: `15.5.9`)
+  - ⚠️ `@types/react` e `@types/react-dom` DEVEM ser `^18` (não `^19`)
 - **Backend**: NestJS 11 (apps/api) — instável em produção, frontend conecta direto ao Supabase
 - **Banco**: Supabase Postgres + RLS obrigatório em TODAS as tabelas
 - **MCP**: `@talentforge/mcp` em `packages/mcp/` — 10 tools via stdio
@@ -49,7 +52,14 @@ Guarda: `PhpModuleGuard` | 3 pilares: TFCI (30%) + NR-1 (40%) + COPC (30%)
 Tabelas: `php_integrated_scores`, `tfci_cycles`, `tfci_assessments`, `nr1_risk_assessments`, `copc_*`
 
 ## Backlog Prioritário
-- [ ] Seção 12 DA "Design System" — conteúdo vazio, preencher
 - [ ] Gráficos de tendência COPC (recharts instalado)
 - [ ] PDF de compliance NR-1
 - [ ] NestJS API: startup silencioso (não vincula porta 3001)
+
+## Dev Local — Troubleshooting Rápido
+- **NUNCA** colocar `VERCEL_OIDC_TOKEN` em `.env.local` (causa hang do servidor)
+- **NUNCA** adicionar `next` como dependência no `package.json` raiz (conflito de versão)
+- Se `node_modules` corrompido: `rm -rf node_modules */*/node_modules package-lock.json && npm cache clean --force && npm install`
+- Se servidor não responde: `rm -rf apps/web/.next` e reiniciar
+- Primeira compilação Turbopack demora 60-120s (normal)
+- Detalhes completos: `docs/ARQUITETURA_CANONICA.md` seção "Troubleshooting"

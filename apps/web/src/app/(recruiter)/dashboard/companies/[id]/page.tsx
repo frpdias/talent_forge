@@ -1,12 +1,12 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, Suspense } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { 
-  Building2, Users, ArrowLeft, Plus, Edit, Trash2, Mail, Phone, MapPin, 
+  Building2, Users, ArrowLeft, Plus, Edit, Trash2, Mail, Phone, MapPin,
   Globe, Calendar, Briefcase, Network, Upload, Activity, ToggleLeft, ToggleRight,
-  TrendingUp, Award, Shield, Clock, Target, BarChart3, FileText, CheckCircle2,
-  AlertCircle, UserCheck, Building, Hash, Layers
+  TrendingUp, Award, Shield, Clock, BarChart3, FileText, CheckCircle2,
+  UserCheck, Building, Hash, Layers
 } from 'lucide-react';
 import { useOrgStore } from '@/lib/store';
 import { createClient } from '@/lib/supabase/client';
@@ -48,6 +48,18 @@ interface Employee {
 }
 
 export default function CompanyDetailPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#141042]"></div>
+      </div>
+    }>
+      <CompanyDetailContent />
+    </Suspense>
+  );
+}
+
+function CompanyDetailContent() {
   const params = useParams();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -92,7 +104,7 @@ export default function CompanyDetailPage() {
   const loadPhpModuleStatus = async () => {
     try {
       const supabase = createClient();
-      const { data, error } = await supabase
+      const { data } = await supabase
         .from('php_module_activations')
         .select('is_active')
         .eq('org_id', companyId)

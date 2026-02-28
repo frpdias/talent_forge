@@ -9,7 +9,6 @@ import {
   Building2, 
   Settings, 
   Shield, 
-  BarChart3,
   LogOut,
   Menu,
   X,
@@ -23,7 +22,6 @@ import {
   UserPlus,
   Building
 } from 'lucide-react';
-import { UserAvatar } from '@/components/UserAvatar';
 import { createClient } from '@/lib/supabase/client';
 import Image from 'next/image';
 
@@ -107,26 +105,28 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       )}
 
       {/* Sidebar */}
-      <aside className={`fixed left-0 top-0 h-full bg-white border-r border-[#E5E5DC] z-50 transition-transform duration-300 w-70 sm:w-64 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
-        <div className="p-4 sm:p-6 flex items-center">
+      <aside className={`fixed left-0 top-0 h-full bg-[#141042] z-50 transition-transform duration-300 w-70 sm:w-64 shadow-[4px_0_24px_rgba(20,16,66,0.15)] ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
+        <div className="p-4 sm:p-6 flex items-center border-b border-white/10">
           <div className="flex items-center justify-between w-full">
             <Link href="/admin" className="flex items-center space-x-3">
-              <UserAvatar size="md" />
-              <div className="flex flex-col">
-                <span className="text-[#1F4ED8] font-semibold text-base tracking-tight">TALENT</span>
-                <span className="text-[#F97316] font-bold text-base tracking-wider">FORGE</span>
+              <div className="w-9 h-9 rounded-lg bg-white/15 border border-white/20 flex items-center justify-center">
+                <span className="text-white font-bold text-sm">TF</span>
+              </div>
+              <div className="flex flex-col -space-y-0.5">
+                <span className="text-white font-semibold text-sm tracking-tight">TALENT</span>
+                <span className="text-[#F97316] font-bold text-sm tracking-wider">FORGE</span>
               </div>
             </Link>
-            <button 
+            <button
               onClick={() => setSidebarOpen(false)}
-              className="lg:hidden p-2 text-[#666666] hover:text-[#141042]"
+              className="lg:hidden p-2 text-white/50 hover:text-white"
             >
               <X className="w-5 h-5" />
             </button>
           </div>
         </div>
 
-        <nav className="p-3 sm:p-4 space-y-1">
+        <nav className="p-3 sm:p-4 space-y-0.5">
           {navItems.map((item) => {
             const isActive = pathname === item.href || (item.href !== '/admin' && pathname.startsWith(item.href));
             return (
@@ -134,14 +134,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 key={item.href}
                 href={item.href}
                 onClick={() => setSidebarOpen(false)}
-                className={`flex items-center space-x-3 px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl transition-all ${
-                  isActive 
-                    ? 'bg-[#141042] text-white' 
-                    : 'text-[#666666] hover:bg-[#F5F5F0] hover:text-[#141042]'
+                className={`flex items-center space-x-3 px-3 sm:px-4 py-2.5 rounded-lg transition-all duration-200 ${
+                  isActive
+                    ? 'bg-white/15 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.12)]'
+                    : 'text-white/60 hover:bg-white/10 hover:text-white'
                 }`}
               >
-                <item.icon className="w-5 h-5" />
-                <span className="font-medium text-sm sm:text-base">{item.label}</span>
+                <item.icon className="w-4 h-4 shrink-0" />
+                <span className="font-medium text-sm">{item.label}</span>
               </Link>
             );
           })}
@@ -149,24 +149,24 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
         <div className="absolute bottom-0 left-0 right-0 p-3 sm:p-4 space-y-3">
           {/* Logo no rodapé */}
-          <div className="flex items-center justify-center px-3 sm:px-4 py-3 border-t border-[#E5E5DC]">
-            <Image 
+          <div className="flex items-center justify-center px-3 sm:px-4 py-3 border-t border-white/10">
+            <Image
               src="https://fjudsjzfnysaztcwlwgm.supabase.co/storage/v1/object/public/LOGOS/LOGO4.png"
               alt="TalentForge"
               width={160}
               height={64}
-              className="h-16 w-auto opacity-60 hover:opacity-100 transition-opacity"
+              className="h-14 w-auto opacity-50 hover:opacity-80 transition-opacity"
               priority
             />
           </div>
 
           {/* Botão de sair */}
-          <button 
+          <button
             onClick={handleLogout}
-            className="flex items-center space-x-3 px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl text-[#666666] hover:bg-[#F5F5F0] hover:text-[#141042] transition-all w-full"
+            className="flex items-center space-x-3 px-3 sm:px-4 py-2.5 rounded-lg text-white/50 hover:bg-white/10 hover:text-white transition-all w-full"
           >
-            <LogOut className="w-5 h-5" />
-            <span className="font-medium text-sm sm:text-base">Sair</span>
+            <LogOut className="w-4 h-4" />
+            <span className="font-medium text-sm">Sair</span>
           </button>
         </div>
       </aside>

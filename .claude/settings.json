@@ -1,5 +1,4 @@
 {
-  "enableAllProjectMcpServers": true,
   "permissions": {
     "allow": [
       "Bash(npm run dev:api)",
@@ -16,7 +15,11 @@
       "Bash(gtimeout 15 node /Users/fernandodias/Desktop/PROJETO_TALENT_FORGE/node_modules/typescript/bin/tsc --version)",
       "Bash(node /Users/fernandodias/Desktop/PROJETO_TALENT_FORGE/node_modules/typescript/bin/tsc --version)",
       "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\(json.dumps\\(d.get\\(''peerDependencies'',{}\\), indent=2\\)\\); print\\(json.dumps\\(d.get\\(''dependencies'',{}\\), indent=2\\)\\)\")",
-      "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\(d[''version'']\\)\")"
+      "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\(d[''version'']\\)\")",
+      "Bash(node_modules/.bin/eslint --version)",
+      "Bash(../../node_modules/.bin/eslint \"src/app/\\(recruiter\\)/php/\" \"src/app/api/v1/php/\" --max-warnings=50)",
+      "Bash(sample 5709 3)"
     ]
-  }
+  },
+  "enableAllProjectMcpServers": true
 }

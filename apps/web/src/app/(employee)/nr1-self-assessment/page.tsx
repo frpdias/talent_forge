@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { Heart, AlertTriangle, CheckCircle, Info, ArrowLeft, XCircle } from 'lucide-react';
@@ -91,6 +91,18 @@ const SCALE_LABELS = {
 };
 
 export default function NR1SelfAssessmentPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#141042]"></div>
+      </div>
+    }>
+      <NR1SelfAssessmentContent />
+    </Suspense>
+  );
+}
+
+function NR1SelfAssessmentContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const token = searchParams.get('token');

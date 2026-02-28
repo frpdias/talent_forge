@@ -113,16 +113,16 @@ export default function ReportsPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">
-            <span className="text-[#1F4ED8] font-semibold" style={{ fontFamily: 'Montserrat' }}>
+          <h1 className="text-3xl font-bold text-[#141042]">
+            <span className="text-[#1F4ED8] font-semibold">
               TALENT
             </span>
             {' '}
-            <span className="text-[#F97316] font-bold" style={{ fontFamily: 'Montserrat' }}>
+            <span className="text-[#F97316] font-bold">
               REPORTS
             </span>
           </h1>
-          <p className="text-gray-600 mt-1">
+          <p className="text-[#666666] mt-1">
             Análises e relatórios detalhados do processo de recrutamento
           </p>
         </div>
@@ -134,14 +134,14 @@ export default function ReportsPage() {
               type="date"
               value={dateRange.start}
               onChange={(e) => setDateRange({ ...dateRange, start: e.target.value })}
-              className="px-3 py-2 border border-gray-300 rounded-lg text-sm"
+              className="px-3 py-2 border border-[#E5E5DC] rounded-lg text-sm text-[#141042] bg-white focus:outline-none focus:ring-2 focus:ring-[#141042]"
             />
-            <span className="text-gray-500">até</span>
+            <span className="text-[#666666]">até</span>
             <input
               type="date"
               value={dateRange.end}
               onChange={(e) => setDateRange({ ...dateRange, end: e.target.value })}
-              className="px-3 py-2 border border-gray-300 rounded-lg text-sm"
+              className="px-3 py-2 border border-[#E5E5DC] rounded-lg text-sm text-[#141042] bg-white focus:outline-none focus:ring-2 focus:ring-[#141042]"
             />
           </div>
 
@@ -169,35 +169,35 @@ export default function ReportsPage() {
         <SourceEffectiveness data={sourceData} />
         
         {/* Additional Stats */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">
+        <div className="bg-white rounded-xl shadow-[var(--shadow-sm)] border border-[#E5E5DC] p-6">
+          <h3 className="text-lg font-semibold text-[#141042] mb-4">
             Estatísticas Gerais
           </h3>
           
           <div className="space-y-4">
             <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
-              <span className="text-sm font-medium text-gray-700">
+              <span className="text-sm font-medium text-[#141042]">
                 Taxa de Aceitação de Propostas
               </span>
               <span className="text-2xl font-bold text-blue-600">85%</span>
             </div>
 
             <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
-              <span className="text-sm font-medium text-gray-700">
+              <span className="text-sm font-medium text-[#141042]">
                 Satisfação dos Candidatos
               </span>
               <span className="text-2xl font-bold text-green-600">4.8/5</span>
             </div>
 
             <div className="flex items-center justify-between p-3 bg-orange-50 rounded-lg">
-              <span className="text-sm font-medium text-gray-700">
+              <span className="text-sm font-medium text-[#141042]">
                 Custo Médio por Contratação
               </span>
               <span className="text-2xl font-bold text-orange-600">R$ 2.500</span>
             </div>
 
             <div className="flex items-center justify-between p-3 bg-purple-50 rounded-lg">
-              <span className="text-sm font-medium text-gray-700">
+              <span className="text-sm font-medium text-[#141042]">
                 Retenção (6 meses)
               </span>
               <span className="text-2xl font-bold text-purple-600">92%</span>
@@ -207,44 +207,44 @@ export default function ReportsPage() {
       </div>
 
       {/* Recent Activity Table */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">
+      <div className="bg-white rounded-xl shadow-[var(--shadow-sm)] border border-[#E5E5DC] p-6">
+        <h3 className="text-lg font-semibold text-[#141042] mb-4">
           Atividade Recente
         </h3>
         
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="border-b border-gray-200">
-                <th className="text-left py-3 px-4 text-sm font-semibold text-gray-900">
+              <tr className="border-b border-[#E5E5DC]">
+                <th className="text-left py-3 px-4 text-sm font-semibold text-[#141042]">
                   Candidato
                 </th>
-                <th className="text-left py-3 px-4 text-sm font-semibold text-gray-900">
+                <th className="text-left py-3 px-4 text-sm font-semibold text-[#141042]">
                   Vaga
                 </th>
-                <th className="text-left py-3 px-4 text-sm font-semibold text-gray-900">
+                <th className="text-left py-3 px-4 text-sm font-semibold text-[#141042]">
                   Etapa
                 </th>
-                <th className="text-left py-3 px-4 text-sm font-semibold text-gray-900">
+                <th className="text-left py-3 px-4 text-sm font-semibold text-[#141042]">
                   Origem
                 </th>
-                <th className="text-left py-3 px-4 text-sm font-semibold text-gray-900">
+                <th className="text-left py-3 px-4 text-sm font-semibold text-[#141042]">
                   Data
                 </th>
               </tr>
             </thead>
             <tbody>
               {reportData.map((row, index) => (
-                <tr key={index} className="border-b border-gray-100 hover:bg-gray-50">
-                  <td className="py-3 px-4 text-sm text-gray-900">{row.name}</td>
-                  <td className="py-3 px-4 text-sm text-gray-700">{row.job}</td>
+                <tr key={index} className="border-b border-[#E5E5DC]/60 hover:bg-[#FAFAF8]">
+                  <td className="py-3 px-4 text-sm text-[#141042] font-medium">{row.name}</td>
+                  <td className="py-3 px-4 text-sm text-[#666666]">{row.job}</td>
                   <td className="py-3 px-4">
-                    <span className="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-700 rounded">
+                    <span className="px-2 py-1 text-xs font-medium bg-[rgba(20,16,66,0.08)] text-[#141042] rounded-full">
                       {row.stage}
                     </span>
                   </td>
-                  <td className="py-3 px-4 text-sm text-gray-700">{row.source}</td>
-                  <td className="py-3 px-4 text-sm text-gray-600">{row.date}</td>
+                  <td className="py-3 px-4 text-sm text-[#666666]">{row.source}</td>
+                  <td className="py-3 px-4 text-sm text-[#94A3B8]">{row.date}</td>
                 </tr>
               ))}
             </tbody>
