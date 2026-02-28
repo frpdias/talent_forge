@@ -181,8 +181,8 @@ export default function SettingsPage() {
       <div className="p-8">
         <div className="max-w-4xl mx-auto">
           <div className="animate-pulse space-y-4">
-            <div className="h-8 bg-gray-200 rounded w-1/4"></div>
-            <div className="h-64 bg-gray-200 rounded"></div>
+            <div className="h-8 bg-[#E5E5DC] rounded w-1/4"></div>
+            <div className="h-64 bg-[#E5E5DC] rounded"></div>
           </div>
         </div>
       </div>
@@ -195,8 +195,8 @@ export default function SettingsPage() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Configurações do Módulo PHP</h1>
-            <p className="text-gray-600 mt-1">
+            <h1 className="text-2xl font-bold text-[#141042]">Configurações do Módulo PHP</h1>
+            <p className="text-[#666666] mt-1">
               Personalize pesos, alertas e notificações
             </p>
           </div>
@@ -204,7 +204,7 @@ export default function SettingsPage() {
             <button
               onClick={resetSettings}
               disabled={saving}
-              className="flex items-center gap-2 px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+              className="flex items-center gap-2 px-4 py-2 text-[#666666] hover:bg-[#FAFAF8] rounded-lg transition-colors"
             >
               <RotateCcw className="w-4 h-4" />
               Restaurar Padrão
@@ -235,7 +235,7 @@ export default function SettingsPage() {
         )}
 
         {/* Tabs */}
-        <div className="flex items-center gap-2 border-b">
+        <div className="flex items-center gap-2 border-b border-[#E5E5DC]">
           {[
             { key: 'weights', label: 'Pesos', icon: Sliders },
             { key: 'thresholds', label: 'Alertas', icon: AlertTriangle },
@@ -250,7 +250,7 @@ export default function SettingsPage() {
                 className={`flex items-center gap-2 px-4 py-3 text-sm font-medium transition-colors border-b-2 -mb-px ${
                   activeTab === tab.key
                     ? 'text-[#1F4ED8] border-[#1F4ED8]'
-                    : 'text-gray-600 border-transparent hover:text-gray-900'
+                    : 'text-[#666666] border-transparent hover:text-[#141042]'
                 }`}
               >
                 <Icon className="w-4 h-4" />
@@ -261,24 +261,24 @@ export default function SettingsPage() {
         </div>
 
         {/* Content */}
-        <div className="bg-white rounded-xl border shadow-sm p-6">
+        <div className="bg-white rounded-xl border border-[#E5E5DC] shadow-[0_2px_8px_rgba(20,16,66,0.06),0_1px_2px_rgba(20,16,66,0.04)] p-6">
           {/* Weights Tab */}
           {activeTab === 'weights' && (
             <div className="space-y-6">
               <div>
-                <h3 className="font-semibold text-gray-900 mb-2">Pesos do PHP Score</h3>
-                <p className="text-sm text-gray-600 mb-4">
+                <h3 className="font-semibold text-[#141042] mb-2">Pesos do PHP Score</h3>
+                <p className="text-sm text-[#666666] mb-4">
                   Defina a importância de cada componente no cálculo do score PHP final.
                   Os valores devem somar 100%.
                 </p>
-                
-                <div className={`text-sm mb-4 ${weightsSum === 100 ? 'text-green-600' : 'text-red-600'}`}>
+
+                <div className={`text-sm mb-4 ${weightsSum === 100 ? 'text-[#10B981]' : 'text-[#EF4444]'}`}>
                   Total: {weightsSum}% {weightsSum === 100 ? '✓' : '(deve ser 100%)'}
                 </div>
 
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-[#666666] mb-2">
                       TFCI (Comportamental): {settings.weights.tfci}%
                     </label>
                     <input
@@ -292,11 +292,11 @@ export default function SettingsPage() {
                       })}
                       className="w-full accent-[#1F4ED8]"
                     />
-                    <p className="text-xs text-gray-500 mt-1">Mede colaboração, comunicação, adaptabilidade, responsabilidade e liderança</p>
+                    <p className="text-xs text-[#999999] mt-1">Mede colaboração, comunicação, adaptabilidade, responsabilidade e liderança</p>
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-[#666666] mb-2">
                       NR-1 (Saúde): {settings.weights.nr1}%
                     </label>
                     <input
@@ -310,11 +310,11 @@ export default function SettingsPage() {
                       })}
                       className="w-full accent-[#1F4ED8]"
                     />
-                    <p className="text-xs text-gray-500 mt-1">Avalia riscos psicossociais conforme NR-1 do Ministério do Trabalho</p>
+                    <p className="text-xs text-[#999999] mt-1">Avalia riscos psicossociais conforme NR-1 do Ministério do Trabalho</p>
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-[#666666] mb-2">
                       COPC (Performance): {settings.weights.copc}%
                     </label>
                     <input
@@ -328,32 +328,32 @@ export default function SettingsPage() {
                       })}
                       className="w-full accent-[#1F4ED8]"
                     />
-                    <p className="text-xs text-gray-500 mt-1">Indicadores operacionais: qualidade, eficiência, efetividade, CX e pessoas</p>
+                    <p className="text-xs text-[#999999] mt-1">Indicadores operacionais: qualidade, eficiência, efetividade, CX e pessoas</p>
                   </div>
                 </div>
               </div>
 
               {/* Visual Preview */}
-              <div className="bg-gray-50 rounded-lg p-4">
-                <h4 className="text-sm font-medium text-gray-700 mb-3">Visualização do Score</h4>
+              <div className="bg-[#FAFAF8] rounded-lg p-4">
+                <h4 className="text-sm font-medium text-[#666666] mb-3">Visualização do Score</h4>
                 <div className="flex gap-1 h-4 rounded-full overflow-hidden">
-                  <div 
-                    className="bg-purple-500 transition-all" 
+                  <div
+                    className="bg-purple-500 transition-all"
                     style={{ width: `${settings.weights.tfci}%` }}
                     title={`TFCI: ${settings.weights.tfci}%`}
                   />
-                  <div 
-                    className="bg-blue-500 transition-all" 
+                  <div
+                    className="bg-blue-500 transition-all"
                     style={{ width: `${settings.weights.nr1}%` }}
                     title={`NR-1: ${settings.weights.nr1}%`}
                   />
-                  <div 
-                    className="bg-cyan-500 transition-all" 
+                  <div
+                    className="bg-cyan-500 transition-all"
                     style={{ width: `${settings.weights.copc}%` }}
                     title={`COPC: ${settings.weights.copc}%`}
                   />
                 </div>
-                <div className="flex justify-between mt-2 text-xs text-gray-600">
+                <div className="flex justify-between mt-2 text-xs text-[#666666]">
                   <span className="flex items-center gap-1"><span className="w-3 h-3 bg-purple-500 rounded"></span> TFCI</span>
                   <span className="flex items-center gap-1"><span className="w-3 h-3 bg-blue-500 rounded"></span> NR-1</span>
                   <span className="flex items-center gap-1"><span className="w-3 h-3 bg-cyan-500 rounded"></span> COPC</span>
@@ -366,15 +366,15 @@ export default function SettingsPage() {
           {activeTab === 'thresholds' && (
             <div className="space-y-6">
               <div>
-                <h3 className="font-semibold text-gray-900 mb-2">Gatilhos de Alerta</h3>
-                <p className="text-sm text-gray-600 mb-4">
+                <h3 className="font-semibold text-[#141042] mb-2">Gatilhos de Alerta</h3>
+                <p className="text-sm text-[#666666] mb-4">
                   Configure os limiares para disparo de alertas preventivos.
                 </p>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="p-4 border rounded-lg">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                <div className="p-4 border border-[#E5E5DC] rounded-lg">
+                  <label className="block text-sm font-medium text-[#666666] mb-2">
                     🔴 Risco de Burnout
                   </label>
                   <input
@@ -387,13 +387,13 @@ export default function SettingsPage() {
                       ...settings,
                       thresholds: { ...settings.thresholds, burnout_risk: parseFloat(e.target.value) }
                     })}
-                    className="w-full px-3 py-2 border rounded-lg"
+                    className="w-full px-3 py-2 border border-[#E5E5DC] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#141042]"
                   />
-                  <p className="text-xs text-gray-500 mt-1">Alerta quando NR-1 carga ≥ este valor (escala 1-3)</p>
+                  <p className="text-xs text-[#999999] mt-1">Alerta quando NR-1 carga ≥ este valor (escala 1-3)</p>
                 </div>
 
-                <div className="p-4 border rounded-lg">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                <div className="p-4 border border-[#E5E5DC] rounded-lg">
+                  <label className="block text-sm font-medium text-[#666666] mb-2">
                     🟡 Conflito Latente
                   </label>
                   <input
@@ -406,13 +406,13 @@ export default function SettingsPage() {
                       ...settings,
                       thresholds: { ...settings.thresholds, conflict_latent: parseFloat(e.target.value) }
                     })}
-                    className="w-full px-3 py-2 border rounded-lg"
+                    className="w-full px-3 py-2 border border-[#E5E5DC] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#141042]"
                   />
-                  <p className="text-xs text-gray-500 mt-1">NR-1 conflitos ≥ este valor + TFCI colaboração baixo</p>
+                  <p className="text-xs text-[#999999] mt-1">NR-1 conflitos ≥ este valor + TFCI colaboração baixo</p>
                 </div>
 
-                <div className="p-4 border rounded-lg">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                <div className="p-4 border border-[#E5E5DC] rounded-lg">
+                  <label className="block text-sm font-medium text-[#666666] mb-2">
                     🟠 Queda Brusca COPC
                   </label>
                   <input
@@ -424,13 +424,13 @@ export default function SettingsPage() {
                       ...settings,
                       thresholds: { ...settings.thresholds, sudden_drop_percent: parseInt(e.target.value) }
                     })}
-                    className="w-full px-3 py-2 border rounded-lg"
+                    className="w-full px-3 py-2 border border-[#E5E5DC] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#141042]"
                   />
-                  <p className="text-xs text-gray-500 mt-1">Alerta se qualidade cair mais de X% em 30 dias</p>
+                  <p className="text-xs text-[#999999] mt-1">Alerta se qualidade cair mais de X% em 30 dias</p>
                 </div>
 
-                <div className="p-4 border rounded-lg">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                <div className="p-4 border border-[#E5E5DC] rounded-lg">
+                  <label className="block text-sm font-medium text-[#666666] mb-2">
                     🔵 Absenteísmo Anormal
                   </label>
                   <input
@@ -442,13 +442,13 @@ export default function SettingsPage() {
                       ...settings,
                       thresholds: { ...settings.thresholds, absenteeism_abnormal: parseInt(e.target.value) }
                     })}
-                    className="w-full px-3 py-2 border rounded-lg"
+                    className="w-full px-3 py-2 border border-[#E5E5DC] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#141042]"
                   />
-                  <p className="text-xs text-gray-500 mt-1">Alerta quando taxa de absenteísmo ≥ X%</p>
+                  <p className="text-xs text-[#999999] mt-1">Alerta quando taxa de absenteísmo ≥ X%</p>
                 </div>
 
-                <div className="p-4 border rounded-lg">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                <div className="p-4 border border-[#E5E5DC] rounded-lg">
+                  <label className="block text-sm font-medium text-[#666666] mb-2">
                     PHP Score - Crítico
                   </label>
                   <input
@@ -460,13 +460,13 @@ export default function SettingsPage() {
                       ...settings,
                       thresholds: { ...settings.thresholds, php_score_critical: parseInt(e.target.value) }
                     })}
-                    className="w-full px-3 py-2 border rounded-lg"
+                    className="w-full px-3 py-2 border border-[#E5E5DC] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#141042]"
                   />
-                  <p className="text-xs text-gray-500 mt-1">Score abaixo deste valor = zona vermelha</p>
+                  <p className="text-xs text-[#999999] mt-1">Score abaixo deste valor = zona vermelha</p>
                 </div>
 
-                <div className="p-4 border rounded-lg">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                <div className="p-4 border border-[#E5E5DC] rounded-lg">
+                  <label className="block text-sm font-medium text-[#666666] mb-2">
                     PHP Score - Atenção
                   </label>
                   <input
@@ -478,9 +478,9 @@ export default function SettingsPage() {
                       ...settings,
                       thresholds: { ...settings.thresholds, php_score_warning: parseInt(e.target.value) }
                     })}
-                    className="w-full px-3 py-2 border rounded-lg"
+                    className="w-full px-3 py-2 border border-[#E5E5DC] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#141042]"
                   />
-                  <p className="text-xs text-gray-500 mt-1">Score abaixo deste valor = zona amarela</p>
+                  <p className="text-xs text-[#999999] mt-1">Score abaixo deste valor = zona amarela</p>
                 </div>
               </div>
             </div>
@@ -490,17 +490,17 @@ export default function SettingsPage() {
           {activeTab === 'notifications' && (
             <div className="space-y-6">
               <div>
-                <h3 className="font-semibold text-gray-900 mb-2">Notificações</h3>
-                <p className="text-sm text-gray-600 mb-4">
+                <h3 className="font-semibold text-[#141042] mb-2">Notificações</h3>
+                <p className="text-sm text-[#666666] mb-4">
                   Configure como você deseja receber alertas do módulo PHP.
                 </p>
               </div>
 
               <div className="space-y-4">
-                <div className="flex items-center justify-between p-4 border rounded-lg">
+                <div className="flex items-center justify-between p-4 border border-[#E5E5DC] rounded-lg">
                   <div>
-                    <p className="font-medium text-gray-900">Notificações por Email</p>
-                    <p className="text-sm text-gray-600">Receba alertas no seu email</p>
+                    <p className="font-medium text-[#141042]">Notificações por Email</p>
+                    <p className="text-sm text-[#666666]">Receba alertas no seu email</p>
                   </div>
                   <label className="relative inline-flex items-center cursor-pointer">
                     <input
@@ -512,14 +512,14 @@ export default function SettingsPage() {
                       })}
                       className="sr-only peer"
                     />
-                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:bg-[#1F4ED8] after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
+                    <div className="w-11 h-6 bg-[#E5E5DC] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:bg-[#1F4ED8] after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
                   </label>
                 </div>
 
-                <div className="flex items-center justify-between p-4 border rounded-lg">
+                <div className="flex items-center justify-between p-4 border border-[#E5E5DC] rounded-lg">
                   <div>
-                    <p className="font-medium text-gray-900">Webhook</p>
-                    <p className="text-sm text-gray-600">Integre com sistemas externos (Slack, Teams, etc)</p>
+                    <p className="font-medium text-[#141042]">Webhook</p>
+                    <p className="text-sm text-[#666666]">Integre com sistemas externos (Slack, Teams, etc)</p>
                   </div>
                   <label className="relative inline-flex items-center cursor-pointer">
                     <input
@@ -531,13 +531,13 @@ export default function SettingsPage() {
                       })}
                       className="sr-only peer"
                     />
-                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:bg-[#1F4ED8] after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
+                    <div className="w-11 h-6 bg-[#E5E5DC] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:bg-[#1F4ED8] after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
                   </label>
                 </div>
 
                 {settings.notifications.webhook_enabled && (
-                  <div className="p-4 border rounded-lg">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <div className="p-4 border border-[#E5E5DC] rounded-lg">
+                    <label className="block text-sm font-medium text-[#666666] mb-2">
                       URL do Webhook
                     </label>
                     <input
@@ -548,15 +548,15 @@ export default function SettingsPage() {
                         notifications: { ...settings.notifications, webhook_url: e.target.value }
                       })}
                       placeholder="https://hooks.slack.com/services/..."
-                      className="w-full px-3 py-2 border rounded-lg"
+                      className="w-full px-3 py-2 border border-[#E5E5DC] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#141042]"
                     />
                   </div>
                 )}
 
-                <div className="flex items-center justify-between p-4 border rounded-lg">
+                <div className="flex items-center justify-between p-4 border border-[#E5E5DC] rounded-lg">
                   <div>
-                    <p className="font-medium text-gray-900">Apenas Alertas Críticos</p>
-                    <p className="text-sm text-gray-600">Notificar somente situações de alto risco</p>
+                    <p className="font-medium text-[#141042]">Apenas Alertas Críticos</p>
+                    <p className="text-sm text-[#666666]">Notificar somente situações de alto risco</p>
                   </div>
                   <label className="relative inline-flex items-center cursor-pointer">
                     <input
@@ -568,7 +568,7 @@ export default function SettingsPage() {
                       })}
                       className="sr-only peer"
                     />
-                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:bg-[#1F4ED8] after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
+                    <div className="w-11 h-6 bg-[#E5E5DC] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:bg-[#1F4ED8] after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
                   </label>
                 </div>
               </div>
@@ -579,17 +579,17 @@ export default function SettingsPage() {
           {activeTab === 'advanced' && (
             <div className="space-y-6">
               <div>
-                <h3 className="font-semibold text-gray-900 mb-2">Configurações Avançadas</h3>
-                <p className="text-sm text-gray-600 mb-4">
+                <h3 className="font-semibold text-[#141042] mb-2">Configurações Avançadas</h3>
+                <p className="text-sm text-[#666666] mb-4">
                   Opções avançadas de automação e IA.
                 </p>
               </div>
 
               <div className="space-y-4">
-                <div className="flex items-center justify-between p-4 border rounded-lg">
+                <div className="flex items-center justify-between p-4 border border-[#E5E5DC] rounded-lg">
                   <div>
-                    <p className="font-medium text-gray-900">🤖 Recomendações por IA</p>
-                    <p className="text-sm text-gray-600">Receba sugestões inteligentes baseadas em padrões</p>
+                    <p className="font-medium text-[#141042]">🤖 Recomendações por IA</p>
+                    <p className="text-sm text-[#666666]">Receba sugestões inteligentes baseadas em padrões</p>
                   </div>
                   <label className="relative inline-flex items-center cursor-pointer">
                     <input
@@ -601,14 +601,14 @@ export default function SettingsPage() {
                       })}
                       className="sr-only peer"
                     />
-                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:bg-[#1F4ED8] after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
+                    <div className="w-11 h-6 bg-[#E5E5DC] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:bg-[#1F4ED8] after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
                   </label>
                 </div>
 
-                <div className="flex items-center justify-between p-4 border rounded-lg">
+                <div className="flex items-center justify-between p-4 border border-[#E5E5DC] rounded-lg">
                   <div>
-                    <p className="font-medium text-gray-900">⚡ Planos de Ação Automáticos</p>
-                    <p className="text-sm text-gray-600">Criar planos automaticamente quando detectar risco alto</p>
+                    <p className="font-medium text-[#141042]">⚡ Planos de Ação Automáticos</p>
+                    <p className="text-sm text-[#666666]">Criar planos automaticamente quando detectar risco alto</p>
                   </div>
                   <label className="relative inline-flex items-center cursor-pointer">
                     <input
@@ -620,12 +620,12 @@ export default function SettingsPage() {
                       })}
                       className="sr-only peer"
                     />
-                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:bg-[#1F4ED8] after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
+                    <div className="w-11 h-6 bg-[#E5E5DC] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:bg-[#1F4ED8] after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
                   </label>
                 </div>
 
-                <div className="p-4 border rounded-lg">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                <div className="p-4 border border-[#E5E5DC] rounded-lg">
+                  <label className="block text-sm font-medium text-[#666666] mb-2">
                     Dias para Vencimento (Planos de Ação)
                   </label>
                   <input
@@ -637,9 +637,9 @@ export default function SettingsPage() {
                       ...settings,
                       action_plan_overdue_days: parseInt(e.target.value)
                     })}
-                    className="w-full px-3 py-2 border rounded-lg"
+                    className="w-full px-3 py-2 border border-[#E5E5DC] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#141042]"
                   />
-                  <p className="text-xs text-gray-500 mt-1">
+                  <p className="text-xs text-[#999999] mt-1">
                     Planos sem data definida serão considerados atrasados após X dias
                   </p>
                 </div>
@@ -649,12 +649,12 @@ export default function SettingsPage() {
         </div>
 
         {/* Help */}
-        <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
-          <h4 className="font-medium text-blue-900 mb-2 flex items-center gap-2">
+        <div className="bg-[#FAFAF8] border border-[#E5E5DC] rounded-xl p-4">
+          <h4 className="font-medium text-[#141042] mb-2 flex items-center gap-2">
             <Settings2 className="w-4 h-4" />
             Dicas de Configuração
           </h4>
-          <ul className="text-sm text-blue-800 space-y-1">
+          <ul className="text-sm text-[#666666] space-y-1">
             <li>• <strong>Pesos:</strong> Para operações de atendimento, aumente o peso do COPC. Para áreas administrativas, priorize NR-1.</li>
             <li>• <strong>Alertas:</strong> Comece com valores padrão e ajuste conforme a realidade da sua operação.</li>
             <li>• <strong>Notificações:</strong> Configure o webhook para receber alertas no Slack ou Teams em tempo real.</li>

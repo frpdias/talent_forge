@@ -41,7 +41,7 @@ const statusConfig = {
   open: { label: 'Aberto', color: 'bg-blue-100 text-blue-800', icon: Clock },
   in_progress: { label: 'Em Andamento', color: 'bg-yellow-100 text-yellow-800', icon: BarChart3 },
   completed: { label: 'Concluído', color: 'bg-green-100 text-green-800', icon: CheckCircle2 },
-  cancelled: { label: 'Cancelado', color: 'bg-gray-100 text-gray-800', icon: XCircle },
+  cancelled: { label: 'Cancelado', color: 'bg-[#FAFAF8] text-[#666666]', icon: XCircle },
 };
 
 const riskConfig = {
@@ -55,7 +55,7 @@ const sourceConfig = {
   tfci: { label: 'TFCI', color: 'bg-purple-100 text-purple-800' },
   nr1: { label: 'NR-1', color: 'bg-blue-100 text-blue-800' },
   copc: { label: 'COPC', color: 'bg-cyan-100 text-cyan-800' },
-  manual: { label: 'Manual', color: 'bg-gray-100 text-gray-800' },
+  manual: { label: 'Manual', color: 'bg-[#FAFAF8] text-[#666666]' },
   ai: { label: 'IA', color: 'bg-indigo-100 text-indigo-800' },
 };
 
@@ -93,7 +93,7 @@ export default function ActionPlansPage() {
     // Calculate stats
     const allPlans = plansData || [];
     const today = new Date().toISOString().split('T')[0];
-    
+
     setStats({
       total: allPlans.length,
       by_status: {
@@ -108,9 +108,9 @@ export default function ActionPlansPage() {
         high: allPlans.filter(p => p.risk_level === 'high').length,
         critical: allPlans.filter(p => p.risk_level === 'critical').length,
       },
-      overdue_count: allPlans.filter(p => 
-        p.due_date && 
-        p.due_date < today && 
+      overdue_count: allPlans.filter(p =>
+        p.due_date &&
+        p.due_date < today &&
         !['completed', 'cancelled'].includes(p.status)
       ).length,
     });
@@ -134,13 +134,13 @@ export default function ActionPlansPage() {
       <div className="p-8">
         <div className="max-w-7xl mx-auto">
           <div className="animate-pulse space-y-4">
-            <div className="h-8 bg-gray-200 rounded w-1/4"></div>
+            <div className="h-8 bg-[#E5E5DC] rounded w-1/4"></div>
             <div className="grid grid-cols-4 gap-4">
               {[1, 2, 3, 4].map(i => (
-                <div key={i} className="h-24 bg-gray-200 rounded"></div>
+                <div key={i} className="h-24 bg-[#E5E5DC] rounded"></div>
               ))}
             </div>
-            <div className="h-64 bg-gray-200 rounded"></div>
+            <div className="h-64 bg-[#E5E5DC] rounded"></div>
           </div>
         </div>
       </div>
@@ -153,8 +153,8 @@ export default function ActionPlansPage() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Planos de Ação</h1>
-            <p className="text-gray-600 mt-1">
+            <h1 className="text-2xl font-bold text-[#141042]">Planos de Ação</h1>
+            <p className="text-[#666666] mt-1">
               Gerencie ações corretivas e preventivas do módulo PHP
             </p>
           </div>
@@ -170,26 +170,26 @@ export default function ActionPlansPage() {
         {/* Stats Cards */}
         {stats && (
           <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-            <div className="bg-white rounded-xl p-4 border shadow-sm">
-              <div className="text-sm text-gray-600 font-medium">Total</div>
-              <div className="text-2xl font-bold text-gray-900">{stats.total}</div>
+            <div className="bg-white rounded-xl p-4 border border-[#E5E5DC] shadow-[0_2px_8px_rgba(20,16,66,0.06),0_1px_2px_rgba(20,16,66,0.04)]">
+              <div className="text-sm text-[#666666] font-medium">Total</div>
+              <div className="text-2xl font-bold text-[#141042]">{stats.total}</div>
             </div>
-            <div className="bg-white rounded-xl p-4 border shadow-sm">
-              <div className="text-sm text-gray-600 font-medium">Ativos</div>
-              <div className="text-2xl font-bold text-blue-600">
+            <div className="bg-white rounded-xl p-4 border border-[#E5E5DC] shadow-[0_2px_8px_rgba(20,16,66,0.06),0_1px_2px_rgba(20,16,66,0.04)]">
+              <div className="text-sm text-[#666666] font-medium">Ativos</div>
+              <div className="text-2xl font-bold text-[#1F4ED8]">
                 {stats.by_status.open + stats.by_status.in_progress}
               </div>
             </div>
-            <div className="bg-white rounded-xl p-4 border shadow-sm">
-              <div className="text-sm text-gray-600 font-medium">Concluídos</div>
+            <div className="bg-white rounded-xl p-4 border border-[#E5E5DC] shadow-[0_2px_8px_rgba(20,16,66,0.06),0_1px_2px_rgba(20,16,66,0.04)]">
+              <div className="text-sm text-[#666666] font-medium">Concluídos</div>
               <div className="text-2xl font-bold text-green-600">{stats.by_status.completed}</div>
             </div>
-            <div className="bg-white rounded-xl p-4 border shadow-sm">
-              <div className="text-sm text-gray-600 font-medium">Críticos</div>
+            <div className="bg-white rounded-xl p-4 border border-[#E5E5DC] shadow-[0_2px_8px_rgba(20,16,66,0.06),0_1px_2px_rgba(20,16,66,0.04)]">
+              <div className="text-sm text-[#666666] font-medium">Críticos</div>
               <div className="text-2xl font-bold text-red-600">{stats.by_risk_level.critical}</div>
             </div>
-            <div className="bg-white rounded-xl p-4 border shadow-sm">
-              <div className="text-sm text-gray-600 font-medium flex items-center gap-1">
+            <div className="bg-white rounded-xl p-4 border border-[#E5E5DC] shadow-[0_2px_8px_rgba(20,16,66,0.06),0_1px_2px_rgba(20,16,66,0.04)]">
+              <div className="text-sm text-[#666666] font-medium flex items-center gap-1">
                 <AlertTriangle className="w-4 h-4 text-orange-500" />
                 Atrasados
               </div>
@@ -200,8 +200,8 @@ export default function ActionPlansPage() {
 
         {/* Filters */}
         <div className="flex items-center gap-2 flex-wrap">
-          <Filter className="w-4 h-4 text-gray-500" />
-          <span className="text-sm text-gray-600 font-medium">Filtrar:</span>
+          <Filter className="w-4 h-4 text-[#666666]" />
+          <span className="text-sm text-[#666666] font-medium">Filtrar:</span>
           {[
             { key: 'all', label: 'Todos' },
             { key: 'active', label: 'Ativos' },
@@ -215,7 +215,7 @@ export default function ActionPlansPage() {
               className={`px-3 py-1 text-sm rounded-full transition-colors ${
                 filter === f.key
                   ? 'bg-[#1F4ED8] text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  : 'bg-[#FAFAF8] text-[#666666] hover:bg-[#E5E5DC]'
               }`}
             >
               {f.label}
@@ -224,32 +224,32 @@ export default function ActionPlansPage() {
         </div>
 
         {/* Plans List */}
-        <div className="bg-white rounded-xl border shadow-sm overflow-hidden">
+        <div className="bg-white rounded-xl border border-[#E5E5DC] shadow-[0_2px_8px_rgba(20,16,66,0.06),0_1px_2px_rgba(20,16,66,0.04)] overflow-hidden">
           {filteredPlans.length === 0 ? (
             <div className="p-12 text-center">
-              <div className="text-gray-400 mb-2">
+              <div className="text-[#999999] mb-2">
                 <CheckCircle2 className="w-12 h-12 mx-auto" />
               </div>
-              <h3 className="text-lg font-semibold text-gray-900">Nenhum plano encontrado</h3>
-              <p className="text-gray-600 mt-1">
-                {filter === 'all' 
+              <h3 className="text-lg font-semibold text-[#141042]">Nenhum plano encontrado</h3>
+              <p className="text-[#666666] mt-1">
+                {filter === 'all'
                   ? 'Crie seu primeiro plano de ação clicando no botão acima.'
                   : 'Não há planos que correspondam ao filtro selecionado.'}
               </p>
             </div>
           ) : (
-            <div className="divide-y">
+            <div className="divide-y divide-[#E5E5DC]">
               {filteredPlans.map(plan => {
                 const StatusIcon = statusConfig[plan.status].icon;
-                const isOverdue = plan.due_date && 
-                  plan.due_date < new Date().toISOString().split('T')[0] && 
+                const isOverdue = plan.due_date &&
+                  plan.due_date < new Date().toISOString().split('T')[0] &&
                   !['completed', 'cancelled'].includes(plan.status);
 
                 return (
                   <Link
                     key={plan.id}
                     href={`/php/action-plans/${plan.id}`}
-                    className="block p-4 hover:bg-gray-50 transition-colors"
+                    className="block p-4 hover:bg-[#FAFAF8] transition-colors"
                   >
                     <div className="flex items-start justify-between gap-4">
                       <div className="flex-1 min-w-0">
@@ -267,11 +267,11 @@ export default function ActionPlansPage() {
                             </span>
                           )}
                         </div>
-                        <h3 className="font-semibold text-gray-900 truncate">{plan.title}</h3>
+                        <h3 className="font-semibold text-[#141042] truncate">{plan.title}</h3>
                         {plan.description && (
-                          <p className="text-sm text-gray-600 mt-1 line-clamp-2">{plan.description}</p>
+                          <p className="text-sm text-[#666666] mt-1 line-clamp-2">{plan.description}</p>
                         )}
-                        <div className="flex items-center gap-4 mt-2 text-xs text-gray-500">
+                        <div className="flex items-center gap-4 mt-2 text-xs text-[#999999]">
                           <span>Prioridade: {plan.priority}</span>
                           {plan.due_date && (
                             <span className={isOverdue ? 'text-red-600 font-medium' : ''}>

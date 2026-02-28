@@ -216,8 +216,8 @@ export default function AiChatPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">🤖 AI Assistant</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-3xl font-bold text-[#141042]">🤖 AI Assistant</h1>
+          <p className="text-[#666666]">
             Converse com IA sobre seus dados de People Analytics
           </p>
         </div>
@@ -298,9 +298,9 @@ export default function AiChatPage() {
                     <div className="flex justify-start">
                       <div className="bg-muted rounded-lg p-3">
                         <div className="flex space-x-2">
-                          <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" />
-                          <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce delay-100" />
-                          <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce delay-200" />
+                          <div className="w-2 h-2 bg-[#999999] rounded-full animate-bounce" />
+                          <div className="w-2 h-2 bg-[#999999] rounded-full animate-bounce delay-100" />
+                          <div className="w-2 h-2 bg-[#999999] rounded-full animate-bounce delay-200" />
                         </div>
                       </div>
                     </div>

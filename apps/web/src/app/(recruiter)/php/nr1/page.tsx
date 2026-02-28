@@ -77,7 +77,7 @@ export default function Nr1ListPage() {
       case 'low':
         return 'text-green-600 bg-green-50';
       default:
-        return 'text-gray-600 bg-gray-50';
+        return 'text-[#666666] bg-[#FAFAF8]';
     }
   };
 
@@ -96,14 +96,14 @@ export default function Nr1ListPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#1F4ED8]"></div>
+      <div className="min-h-[60vh] flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#141042]"></div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="flex justify-between items-center mb-8">
@@ -126,7 +126,7 @@ export default function Nr1ListPage() {
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <div className="bg-white border border-[#E5E5DC] rounded-lg p-6">
+          <div className="bg-white border border-[#E5E5DC] rounded-xl shadow-[0_2px_8px_rgba(20,16,66,0.06),0_1px_2px_rgba(20,16,66,0.04)] p-6">
             <div className="flex items-center gap-3">
               <Users className="w-8 h-8 text-[#3B82F6]" />
               <div>
@@ -136,7 +136,7 @@ export default function Nr1ListPage() {
             </div>
           </div>
 
-          <div className="bg-white border border-[#E5E5DC] rounded-lg p-6">
+          <div className="bg-white border border-[#E5E5DC] rounded-xl shadow-[0_2px_8px_rgba(20,16,66,0.06),0_1px_2px_rgba(20,16,66,0.04)] p-6">
             <div className="flex items-center gap-3">
               <AlertTriangle className="w-8 h-8 text-[#EF4444]" />
               <div>
@@ -146,7 +146,7 @@ export default function Nr1ListPage() {
             </div>
           </div>
 
-          <div className="bg-white border border-[#E5E5DC] rounded-lg p-6">
+          <div className="bg-white border border-[#E5E5DC] rounded-xl shadow-[0_2px_8px_rgba(20,16,66,0.06),0_1px_2px_rgba(20,16,66,0.04)] p-6">
             <div className="flex items-center gap-3">
               <AlertTriangle className="w-8 h-8 text-[#F59E0B]" />
               <div>
@@ -156,7 +156,7 @@ export default function Nr1ListPage() {
             </div>
           </div>
 
-          <div className="bg-white border border-[#E5E5DC] rounded-lg p-6">
+          <div className="bg-white border border-[#E5E5DC] rounded-xl shadow-[0_2px_8px_rgba(20,16,66,0.06),0_1px_2px_rgba(20,16,66,0.04)] p-6">
             <div className="flex items-center gap-3">
               <CheckCircle className="w-8 h-8 text-[#10B981]" />
               <div>
@@ -168,7 +168,7 @@ export default function Nr1ListPage() {
         </div>
 
         {/* Table */}
-        <div className="bg-white border border-[#E5E5DC] rounded-lg overflow-hidden">
+        <div className="bg-white border border-[#E5E5DC] rounded-xl shadow-[0_2px_8px_rgba(20,16,66,0.06),0_1px_2px_rgba(20,16,66,0.04)] overflow-hidden">
           <div className="px-6 py-4 border-b border-[#E5E5DC]">
             <h2 className="text-lg font-semibold text-[#141042]">
               Histórico de Avaliações NR-1

@@ -63,36 +63,11 @@ export default function CopcDashboard() {
 
         setOverallScore(summary.overall || 0);
         setCategories([
-          {
-            category: 'Qualidade',
-            score: summary.quality || 0,
-            trend: 'stable',
-            change: 0,
-          },
-          {
-            category: 'Eficiência',
-            score: summary.efficiency || 0,
-            trend: 'stable',
-            change: 0,
-          },
-          {
-            category: 'Efetividade',
-            score: summary.effectiveness || 0,
-            trend: 'stable',
-            change: 0,
-          },
-          {
-            category: 'CX',
-            score: summary.cx || 0,
-            trend: 'stable',
-            change: 0,
-          },
-          {
-            category: 'People',
-            score: summary.people || 0,
-            trend: 'stable',
-            change: 0,
-          },
+          { category: 'Qualidade', score: summary.quality || 0, trend: 'stable', change: 0 },
+          { category: 'Eficiência', score: summary.efficiency || 0, trend: 'stable', change: 0 },
+          { category: 'Efetividade', score: summary.effectiveness || 0, trend: 'stable', change: 0 },
+          { category: 'CX', score: summary.cx || 0, trend: 'stable', change: 0 },
+          { category: 'People', score: summary.people || 0, trend: 'stable', change: 0 },
         ]);
       }
 
@@ -133,17 +108,17 @@ export default function CopcDashboard() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
+      <div className="flex items-center justify-center min-h-[60vh]">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#141042] mx-auto"></div>
-          <p className="mt-4 text-[#141042]">Carregando dashboard COPC...</p>
+          <p className="mt-4 text-[#666666]">Carregando dashboard COPC...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="p-6 bg-[#FAFAF8] min-h-screen">
+    <div className="p-6 min-h-screen">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="flex justify-between items-center mb-8">
@@ -151,7 +126,7 @@ export default function CopcDashboard() {
             <h1 className="text-3xl font-bold text-[#141042]">
               COPC Adapted Dashboard
             </h1>
-            <p className="text-gray-600 mt-1">
+            <p className="text-[#666666] mt-1">
               Performance operacional e bem-estar organizacional
             </p>
           </div>
@@ -164,9 +139,7 @@ export default function CopcDashboard() {
         </div>
 
         {/* Overall COPC Score */}
-        <div
-          className={`mb-8 p-8 rounded-lg border-2 ${getScoreColor(overallScore)}`}
-        >
+        <div className={`mb-8 p-8 rounded-xl border-2 ${getScoreColor(overallScore)}`}>
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium mb-2">COPC Score Geral</p>
@@ -193,16 +166,16 @@ export default function CopcDashboard() {
           {categories.map((cat) => (
             <div
               key={cat.category}
-              className="p-6 bg-white rounded-lg border border-[#E5E5DC] hover:shadow-md transition-shadow"
+              className="p-6 bg-white rounded-xl border border-[#E5E5DC] shadow-[0_2px_8px_rgba(20,16,66,0.06),0_1px_2px_rgba(20,16,66,0.04)] hover:shadow-[0_8px_32px_rgba(20,16,66,0.10),0_2px_8px_rgba(20,16,66,0.06)] hover:-translate-y-px transition-all duration-300"
             >
-              <p className="text-sm text-gray-600 mb-2">{cat.category}</p>
+              <p className="text-sm text-[#666666] mb-2">{cat.category}</p>
               <p className={`text-3xl font-bold ${getScoreTextColor(cat.score)}`}>
                 {cat.score.toFixed(1)}
               </p>
-              <div className="mt-2 flex items-center text-xs text-gray-500">
-                {cat.trend === 'up' && <span className="text-green-600">↑</span>}
-                {cat.trend === 'down' && <span className="text-red-600">↓</span>}
-                {cat.trend === 'stable' && <span className="text-gray-400">→</span>}
+              <div className="mt-2 flex items-center text-xs text-[#999999]">
+                {cat.trend === 'up' && <span className="text-[#10B981]">↑</span>}
+                {cat.trend === 'down' && <span className="text-[#EF4444]">↓</span>}
+                {cat.trend === 'stable' && <span className="text-[#999999]">→</span>}
                 <span className="ml-1">
                   {cat.change > 0 ? `+${cat.change.toFixed(1)}` : '—'}
                 </span>
@@ -212,36 +185,36 @@ export default function CopcDashboard() {
         </div>
 
         {/* Category Weights Info */}
-        <div className="mb-8 p-6 bg-blue-50 rounded-lg border border-blue-200">
-          <h3 className="text-sm font-semibold text-blue-900 mb-3">
+        <div className="mb-8 p-6 bg-[#FAFAF8] rounded-xl border border-[#E5E5DC]">
+          <h3 className="text-sm font-semibold text-[#141042] mb-3">
             📊 Pesos das Categorias COPC
           </h3>
           <div className="grid grid-cols-2 md:grid-cols-5 gap-3 text-xs">
             <div>
-              <span className="font-medium text-blue-800">Qualidade:</span>{' '}
-              <span className="text-blue-700">35%</span>
+              <span className="font-medium text-[#666666]">Qualidade:</span>{' '}
+              <span className="text-[#666666]">35%</span>
             </div>
             <div>
-              <span className="font-medium text-blue-800">Eficiência:</span>{' '}
-              <span className="text-blue-700">20%</span>
+              <span className="font-medium text-[#666666]">Eficiência:</span>{' '}
+              <span className="text-[#666666]">20%</span>
             </div>
             <div>
-              <span className="font-medium text-blue-800">Efetividade:</span>{' '}
-              <span className="text-blue-700">20%</span>
+              <span className="font-medium text-[#666666]">Efetividade:</span>{' '}
+              <span className="text-[#666666]">20%</span>
             </div>
             <div>
-              <span className="font-medium text-blue-800">CX:</span>{' '}
-              <span className="text-blue-700">15%</span>
+              <span className="font-medium text-[#666666]">CX:</span>{' '}
+              <span className="text-[#666666]">15%</span>
             </div>
             <div>
-              <span className="font-medium text-blue-800">People:</span>{' '}
-              <span className="text-blue-700">10%</span>
+              <span className="font-medium text-[#666666]">People:</span>{' '}
+              <span className="text-[#666666]">10%</span>
             </div>
           </div>
         </div>
 
         {/* Recent Metrics Table */}
-        <div className="bg-white rounded-lg border border-[#E5E5DC] overflow-hidden">
+        <div className="bg-white rounded-xl border border-[#E5E5DC] shadow-[0_2px_8px_rgba(20,16,66,0.06),0_1px_2px_rgba(20,16,66,0.04)] overflow-hidden">
           <div className="p-6 border-b border-[#E5E5DC]">
             <h2 className="text-xl font-semibold text-[#141042]">
               Métricas Recentes
@@ -249,29 +222,29 @@ export default function CopcDashboard() {
           </div>
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-gray-50">
+              <thead className="bg-[#FAFAF8]">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-[#666666] uppercase tracking-wider">
                     Data
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-[#666666] uppercase tracking-wider">
                     Score Geral
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-[#666666] uppercase tracking-wider">
                     Qualidade
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-[#666666] uppercase tracking-wider">
                     CX
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-[#666666] uppercase tracking-wider">
                     Time
                   </th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
+              <tbody className="bg-white divide-y divide-[#E5E5DC]">
                 {recentMetrics.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="px-6 py-8 text-center text-gray-500">
+                    <td colSpan={5} className="px-6 py-8 text-center text-[#666666]">
                       <p className="text-sm">
                         Nenhuma métrica registrada ainda.
                       </p>
@@ -287,10 +260,10 @@ export default function CopcDashboard() {
                   recentMetrics.map((metric) => (
                     <tr
                       key={metric.id}
-                      className="hover:bg-gray-50 cursor-pointer"
+                      className="hover:bg-[#FAFAF8] cursor-pointer"
                       onClick={() => router.push(`/php/copc/${metric.id}`)}
                     >
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-[#141042]">
                         {new Date(metric.metric_date).toLocaleDateString('pt-BR')}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
@@ -300,13 +273,13 @@ export default function CopcDashboard() {
                           {metric.overall_performance_score?.toFixed(1) || '—'}
                         </span>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-[#141042]">
                         {metric.quality_score?.toFixed(1) || '—'}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-[#141042]">
                         {metric.customer_satisfaction_score?.toFixed(1) || '—'}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-[#999999]">
                         {metric.team_id ? `Time ${metric.team_id.substring(0, 8)}...` : '—'}
                       </td>
                     </tr>

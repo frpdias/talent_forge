@@ -2,15 +2,13 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { 
-  Plus, 
-  Search, 
-  Users, 
-  User, 
+import {
+  Plus,
+  Search,
+  Users,
   UserPlus,
   Trash2,
   Edit2,
-  MoreVertical,
   Building2,
 } from 'lucide-react';
 import { useOrgStore } from '@/lib/store';
@@ -178,11 +176,11 @@ export default function TeamsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-[#1F4ED8]">Times</h1>
-          <p className="text-gray-600 mt-1">
+          <p className="text-[#666666] mt-1">
             Gestão de equipes e agrupamento de colaboradores
           </p>
         </div>
-        <button 
+        <button
           onClick={() => setShowCreateModal(true)}
           className="flex items-center gap-2 px-4 py-2 bg-[#1F4ED8] text-white rounded-lg hover:bg-[#1845B8] transition-colors"
         >
@@ -193,41 +191,41 @@ export default function TeamsPage() {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="bg-white rounded-lg border border-gray-200 p-4">
+        <div className="bg-white rounded-xl border border-[#E5E5DC] shadow-[0_2px_8px_rgba(20,16,66,0.06),0_1px_2px_rgba(20,16,66,0.04)] p-4">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-blue-100 rounded-lg">
               <Building2 className="w-5 h-5 text-[#1F4ED8]" />
             </div>
             <div>
-              <p className="text-sm text-gray-600">Total de Times</p>
-              <p className="text-2xl font-bold text-gray-900">{stats.total}</p>
+              <p className="text-sm text-[#666666]">Total de Times</p>
+              <p className="text-2xl font-bold text-[#141042]">{stats.total}</p>
             </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-lg border border-gray-200 p-4">
+        <div className="bg-white rounded-xl border border-[#E5E5DC] shadow-[0_2px_8px_rgba(20,16,66,0.06),0_1px_2px_rgba(20,16,66,0.04)] p-4">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-orange-100 rounded-lg">
               <Users className="w-5 h-5 text-[#F97316]" />
             </div>
             <div>
-              <p className="text-sm text-gray-600">Total de Membros</p>
-              <p className="text-2xl font-bold text-gray-900">{stats.totalMembers}</p>
+              <p className="text-sm text-[#666666]">Total de Membros</p>
+              <p className="text-2xl font-bold text-[#141042]">{stats.totalMembers}</p>
             </div>
           </div>
         </div>
       </div>
 
       {/* Search */}
-      <div className="bg-white rounded-lg border border-gray-200 p-4">
+      <div className="bg-white rounded-xl border border-[#E5E5DC] shadow-[0_2px_8px_rgba(20,16,66,0.06),0_1px_2px_rgba(20,16,66,0.04)] p-4">
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-[#999999]" />
           <input
             type="text"
             placeholder="Buscar times..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1F4ED8] focus:border-transparent"
+            className="w-full pl-10 pr-4 py-2 border border-[#E5E5DC] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1F4ED8]"
           />
         </div>
       </div>
@@ -238,18 +236,18 @@ export default function TeamsPage() {
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#1F4ED8]"></div>
         </div>
       ) : filteredTeams.length === 0 ? (
-        <div className="bg-white rounded-lg border border-gray-200 p-12 text-center">
-          <Users className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">
+        <div className="bg-white rounded-xl border border-[#E5E5DC] shadow-[0_2px_8px_rgba(20,16,66,0.06),0_1px_2px_rgba(20,16,66,0.04)] p-12 text-center">
+          <Users className="w-12 h-12 text-[#999999] mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-[#141042] mb-2">
             {search ? 'Nenhum time encontrado' : 'Nenhum time cadastrado'}
           </h3>
-          <p className="text-gray-600 mb-4">
-            {search 
-              ? 'Tente ajustar sua busca' 
+          <p className="text-[#666666] mb-4">
+            {search
+              ? 'Tente ajustar sua busca'
               : 'Crie seu primeiro time para começar a organizar seus colaboradores'}
           </p>
           {!search && (
-            <button 
+            <button
               onClick={() => setShowCreateModal(true)}
               className="inline-flex items-center gap-2 px-4 py-2 bg-[#1F4ED8] text-white rounded-lg hover:bg-[#1845B8] transition-colors"
             >
@@ -261,9 +259,9 @@ export default function TeamsPage() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {filteredTeams.map((team) => (
-            <div 
-              key={team.id} 
-              className="bg-white rounded-lg border border-gray-200 p-4 hover:shadow-md transition-shadow cursor-pointer group"
+            <div
+              key={team.id}
+              className="bg-white rounded-xl border border-[#E5E5DC] shadow-[0_2px_8px_rgba(20,16,66,0.06),0_1px_2px_rgba(20,16,66,0.04)] p-4 hover:shadow-[0_8px_32px_rgba(20,16,66,0.10),0_2px_8px_rgba(20,16,66,0.06)] hover:-translate-y-px transition-all duration-300 cursor-pointer group"
               onClick={() => router.push(`/php/teams/${team.id}`)}
             >
               <div className="flex items-start justify-between mb-3">
@@ -272,8 +270,8 @@ export default function TeamsPage() {
                     <Users className="w-6 h-6 text-[#1F4ED8]" />
                   </div>
                   <div>
-                    <h3 className="font-semibold text-gray-900">{team.name}</h3>
-                    <p className="text-sm text-gray-500">{team.member_count} membro(s)</p>
+                    <h3 className="font-semibold text-[#141042]">{team.name}</h3>
+                    <p className="text-sm text-[#999999]">{team.member_count} membro(s)</p>
                   </div>
                 </div>
                 <div className="opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
@@ -282,7 +280,7 @@ export default function TeamsPage() {
                       e.stopPropagation();
                       router.push(`/php/teams/${team.id}`);
                     }}
-                    className="p-1.5 text-gray-500 hover:text-[#1F4ED8] hover:bg-gray-100 rounded"
+                    className="p-1.5 text-[#666666] hover:text-[#1F4ED8] hover:bg-[#FAFAF8] rounded"
                     title="Editar"
                   >
                     <Edit2 className="w-4 h-4" />
@@ -292,21 +290,21 @@ export default function TeamsPage() {
                       e.stopPropagation();
                       handleDeleteTeam(team.id, team.name);
                     }}
-                    className="p-1.5 text-gray-500 hover:text-red-600 hover:bg-gray-100 rounded"
+                    className="p-1.5 text-[#666666] hover:text-red-600 hover:bg-[#FAFAF8] rounded"
                     title="Excluir"
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>
                 </div>
               </div>
-              
+
               {team.description && (
-                <p className="text-sm text-gray-600 mb-3 line-clamp-2">
+                <p className="text-sm text-[#666666] mb-3 line-clamp-2">
                   {team.description}
                 </p>
               )}
 
-              <div className="flex items-center justify-between text-xs text-gray-500 pt-3 border-t border-gray-100">
+              <div className="flex items-center justify-between text-xs text-[#999999] pt-3 border-t border-[#E5E5DC]">
                 <span>Criado em {new Date(team.created_at).toLocaleDateString('pt-BR')}</span>
                 <span className="flex items-center gap-1">
                   <UserPlus className="w-3 h-3" />
@@ -321,10 +319,10 @@ export default function TeamsPage() {
       {/* Create Modal */}
       {showCreateModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-xl w-full max-w-md mx-4">
+          <div className="bg-white rounded-xl shadow-[0_8px_32px_rgba(20,16,66,0.16)] w-full max-w-md mx-4">
             <div className="p-6">
-              <h2 className="text-xl font-bold text-gray-900 mb-4">Criar Novo Time</h2>
-              
+              <h2 className="text-xl font-bold text-[#141042] mb-4">Criar Novo Time</h2>
+
               {error && (
                 <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-600 rounded-lg text-sm">
                   {error}
@@ -333,7 +331,7 @@ export default function TeamsPage() {
 
               <form onSubmit={handleCreateTeam} className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-[#666666] mb-1">
                     Nome do Time *
                   </label>
                   <input
@@ -341,13 +339,13 @@ export default function TeamsPage() {
                     value={createForm.name}
                     onChange={(e) => setCreateForm({ ...createForm, name: e.target.value })}
                     placeholder="Ex: Equipe de Vendas"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1F4ED8] focus:border-transparent"
+                    className="w-full px-3 py-2 border border-[#E5E5DC] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1F4ED8]"
                     required
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-[#666666] mb-1">
                     Descrição
                   </label>
                   <textarea
@@ -355,18 +353,18 @@ export default function TeamsPage() {
                     onChange={(e) => setCreateForm({ ...createForm, description: e.target.value })}
                     placeholder="Descreva o propósito deste time..."
                     rows={3}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1F4ED8] focus:border-transparent resize-none"
+                    className="w-full px-3 py-2 border border-[#E5E5DC] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1F4ED8] resize-none"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-[#666666] mb-1">
                     Gestor do Time
                   </label>
                   <select
                     value={createForm.manager_id}
                     onChange={(e) => setCreateForm({ ...createForm, manager_id: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1F4ED8] focus:border-transparent"
+                    className="w-full px-3 py-2 border border-[#E5E5DC] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1F4ED8]"
                   >
                     <option value="">Selecione um gestor (opcional)</option>
                     {orgMembers.map((member) => (
@@ -385,7 +383,7 @@ export default function TeamsPage() {
                       setError(null);
                       setCreateForm({ name: '', description: '', manager_id: '' });
                     }}
-                    className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                    className="flex-1 px-4 py-2 border border-[#E5E5DC] text-[#666666] rounded-lg hover:bg-[#FAFAF8] transition-colors"
                     disabled={creating}
                   >
                     Cancelar
