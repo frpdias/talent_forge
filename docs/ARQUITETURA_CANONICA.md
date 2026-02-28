@@ -842,9 +842,10 @@ SELECT * FROM v_recruiter_performance WHERE org_id = '<uuid>';
 - **Banco**: Supabase Postgres + Auth + Storage, com **RLS obrigatório**.
 - **Infra**: Vercel (web/api) + Supabase (DB/Auth/Storage).
 - **Produção (2026-02-28)**:
-   - Web: https://web-fartechs-projects-c64e0af4.vercel.app *(alias estável — atualiza a cada deploy de main)*
-   - API: https://api-fartechs-projects-c64e0af4.vercel.app *(projeto relinkado 2026-02-28)*
-   - Env var web: `NEXT_PUBLIC_API_BASE_URL=https://api-fartechs-projects-c64e0af4.vercel.app`
+   - Web: https://web-eight-rho-84.vercel.app *(projeto: `prj_inQzsBoFh4jVKptWyi47NuB6Wumu`)*
+   - API: https://talent-forge-api.vercel.app *(projeto: `prj_MIy6Yi0FABRBuevuXw60wuW7jI9x`)*
+   - Vercel team: `fernando-dias-projects-e4b4044b` / orgId: `team_lwke1raX8NIzKHkR5z2CPFR5`
+   - Env var web: `NEXT_PUBLIC_API_BASE_URL=https://talent-forge-api.vercel.app`
 
 ## 2) Padrões essenciais (não desviar)
 - **Multi-tenant**: `organizations` + `org_members`.
