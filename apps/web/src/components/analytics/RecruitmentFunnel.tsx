@@ -14,8 +14,8 @@ interface RecruitmentFunnelProps {
 
 export function RecruitmentFunnel({ data }: RecruitmentFunnelProps) {
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-      <h3 className="text-lg font-semibold text-gray-900 mb-4">Funil de Recrutamento</h3>
+    <div className="bg-white rounded-xl shadow-[0_2px_8px_rgba(20,16,66,0.06),0_1px_2px_rgba(20,16,66,0.04)] border border-[#E5E5DC] p-6">
+      <h3 className="text-lg font-semibold text-[#141042] mb-4">Funil de Recrutamento</h3>
       
       <ResponsiveContainer width="100%" height={300}>
         <BarChart data={data}>
@@ -32,9 +32,9 @@ export function RecruitmentFunnel({ data }: RecruitmentFunnelProps) {
       <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4">
         {data.map((item, index) => (
           <div key={index} className="text-center">
-            <p className="text-sm text-gray-600">{item.stage}</p>
-            <p className="text-2xl font-bold text-gray-900">{item.candidates}</p>
-            <p className="text-xs text-green-600">+{item.conversion}%</p>
+            <p className="text-sm text-[#666666]">{item.stage}</p>
+            <p className="text-2xl font-bold text-[#141042]">{item.candidates}</p>
+            <p className="text-xs text-[#10B981]">+{item.conversion}%</p>
           </div>
         ))}
       </div>

@@ -14,8 +14,8 @@ interface TimeToHireChartProps {
 
 export function TimeToHireChart({ data }: TimeToHireChartProps) {
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-      <h3 className="text-lg font-semibold text-gray-900 mb-4">Tempo Médio de Contratação</h3>
+    <div className="bg-white rounded-xl shadow-[0_2px_8px_rgba(20,16,66,0.06),0_1px_2px_rgba(20,16,66,0.04)] border border-[#E5E5DC] p-6">
+      <h3 className="text-lg font-semibold text-[#141042] mb-4">Tempo Médio de Contratação</h3>
       
       <ResponsiveContainer width="100%" height={300}>
         <LineChart data={data}>
@@ -44,14 +44,14 @@ export function TimeToHireChart({ data }: TimeToHireChartProps) {
 
       <div className="mt-4 flex items-center justify-between">
         <div>
-          <p className="text-sm text-gray-600">Média Atual</p>
-          <p className="text-3xl font-bold text-gray-900">
-            {Math.round(data.reduce((acc, item) => acc + item.days, 0) / data.length)} dias
+          <p className="text-sm text-[#666666]">Média Atual</p>
+          <p className="text-3xl font-bold text-[#141042]">
+            {data.length > 0 ? Math.round(data.reduce((acc, item) => acc + item.days, 0) / data.length) : 0} dias
           </p>
         </div>
         <div className="text-right">
-          <p className="text-sm text-gray-600">Meta</p>
-          <p className="text-3xl font-bold text-orange-600">
+          <p className="text-sm text-[#666666]">Meta</p>
+          <p className="text-3xl font-bold text-[#F97316]">
             {data[0]?.target || 0} dias
           </p>
         </div>

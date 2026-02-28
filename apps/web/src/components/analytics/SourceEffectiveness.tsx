@@ -15,8 +15,8 @@ interface SourceEffectivenessProps {
 
 export function SourceEffectiveness({ data }: SourceEffectivenessProps) {
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-      <h3 className="text-lg font-semibold text-gray-900 mb-4">Efetividade por Origem</h3>
+    <div className="bg-white rounded-xl shadow-[0_2px_8px_rgba(20,16,66,0.06),0_1px_2px_rgba(20,16,66,0.04)] border border-[#E5E5DC] p-6">
+      <h3 className="text-lg font-semibold text-[#141042] mb-4">Efetividade por Origem</h3>
       
       <ResponsiveContainer width="100%" height={300}>
         <PieChart>
@@ -41,15 +41,15 @@ export function SourceEffectiveness({ data }: SourceEffectivenessProps) {
 
       <div className="mt-4 space-y-2">
         {data.map((source, index) => (
-          <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded">
+          <div key={index} className="flex items-center justify-between p-2 bg-[#FAFAF8] rounded-lg">
             <div className="flex items-center gap-2">
-              <div 
-                className="w-3 h-3 rounded-full" 
+              <div
+                className="w-3 h-3 rounded-full"
                 style={{ backgroundColor: source.color }}
               />
-              <span className="text-sm font-medium text-gray-700">{source.name}</span>
+              <span className="text-sm font-medium text-[#666666]">{source.name}</span>
             </div>
-            <span className="text-sm font-bold text-gray-900">{source.value} candidatos</span>
+            <span className="text-sm font-bold text-[#141042]">{source.value} candidatos</span>
           </div>
         ))}
       </div>

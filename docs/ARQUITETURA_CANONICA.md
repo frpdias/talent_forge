@@ -1,6 +1,6 @@
 # Arquitetura Canônica — TalentForge
 
-**Última atualização**: 2026-02-28 | **Score de Conformidade**: ✅ 100% (Sprint 18: Deploy padronizado + Glass tokens + Layout refinado)
+**Última atualização**: 2026-02-28 | **Score de Conformidade**: ✅ 100% (Sprint 19: Reports conectados a dados reais + Design system nos gráficos)
 
 ## 📜 FONTE DA VERDADE — PRINCÍPIO FUNDAMENTAL
 
@@ -4835,7 +4835,7 @@ Próxima revisão: Sprint 12 (Action Plans + Settings)
 
 ---
 
-**FIM DO DOCUMENTO** — Versão 3.7 (Sprint 18 + Deploy Padronizado + Glass Tokens + Layout Refinado)
+**FIM DO DOCUMENTO** — Versão 3.8 (Sprint 19 + Reports Dados Reais + Design System Analytics)
 ```sql
 CREATE TYPE risk_level AS ENUM ('low', 'medium', 'high', 'critical');
 CREATE TYPE assessment_status AS ENUM ('draft', 'active', 'completed', 'cancelled');
@@ -4876,6 +4876,17 @@ CREATE TYPE alert_level AS ENUM ('none', 'watch', 'warning', 'critical');
 ---
 
 ## 📝 Histórico de Versões
+
+### v3.8 (2026-02-28)
+- ✅ **Score de Conformidade**: 100% mantido (Sprint 19)
+- ✅ **Reports conectados a dados reais**: `reports/page.tsx` reescrito com `useOrgStore` + Supabase + `reportsApi` (sem mock data)
+- ✅ **Padrão de fetch canônico**: `Promise.allSettled([reportsApi.dashboard, reportsApi.pipelines, supabase_time_to_hire])` com fallback direto ao Supabase
+- ✅ **Time-to-hire via Supabase direto**: últimos 6 meses calculados de `applications` (não depende do NestJS API)
+- ✅ **Filtros de data funcionais**: `dateRange.start/end` disparam re-fetch com debounce 300ms via `useEffect`
+- ✅ **Export com dados reais**: `ReportExport` usa `reportData` populado de `recentActivity` da API
+- ✅ **4 componentes analytics migrados** para design system canônico: `KPICards`, `RecruitmentFunnel`, `TimeToHireChart`, `SourceEffectiveness`
+- ✅ **Cores de gráficos padronizadas**: `gray-*` → `#141042`/`#666666`/`#E5E5DC`; ícones `#3B82F6`; trends `#10B981`/`#EF4444`
+- ✅ **Sombras tintadas nos analytics**: `shadow-[0_2px_8px_rgba(20,16,66,0.06),...]` em todos os cards de gráfico
 
 ### v3.7 (2026-02-28)
 - ✅ **Score de Conformidade**: 100% mantido (Sprint 18)
