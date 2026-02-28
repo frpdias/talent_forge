@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { ArrowLeft, Save, User, Calendar, Briefcase, Users, Loader2 } from 'lucide-react';
 import { useOrgStore } from '@/lib/store';
 import { createClient } from '@/lib/supabase/client';
+import { API_V1_URL } from '@/lib/api-config';
 import { HIERARCHY_LEVELS } from '@/lib/constants/hierarchy';
 
 interface Employee {
@@ -88,7 +89,7 @@ export default function EditEmployeePage() {
         return;
       }
       
-      const url = `http://localhost:3001/api/v1/php/employees/${employeeId}`;
+      const url = `${API_V1_URL}/php/employees/${employeeId}`;
       console.log('📡 Buscando employee:', { employeeId, orgId: currentOrg.id, url });
       
       const response = await fetch(url, {
@@ -136,7 +137,7 @@ export default function EditEmployeePage() {
         return;
       }
       
-      const response = await fetch(`http://localhost:3001/api/v1/php/employees?organization_id=${companyId}&status=active`, {
+      const response = await fetch(`${API_V1_URL}/php/employees?organization_id=${companyId}&status=active`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'x-org-id': currentOrg.id, // ID do tenant do recrutador
@@ -278,7 +279,7 @@ export default function EditEmployeePage() {
       console.log('📤 Enviando payload:', payload);
       console.log('🔑 x-org-id:', currentOrg?.id || companyId);
 
-      const response = await fetch(`http://localhost:3001/api/v1/php/employees/${employeeId}`, {
+      const response = await fetch(`${API_V1_URL}/php/employees/${employeeId}`, {
         method: 'PATCH',
         headers: {
           'Authorization': `Bearer ${token}`,

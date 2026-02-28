@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Key, Plus, Copy, Trash2, Eye, EyeOff, Search, Calendar, Check, X, AlertCircle } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
+import { API_V1_URL } from '@/lib/api-config';
 
 interface ApiKey {
   id: string;
@@ -46,7 +47,7 @@ export default function ApiKeysPage() {
       
       if (!session?.access_token) return;
 
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/api-keys`, {
+      const res = await fetch(`${API_V1_URL}/api-keys`, {
         headers: { 'Authorization': `Bearer ${session.access_token}` },
       });
 
@@ -70,7 +71,7 @@ export default function ApiKeysPage() {
       
       if (!session?.access_token) return;
 
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/api-keys`, {
+      const res = await fetch(`${API_V1_URL}/api-keys`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${session.access_token}`,
@@ -105,7 +106,7 @@ export default function ApiKeysPage() {
       
       if (!session?.access_token) return;
 
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/api-keys/${keyId}`, {
+      const res = await fetch(`${API_V1_URL}/api-keys/${keyId}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${session.access_token}` },
       });

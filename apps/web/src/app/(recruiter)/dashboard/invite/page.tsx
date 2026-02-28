@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { createBrowserClient } from '@supabase/ssr';
 import { useOrgStore } from '@/lib/store';
+import { API_BASE_URL } from '@/lib/api-config';
 
 type InviteLinkResponse = {
   token: string;
@@ -13,7 +14,7 @@ type InviteLinkResponse = {
 
 export default function InvitePage() {
   const { currentOrg, setCurrentOrg } = useOrgStore();
-  const apiBase = (process.env.NEXT_PUBLIC_API_URL || '').replace(/\/api\/v1\/?$/, '');
+  const apiBase = API_BASE_URL;
 
   const supabase = useMemo(
     () =>

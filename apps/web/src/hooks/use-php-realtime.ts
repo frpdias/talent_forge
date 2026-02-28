@@ -152,12 +152,9 @@ interface UsePhpRealtimeReturn extends RealtimeState {
 // ====================
 // API Base URL
 // ====================
-const getApiUrl = () => {
-  if (typeof window !== 'undefined') {
-    return process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-  }
-  return 'http://localhost:3001';
-};
+import { API_BASE_URL } from '@/lib/api-config';
+
+const getApiUrl = () => API_BASE_URL;
 
 // ====================
 // Main Hook

@@ -9,7 +9,7 @@ import {
   GenerateAssessmentsResult,
 } from '@/types/tfci';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+import { API_BASE_URL } from '@/lib/api-config';
 
 interface UseTFCIPeerSelectionProps {
   cycleId: string;

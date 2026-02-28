@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { useOrgStore } from '@/lib/store';
 import { createClient } from '@/lib/supabase/client';
+import { API_V1_URL } from '@/lib/api-config';
 import OrgChart from '@/components/OrgChart';
 import ImportCSVDialog from '@/components/ImportCSVDialog';
 import { HIERARCHY_LEVELS } from '@/lib/hierarchy-constants';
@@ -176,7 +177,7 @@ function CompanyDetailContent() {
         return;
       }
       
-      const response = await fetch(`http://localhost:3001/api/v1/organizations/${companyId}`, {
+      const response = await fetch(`${API_V1_URL}/organizations/${companyId}`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'x-org-id': currentOrg.id,
@@ -222,7 +223,7 @@ function CompanyDetailContent() {
         return;
       }
       
-      const response = await fetch(`http://localhost:3001/api/v1/php/employees?organization_id=${companyId}`, {
+      const response = await fetch(`${API_V1_URL}/php/employees?organization_id=${companyId}`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'x-org-id': currentOrg.id, // ID do recrutador, não da empresa
@@ -260,7 +261,7 @@ function CompanyDetailContent() {
         return;
       }
       
-      const response = await fetch(`http://localhost:3001/api/v1/php/employees/${employeeId}`, {
+      const response = await fetch(`${API_V1_URL}/php/employees/${employeeId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,

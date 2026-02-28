@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useParams } from 'next/navigation';
+import { API_BASE_URL } from '@/lib/api-config';
 
 type InviteStatus = {
   valid: boolean;
@@ -24,7 +25,7 @@ type CandidateForm = {
 export default function InviteCandidatePage() {
   const params = useParams();
   const token = useMemo(() => String(params?.token || ''), [params]);
-  const apiBase = (process.env.NEXT_PUBLIC_API_URL || '').replace(/\/api\/v1\/?$/, '');
+  const apiBase = API_BASE_URL;
 
   const [status, setStatus] = useState<InviteStatus | null>(null);
   const [loading, setLoading] = useState(true);

@@ -3,14 +3,15 @@
 import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { ArrowLeft, Save, User, Calendar, Briefcase, Building2, Users, TrendingUp, Award } from 'lucide-react';
-import { 
-  HIERARCHY_LEVELS, 
-  SENIORITY_LEVELS, 
-  CAREER_TRACKS, 
+import {
+  HIERARCHY_LEVELS,
+  SENIORITY_LEVELS,
+  CAREER_TRACKS,
   getDepartmentsByLevel,
   canBeManager,
   getHierarchyLevel
 } from '@/lib/hierarchy-constants';
+import { API_V1_URL } from '@/lib/api-config';
 
 interface Manager {
   id: string;
@@ -65,7 +66,7 @@ export default function NewEmployeePage() {
       try {
         const token = localStorage.getItem('supabase.auth.token');
         const response = await fetch(
-          `http://localhost:3001/api/v1/php/employees?organization_id=${companyId}&status=active`,
+          `${API_V1_URL}/php/employees?organization_id=${companyId}&status=active`,
           {
             headers: {
               'Authorization': `Bearer ${token}`,
@@ -231,7 +232,7 @@ export default function NewEmployeePage() {
         status: formData.status,
       };
 
-      const response = await fetch('http://localhost:3001/api/v1/php/employees', {
+      const response = await fetch('${API_V1_URL}/php/employees', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,

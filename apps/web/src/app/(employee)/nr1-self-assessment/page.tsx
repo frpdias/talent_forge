@@ -3,6 +3,7 @@
 import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
+import { API_V1_URL } from '@/lib/api-config';
 import { Heart, AlertTriangle, CheckCircle, Info, ArrowLeft, XCircle } from 'lucide-react';
 
 interface SelfAssessmentData {
@@ -248,7 +249,7 @@ function NR1SelfAssessmentContent() {
         ...(invitationData && { invitation_id: invitationData.id })
       };
 
-      const response = await fetch('http://localhost:3001/api/v1/php/nr1/self-assessments', {
+      const response = await fetch('${API_V1_URL}/php/nr1/self-assessments', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

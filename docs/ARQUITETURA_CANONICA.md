@@ -1,6 +1,6 @@
 # Arquitetura Canônica — TalentForge
 
-**Última atualização**: 2026-02-04 19:00 | **Score de Conformidade**: ✅ 100% (Sprint 16: Teams CRUD completo)
+**Última atualização**: 2026-02-28 | **Score de Conformidade**: ✅ 100% (Sprint 17: Design System restaurado + @types/react fix + Build 88/88 pages estáticas)
 
 ## 📜 FONTE DA VERDADE — PRINCÍPIO FUNDAMENTAL
 
@@ -108,6 +108,8 @@ PROJETO_TALENT_FORGE/
 │       │   │   │       ├── ai/               # AI Insights
 │       │   │   │       ├── ai-chat/          # Chat AI
 │       │   │   │       └── settings/         # Configurações
+│       │   │   ├── (employee)/      # Rotas colaborador (self-service NR-1)
+│       │   │   │   └── nr1-self-assessment/ # Self-assessment NR-1 via convite
 │       │   │   ├── (candidate)/     # Rotas candidato
 │       │   │   │   ├── candidate/
 │       │   │   │   ├── onboarding/
@@ -291,7 +293,7 @@ const COLORS = {
 1. **Criar branch**: `git checkout -b feat/nova-feature`
 2. **Desenvolver localmente**:
    ```bash
-   npm run dev        # Roda api + web
+   npm run dev        # Roda api + web (via concurrently)
    npm run dev:api    # Apenas API (porta 3001)
    npm run dev:web    # Apenas Web (porta 3000)
    ```
@@ -316,9 +318,480 @@ const COLORS = {
 
 ### 🔌 Conexões locais (obrigatório em dev)
 - Web local deve apontar para API local:
-   - `NEXT_PUBLIC_API_URL=http://localhost:3001/api/v1`
+   - `NEXT_PUBLIC_API_BASE_URL=http://localhost:3001` *(sem `/api/v1` — a lib `api-config.ts` compõe o path)*
 - API local deve aceitar origem `http://localhost:3000` via CORS.
 - Se usar API remota em dev, garantir que CORS permita `localhost`.
+
+### 🛠️ Startup do Servidor Local — Guia Completo e Troubleshooting
+
+#### Pré-requisitos
+- **Node.js >= 20.0.0** (usar `nvm use 20` se necessário)
+- **npm >= 10** (vem com Node 20)
+- Arquivo `apps/web/.env.local` configurado com:
+  - `NEXT_PUBLIC_SUPABASE_URL`
+  - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+  - `SUPABASE_SERVICE_ROLE_KEY`
+
+#### Comandos de Startup
+```bash
+# Instalar dependências (primeira vez ou após pull)
+npm install
+
+# Rodar apenas o frontend (recomendado para dev rápido)
+npm run dev:web
+# → Next.js 15 + Turbopack em http://localhost:3000
+
+# Rodar apenas a API NestJS
+npm run dev:api
+# → NestJS em http://localhost:3001
+
+# Rodar ambos (via concurrently)
+npm run dev
+```
+
+#### ⚠️ Variáveis de Ambiente Críticas (`apps/web/.env.local`)
+| Variável | Obrigatória | Descrição |
+|----------|-------------|----------|
+| `NEXT_PUBLIC_SUPABASE_URL` | ✅ | URL do projeto Supabase |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | ✅ | Chave anon (pública) do Supabase |
+| `SUPABASE_SERVICE_ROLE_KEY` | ✅ | Chave service role (admin ops, NÃO expor no client) |
+| `VERCEL_OIDC_TOKEN` | ❌ **PROIBIDO em dev local** | Causa hang do servidor. Só usar em deploy Vercel |
+| `NEXT_PUBLIC_API_BASE_URL` | 🟡 Opcional | URL base da API NestJS **sem** `/api/v1` (padrão: `http://localhost:3001`) |
+
+> **🔴 REGRA ABSOLUTA**: A variável `VERCEL_OIDC_TOKEN` **NUNCA** deve estar ativa em `.env.local` para desenvolvimento local. Ela causa interferência no servidor Next.js, fazendo-o aceitar conexões na porta 3000 mas nunca responder às requisições (hang infinito). Se presente, comentar com `#`.
+
+---
+
+### 🔧 Troubleshooting — Problemas Conhecidos e Soluções
+
+#### Problema 1: `node_modules` corrompido (JSON truncado)
+**Sintoma**: Erros como `Unexpected end of JSON input`, `Cannot find module`, ou falhas em pacotes como `commander`, `semver`, `balanced-match`, `brace-expansion`, `lru-cache`, `minimatch`.
+
+**Causa raiz**: Interrupção de `npm install` (crash, Ctrl+C, disco cheio) deixa arquivos `package.json` de pacotes internos com conteúdo truncado/inválido.
+
+**Solução definitiva** (limpeza completa):
+```bash
+# 1. Remover TODOS os node_modules e lock file
+rm -rf node_modules apps/web/node_modules apps/api/node_modules \
+       packages/mcp/node_modules packages/types/node_modules \
+       package-lock.json
+
+# 2. Limpar cache do npm
+npm cache clean --force
+
+# 3. Reinstalar do zero
+npm install
+```
+
+**⚠️ NÃO tentar corrigir pacotes individuais** — a corrupção geralmente afeta múltiplos pacotes simultaneamente. Limpeza total é a única solução confiável.
+
+---
+
+#### Problema 2: Conflito de versão Next.js (root vs workspace)
+**Sintoma**: Compilação trava sem erro, servidor não responde, ou erros de incompatibilidade React 18 vs React 19.
+
+**Causa raiz**: O `package.json` raiz **NÃO deve** declarar `next` como dependência. O npm workspace hoisting pode puxar uma versão diferente (ex: Next.js 16) para o `node_modules/` raiz, sobrescrevendo a versão correta do workspace `apps/web` (Next.js 15).
+
+**Regras de compatibilidade**:
+| Next.js | React | Status |
+|---------|-------|---------|
+| 15.x | React 18 | ✅ Versão do projeto |
+| 16.x | React 19 | ❌ **INCOMPATÍVEL** — não usar |
+
+**Diagnóstico**:
+```bash
+# Verificar versão do Next.js instalada
+ls -la apps/web/node_modules/next/package.json | head -5
+node -e "console.log(require('./apps/web/node_modules/next/package.json').version)"
+
+# Verificar se há Next.js no root (NÃO deveria existir)
+ls node_modules/next/package.json 2>/dev/null && echo 'PROBLEMA: Next.js no root!' || echo 'OK: Next.js apenas no workspace'
+```
+
+**Solução**:
+```bash
+# 1. Remover "next" do package.json raiz (se existir)
+#    O root package.json NÃO deve conter dependência "next"
+
+# 2. Limpeza completa
+rm -rf node_modules apps/web/node_modules apps/web/.next package-lock.json
+
+# 3. Reinstalar
+npm install
+
+# 4. Verificar
+node -e "console.log(require('./apps/web/node_modules/next/package.json').version)"
+# Deve retornar 15.x.x
+```
+
+**Estado correto do `package.json` raiz**:
+```json
+{
+  "dependencies": {
+    "@supabase/ssr": "0.5.2",
+    "@supabase/supabase-js": "2.46.2"
+  }
+}
+```
+> **Nota**: `next`, `react` e `react-dom` devem estar APENAS em `apps/web/package.json`.
+
+---
+
+#### Problema 3: Servidor aceita conexão mas não responde (hang)
+**Sintoma**: `lsof -i :3000` mostra processo escutando, mas `curl http://localhost:3000` fica em timeout indefinidamente.
+
+**Causas possíveis**:
+
+| Causa | Diagnóstico | Solução |
+|-------|-------------|--------|
+| `VERCEL_OIDC_TOKEN` ativo | Verificar `apps/web/.env.local` | Comentar/remover a linha |
+| Cache `.next` corrompido | Servidor inicia mas não compila | `rm -rf apps/web/.next` |
+| SWC binary ausente | Warning "Found lockfile missing swc" | `rm -rf node_modules && npm install` |
+| Middleware travando | `middleware.ts` chama API externa | Verificar conectividade Supabase |
+
+**Solução geral**:
+```bash
+# 1. Limpar VERCEL_OIDC_TOKEN
+sed -i '' 's/^VERCEL_OIDC_TOKEN/# VERCEL_OIDC_TOKEN/' apps/web/.env.local
+
+# 2. Limpar cache de build
+rm -rf apps/web/.next
+
+# 3. Reiniciar servidor
+cd apps/web && npx next dev --turbopack -p 3000 -H 0.0.0.0
+```
+
+---
+
+#### Problema 4: `Missing script: "dev:api"` no root
+**Sintoma**: `npm run dev:api` falha na raiz do projeto.
+
+**Solução**: O script já está configurado no root `package.json` como:
+```json
+"dev:api": "npm run start:dev -w tf-api"
+```
+E no `apps/api/package.json`:
+```json
+"dev:api": "nest start --watch",
+"start:dev": "nest start --watch"
+```
+
+---
+
+#### Problema 5: Primeira compilação muito lenta (>60s)
+**Sintoma**: Após `npm run dev:web`, a primeira requisição demora 60-120 segundos.
+
+**Causa**: Normal no Next.js 15 com Turbopack na primeira compilação. O Turbopack precisa compilar todas as dependências na primeira vez.
+
+**Mitigação**:
+- Usar `--turbopack` (já configurado) — mais rápido que Webpack
+- Não interromper a primeira compilação
+- Compilações subsequentes são instantâneas (<3s)
+- O binário SWC nativo (`@next/swc-darwin-arm64` para Mac M1/M2/M3) deve estar instalado
+
+---
+
+#### Problema 6: AuthApiError em logs (refresh_token)
+**Sintoma**: Logs do Supabase mostram `AuthApiError: Invalid Refresh Token: Already Used` ou `Refresh Token Not Found`.
+
+**Causa**: Normal quando não há sessão ativa. O middleware (`apps/web/src/middleware.ts`) chama `supabase.auth.getUser()` em toda requisição, e sem cookie de sessão válido, o Supabase retorna esses erros.
+
+**Não é um bug** — é comportamento esperado para rotas não autenticadas.
+
+---
+
+#### Problema 7: Versões de `eslint-config-next` e `@types/react` incompatíveis (processo Next.js silencioso)
+**Sintoma**: Processo `next dev` inicia (aparece em `ps aux`), consome memória mínima (~13MB RSS), **não produz NENHUM output** mesmo após 5-10 minutos, e a porta 3000 nunca é aberta.
+
+**Causa raiz**: Conflito de versões entre `eslint-config-next` e `@types/react` declaradas em `apps/web/package.json` e as versões reais instaladas. Especificamente:
+- `eslint-config-next: "16.0.9"` (para Next.js 16) sendo usado com Next.js 15 — incompatível
+- `@types/react: "^19"` / `@types/react-dom: "^19"` (tipos do React 19) com React 18 instalado — divergência de tipos durante inicialização do TypeScript
+
+O Next.js em modo dev carrega e valida dependências de forma mais ampla que em produção. O conflito faz o processo travão em estado `S` (sleeping/aguardando I/O) sem nunca imprimir o banner de startup.
+
+**Diagnóstico**:
+```bash
+# Verificar versões de eslint-config-next e @types/react em apps/web/package.json
+grep -E 'eslint-config-next|@types/react' apps/web/package.json
+
+# Regra: eslint-config-next DEVE ter a mesma versão major que next
+# eslint-config-next: "15.x.x" ↔ next: "^15.x.x"
+# @types/react: "^18" ↔ react: "^18.x.x" (nunca @types/react: "^19" com React 18)
+```
+
+**Solução**:
+```bash
+# 1. Corrigir versões em apps/web/package.json:
+#    "eslint-config-next": "15.5.9"  (ou versão exata do Next.js instalado)
+#    "@types/react": "^18"
+#    "@types/react-dom": "^18"
+
+# 2. Reinstalar dependências
+npm install
+
+# 3. Limpar cache
+rm -rf apps/web/.next
+
+# 4. Reiniciar
+npm run dev:web
+```
+
+**Regra de ouro**: **eslint-config-next** e **@types/react** DEVEM ser mantidos alinhados com as versões de `next` e `react` respectivamente. Ao atualizar `next`, atualizar também `eslint-config-next` para a mesma versão.
+
+| Pacote | Versão correta (Next.js 15) |
+|--------|-----------------------------|
+| `next` | `^15.5.9` |
+| `eslint-config-next` | `15.5.9` (igual ao next) |
+| `react` | `^18.3.1` |
+| `@types/react` | `^18` |
+| `@types/react-dom` | `^18` |
+
+---
+
+#### Problema 8: `@types/react` dual version — TS2786 lucide-react "cannot be used as JSX component"
+**Sintoma**: Erros TypeScript em imports de ícones (lucide-react, heroicons): `Type 'Element' is not assignable to type 'ReactNode'`.
+
+**Causa raiz**: npm hoisting instala `@types/react@19` na raiz do monorepo (puxado por `react-redux` como optional peer). O workspace `apps/web` tem `@types/react@18`. TypeScript resolve para a versão da raiz (v19), incompatível com React 18.
+
+**Solução** (root `package.json`):
+```json
+{
+  "overrides": {
+    "@types/react": "^18",
+    "@types/react-dom": "^18"
+  }
+}
+```
+
+**⚠️ NUNCA adicionar em `devDependencies` do root E `overrides` ao mesmo tempo** — causará `EOVERRIDE conflict`.
+
+**Diagnóstico**:
+```bash
+# Verificar versão instalada na raiz
+node -e "console.log(require('./node_modules/@types/react/package.json').version)"
+# Deve ser 18.x.x (se 19.x.x, overrides não aplicados ou npm rodou do lugar errado)
+
+# Verificar overrides
+node -e "console.log(JSON.stringify(require('./package.json').overrides, null, 2))"
+```
+
+**⚠️ Sempre rodar `npm install` do DIRETÓRIO RAIZ** — se rodar de `apps/web`, os overrides do root não se aplicam.
+
+---
+
+#### Problema 9: `useSearchParams()` sem `<Suspense>` — build falha em static pages
+**Sintoma**: Build (SSG) falha com: `Error: useSearchParams() should be wrapped in a suspense boundary at the page level`
+
+**Causa raiz**: Next.js 15 exige que qualquer componente que use `useSearchParams()` esteja dentro de `<Suspense>` quando a página é gerada estaticamente.
+
+**Padrão obrigatório**:
+```tsx
+import { Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
+
+// ✅ Exportar um wrapper com Suspense
+export default function MyPage() {
+  return (
+    <Suspense fallback={<div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#141042]" />}>
+      <MyPageContent />
+    </Suspense>
+  );
+}
+
+// Componente interno usa os hooks normalmente
+function MyPageContent() {
+  const searchParams = useSearchParams();
+  // ...
+}
+```
+
+**Páginas que JÁ aplicam corretamente** (não alterar): `login/page.tsx`, `register/page.tsx`, `auth/callback/page.tsx`, `nr1-self-assessment/page.tsx`, `companies/[id]/page.tsx`.
+
+---
+
+### 📋 Checklist de Verificação Rápida (Dev Local)
+```bash
+# 1. Node.js correto?
+node --version  # Deve ser v20.x.x
+
+# 2. Dependências instaladas?
+ls apps/web/node_modules/next/package.json  # Deve existir
+
+# 3. Next.js correto?
+node -e "console.log(require('./apps/web/node_modules/next/package.json').version)"  # 15.x.x
+
+# 4. VERCEL_OIDC_TOKEN removido?
+grep '^VERCEL_OIDC_TOKEN' apps/web/.env.local  # Não deve retornar nada
+
+# 5. Next.js no root? (INDESEJADO)
+ls node_modules/next 2>/dev/null && echo 'PROBLEMA!' || echo 'OK'
+
+# 6. eslint-config-next e @types/react alinhados?
+grep -E 'eslint-config-next|@types/react|"next"|"react"' apps/web/package.json | grep -v '\/\/'  # Conferir versões
+
+# 7. Servidor respondendo?
+curl -s -o /dev/null -w '%{http_code}' http://localhost:3000/login  # 200
+
+# 8. @types/react versão correta no root? (overrides aplicados?)
+node -e "console.log(require('./node_modules/@types/react/package.json').version)"  # 18.x.x (NÃO 19.x)
+
+# 9. overrides no root package.json?
+node -e "const p=require('./package.json');console.log(p.overrides)"  # { '@types/react': '^18', '@types/react-dom': '^18' }
+```
+
+---
+
+### 📜 Histórico de Incidentes de Dev Local
+
+#### Incidente 2026-02-05: Servidor local não responde
+**Contexto**: Após atualização de dependências, o servidor Next.js parou de responder.
+
+**Cadeia de causas** (3 problemas em cascata):
+1. **node_modules corrompido**: Múltiplos `package.json` internos com JSON truncado (`commander`, `semver`, `balanced-match`, `brace-expansion`, `lru-cache`, `minimatch`, `@inquirer/prompts`)
+2. **Next.js 16 no root**: O `package.json` raiz tinha `"next": "^16.1.6"` como dependência. O npm hoisting instalava Next.js 16 no root, que requer React 19 — incompatível com React 18 do projeto. Causava hang na compilação.
+3. **VERCEL_OIDC_TOKEN ativo**: Token de OIDC do Vercel em `.env.local` causava comportamento de deploy (não dev) no servidor, aceitando conexões TCP mas nunca respondendo HTTP.
+
+**Resolução**:
+1. Limpeza total: `rm -rf node_modules */*/node_modules package-lock.json`
+2. Remoção de `"next": "^16.1.6"` do `package.json` raiz
+3. Comentar `VERCEL_OIDC_TOKEN` em `apps/web/.env.local`
+4. Limpar cache: `rm -rf apps/web/.next`
+5. Reinstalar: `npm install`
+6. Iniciar com Turbopack: `cd apps/web && npx next dev --turbopack -p 3000 -H 0.0.0.0`
+
+**Tempo total**: ~45 minutos de diagnóstico
+**Prevenção**: Checklist de verificação rápida (acima) antes de cada sessão de dev
+
+#### Incidente 2026-02-27: Processo next dev silencioso (zero output)
+**Contexto**: Servidor não iniciava após tentativas de reinício. Processo aparecia em `ps aux` mas a porta 3000 nunca era aberta e nenhum log era produzido.
+
+**Cadeia de causas** (2 problemas):
+1. **`eslint-config-next: "16.0.9"`** em `apps/web/package.json` — versão para Next.js 16, incompatível com Next.js 15.5 instalado. Causava conflito silencioso no bootstrap do servidor.
+2. **`@types/react: "^19"` e `@types/react-dom: "^19"`** — tipos do React 19 com React 18 instalado, causando divergência de tipos no carregamento do TypeScript.
+
+**Otimizações aplicadas simultaneamente**:
+- `next.config.ts`: `outputFileTracingRoot` e `outputFileTracingExcludes` movidos para bloco `production-only` — elimina varredura desnecessária do monorepo em `next dev`
+- Script `dev` em `apps/web/package.json` atualizado para `next dev --turbopack -p 3000 -H 0.0.0.0`
+
+**Resolução**:
+1. `eslint-config-next: "16.0.9"` → `"15.5.9"` em `apps/web/package.json`
+2. `@types/react: "^19"` → `"^18"` e `@types/react-dom: "^19"` → `"^18"`
+3. `next.config.ts` refatorado — `outputFileTracingRoot` apenas em `isDev === false`
+4. `npm install` para aplicar correções
+
+**Tempo total**: ~60 minutos de diagnóstico
+**Prevenção**: Item 6 do Checklist de Verificação (verificar versões de `eslint-config-next` e `@types/react`)
+
+#### Incidente 2026-02-28: Design System + @types/react dual version + Build failures
+**Contexto**: Após mudanças visuais em sessão anterior, o projeto acumulou 3 problemas independentes que precisaram ser resolvidos antes do deploy: violações de design system, erro de build por `useSearchParams` sem `Suspense`, e conflito de versão `@types/react` em monorepo.
+
+**Problema 1: Violações do Design System (cor FORGE incorreta)**
+
+| Arquivo | Problema | Correção |
+|---------|----------|---------|
+| `admin/layout.tsx` | `FORGE text-[#3B82F6]` (azul) | → `text-[#F97316]` (laranja) |
+| `dashboard/layout.tsx` | `FORGE text-[#3B82F6]` (azul) | → `text-[#F97316]` (laranja) |
+| `dashboard/reports/page.tsx` | `TALENT text-[#141042]`, `REPORTS text-[#3B82F6]` | TALENT → `#1F4ED8`, REPORTS → `#F97316` |
+| `login/page.tsx` | `FORGE text-(--tf-accent-light)` e `text-tf-accent` | → `text-[#F97316]` |
+
+**Regra canônica**: TALENT = `#1F4ED8` (azul), FORGE = `#F97316` (laranja). Usar APENAS nesses dois componentes de branding do logotipo.
+
+**Problema 2: `useSearchParams()` sem `<Suspense>` boundary**
+
+**Sintoma**: Build falha com `Error: useSearchParams() should be wrapped in a suspense boundary`
+
+**Arquivos afetados**:
+- `apps/web/src/app/(employee)/nr1-self-assessment/page.tsx`
+- `apps/web/src/app/(recruiter)/dashboard/companies/[id]/page.tsx`
+
+**Padrão de correção obrigatório**:
+```tsx
+// ❌ INCORRETO — useSearchParams sem Suspense
+export default function MyPage() {
+  const searchParams = useSearchParams();
+  // ...
+}
+
+// ✅ CORRETO — Wrapper com Suspense
+export default function MyPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#141042]" />
+      </div>
+    }>
+      <MyPageContent />
+    </Suspense>
+  );
+}
+
+function MyPageContent() {
+  const searchParams = useSearchParams();
+  // componente original aqui
+}
+```
+
+**Nota**: `login/page.tsx`, `register/page.tsx` e `auth/callback/page.tsx` já estavam corretamente envolvidos em `<Suspense>` — não foram tocados.
+
+**Problema 3: `@types/react` dual version conflict**
+
+**Sintoma**: Erro TypeScript `TS2786: 'XIcon' cannot be used as a JSX component — Type 'Element' is not assignable to type 'ReactNode'` em imports de lucide-react.
+
+**Causa raiz**: O npm workspace hoisting instala `@types/react@19` no `node_modules/` raiz (puxado por `react-redux` como optional peer de `recharts`/`@dnd-kit`). O workspace `apps/web` declara `@types/react@18`. Duas versões incompatíveis coexistem — TypeScript resolve para a raiz que tem v19.
+
+**Solução via `overrides` no root `package.json`**:
+```json
+{
+  "overrides": {
+    "@types/react": "^18",
+    "@types/react-dom": "^18"
+  }
+}
+```
+
+**⚠️ CONFLITO COMUM**: Não adicionar `@types/react` em `devDependencies` do root E em `overrides` simultaneamente. O npm retornará `EOVERRIDE: Override for @types/react conflicts with direct dependency`. Use APENAS `overrides`, sem `devDependencies` no root.
+
+**⚠️ DIRETÓRIO OBRIGATÓRIO**: Todos os comandos `npm install` DEVEM ser executados do diretório raiz `/Users/fernandodias/Desktop/PROJETO_TALENT_FORGE`, NUNCA de `apps/web/`. Rodar npm de `apps/web` instala na subárvore e perde os `overrides` do root.
+
+**Problema 4: next.config.ts → next.config.mjs**
+
+`next.config.ts` foi substituído por `next.config.mjs` para melhor compatibilidade ESM:
+
+```js
+// apps/web/next.config.mjs
+import { dirname, join } from 'path';
+import { fileURLToPath } from 'url';
+const __dirname = dirname(fileURLToPath(import.meta.url));
+
+const nextConfig = {
+  eslint: { ignoreDuringBuilds: true },
+  images: {
+    remotePatterns: [{
+      protocol: 'https',
+      hostname: 'fjudsjzfnysaztcwlwgm.supabase.co',
+      pathname: '/storage/v1/object/public/**'
+    }]
+  },
+  outputFileTracingRoot: join(__dirname, '../../'),
+};
+export default nextConfig;
+```
+
+**Resolução final**:
+1. Corrigir cores FORGE/TALENT (4 arquivos)
+2. Adicionar `Suspense` wrapper em 2 arquivos com `useSearchParams`
+3. Adicionar `overrides` em root `package.json`
+4. Substituir `next.config.ts` → `next.config.mjs`
+5. `npm install` do diretório RAIZ
+6. `npm run build:web` → ✅ 88/88 páginas estáticas geradas
+
+**Commit**: `26b506b` — `fix(web): restaurar design system + Suspense useSearchParams + @types/react override`
+
+**Tempo total**: ~3h
+**Prevenção**:
+- Item 8 do Checklist de Verificação (cores FORGE/TALENT)
+- Item 9 do Checklist (overrides root package.json)
+- Sempre rodar `npm install` da raiz do monorepo
 
 ### 🧭 Pipeline (recrutador)
 - O pipeline exibe **candidaturas (applications)**, não apenas candidatos.
@@ -363,13 +836,15 @@ SELECT * FROM v_recruiter_performance WHERE org_id = '<uuid>';
 ---
 
 ## 1) Stack e módulos (imutável)
-- **Frontend**: Next.js 15 + React 19 + Tailwind 4 + Zustand + @dnd-kit (App Router).
+- **Frontend**: Next.js 15 + React 18 + Tailwind 4 + Zustand + @dnd-kit (App Router).
+  - ⚠️ **ATENÇÃO**: React 18 é obrigatório. Next.js 16 requer React 19 — NÃO usar Next.js 16 neste projeto.
 - **Backend**: NestJS 11 (BFF + serviços de domínio) com Supabase JS e Swagger.
 - **Banco**: Supabase Postgres + Auth + Storage, com **RLS obrigatório**.
 - **Infra**: Vercel (web/api) + Supabase (DB/Auth/Storage).
-- **Produção (2026-01-26)**:
-   - Web: https://fartech-talentforge-amber.vercel.app
-   - API: https://api-py-ruddy.vercel.app/api/v1
+- **Produção (2026-02-28)**:
+   - Web: https://web-fartechs-projects-c64e0af4.vercel.app *(alias estável — atualiza a cada deploy de main)*
+   - API: https://api-fartechs-projects-c64e0af4.vercel.app *(projeto relinkado 2026-02-28)*
+   - Env var web: `NEXT_PUBLIC_API_BASE_URL=https://api-fartechs-projects-c64e0af4.vercel.app`
 
 ## 2) Padrões essenciais (não desviar)
 - **Multi-tenant**: `organizations` + `org_members`.
@@ -1856,18 +2331,13 @@ WHERE org_id = $1 AND user_id = auth.uid() AND status = 'active';
 
 | Item | Banco | API | UI | Status |
 |------|-------|-----|-----|--------|
-| `teams` | ✅ Tabela existe | ❌ Sem endpoints | ❌ Sem página | ⚠️ **PENDENTE** |
-| `team_members` | ✅ Tabela existe | ❌ Sem endpoints | ❌ Sem página | ⚠️ **PENDENTE** |
+| `teams` | ✅ Tabela existe | ✅ 9 endpoints | ✅ 2 páginas | ✅ **IMPLEMENTADO Sprint 16** |
+| `team_members` | ✅ Tabela existe | ✅ Via TeamsService | ✅ Página detalhes | ✅ **IMPLEMENTADO Sprint 16** |
 | `employees` | ✅ Tabela existe | ✅ 11 endpoints | ✅ Página existe | ✅ Completo |
 | `php_notifications` | ✅ Tabela existe | ✅ Via realtime | ✅ Dashboard | ✅ Completo |
 | `php_user_presence` | ✅ Tabela existe | ✅ Via realtime | ✅ Dashboard | ✅ Completo |
 | `php_comments` | ✅ Tabela existe | ✅ Via realtime | ✅ Dashboard | ✅ Completo |
 | `php_edit_locks` | ✅ Tabela existe | ✅ Via realtime | ✅ Dashboard | ✅ Completo |
-
-**Ação necessária:**
-- [ ] Criar `TeamsController` + `TeamsService` no backend (`apps/api/src/php/teams/`)
-- [ ] Criar página `/php/teams/page.tsx` no frontend
-- [ ] Criar página `/php/teams/[id]/page.tsx` para detalhes do time
 
 ---
 
@@ -3124,7 +3594,7 @@ WHERE table_name = 'organizations'
 - Logos padronizadas (altura 64px) em toda a aplicação.
 
 ### ✅ Configuração de API em Dev
-- `API_URL` aponta para `http://localhost:3001/api/v1` quando `NODE_ENV=development`.
+- `API_V1_URL` (de `src/lib/api-config.ts`) aponta para `http://localhost:3001/api/v1` quando `NEXT_PUBLIC_API_BASE_URL` não está definida.
 
 ---
 
@@ -3141,7 +3611,7 @@ O módulo **PHP** integra três dimensões críticas de gestão de pessoas:
 │                  MÓDULO PHP - ARQUITETURA                   │
 ├─────────────────────────────────────────────────────────────┤
 │                                                             │
-│  1. COMPORTAMENTO (TFCI) ──┐                               │
+│  1.  COMPORTAMENTO (TFCI) ──┐                               │
 │     • Percepção coletiva    │                               │
 │     • Padrões de equipe     │                               │
 │     • Sinais precoces       │                               │
@@ -3156,7 +3626,7 @@ O módulo **PHP** integra três dimensões críticas de gestão de pessoas:
 │     (COPC Adaptado)         │                               │
 │     • Qualidade             │                               │
 │     • Eficiência            │                               │
-│     • Absenteísmo          │                               │
+│     • Absenteísmo           │                               │
 │                             │                               │
 └─────────────────────────────┘                               │
 ```
@@ -4364,7 +4834,7 @@ Próxima revisão: Sprint 12 (Action Plans + Settings)
 
 ---
 
-**FIM DO DOCUMENTO** — Versão 3.3 (Sprint 10 Complete + Admin Panel + Design System 100%)
+**FIM DO DOCUMENTO** — Versão 3.6 (Sprint 17 + Design System Restaurado + @types/react Override + Build 88/88)
 ```sql
 CREATE TYPE risk_level AS ENUM ('low', 'medium', 'high', 'critical');
 CREATE TYPE assessment_status AS ENUM ('draft', 'active', 'completed', 'cancelled');
@@ -4405,6 +4875,30 @@ CREATE TYPE alert_level AS ENUM ('none', 'watch', 'warning', 'critical');
 ---
 
 ## 📝 Histórico de Versões
+
+### v3.6 (2026-02-28)
+- ✅ **Score de Conformidade**: 100% mantido (Sprint 17)
+- ✅ **Gaps resolvidos**: `teams` e `team_members` atualizados para ✅ IMPLEMENTADO Sprint 16
+- ✅ **Rota `(employee)` documentada**: grupo de rotas para colaboradores (self-service NR-1)
+- ✅ **Incidente 2026-02-28 documentado**: 4 problemas + correções em cascata
+  - Design System: FORGE `#3B82F6` → `#F97316` (4 arquivos)
+  - `useSearchParams` sem `Suspense`: padrão correto documentado
+  - `@types/react` dual version: solução via `overrides` no root `package.json`
+  - `next.config.ts` → `next.config.mjs` (ESM-first)
+- ✅ **Checklist**: adicionados itens 8 e 9 (verificar `@types/react` raiz e `overrides`)
+- ✅ **Regra nova**: `npm install` SEMPRE da raiz do monorepo, nunca de `apps/web`
+- ✅ **Build validado**: `npm run build:web` → 88/88 páginas estáticas geradas sem erros
+
+### v3.5 (2026-02-05 14:00)
+- ✅ **Correção Stack**: React 19 → **React 18** na documentação (Next.js 15 requer React 18, não 19)
+- ✅ **Seção de Troubleshooting**: Adicionada seção completa "Startup do Servidor Local — Guia Completo e Troubleshooting"
+  - 6 problemas documentados com diagnóstico e solução
+  - Checklist de verificação rápida para dev local
+  - Histórico de incidentes com cadeia de causas e resolução
+  - Tabela de variáveis de ambiente críticas (incluindo VERCEL_OIDC_TOKEN proibido em dev)
+- ✅ **Regra de Segurança Ambiental**: `VERCEL_OIDC_TOKEN` documentado como **proibido** em desenvolvimento local
+- ✅ **Regra de Dependências**: Documentado que `next`, `react`, `react-dom` devem existir APENAS em `apps/web/package.json` (nunca no root)
+- ✅ **Incidente documentado**: Cadeia de 3 causas em cascata do incidente 2026-02-05 (node_modules corrompido + Next.js 16 no root + VERCEL_OIDC_TOKEN)
 
 ### v3.4 (2026-01-29 23:58)
 - ✅ **UX Final Sprint 10**: Logo PHP otimizada no footer

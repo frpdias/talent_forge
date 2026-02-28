@@ -6,6 +6,7 @@ import { ArrowLeft, Save, User, Calendar, Briefcase, Users } from 'lucide-react'
 import { useOrgStore } from '@/lib/store';
 import { createClient } from '@/lib/supabase/client';
 import { HIERARCHY_LEVELS } from '@/lib/constants/hierarchy';
+import { API_V1_URL } from '@/lib/api-config';
 
 interface Employee {
   id?: string;
@@ -66,7 +67,7 @@ export default function NewEmployeePage() {
         return;
       }
       
-      const response = await fetch(`http://localhost:3001/api/v1/php/employees?organization_id=${companyId}&status=active`, {
+      const response = await fetch(`${API_V1_URL}/php/employees?organization_id=${companyId}&status=active`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'x-org-id': companyId,
@@ -182,7 +183,7 @@ export default function NewEmployeePage() {
       
       console.log('Criando funcionário:', payload);
 
-      const response = await fetch('http://localhost:3001/api/v1/php/employees', {
+      const response = await fetch('${API_V1_URL}/php/employees', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,

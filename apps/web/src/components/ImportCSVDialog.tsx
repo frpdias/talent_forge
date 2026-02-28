@@ -2,6 +2,7 @@
 
 import { useState, useRef } from 'react';
 import { Upload, X, FileText, AlertCircle, CheckCircle, Download } from 'lucide-react';
+import { API_V1_URL } from '@/lib/api-config';
 
 interface ImportResult {
   success: number;
@@ -58,7 +59,7 @@ export default function ImportCSVDialog({
       formData.append('file', file);
       formData.append('organization_id', companyId);
 
-      const response = await fetch('http://localhost:3001/api/v1/php/employees/import', {
+      const response = await fetch('${API_V1_URL}/php/employees/import', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,

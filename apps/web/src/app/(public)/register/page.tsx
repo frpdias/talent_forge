@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { Mail, Lock, Eye, EyeOff, Building2, UserCircle, Check } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
+import { API_BASE_URL } from '@/lib/api-config';
 import { UserAvatar } from '@/components/UserAvatar';
 
 export default function RegisterPage() {
@@ -19,7 +20,7 @@ function RegisterContent() {
   const searchParams = useSearchParams();
   const typeParam = searchParams.get('type') as 'recruiter' | 'candidate' | null;
   const inviteToken = searchParams.get('invite');
-  const apiBase = (process.env.NEXT_PUBLIC_API_URL || '').replace(/\/api\/v1\/?$/, '');
+  const apiBase = API_BASE_URL;
 
   const [userType, setUserType] = useState<'recruiter' | 'candidate'>(
     inviteToken ? 'candidate' : typeParam || 'recruiter',

@@ -1,12 +1,6 @@
-const RAW_API_URL =
-  process.env.NEXT_PUBLIC_API_URL ||
-  (process.env.NODE_ENV === 'development'
-    ? 'http://localhost:3001/api/v1'
-    : 'https://api-py-ruddy.vercel.app');
+import { API_V1_URL } from './api-config';
 
-const API_URL = RAW_API_URL.replace(/\/$/, '').endsWith('/api/v1')
-  ? RAW_API_URL.replace(/\/$/, '')
-  : `${RAW_API_URL.replace(/\/$/, '')}/api/v1`;
+const API_URL = API_V1_URL;
 
 const DEFAULT_TIMEOUT_MS = 10_000;
 

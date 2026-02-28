@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Lock, Shield, Plus, Search, ChevronRight, Users, Check } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
+import { API_V1_URL } from '@/lib/api-config';
 
 interface Role {
   id: string;
@@ -50,10 +51,10 @@ export default function RolesPage() {
       if (!session?.access_token) return;
 
       const [rolesRes, permsRes] = await Promise.all([
-        fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/roles`, {
+        fetch(`${API_V1_URL}/roles`, {
           headers: { 'Authorization': `Bearer ${session.access_token}` },
         }),
-        fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/permissions`, {
+        fetch(`${API_V1_URL}/permissions`, {
           headers: { 'Authorization': `Bearer ${session.access_token}` },
         }),
       ]);
