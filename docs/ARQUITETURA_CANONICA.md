@@ -1,6 +1,6 @@
 # Arquitetura Canônica — TalentForge
 
-**Última atualização**: 2026-02-28 | **Score de Conformidade**: ✅ 100% (Sprint 19: Reports conectados a dados reais + Design system nos gráficos)
+**Última atualização**: 2026-03-01 | **Score de Conformidade**: ✅ 100% (Sprint 20: Companies CRUD + sidebar PHP canônico + Design System PHP + NR-1 fixes)
 
 ## 📜 FONTE DA VERDADE — PRINCÍPIO FUNDAMENTAL
 
@@ -75,6 +75,10 @@ PROJETO_TALENT_FORGE/
 │       │   │   │       ├── users/             # Gestão usuários
 │       │   │   │       ├── create-user/       # Criar usuários
 │       │   │   │       ├── companies/         # Gestão empresas
+│       │   │   │       │   ├── page.tsx       # Lista empresas (admin view)
+│       │   │   │       │   └── [id]/
+│       │   │   │       │       ├── page.tsx   # Detalhe + abas Informações/Funcionários
+│       │   │   │       │       └── employees/new/page.tsx # Cadastro funcionário
 │       │   │   │       ├── tenants/           # Gestão tenants
 │       │   │   │       ├── security/          # Centro segurança
 │       │   │   │       ├── roles/             # Gestão roles
@@ -85,10 +89,13 @@ PROJETO_TALENT_FORGE/
 │       │   │   ├── (recruiter)/     # Rotas recrutador
 │       │   │   │   ├── dashboard/
 │       │   │   │   │   ├── page.tsx           # Dashboard principal
-│       │   │   │   │   └── companies/         # ✨ Gestão de empresas (Sprint 15)
-│       │   │   │   │       ├── page.tsx       # Lista empresas
+│       │   │   │   │   └── companies/         # ✨ Gestão de empresas clientes (Sprint 15/20)
+│       │   │   │   │       ├── page.tsx       # Lista + CRUD + consulta CNPJ via BrasilAPI
 │       │   │   │   │       └── [id]/
-│       │   │   │   │           └── page.tsx   # Detalhes + Dados Corporativos + Top 3 Gestores
+│       │   │   │   │           ├── page.tsx   # Detalhes + Dados Corporativos + abas
+│       │   │   │   │           └── employees/
+│       │   │   │   │               ├── new/page.tsx              # Cadastro funcionário
+│       │   │   │   │               └── [employeeId]/edit/page.tsx # Edição funcionário
 │       │   │   │   ├── pipeline/
 │       │   │   │   ├── candidates/
 │       │   │   │   ├── jobs/
@@ -4835,7 +4842,7 @@ Próxima revisão: Sprint 12 (Action Plans + Settings)
 
 ---
 
-**FIM DO DOCUMENTO** — Versão 3.8 (Sprint 19 + Reports Dados Reais + Design System Analytics)
+**FIM DO DOCUMENTO** — Versão 3.9 (Sprint 20 + Companies CRUD + PHP Design System + NR-1 fixes)
 ```sql
 CREATE TYPE risk_level AS ENUM ('low', 'medium', 'high', 'critical');
 CREATE TYPE assessment_status AS ENUM ('draft', 'active', 'completed', 'cancelled');
@@ -4876,6 +4883,16 @@ CREATE TYPE alert_level AS ENUM ('none', 'watch', 'warning', 'critical');
 ---
 
 ## 📝 Histórico de Versões
+
+### v3.9 (2026-03-01)
+- ✅ **Score de Conformidade**: 100% mantido (Sprint 20)
+- ✅ **Companies CRUD (recruiter)**: `dashboard/companies/page.tsx` reescrito com criação/edição/exclusão de empresas clientes, consulta automática de CNPJ via BrasilAPI e cadastro de administrador inicial via `/api/v1/php/employees`
+- ✅ **Admin companies detalhe**: `admin/companies/[id]/page.tsx` atualizado com abas Informações/Funcionários, carrega employees via `/api/v1/php/employees` com Authorization header canônico
+- ✅ **Rotas de funcionários documentadas**: `dashboard/companies/[id]/employees/new/page.tsx` e `[employeeId]/edit/page.tsx` (recruiter) + `admin/companies/[id]/employees/new/page.tsx` (admin)
+- ✅ **PHP sidebar canônico**: nav horizontal substituída por sidebar vertical canônico em todo o módulo PHP
+- ✅ **Design System PHP**: todas as páginas do módulo PHP (TFCI, NR-1, COPC, action-plans, settings) padronizadas com paleta `#141042`/`#10B981`/`#3B82F6` e tokens canônicos
+- ✅ **NR-1 Authorization fix**: lista NR-1 corrigida com `Authorization: Bearer <JWT>` + guard de array `Array.isArray(data)`
+- ✅ **Tailwind v4 @source fix**: adicionado `@source` em `globals.css` para scan completo de classes em produção (Vercel)
 
 ### v3.8 (2026-02-28)
 - ✅ **Score de Conformidade**: 100% mantido (Sprint 19)
