@@ -26,7 +26,8 @@ interface Nr1Assessment {
 
 export default function Nr1ListPage() {
   const router = useRouter();
-  const { currentOrg } = useOrgStore();
+  const { currentOrg, phpContextOrgId } = useOrgStore();
+  const effectiveOrgId = phpContextOrgId || currentOrg?.id;
   const [assessments, setAssessments] = useState<Nr1Assessment[]>([]);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({
@@ -37,15 +38,15 @@ export default function Nr1ListPage() {
   });
 
   useEffect(() => {
-    if (currentOrg?.id) {
+    if (effectiveOrgId) {
       setLoading(true);
       setAssessments([]);
-      fetchAssessments(currentOrg.id);
+      fetchAssessments(effectiveOrgId);
     } else {
       setLoading(false);
       setAssessments([]);
     }
-  }, [currentOrg?.id]);
+  }, [effectiveOrgId]);
 
   const fetchAssessments = async (organizationId: string) => {
     try {

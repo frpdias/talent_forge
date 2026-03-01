@@ -54,16 +54,17 @@ const RISK_COLORS = {
 export default function Nr1DetailPage() {
   const params = useParams();
   const router = useRouter();
-  const { currentOrg } = useOrgStore();
+  const { currentOrg, phpContextOrgId } = useOrgStore();
+  const effectiveOrgId = phpContextOrgId || currentOrg?.id;
   const [assessment, setAssessment] = useState<Nr1Assessment | null>(null);
   const [loading, setLoading] = useState(true);
   const assessmentId = params?.id as string;
 
   useEffect(() => {
-    if (currentOrg?.id && assessmentId) {
+    if (effectiveOrgId && assessmentId) {
       loadAssessment();
     }
-  }, [currentOrg?.id, assessmentId]);
+  }, [effectiveOrgId, assessmentId]);
 
   const loadAssessment = async () => {
     try {
@@ -71,7 +72,7 @@ export default function Nr1DetailPage() {
       const { data: { session } } = await createClient().auth.getSession();
       const token = session?.access_token;
 
-      if (!token || !currentOrg?.id) {
+      if (!token || !effectiveOrgId) {
         console.error('Token ou organização não encontrados');
         return;
       }
@@ -81,7 +82,7 @@ export default function Nr1DetailPage() {
         {
           headers: {
             'Authorization': `Bearer ${token}`,
-            'x-org-id': currentOrg.id,
+            'x-org-id': effectiveOrgId!,
           },
         }
       );

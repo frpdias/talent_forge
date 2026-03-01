@@ -34,16 +34,17 @@ const COPC_CATEGORIES = [
 export default function CopcMetricDetailPage() {
   const params = useParams();
   const router = useRouter();
-  const { currentOrg } = useOrgStore();
+  const { currentOrg, phpContextOrgId } = useOrgStore();
+  const effectiveOrgId = phpContextOrgId || currentOrg?.id;
   const [metric, setMetric] = useState<CopcMetric | null>(null);
   const [loading, setLoading] = useState(true);
   const metricId = params?.id as string;
 
   useEffect(() => {
-    if (currentOrg?.id && metricId) {
+    if (effectiveOrgId && metricId) {
       loadMetric();
     }
-  }, [currentOrg?.id, metricId]);
+  }, [effectiveOrgId, metricId]);
 
   const loadMetric = async () => {
     try {
@@ -51,7 +52,7 @@ export default function CopcMetricDetailPage() {
       const { data: { session } } = await createClient().auth.getSession();
       const token = session?.access_token;
 
-      if (!token || !currentOrg?.id) {
+      if (!token || !effectiveOrgId) {
         console.error('Token ou organização não encontrados');
         return;
       }
@@ -61,7 +62,7 @@ export default function CopcMetricDetailPage() {
         {
           headers: {
             'Authorization': `Bearer ${token}`,
-            'x-org-id': currentOrg.id,
+            'x-org-id': effectiveOrgId!,
           },
         }
       );

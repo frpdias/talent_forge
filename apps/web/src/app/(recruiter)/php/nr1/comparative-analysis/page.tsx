@@ -37,7 +37,8 @@ interface Statistics {
 
 export default function ComparativeAnalysisPage() {
   const router = useRouter();
-  const { currentOrg } = useOrgStore();
+  const { currentOrg, phpContextOrgId } = useOrgStore();
+  const effectiveOrgId = phpContextOrgId || currentOrg?.id;
   const [loading, setLoading] = useState(true);
   const [comparisons, setComparisons] = useState<ComparativeData[]>([]);
   const [statistics, setStatistics] = useState<Statistics | null>(null);
@@ -46,10 +47,10 @@ export default function ComparativeAnalysisPage() {
   const [filterSeverity, setFilterSeverity] = useState<string>('all');
 
   useEffect(() => {
-    if (currentOrg?.id) {
+    if (effectiveOrgId) {
       loadComparativeAnalysis();
     }
-  }, [currentOrg?.id]);
+  }, [effectiveOrgId]);
 
   const loadComparativeAnalysis = async () => {
     try {
@@ -57,14 +58,14 @@ export default function ComparativeAnalysisPage() {
       const { data: { session } } = await createClient().auth.getSession();
       const token = session?.access_token;
 
-      if (!token || !currentOrg?.id) return;
+      if (!token || !effectiveOrgId) return;
 
       const response = await fetch(
-        `/api/v1/php/nr1/comparative-analysis/${currentOrg.id}`,
+        `/api/v1/php/nr1/comparative-analysis/${effectiveOrgId}`,
         {
           headers: {
             'Authorization': `Bearer ${token}`,
-            'x-org-id': currentOrg.id,
+            'x-org-id': effectiveOrgId!,
           },
         }
       );

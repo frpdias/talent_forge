@@ -53,19 +53,20 @@ interface TfciAssessment {
 
 export default function TfciAssessmentsPage() {
   const router = useRouter();
-  const { currentOrg } = useOrgStore();
+  const { currentOrg, phpContextOrgId } = useOrgStore();
+  const effectiveOrgId = phpContextOrgId || currentOrg?.id;
   const [assessments, setAssessments] = useState<TfciAssessment[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
 
   useEffect(() => {
-    if (currentOrg?.id) {
-      fetchAssessments(currentOrg.id);
+    if (effectiveOrgId) {
+      fetchAssessments(effectiveOrgId);
     } else {
       setLoading(false);
     }
-  }, [currentOrg?.id]);
+  }, [effectiveOrgId]);
 
   const fetchAssessments = async (organizationId: string) => {
     try {

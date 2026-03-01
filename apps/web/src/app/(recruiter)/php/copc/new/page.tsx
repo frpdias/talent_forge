@@ -8,7 +8,8 @@ import { createClient } from '@/lib/supabase/client';
 
 export default function NewCopcMetric() {
   const router = useRouter();
-  const { currentOrg } = useOrgStore();
+  const { currentOrg, phpContextOrgId } = useOrgStore();
+  const effectiveOrgId = phpContextOrgId || currentOrg?.id;
   const [loading, setLoading] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
 
@@ -84,7 +85,7 @@ export default function NewCopcMetric() {
       alert('Por favor, preencha todas as métricas obrigatórias.');
       return;
     }
-    if (!currentOrg?.id) {
+    if (!effectiveOrgId) {
       alert('Selecione uma empresa primeiro');
       return;
     }
@@ -96,7 +97,7 @@ export default function NewCopcMetric() {
       const token = session?.access_token || '';
 
       const payload = {
-        org_id: currentOrg.id,
+        org_id: effectiveOrgId!,
         quality_score: Number(qualityScore),
         rework_rate: Number(reworkRate),
         process_adherence_rate: Number(processAdherenceRate),
@@ -117,7 +118,7 @@ export default function NewCopcMetric() {
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
-          'x-org-id': currentOrg.id,
+          'x-org-id': effectiveOrgId!,
         },
         body: JSON.stringify(payload),
       });

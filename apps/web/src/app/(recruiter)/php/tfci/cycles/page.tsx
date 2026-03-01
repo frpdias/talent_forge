@@ -56,7 +56,8 @@ interface TfciCycleWithStats {
 
 export default function TfciCyclesPage() {
   const router = useRouter();
-  const { currentOrg } = useOrgStore();
+  const { currentOrg, phpContextOrgId } = useOrgStore();
+  const effectiveOrgId = phpContextOrgId || currentOrg?.id;
   const [cycles, setCycles] = useState<TfciCycleWithStats[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -82,15 +83,15 @@ export default function TfciCyclesPage() {
   };
 
   useEffect(() => {
-    if (currentOrg?.id) {
+    if (effectiveOrgId) {
       setLoading(true);
       setCycles([]);
-      fetchCycles(currentOrg.id);
+      fetchCycles(effectiveOrgId);
     } else {
       setLoading(false);
       setCycles([]);
     }
-  }, [currentOrg?.id]);
+  }, [effectiveOrgId]);
 
   const fetchCycles = async (organizationId: string) => {
     try {
@@ -162,7 +163,7 @@ export default function TfciCyclesPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!currentOrg?.id) return;
+    if (!effectiveOrgId) return;
 
     try {
       const supabase = createClient();
@@ -171,7 +172,7 @@ export default function TfciCyclesPage() {
       const { error } = await supabase
         .from('tfci_cycles')
         .insert({
-          org_id: currentOrg.id,
+          org_id: effectiveOrgId!,
           name: formData.name,
           start_date: formData.start_date,
           end_date: formData.end_date,
@@ -182,7 +183,7 @@ export default function TfciCyclesPage() {
       if (!error) {
         setShowForm(false);
         setFormData({ name: '', start_date: '', end_date: '', status: 'draft' });
-        fetchCycles(currentOrg.id);
+        fetchCycles(effectiveOrgId);
       }
     } catch (error) {
       console.error('Error creating cycle:', error);
@@ -190,7 +191,7 @@ export default function TfciCyclesPage() {
   };
 
   const updateCycleStatus = async (cycleId: string, status: string) => {
-    if (!currentOrg?.id) return;
+    if (!effectiveOrgId) return;
     
     try {
       const supabase = createClient();
@@ -198,9 +199,9 @@ export default function TfciCyclesPage() {
         .from('tfci_cycles')
         .update({ status })
         .eq('id', cycleId)
-        .eq('org_id', currentOrg.id);
+        .eq('org_id', effectiveOrgId);
       
-      fetchCycles(currentOrg.id);
+      fetchCycles(effectiveOrgId);
     } catch (error) {
       console.error('Error updating cycle:', error);
     }
@@ -255,7 +256,7 @@ export default function TfciCyclesPage() {
     return diff;
   };
 
-  if (loading && !currentOrg?.id) {
+  if (loading && !effectiveOrgId) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-[#FAFAF8]">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#141042]"></div>

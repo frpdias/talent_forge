@@ -28,21 +28,22 @@ interface RiskPrediction {
 }
 
 export default function AiDashboard() {
-  const { currentOrg } = useOrgStore();
+  const { currentOrg, phpContextOrgId } = useOrgStore();
+  const effectiveOrgId = phpContextOrgId || currentOrg?.id;
   const [loading, setLoading] = useState(true);
   const [insights, setInsights] = useState<AiInsight[]>([]);
   const [predictions, setPredictions] = useState<RiskPrediction[]>([]);
 
   useEffect(() => {
-    if (currentOrg?.id) {
+    if (effectiveOrgId) {
       setLoading(true);
       setInsights([]);
       setPredictions([]);
-      loadAiData(currentOrg.id);
+      loadAiData(effectiveOrgId);
     } else {
       setLoading(false);
     }
-  }, [currentOrg?.id]);
+  }, [effectiveOrgId]);
 
   const loadAiData = async (organizationId: string) => {
     try {
@@ -168,8 +169,8 @@ export default function AiDashboard() {
               </p>
             </div>
             <button
-              onClick={() => currentOrg?.id && loadAiData(currentOrg.id)}
-              disabled={!currentOrg?.id}
+              onClick={() => effectiveOrgId && loadAiData(effectiveOrgId)}
+              disabled={!effectiveOrgId}
               className="px-4 py-2 bg-[#141042] text-white rounded-lg hover:bg-[#1a1554] transition-colors disabled:opacity-50"
             >
               🔄 Atualizar

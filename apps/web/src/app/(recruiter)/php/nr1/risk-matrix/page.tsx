@@ -29,7 +29,8 @@ const RISK_COLORS = ['bg-green-500', 'bg-yellow-500', 'bg-orange-500', 'bg-red-5
 
 export default function RiskMatrixPage() {
   const router = useRouter();
-  const { currentOrg } = useOrgStore();
+  const { currentOrg, phpContextOrgId } = useOrgStore();
+  const effectiveOrgId = phpContextOrgId || currentOrg?.id;
   const [assessments, setAssessments] = useState<Nr1Assessment[]>([]);
   const [loading, setLoading] = useState(true);
   const [matrixData, setMatrixData] = useState<RiskMatrixData>({
@@ -42,10 +43,10 @@ export default function RiskMatrixPage() {
   });
 
   useEffect(() => {
-    if (currentOrg?.id) {
+    if (effectiveOrgId) {
       loadAssessments();
     }
-  }, [currentOrg?.id]);
+  }, [effectiveOrgId]);
 
   const loadAssessments = async () => {
     try {
@@ -53,17 +54,17 @@ export default function RiskMatrixPage() {
       const { data: { session } } = await createClient().auth.getSession();
       const token = session?.access_token;
 
-      if (!token || !currentOrg?.id) {
+      if (!token || !effectiveOrgId) {
         console.error('Token ou organização não encontrados');
         return;
       }
 
       const response = await fetch(
-        `/api/v1/php/nr1/assessments?org_id=${currentOrg.id}`,
+        `/api/v1/php/nr1/assessments?org_id=${effectiveOrgId}`,
         {
           headers: {
             'Authorization': `Bearer ${token}`,
-            'x-org-id': currentOrg.id,
+            'x-org-id': effectiveOrgId!,
           },
         }
       );

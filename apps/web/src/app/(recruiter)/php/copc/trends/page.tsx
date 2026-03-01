@@ -39,17 +39,18 @@ interface TrendData {
 
 export default function CopcTrendsPage() {
   const router = useRouter();
-  const { currentOrg } = useOrgStore();
+  const { currentOrg, phpContextOrgId } = useOrgStore();
+  const effectiveOrgId = phpContextOrgId || currentOrg?.id;
   const [loading, setLoading] = useState(true);
   const [metrics, setMetrics] = useState<CopcMetric[]>([]);
   const [trends, setTrends] = useState<TrendData[]>([]);
   const [period, setPeriod] = useState<'7d' | '30d' | '90d'>('30d');
 
   useEffect(() => {
-    if (currentOrg?.id) {
+    if (effectiveOrgId) {
       loadMetrics();
     }
-  }, [currentOrg?.id, period]);
+  }, [effectiveOrgId, period]);
 
   const loadMetrics = async () => {
     try {
@@ -57,17 +58,17 @@ export default function CopcTrendsPage() {
       const { data: { session } } = await createClient().auth.getSession();
       const token = session?.access_token;
 
-      if (!token || !currentOrg?.id) {
+      if (!token || !effectiveOrgId) {
         console.error('Token ou organização não encontrados');
         return;
       }
 
       const response = await fetch(
-        `/api/v1/php/copc/metrics?org_id=${currentOrg.id}&period=${period}`,
+        `/api/v1/php/copc/metrics?org_id=${effectiveOrgId}&period=${period}`,
         {
           headers: {
             'Authorization': `Bearer ${token}`,
-            'x-org-id': currentOrg.id,
+            'x-org-id': effectiveOrgId!,
           },
         }
       );

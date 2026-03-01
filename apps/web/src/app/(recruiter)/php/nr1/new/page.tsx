@@ -26,13 +26,14 @@ const RISK_LABELS = [
 
 export default function NewNr1AssessmentPage() {
   const router = useRouter();
-  const { currentOrg } = useOrgStore();
+  const { currentOrg, phpContextOrgId } = useOrgStore();
+  const effectiveOrgId = phpContextOrgId || currentOrg?.id;
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState<Record<string, number>>({});
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!currentOrg?.id) {
+    if (!effectiveOrgId) {
       alert('Selecione uma empresa primeiro');
       return;
     }
@@ -43,10 +44,10 @@ export default function NewNr1AssessmentPage() {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
-          'x-org-id': currentOrg.id,
+          'x-org-id': effectiveOrgId!,
         },
         body: JSON.stringify({
-          org_id: currentOrg.id,
+          org_id: effectiveOrgId!,
           ...formData,
         }),
       });

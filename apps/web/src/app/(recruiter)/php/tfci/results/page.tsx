@@ -46,7 +46,8 @@ interface CycleOption {
 
 export default function TfciResultsPage() {
   const router = useRouter();
-  const { currentOrg } = useOrgStore();
+  const { currentOrg, phpContextOrgId } = useOrgStore();
+  const effectiveOrgId = phpContextOrgId || currentOrg?.id;
   const [results, setResults] = useState<EmployeeResult[]>([]);
   const [cycles, setCycles] = useState<CycleOption[]>([]);
   const [loading, setLoading] = useState(true);
@@ -56,19 +57,19 @@ export default function TfciResultsPage() {
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
 
   useEffect(() => {
-    if (currentOrg?.id) {
-      fetchCycles(currentOrg.id);
-      fetchResults(currentOrg.id);
+    if (effectiveOrgId) {
+      fetchCycles(effectiveOrgId);
+      fetchResults(effectiveOrgId);
     } else {
       setLoading(false);
     }
-  }, [currentOrg?.id]);
+  }, [effectiveOrgId]);
 
   useEffect(() => {
-    if (currentOrg?.id) {
-      fetchResults(currentOrg.id, selectedCycle);
+    if (effectiveOrgId) {
+      fetchResults(effectiveOrgId!, selectedCycle);
     }
-  }, [selectedCycle, currentOrg?.id]);
+  }, [selectedCycle, effectiveOrgId]);
 
   const fetchCycles = async (organizationId: string) => {
     try {

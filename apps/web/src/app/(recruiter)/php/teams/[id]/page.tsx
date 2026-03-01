@@ -86,7 +86,8 @@ export default function TeamDetailsPage() {
   const router = useRouter();
   const params = useParams();
   const teamId = params.id as string;
-  const { currentOrg } = useOrgStore();
+  const { currentOrg, phpContextOrgId } = useOrgStore();
+  const effectiveOrgId = phpContextOrgId || currentOrg?.id;
   
   const [team, setTeam] = useState<Team | null>(null);
   const [loading, setLoading] = useState(true);
@@ -101,7 +102,7 @@ export default function TeamDetailsPage() {
   const [selectedRole, setSelectedRole] = useState<'member' | 'lead' | 'coordinator'>('member');
 
   const loadTeam = useCallback(async () => {
-    if (!currentOrg?.id || !teamId) return;
+    if (!effectiveOrgId || !teamId) return;
 
     try {
       setLoading(true);
@@ -109,7 +110,7 @@ export default function TeamDetailsPage() {
       const res = await fetch(`/api/v1/php/teams/${teamId}`, {
         headers: {
           Authorization: `Bearer ${session?.access_token || ''}`,
-          'x-org-id': currentOrg.id,
+          'x-org-id': effectiveOrgId!,
         },
       });
 
@@ -125,10 +126,10 @@ export default function TeamDetailsPage() {
     } finally {
       setLoading(false);
     }
-  }, [currentOrg?.id, teamId, router]);
+  }, [effectiveOrgId, teamId, router]);
 
   const loadAvailableEmployees = useCallback(async () => {
-    if (!currentOrg?.id || !teamId) return;
+    if (!effectiveOrgId || !teamId) return;
 
     try {
       setLoadingAvailable(true);
@@ -136,7 +137,7 @@ export default function TeamDetailsPage() {
       const res = await fetch(`/api/v1/php/teams/${teamId}/available-members`, {
         headers: {
           Authorization: `Bearer ${session?.access_token || ''}`,
-          'x-org-id': currentOrg.id,
+          'x-org-id': effectiveOrgId!,
         },
       });
 
@@ -149,7 +150,7 @@ export default function TeamDetailsPage() {
     } finally {
       setLoadingAvailable(false);
     }
-  }, [currentOrg?.id, teamId]);
+  }, [effectiveOrgId, teamId]);
 
   useEffect(() => {
     loadTeam();
@@ -162,7 +163,7 @@ export default function TeamDetailsPage() {
   }, [showAddMember, loadAvailableEmployees]);
 
   const handleSaveEdit = async () => {
-    if (!currentOrg?.id || !team) return;
+    if (!effectiveOrgId || !team) return;
 
     try {
       setSaving(true);
@@ -172,7 +173,7 @@ export default function TeamDetailsPage() {
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${session?.access_token || ''}`,
-          'x-org-id': currentOrg.id,
+          'x-org-id': effectiveOrgId!,
         },
         body: JSON.stringify({
           name: editForm.name.trim(),
@@ -195,7 +196,7 @@ export default function TeamDetailsPage() {
   };
 
   const handleAddMember = async (employeeId: string) => {
-    if (!currentOrg?.id || !team) return;
+    if (!effectiveOrgId || !team) return;
 
     try {
       setAddingMember(true);
@@ -205,7 +206,7 @@ export default function TeamDetailsPage() {
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${session?.access_token || ''}`,
-          'x-org-id': currentOrg.id,
+          'x-org-id': effectiveOrgId!,
         },
         body: JSON.stringify({
           user_id: employeeId, // employee_id passed as user_id for API compatibility
@@ -228,7 +229,7 @@ export default function TeamDetailsPage() {
   };
 
   const handleRemoveMember = async (memberId: string, memberName: string) => {
-    if (!currentOrg?.id || !team) return;
+    if (!effectiveOrgId || !team) return;
     if (!confirm(`Remover ${memberName} do time?`)) return;
 
     try {
@@ -237,7 +238,7 @@ export default function TeamDetailsPage() {
         method: 'DELETE',
         headers: {
           Authorization: `Bearer ${session?.access_token || ''}`,
-          'x-org-id': currentOrg.id,
+          'x-org-id': effectiveOrgId!,
         },
       });
 
@@ -253,7 +254,7 @@ export default function TeamDetailsPage() {
   };
 
   const handleUpdateRole = async (memberId: string, newRole: 'member' | 'lead' | 'coordinator') => {
-    if (!currentOrg?.id || !team) return;
+    if (!effectiveOrgId || !team) return;
 
     try {
       const { data: { session } } = await createClient().auth.getSession();
@@ -261,7 +262,7 @@ export default function TeamDetailsPage() {
         method: 'PATCH',
         headers: {
           Authorization: `Bearer ${session?.access_token || ''}`,
-          'x-org-id': currentOrg.id,
+          'x-org-id': effectiveOrgId!,
         },
       });
 
@@ -277,7 +278,7 @@ export default function TeamDetailsPage() {
   };
 
   const handleDeleteTeam = async () => {
-    if (!currentOrg?.id || !team) return;
+    if (!effectiveOrgId || !team) return;
     if (!confirm(`Tem certeza que deseja excluir o time "${team.name}"? Esta ação não pode ser desfeita.`)) return;
 
     try {
@@ -286,7 +287,7 @@ export default function TeamDetailsPage() {
         method: 'DELETE',
         headers: {
           Authorization: `Bearer ${session?.access_token || ''}`,
-          'x-org-id': currentOrg.id,
+          'x-org-id': effectiveOrgId!,
         },
       });
 

@@ -33,7 +33,8 @@ interface CreateTeamForm {
 
 export default function TeamsPage() {
   const router = useRouter();
-  const { currentOrg } = useOrgStore();
+  const { currentOrg, phpContextOrgId } = useOrgStore();
+  const effectiveOrgId = phpContextOrgId || currentOrg?.id;
   const [teams, setTeams] = useState<Team[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -44,7 +45,7 @@ export default function TeamsPage() {
   const [orgMembers, setOrgMembers] = useState<any[]>([]);
 
   const loadTeams = useCallback(async () => {
-    if (!currentOrg?.id) return;
+    if (!effectiveOrgId) return;
 
     try {
       setLoading(true);
@@ -55,7 +56,7 @@ export default function TeamsPage() {
       const res = await fetch(`/api/v1/php/teams?${params}`, {
         headers: {
           Authorization: `Bearer ${session?.access_token || ''}`,
-          'x-org-id': currentOrg.id,
+          'x-org-id': effectiveOrgId,
         },
       });
 
@@ -68,17 +69,17 @@ export default function TeamsPage() {
     } finally {
       setLoading(false);
     }
-  }, [currentOrg?.id, search]);
+  }, [effectiveOrgId, search]);
 
   const loadOrgMembers = useCallback(async () => {
-    if (!currentOrg?.id) return;
+    if (!effectiveOrgId) return;
 
     try {
       const { data: { session } } = await createClient().auth.getSession();
-      const res = await fetch(`/api/v1/organizations/${currentOrg.id}/members`, {
+      const res = await fetch(`/api/v1/organizations/${effectiveOrgId}/members`, {
         headers: {
           Authorization: `Bearer ${session?.access_token || ''}`,
-          'x-org-id': currentOrg.id,
+          'x-org-id': effectiveOrgId,
         },
       });
 
@@ -89,7 +90,7 @@ export default function TeamsPage() {
     } catch (error) {
       console.error('Erro ao carregar membros:', error);
     }
-  }, [currentOrg?.id]);
+  }, [effectiveOrgId]);
 
   useEffect(() => {
     loadTeams();
@@ -98,7 +99,7 @@ export default function TeamsPage() {
 
   const handleCreateTeam = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!currentOrg?.id || !createForm.name.trim()) return;
+    if (!effectiveOrgId || !createForm.name.trim()) return;
 
     try {
       setCreating(true);
@@ -110,10 +111,10 @@ export default function TeamsPage() {
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${session?.access_token || ''}`,
-          'x-org-id': currentOrg.id,
+          'x-org-id': effectiveOrgId,
         },
         body: JSON.stringify({
-          organization_id: currentOrg.id,
+          organization_id: effectiveOrgId,
           name: createForm.name.trim(),
           description: createForm.description.trim() || null,
           manager_id: createForm.manager_id || null,
@@ -136,7 +137,7 @@ export default function TeamsPage() {
   };
 
   const handleDeleteTeam = async (teamId: string, teamName: string) => {
-    if (!currentOrg?.id) return;
+    if (!effectiveOrgId) return;
     if (!confirm(`Tem certeza que deseja excluir o time "${teamName}"? Esta ação não pode ser desfeita.`)) return;
 
     try {
@@ -145,7 +146,7 @@ export default function TeamsPage() {
         method: 'DELETE',
         headers: {
           Authorization: `Bearer ${session?.access_token || ''}`,
-          'x-org-id': currentOrg.id,
+          'x-org-id': effectiveOrgId,
         },
       });
 

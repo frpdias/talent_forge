@@ -170,7 +170,7 @@ function LoginContent() {
           {/* Google Login */}
           <button
             onClick={handleGoogleLogin}
-            className="w-full flex items-center justify-center gap-3 px-4 py-3 bg-white border border-border rounded-lg hover:bg-gray-50 hover:border-(--border-hover) transition-all mb-6"
+            className="w-full flex items-center justify-center gap-3 px-4 py-3 bg-white border border-border rounded-lg hover:bg-[#FAFAF8] hover:border-(--border-hover) transition-all mb-6"
           >
             <svg className="w-5 h-5" viewBox="0 0 24 24">
               <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -195,12 +195,12 @@ function LoginContent() {
             <div>
               <label className="block text-sm font-medium text-foreground mb-1.5">Email</label>
               <div className="relative">
-                <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#999999]" />
                 <input
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2.5 bg-white border border-border rounded-lg text-sm text-foreground placeholder-gray-400 focus:outline-none focus:border-tf-accent focus:ring-2 focus:ring-(--tf-accent)/10 transition-all"
+                  className="w-full pl-10 pr-4 py-2.5 bg-white border border-border rounded-lg text-sm text-foreground placeholder-[#999999] focus:outline-none focus:border-tf-accent focus:ring-2 focus:ring-(--tf-accent)/10 transition-all"
                   placeholder="seu@email.com"
                   required
                 />
@@ -210,19 +210,19 @@ function LoginContent() {
             <div>
               <label className="block text-sm font-medium text-foreground mb-1.5">Senha</label>
               <div className="relative">
-                <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#999999]" />
                 <input
                   type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full pl-10 pr-10 py-2.5 bg-white border border-border rounded-lg text-sm text-foreground placeholder-gray-400 focus:outline-none focus:border-tf-accent focus:ring-2 focus:ring-(--tf-accent)/10 transition-all"
+                  className="w-full pl-10 pr-10 py-2.5 bg-white border border-border rounded-lg text-sm text-foreground placeholder-[#999999] focus:outline-none focus:border-tf-accent focus:ring-2 focus:ring-(--tf-accent)/10 transition-all"
                   placeholder="••••••••"
                   required
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#999999] hover:text-[#666666] transition-colors"
                 >
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>

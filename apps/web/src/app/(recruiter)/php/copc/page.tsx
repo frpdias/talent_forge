@@ -24,22 +24,23 @@ interface MetricEntry {
 
 export default function CopcDashboard() {
   const router = useRouter();
-  const { currentOrg } = useOrgStore();
+  const { currentOrg, phpContextOrgId } = useOrgStore();
+  const effectiveOrgId = phpContextOrgId || currentOrg?.id;
   const [loading, setLoading] = useState(true);
   const [categories, setCategories] = useState<CategoryScore[]>([]);
   const [overallScore, setOverallScore] = useState(0);
   const [recentMetrics, setRecentMetrics] = useState<MetricEntry[]>([]);
 
   useEffect(() => {
-    if (currentOrg?.id) {
+    if (effectiveOrgId) {
       setLoading(true);
       setCategories([]);
       setRecentMetrics([]);
-      loadData(currentOrg.id);
+      loadData(effectiveOrgId);
     } else {
       setLoading(false);
     }
-  }, [currentOrg?.id]);
+  }, [effectiveOrgId]);
 
   const loadData = async (organizationId: string) => {
     try {
