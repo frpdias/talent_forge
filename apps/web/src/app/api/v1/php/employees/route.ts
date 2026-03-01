@@ -82,7 +82,7 @@ async function resolveAuthUserId(supabase: ReturnType<typeof createClient>, emai
     .eq('email', email.toLowerCase().trim())
     .maybeSingle();
 
-  if (profile?.id) return profile.id;
+  if (profile?.id) return (profile as { id: string }).id;
 
   // 2. Cria auth user sem envio de email (email_confirm: true = conta ativa sem verificação)
   //    O acesso real é estabelecido pelo funcionário via link de recuperação de senha.
