@@ -74,7 +74,8 @@ export async function GET(request: NextRequest) {
  * 2. Se não existir, cria auth user confirmado via admin API (sem envio de email)
  *    O funcionário poderá acessar via "Esqueci a senha" quando necessário.
  */
-async function resolveAuthUserId(supabase: ReturnType<typeof createClient>, email: string): Promise<string | null> {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function resolveAuthUserId(supabase: any, email: string): Promise<string | null> {
   // 1. Busca user_id existente por email em user_profiles
   const { data: profile } = await supabase
     .from('user_profiles')
