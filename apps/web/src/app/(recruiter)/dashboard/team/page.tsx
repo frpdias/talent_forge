@@ -65,26 +65,17 @@ export default function TeamPage() {
     try {
       setLoading(true);
 
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
 
-      const { data: profile } = await supabase
-        .from('user_profiles')
-        .select('organization_id')
-        .eq('id', user.id)
-        .maybeSingle();
+      const res = await fetch('/api/v1/team/members', {
+        headers: { Authorization: `Bearer ${session.access_token}` },
+      });
 
-      if (!profile?.organization_id) return;
+      if (!res.ok) throw new Error(await res.text());
 
-      const { data: members, error } = await supabase
-        .from('user_profiles')
-        .select('id, full_name, email, user_type, created_at')
-        .eq('organization_id', profile.organization_id)
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-
-      setTeamMembers(members || []);
+      const members = await res.json();
+      setTeamMembers(members);
     } catch (error) {
       console.error('Error loading team members:', error);
     } finally {
