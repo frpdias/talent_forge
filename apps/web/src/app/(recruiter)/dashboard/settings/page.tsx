@@ -256,9 +256,9 @@ export default function SettingsPage() {
                 type="email"
                 value={userData.email}
                 disabled
-                className="bg-gray-50"
+                className="bg-[#FAFAF8]"
               />
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-xs text-[#999999] mt-1">
                 O email não pode ser alterado
               </p>
             </div>
@@ -297,42 +297,42 @@ export default function SettingsPage() {
           <CardContent className="space-y-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="font-medium text-gray-900">Novas candidaturas</p>
-                <p className="text-sm text-gray-500">
+                <p className="font-medium text-[#141042]">Novas candidaturas</p>
+                <p className="text-sm text-[#666666]">
                   Receba emails quando houver novas candidaturas
                 </p>
               </div>
               <input
                 type="checkbox"
-                className="h-5 w-5 rounded border-gray-300 text-[#141042] focus:ring-[#141042]"
+                className="h-5 w-5 rounded border-[#E5E5DC] text-[#141042] focus:ring-[#141042]"
                 defaultChecked
               />
             </div>
 
             <div className="flex items-center justify-between">
               <div>
-                <p className="font-medium text-gray-900">Avaliações concluídas</p>
-                <p className="text-sm text-gray-500">
+                <p className="font-medium text-[#141042]">Avaliações concluídas</p>
+                <p className="text-sm text-[#666666]">
                   Notificações quando candidatos completarem avaliações
                 </p>
               </div>
               <input
                 type="checkbox"
-                className="h-5 w-5 rounded border-gray-300 text-[#141042] focus:ring-[#141042]"
+                className="h-5 w-5 rounded border-[#E5E5DC] text-[#141042] focus:ring-[#141042]"
                 defaultChecked
               />
             </div>
 
             <div className="flex items-center justify-between">
               <div>
-                <p className="font-medium text-gray-900">Resumo semanal</p>
-                <p className="text-sm text-gray-500">
+                <p className="font-medium text-[#141042]">Resumo semanal</p>
+                <p className="text-sm text-[#666666]">
                   Receba um resumo semanal das atividades
                 </p>
               </div>
               <input
                 type="checkbox"
-                className="h-5 w-5 rounded border-gray-300 text-[#141042] focus:ring-[#141042]"
+                className="h-5 w-5 rounded border-[#E5E5DC] text-[#141042] focus:ring-[#141042]"
               />
             </div>
           </CardContent>

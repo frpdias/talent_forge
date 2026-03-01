@@ -23,10 +23,10 @@ interface Company {
 }
 
 const SIZE_BADGES = {
-  small: { label: 'Pequena', color: 'bg-blue-100 text-blue-800' },
-  medium: { label: 'Média', color: 'bg-green-100 text-green-800' },
-  large: { label: 'Grande', color: 'bg-orange-100 text-orange-800' },
-  enterprise: { label: 'Enterprise', color: 'bg-purple-100 text-purple-800' },
+  small: { label: 'Pequena', color: 'bg-[#3B82F6]/10 text-[#3B82F6]' },
+  medium: { label: 'Média', color: 'bg-[#10B981]/10 text-[#10B981]' },
+  large: { label: 'Grande', color: 'bg-[#F97316]/10 text-[#F97316]' },
+  enterprise: { label: 'Enterprise', color: 'bg-[#141042]/10 text-[#141042]' },
 };
 
 export default function RecruiterCompaniesPage() {
@@ -205,7 +205,7 @@ export default function RecruiterCompaniesPage() {
 
       const endpoint = editingCompany
         ? `${API_V1_URL}/organizations/${editingCompany.id}`
-        : '${API_V1_URL}/organizations';
+        : `${API_V1_URL}/organizations`;
       
       const method = editingCompany ? 'PATCH' : 'POST';
       
@@ -258,7 +258,7 @@ export default function RecruiterCompaniesPage() {
 
           console.log('Criando administrador:', adminPayload);
 
-          const adminResponse = await fetch('${API_V1_URL}/php/employees', {
+          const adminResponse = await fetch(`${API_V1_URL}/php/employees`, {
             method: 'POST',
             headers: {
               'Authorization': `Bearer ${token}`,
