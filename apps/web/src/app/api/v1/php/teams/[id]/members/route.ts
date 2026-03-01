@@ -88,18 +88,18 @@ export async function POST(request: NextRequest, { params }: Params) {
     }
 
     // Atualiza member_count
-    await supabase.rpc('update_team_member_count', { p_team_id: teamId }).catch(() => {
+    try {
+      await supabase.rpc('update_team_member_count', { p_team_id: teamId });
+    } catch {
       // Fallback manual se a função não existir
-      supabase
+      const { count } = await supabase
         .from('team_members')
         .select('id', { count: 'exact', head: true })
-        .eq('team_id', teamId)
-        .then(({ count }) => {
-          if (count !== null) {
-            supabase.from('teams').update({ member_count: count }).eq('id', teamId);
-          }
-        });
-    });
+        .eq('team_id', teamId);
+      if (count !== null) {
+        await supabase.from('teams').update({ member_count: count }).eq('id', teamId);
+      }
+    }
 
     return NextResponse.json(data, { status: 201 });
   } catch (err: any) {
