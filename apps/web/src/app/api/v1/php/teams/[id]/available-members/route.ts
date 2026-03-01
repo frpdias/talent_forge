@@ -33,24 +33,25 @@ export async function GET(request: NextRequest, { params }: Params) {
     const { id: teamId } = await params;
     const supabase = getSupabase();
 
-    // IDs de employees já no time
+    // user_ids já no time (team_members.user_id = auth.users.id)
     const { data: currentMembers } = await supabase
       .from('team_members')
       .select('user_id')
       .eq('team_id', teamId);
 
-    const memberIds = (currentMembers || []).map((m: any) => m.user_id);
+    const memberAuthIds = (currentMembers || []).map((m: any) => m.user_id).filter(Boolean);
 
-    // Employees da org não membros ainda
+    // Employees com conta Supabase (user_id IS NOT NULL) que ainda não estão no time
     let query = supabase
       .from('employees')
       .select('id, full_name, position, department, manager_id, user_id')
       .eq('organization_id', orgId)
       .eq('status', 'active')
+      .not('user_id', 'is', null)  // somente employees com conta Supabase
       .order('full_name', { ascending: true });
 
-    if (memberIds.length > 0) {
-      query = query.not('id', 'in', `(${memberIds.join(',')})`);
+    if (memberAuthIds.length > 0) {
+      query = query.not('user_id', 'in', `(${memberAuthIds.join(',')})`);
     }
 
     const { data, error } = await query;

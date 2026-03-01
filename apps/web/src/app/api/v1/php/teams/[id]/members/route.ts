@@ -53,10 +53,10 @@ export async function POST(request: NextRequest, { params }: Params) {
       return NextResponse.json({ error: 'Time não encontrado' }, { status: 404 });
     }
 
-    // Valida que o employee existe e pertence à org
+    // Valida que o employee existe, pertence à org e tem conta Supabase
     const { data: employee } = await supabase
       .from('employees')
-      .select('id')
+      .select('id, user_id')
       .eq('id', employeeId)
       .eq('organization_id', orgId)
       .single();
@@ -65,10 +65,17 @@ export async function POST(request: NextRequest, { params }: Params) {
       return NextResponse.json({ error: 'Funcionário não encontrado' }, { status: 404 });
     }
 
-    // Insere membro
+    if (!employee.user_id) {
+      return NextResponse.json(
+        { error: 'Este funcionário não possui conta de acesso configurada e não pode ser adicionado ao time' },
+        { status: 422 }
+      );
+    }
+
+    // Insere usando auth user_id (schema canônico: team_members.user_id → auth.users)
     const { data, error } = await supabase
       .from('team_members')
-      .insert({ team_id: teamId, user_id: employeeId, role_in_team })
+      .insert({ team_id: teamId, user_id: employee.user_id, role_in_team })
       .select()
       .single();
 

@@ -44,33 +44,40 @@ export async function GET(request: NextRequest, { params }: Params) {
       return NextResponse.json({ error: 'Time não encontrado' }, { status: 404 });
     }
 
-    // Busca membros com dados do employee
+    // Busca membros do time (user_id → auth.users, schema canônico)
     const { data: members } = await supabase
       .from('team_members')
-      .select(`
-        id, team_id, user_id, role_in_team, joined_at,
-        employees!team_members_employee_id_fkey(id, full_name, position, department, manager_id)
-      `)
+      .select('id, team_id, user_id, role_in_team, joined_at')
       .eq('team_id', teamId)
       .order('joined_at', { ascending: true });
 
-    // Normaliza employee como campo 'employee'
+    // Busca dados de employee para cada membro via employees.user_id
+    const memberUserIds = (members || []).map((m: any) => m.user_id).filter(Boolean);
+    let employeeMap: Record<string, any> = {};
+    if (memberUserIds.length > 0) {
+      const { data: emps } = await supabase
+        .from('employees')
+        .select('id, full_name, position, department, manager_id, user_id')
+        .in('user_id', memberUserIds);
+      (emps || []).forEach((e: any) => { employeeMap[e.user_id] = e; });
+    }
+
     const normalizedMembers = (members || []).map((m: any) => ({
       id: m.id,
       team_id: m.team_id,
       user_id: m.user_id,
       role_in_team: m.role_in_team,
       joined_at: m.joined_at,
-      employee: m.employees || null,
+      employee: employeeMap[m.user_id] || null,
     }));
 
-    // Busca dados do gestor se existir
+    // Busca dados do gestor via employees.user_id (manager_id = auth.users.id)
     let manager = null;
     if (team.manager_id) {
       const { data: emp } = await supabase
         .from('employees')
         .select('id, full_name, position')
-        .eq('id', team.manager_id)
+        .eq('user_id', team.manager_id)
         .single();
       manager = emp;
     }
