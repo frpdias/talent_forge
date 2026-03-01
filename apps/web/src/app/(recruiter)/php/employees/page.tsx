@@ -18,24 +18,25 @@ interface Employee {
 }
 
 export default function EmployeesPage() {
-  const { currentOrg } = useOrgStore();
+  const { currentOrg, phpContextOrgId } = useOrgStore();
+  const effectiveOrgId = phpContextOrgId || currentOrg?.id;
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive' | 'terminated'>('active');
 
   useEffect(() => {
-    if (currentOrg?.id) {
+    if (effectiveOrgId) {
       loadEmployees();
     }
-  }, [currentOrg?.id, statusFilter]);
+  }, [effectiveOrgId, statusFilter]);
 
   const loadEmployees = async () => {
     try {
       setLoading(true);
       const { data: { session } } = await createClient().auth.getSession();
       const params = new URLSearchParams({
-        organization_id: currentOrg!.id,
+        organization_id: effectiveOrgId!,
       });
       if (statusFilter !== 'all') {
         params.append('status', statusFilter);
@@ -44,7 +45,7 @@ export default function EmployeesPage() {
       const res = await fetch(`/api/v1/php/employees?${params}`, {
         headers: {
           Authorization: `Bearer ${session?.access_token || ''}`,
-          'x-org-id': currentOrg!.id,
+          'x-org-id': effectiveOrgId!,
         },
       });
 

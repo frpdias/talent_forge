@@ -23,7 +23,7 @@ interface CurrentOrgResult {
  * consistência na obtenção do org_id.
  */
 export function useCurrentOrg(): CurrentOrgResult {
-  const { currentOrg } = useOrgStore();
+  const { currentOrg, phpContextOrgId, phpContextOrgName } = useOrgStore();
   const [dbOrg, setDbOrg] = useState<{ id: string; name: string } | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -73,8 +73,8 @@ export function useCurrentOrg(): CurrentOrgResult {
 
   // Efeito para buscar do DB como fallback
   useEffect(() => {
-    // Se já tem org no store, não precisa buscar do DB
-    if (currentOrg?.id) {
+    // Se tem contexto PHP ou org no store, não precisa buscar do DB
+    if (phpContextOrgId || currentOrg?.id) {
       setLoading(false);
       setError(null);
       return;
@@ -83,7 +83,7 @@ export function useCurrentOrg(): CurrentOrgResult {
     // Se ainda não buscou do DB, aguardar um pouco pela hydration do zustand
     if (!fetchedRef.current) {
       const timeout = setTimeout(() => {
-        if (!currentOrg?.id) {
+        if (!phpContextOrgId && !currentOrg?.id) {
           console.log('[useCurrentOrg] Fallback para busca no DB');
           fetchedRef.current = true;
           fetchFromDb();
@@ -92,23 +92,23 @@ export function useCurrentOrg(): CurrentOrgResult {
 
       return () => clearTimeout(timeout);
     }
-  }, [currentOrg?.id, fetchFromDb]);
+  }, [phpContextOrgId, currentOrg?.id, fetchFromDb]);
 
-  // Prioridade: store > db
-  const orgId = currentOrg?.id || dbOrg?.id || null;
-  const orgName = currentOrg?.name || dbOrg?.name || null;
+  // Prioridade: phpContext > store > db
+  const orgId = phpContextOrgId || currentOrg?.id || dbOrg?.id || null;
+  const orgName = (phpContextOrgId ? phpContextOrgName : null) || currentOrg?.name || dbOrg?.name || null;
 
   // Debug log quando org muda
   useEffect(() => {
     if (orgId) {
-      console.log('[useCurrentOrg] Org atual:', orgId, orgName);
+      console.log('[useCurrentOrg] Org atual:', orgId, orgName, phpContextOrgId ? '(PHP context)' : '');
     }
-  }, [orgId, orgName]);
+  }, [orgId, orgName, phpContextOrgId]);
 
   return {
     orgId,
     orgName,
-    loading: loading && !orgId, // Não está loading se já tem orgId
+    loading: loading && !orgId,
     error: orgId ? null : error,
     refetch: fetchFromDb,
   };

@@ -64,7 +64,7 @@ function CompanyDetailContent() {
   const params = useParams();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { currentOrg } = useOrgStore();
+  const { currentOrg, setPhpContextOrg } = useOrgStore();
   
   const companyId = params?.id as string;
   const defaultTab = searchParams?.get('tab') || 'info';
@@ -832,14 +832,26 @@ function CompanyInfoTab({ company, employees, phpModuleActive, phpLoading, toggl
             </div>
             
             {phpModuleActive && (
-              <div className="mt-5 pt-5 border-t border-green-200">
-                <div className="flex items-center gap-2 text-green-700">
-                  <CheckCircle2 className="w-5 h-5" />
-                  <span className="font-medium">Módulo ativo e pronto para uso</span>
+              <div className="mt-5 pt-5 border-t border-green-200 flex items-center justify-between gap-4">
+                <div>
+                  <div className="flex items-center gap-2 text-green-700">
+                    <CheckCircle2 className="w-5 h-5" />
+                    <span className="font-medium">Módulo ativo e pronto para uso</span>
+                  </div>
+                  <p className="text-sm text-green-600 mt-1 ml-7">
+                    Esta empresa pode participar de ciclos de avaliação TFCI, NR-1 e COPC.
+                  </p>
                 </div>
-                <p className="text-sm text-green-600 mt-1 ml-7">
-                  Esta empresa pode participar de ciclos de avaliação TFCI, NR-1 e COPC.
-                </p>
+                <button
+                  onClick={() => {
+                    setPhpContextOrg(companyId, company.name);
+                    router.push('/php/dashboard');
+                  }}
+                  className="flex items-center gap-2 px-4 py-2 bg-[#1F4ED8] text-white rounded-lg hover:bg-[#1845B8] transition-colors text-sm font-medium shrink-0"
+                >
+                  <BarChart3 className="w-4 h-4" />
+                  Abrir Módulo PHP
+                </button>
               </div>
             )}
           </div>

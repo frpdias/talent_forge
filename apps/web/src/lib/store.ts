@@ -14,6 +14,10 @@ interface OrgStore {
   organizations: Organization[];
   setCurrentOrg: (org: Organization | null) => void;
   setOrganizations: (orgs: Organization[]) => void;
+  // Contexto do módulo PHP — empresa cliente selecionada
+  phpContextOrgId: string | null;
+  phpContextOrgName: string | null;
+  setPhpContextOrg: (id: string | null, name?: string | null) => void;
 }
 
 export const useOrgStore = create<OrgStore>()(
@@ -23,6 +27,9 @@ export const useOrgStore = create<OrgStore>()(
       organizations: [],
       setCurrentOrg: (org) => set({ currentOrg: org }),
       setOrganizations: (orgs) => set({ organizations: orgs }),
+      phpContextOrgId: null,
+      phpContextOrgName: null,
+      setPhpContextOrg: (id, name = null) => set({ phpContextOrgId: id, phpContextOrgName: name }),
     }),
     {
       name: 'talentforge-org',
