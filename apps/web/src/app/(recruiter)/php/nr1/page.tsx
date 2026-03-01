@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Plus, AlertTriangle, CheckCircle, Users } from 'lucide-react';
 import { useOrgStore } from '@/lib/store';
+import { createClient } from '@/lib/supabase/client';
 
 interface Nr1Assessment {
   id: string;
@@ -48,21 +49,39 @@ export default function Nr1ListPage() {
 
   const fetchAssessments = async (organizationId: string) => {
     try {
-      const response = await fetch(
-        `/api/v1/php/nr1/assessments?org_id=${organizationId}&limit=50`
-      );
-      const data = await response.json();
-      setAssessments(data);
+      const { data: { session } } = await createClient().auth.getSession();
+      const token = session?.access_token || '';
 
-      // Calculate stats
+      const response = await fetch(
+        `/api/v1/php/nr1/assessments?org_id=${organizationId}&limit=50`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'x-org-id': organizationId,
+          },
+        }
+      );
+
+      if (!response.ok) {
+        console.error('Erro NR-1:', response.status);
+        setAssessments([]);
+        setLoading(false);
+        return;
+      }
+
+      const data = await response.json();
+      const list: Nr1Assessment[] = Array.isArray(data) ? data : [];
+      setAssessments(list);
+
       setStats({
-        total: data.length,
-        high_risk: data.filter((a: Nr1Assessment) => a.overall_risk_level === 'high').length,
-        medium_risk: data.filter((a: Nr1Assessment) => a.overall_risk_level === 'medium').length,
-        low_risk: data.filter((a: Nr1Assessment) => a.overall_risk_level === 'low').length,
+        total: list.length,
+        high_risk: list.filter((a) => a.overall_risk_level === 'high').length,
+        medium_risk: list.filter((a) => a.overall_risk_level === 'medium').length,
+        low_risk: list.filter((a) => a.overall_risk_level === 'low').length,
       });
     } catch (error) {
       console.error('Erro ao carregar assessments:', error);
+      setAssessments([]);
     } finally {
       setLoading(false);
     }
