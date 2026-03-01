@@ -378,12 +378,16 @@ function CompanyDetailContent() {
 
         {/* Content */}
         {activeTab === 'info' && (
-          <CompanyInfoTab 
+          <CompanyInfoTab
             company={company}
             employees={employees}
             phpModuleActive={phpModuleActive}
             phpLoading={phpLoading}
             togglePhpModule={togglePhpModule}
+            onOpenPhp={() => {
+              setPhpContextOrg(companyId, company.name);
+              router.push('/php/dashboard');
+            }}
           />
         )}
 
@@ -586,9 +590,10 @@ interface CompanyInfoTabProps {
   phpModuleActive: boolean;
   phpLoading: boolean;
   togglePhpModule: () => void;
+  onOpenPhp: () => void;
 }
 
-function CompanyInfoTab({ company, employees, phpModuleActive, phpLoading, togglePhpModule }: CompanyInfoTabProps) {
+function CompanyInfoTab({ company, employees, phpModuleActive, phpLoading, togglePhpModule, onOpenPhp }: CompanyInfoTabProps) {
   // Métricas calculadas dos funcionários
   const employeeStats = useMemo(() => {
     if (employees.length === 0) {
@@ -843,10 +848,7 @@ function CompanyInfoTab({ company, employees, phpModuleActive, phpLoading, toggl
                   </p>
                 </div>
                 <button
-                  onClick={() => {
-                    setPhpContextOrg(companyId, company.name);
-                    router.push('/php/dashboard');
-                  }}
+                  onClick={onOpenPhp}
                   className="flex items-center gap-2 px-4 py-2 bg-[#1F4ED8] text-white rounded-lg hover:bg-[#1845B8] transition-colors text-sm font-medium shrink-0"
                 >
                   <BarChart3 className="w-4 h-4" />
