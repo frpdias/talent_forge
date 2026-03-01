@@ -27,22 +27,25 @@ export async function GET(request: NextRequest) {
     }
 
     // 1. Descobre o org_id do usuário logado
+    // Sem filtro de status pois registros criados via organizations.service.ts
+    // não definem status (fica NULL) e seriam excluídos pelo filtro 'active'.
     const { data: membership } = await supabase
       .from('org_members')
       .select('org_id')
       .eq('user_id', user.id)
-      .eq('status', 'active')
+      .neq('status', 'inactive')
       .maybeSingle();
 
     if (!membership?.org_id) {
       return NextResponse.json([]);
     }
 
-    // 2. Lista todos os membros ativos da org
+    // 2. Lista todos os membros não-inativos da org
     const { data: orgMembers, error: membersError } = await supabase
       .from('org_members')
       .select('user_id, role, created_at')
       .eq('org_id', membership.org_id)
+      .neq('status', 'inactive')
       .order('created_at', { ascending: false });
 
     if (membersError) throw membersError;
