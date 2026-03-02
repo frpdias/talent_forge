@@ -33,6 +33,8 @@ export async function GET(
     const { id } = await params;
     const supabase = getSupabase();
 
+    const orgId = request.headers.get('x-org-id');
+
     const { data, error } = await supabase
       .from('organizations')
       .select('*')
@@ -41,6 +43,34 @@ export async function GET(
 
     if (error || !data) {
       return NextResponse.json({ error: 'Organização não encontrada' }, { status: 404 });
+    }
+
+    // Validar acesso: usuário deve ser membro da org requisitada
+    // OU a org deve ser filha de uma org da qual o usuário é membro
+    const parentId = (data as any).parent_org_id;
+    const checkOrgId = orgId || parentId || id;
+
+    const { data: membership } = await supabase
+      .from('org_members')
+      .select('role')
+      .eq('org_id', checkOrgId)
+      .eq('user_id', user.id)
+      .maybeSingle();
+
+    // Permitir acesso se membro da org, da org pai, ou da própria org solicitada
+    const hasMembershipViaParent = parentId && membership;
+    const hasMembershipDirect = !parentId && membership;
+    const { data: directMembership } = !hasMembershipViaParent && !hasMembershipDirect
+      ? await supabase
+          .from('org_members')
+          .select('role')
+          .eq('org_id', id)
+          .eq('user_id', user.id)
+          .maybeSingle()
+      : { data: membership };
+
+    if (!membership && !directMembership) {
+      return NextResponse.json({ error: 'Sem permissão para esta organização' }, { status: 403 });
     }
 
     return NextResponse.json(data);

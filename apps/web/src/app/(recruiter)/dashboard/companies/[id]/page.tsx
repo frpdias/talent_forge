@@ -179,7 +179,6 @@ function CompanyDetailContent() {
 
       if (response.ok) {
         const raw = await response.json();
-        console.log('Company data:', raw);
 
         // Normalizar snake_case → camelCase para compatibilidade
         const data: Company = {
@@ -189,15 +188,10 @@ function CompanyDetailContent() {
           createdAt: raw.created_at || raw.createdAt,
           updatedAt: raw.updated_at || raw.updatedAt,
         };
-        
-        // Verificar se a empresa pertence a este recrutador
-        if (data.parentOrgId && data.parentOrgId !== currentOrg.id) {
-          alert('Você não tem permissão para acessar esta empresa');
-          router.push('/dashboard/companies');
-          return;
-        }
-        
+
         setCompany(data);
+      } else if (response.status === 403) {
+        router.push('/dashboard/companies');
       } else {
         console.error('Erro ao carregar empresa:', response.status);
       }
