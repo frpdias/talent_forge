@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useOrgStore } from '@/lib/store';
-import { createClient } from '@/lib/supabase/client';
+import { createClient, getAuthToken } from '@/lib/supabase/client';
 
 interface AiInsight {
   type: 'risk' | 'opportunity' | 'recommendation' | 'alert';
@@ -47,8 +47,7 @@ export default function AiDashboard() {
 
   const loadAiData = async (organizationId: string) => {
     try {
-      const { data: { session } } = await createClient().auth.getSession();
-      const token = session?.access_token || '';
+      const token = await getAuthToken() ?? '';
 
       // Carregar insights
       const insightsRes = await fetch('/api/v1/php/ai/generate-insights', {

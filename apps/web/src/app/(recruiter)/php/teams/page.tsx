@@ -12,7 +12,7 @@ import {
   Building2,
 } from 'lucide-react';
 import { useOrgStore } from '@/lib/store';
-import { createClient } from '@/lib/supabase/client';
+import { createClient, getAuthToken } from '@/lib/supabase/client';
 
 interface Team {
   id: string;
@@ -49,13 +49,13 @@ export default function TeamsPage() {
 
     try {
       setLoading(true);
-      const { data: { session } } = await createClient().auth.getSession();
+      const token = await getAuthToken();
       const params = new URLSearchParams();
       if (search) params.append('search', search);
 
       const res = await fetch(`/api/v1/php/teams?${params}`, {
         headers: {
-          Authorization: `Bearer ${session?.access_token || ''}`,
+          Authorization: `Bearer ${token ?? ''}`,
           'x-org-id': effectiveOrgId,
         },
       });
@@ -75,10 +75,10 @@ export default function TeamsPage() {
     if (!effectiveOrgId) return;
 
     try {
-      const { data: { session } } = await createClient().auth.getSession();
+      const token = await getAuthToken();
       const res = await fetch(`/api/v1/organizations/${effectiveOrgId}/members`, {
         headers: {
-          Authorization: `Bearer ${session?.access_token || ''}`,
+          Authorization: `Bearer ${token ?? ''}`,
           'x-org-id': effectiveOrgId,
         },
       });
@@ -104,13 +104,13 @@ export default function TeamsPage() {
     try {
       setCreating(true);
       setError(null);
-      const { data: { session } } = await createClient().auth.getSession();
+      const token = await getAuthToken();
 
       const res = await fetch('/api/v1/php/teams', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${session?.access_token || ''}`,
+          Authorization: `Bearer ${token ?? ''}`,
           'x-org-id': effectiveOrgId,
         },
         body: JSON.stringify({
@@ -141,11 +141,11 @@ export default function TeamsPage() {
     if (!confirm(`Tem certeza que deseja excluir o time "${teamName}"? Esta ação não pode ser desfeita.`)) return;
 
     try {
-      const { data: { session } } = await createClient().auth.getSession();
+      const token = await getAuthToken();
       const res = await fetch(`/api/v1/php/teams/${teamId}`, {
         method: 'DELETE',
         headers: {
-          Authorization: `Bearer ${session?.access_token || ''}`,
+          Authorization: `Bearer ${token ?? ''}`,
           'x-org-id': effectiveOrgId,
         },
       });

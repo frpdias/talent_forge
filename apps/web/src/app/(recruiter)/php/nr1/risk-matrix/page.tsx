@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, AlertTriangle, Users, TrendingUp } from 'lucide-react';
-import { createClient } from '@/lib/supabase/client';
+import { createClient, getAuthToken } from '@/lib/supabase/client';
 import { useOrgStore } from '@/lib/store';
 
 interface Nr1Assessment {
@@ -51,8 +51,7 @@ export default function RiskMatrixPage() {
   const loadAssessments = async () => {
     try {
       setLoading(true);
-      const { data: { session } } = await createClient().auth.getSession();
-      const token = session?.access_token;
+      const token = await getAuthToken();
 
       if (!token || !effectiveOrgId) {
         console.error('Token ou organização não encontrados');

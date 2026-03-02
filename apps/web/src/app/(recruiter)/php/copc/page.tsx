@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useOrgStore } from '@/lib/store';
-import { createClient } from '@/lib/supabase/client';
+import { createClient, getAuthToken } from '@/lib/supabase/client';
 
 interface CategoryScore {
   category: string;
@@ -44,8 +44,7 @@ export default function CopcDashboard() {
 
   const loadData = async (organizationId: string) => {
     try {
-      const { data: { session } } = await createClient().auth.getSession();
-      const token = session?.access_token || '';
+      const token = await getAuthToken() ?? '';
 
       // Carregar dashboard
       const dashboardRes = await fetch(

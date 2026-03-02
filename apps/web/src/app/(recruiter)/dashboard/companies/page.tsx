@@ -6,6 +6,7 @@ import { Building2, Plus, Search, Edit, Eye, Trash2, MapPin, Mail, Phone } from 
 import { useOrgStore } from '@/lib/store';
 import { HIERARCHY_LEVELS } from '@/lib/constants/hierarchy';
 import { API_V1_URL } from '@/lib/api-config';
+import { getAuthToken } from '@/lib/supabase/client';
 
 interface Company {
   id: string;
@@ -152,10 +153,8 @@ export default function RecruiterCompaniesPage() {
   const loadCompanies = async () => {
     try {
       setLoading(true);
-      
-      // Buscar token do Supabase (sessão atual)
-      const { data: { session } } = await (await import('@/lib/supabase/client')).createClient().auth.getSession();
-      const token = session?.access_token;
+
+      const token = await getAuthToken();
 
       if (!token || !currentOrg?.id) {
         setLoading(false);
@@ -193,9 +192,7 @@ export default function RecruiterCompaniesPage() {
     setSaving(true);
     
     try {
-      // Buscar token do Supabase (sessão atual)
-      const { data: { session } } = await (await import('@/lib/supabase/client')).createClient().auth.getSession();
-      const token = session?.access_token;
+      const token = await getAuthToken();
 
       if (!token) {
         alert('Sessão expirada. Faça login novamente.');
@@ -341,9 +338,7 @@ export default function RecruiterCompaniesPage() {
     if (!confirm('Tem certeza que deseja excluir esta empresa?')) return;
 
     try {
-      // Buscar token do Supabase (sessão atual)
-      const { data: { session } } = await (await import('@/lib/supabase/client')).createClient().auth.getSession();
-      const token = session?.access_token;
+      const token = await getAuthToken();
 
       if (!token) {
         alert('Sessão expirada. Faça login novamente.');

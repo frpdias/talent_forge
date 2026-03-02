@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { createClient } from '@/lib/supabase/client';
+import { createClient, getAuthToken } from '@/lib/supabase/client';
 import { useOrgStore } from '@/lib/store';
 import { ArrowLeft, AlertTriangle, TrendingUp, TrendingDown, Minus, Eye, Filter, Download } from 'lucide-react';
 
@@ -55,8 +55,7 @@ export default function ComparativeAnalysisPage() {
   const loadComparativeAnalysis = async () => {
     try {
       setLoading(true);
-      const { data: { session } } = await createClient().auth.getSession();
-      const token = session?.access_token;
+      const token = await getAuthToken();
 
       if (!token || !effectiveOrgId) return;
 

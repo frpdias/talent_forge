@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { ArrowLeft, AlertTriangle, TrendingUp, TrendingDown, BarChart3 } from 'lucide-react';
-import { createClient } from '@/lib/supabase/client';
+import { createClient, getAuthToken } from '@/lib/supabase/client';
 import { useOrgStore } from '@/lib/store';
 
 interface CopcMetric {
@@ -49,8 +49,7 @@ export default function CopcMetricDetailPage() {
   const loadMetric = async () => {
     try {
       setLoading(true);
-      const { data: { session } } = await createClient().auth.getSession();
-      const token = session?.access_token;
+      const token = await getAuthToken();
 
       if (!token || !effectiveOrgId) {
         console.error('Token ou organização não encontrados');

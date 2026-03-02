@@ -17,7 +17,7 @@ import {
   Check,
 } from 'lucide-react';
 import { useOrgStore } from '@/lib/store';
-import { createClient } from '@/lib/supabase/client';
+import { createClient, getAuthToken } from '@/lib/supabase/client';
 
 interface TeamMember {
   id: string;
@@ -106,10 +106,10 @@ export default function TeamDetailsPage() {
 
     try {
       setLoading(true);
-      const { data: { session } } = await createClient().auth.getSession();
+      const token = await getAuthToken();
       const res = await fetch(`/api/v1/php/teams/${teamId}`, {
         headers: {
-          Authorization: `Bearer ${session?.access_token || ''}`,
+          Authorization: `Bearer ${token ?? ''}`,
           'x-org-id': effectiveOrgId!,
         },
       });
@@ -133,10 +133,10 @@ export default function TeamDetailsPage() {
 
     try {
       setLoadingAvailable(true);
-      const { data: { session } } = await createClient().auth.getSession();
+      const token = await getAuthToken();
       const res = await fetch(`/api/v1/php/teams/${teamId}/available-members`, {
         headers: {
-          Authorization: `Bearer ${session?.access_token || ''}`,
+          Authorization: `Bearer ${token ?? ''}`,
           'x-org-id': effectiveOrgId!,
         },
       });
@@ -167,12 +167,12 @@ export default function TeamDetailsPage() {
 
     try {
       setSaving(true);
-      const { data: { session } } = await createClient().auth.getSession();
+      const token = await getAuthToken();
       const res = await fetch(`/api/v1/php/teams/${team.id}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${session?.access_token || ''}`,
+          Authorization: `Bearer ${token ?? ''}`,
           'x-org-id': effectiveOrgId!,
         },
         body: JSON.stringify({
@@ -200,12 +200,12 @@ export default function TeamDetailsPage() {
 
     try {
       setAddingMember(true);
-      const { data: { session } } = await createClient().auth.getSession();
+      const token = await getAuthToken();
       const res = await fetch(`/api/v1/php/teams/${team.id}/members`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${session?.access_token || ''}`,
+          Authorization: `Bearer ${token ?? ''}`,
           'x-org-id': effectiveOrgId!,
         },
         body: JSON.stringify({
@@ -233,11 +233,11 @@ export default function TeamDetailsPage() {
     if (!confirm(`Remover ${memberName} do time?`)) return;
 
     try {
-      const { data: { session } } = await createClient().auth.getSession();
+      const token = await getAuthToken();
       const res = await fetch(`/api/v1/php/teams/${team.id}/members/${memberId}`, {
         method: 'DELETE',
         headers: {
-          Authorization: `Bearer ${session?.access_token || ''}`,
+          Authorization: `Bearer ${token ?? ''}`,
           'x-org-id': effectiveOrgId!,
         },
       });
@@ -257,11 +257,11 @@ export default function TeamDetailsPage() {
     if (!effectiveOrgId || !team) return;
 
     try {
-      const { data: { session } } = await createClient().auth.getSession();
+      const token = await getAuthToken();
       const res = await fetch(`/api/v1/php/teams/${team.id}/members/${memberId}/role?role=${newRole}`, {
         method: 'PATCH',
         headers: {
-          Authorization: `Bearer ${session?.access_token || ''}`,
+          Authorization: `Bearer ${token ?? ''}`,
           'x-org-id': effectiveOrgId!,
         },
       });
@@ -282,11 +282,11 @@ export default function TeamDetailsPage() {
     if (!confirm(`Tem certeza que deseja excluir o time "${team.name}"? Esta ação não pode ser desfeita.`)) return;
 
     try {
-      const { data: { session } } = await createClient().auth.getSession();
+      const token = await getAuthToken();
       const res = await fetch(`/api/v1/php/teams/${team.id}`, {
         method: 'DELETE',
         headers: {
-          Authorization: `Bearer ${session?.access_token || ''}`,
+          Authorization: `Bearer ${token ?? ''}`,
           'x-org-id': effectiveOrgId!,
         },
       });

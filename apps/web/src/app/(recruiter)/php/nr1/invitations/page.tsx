@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { createClient } from '@/lib/supabase/client';
+import { createClient, getAuthToken } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Send, Copy, RefreshCw, X, CheckCircle, Clock, XCircle, AlertCircle, ArrowLeft } from 'lucide-react';
@@ -73,7 +73,7 @@ export default function InvitationsPage() {
 
   const loadInvitations = async (org_id: string) => {
     try {
-      const token = (await supabase.auth.getSession()).data.session?.access_token;
+      const token = await getAuthToken();
       console.log('🎫 Token presente:', !!token);
       
       const url = `/api/v1/php/nr1/invitations?org_id=${org_id}`;
@@ -111,7 +111,7 @@ export default function InvitationsPage() {
 
     setCreating(true);
     try {
-      const token = (await supabase.auth.getSession()).data.session?.access_token;
+      const token = await getAuthToken();
       const res = await fetch('/api/v1/php/nr1/invitations', {
         method: 'POST',
         headers: {
@@ -149,7 +149,7 @@ export default function InvitationsPage() {
 
   const handleResend = async (id: string) => {
     try {
-      const token = (await supabase.auth.getSession()).data.session?.access_token;
+      const token = await getAuthToken();
       const res = await fetch(`/api/v1/php/nr1/invitations/${id}/resend`, {
         method: 'POST',
         headers: {
@@ -170,7 +170,7 @@ export default function InvitationsPage() {
     if (!confirm('Deseja realmente cancelar este convite?')) return;
 
     try {
-      const token = (await supabase.auth.getSession()).data.session?.access_token;
+      const token = await getAuthToken();
       const res = await fetch(`/api/v1/php/nr1/invitations/${id}`, {
         method: 'DELETE',
         headers: {

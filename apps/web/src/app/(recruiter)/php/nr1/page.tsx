@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Plus, AlertTriangle, CheckCircle, Users } from 'lucide-react';
 import { useOrgStore } from '@/lib/store';
-import { createClient } from '@/lib/supabase/client';
+import { createClient, getAuthToken } from '@/lib/supabase/client';
 
 interface Nr1Assessment {
   id: string;
@@ -50,8 +50,7 @@ export default function Nr1ListPage() {
 
   const fetchAssessments = async (organizationId: string) => {
     try {
-      const { data: { session } } = await createClient().auth.getSession();
-      const token = session?.access_token || '';
+      const token = await getAuthToken() ?? '';
 
       const response = await fetch(
         `/api/v1/php/nr1/assessments?org_id=${organizationId}&limit=50`,
