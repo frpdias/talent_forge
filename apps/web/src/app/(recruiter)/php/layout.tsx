@@ -74,6 +74,13 @@ export default function PhpLayout({ children }: { children: ReactNode }) {
     checkUser();
   }, []);
 
+  // Sincroniza phpContextOrg se currentOrg existe mas phpContextOrgId está null
+  useEffect(() => {
+    if (!phpContextOrgId && currentOrg?.id) {
+      setPhpContextOrg(currentOrg.id, currentOrg.name);
+    }
+  }, [phpContextOrgId, currentOrg, setPhpContextOrg]);
+
   const handleLogout = async () => {
     const supabase = createBrowserClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -141,6 +148,7 @@ export default function PhpLayout({ children }: { children: ReactNode }) {
                     key={org.id}
                     onClick={() => {
                       setCurrentOrg(org);
+                      setPhpContextOrg(org.id, org.name);
                       setOrgDropdownOpen(false);
                     }}
                     className={`w-full text-left px-3 py-2 text-sm text-white/75 hover:bg-white/10 hover:text-white transition-colors ${currentOrg?.id === org.id ? 'bg-white/15 text-white font-medium' : ''}`}

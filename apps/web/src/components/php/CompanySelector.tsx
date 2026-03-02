@@ -13,7 +13,7 @@ interface Organization {
 }
 
 export function CompanySelector() {
-  const { currentOrg, setCurrentOrg } = useOrgStore();
+  const { currentOrg, setCurrentOrg, setPhpContextOrg } = useOrgStore();
   const [organizations, setOrganizations] = useState<Organization[]>([]);
   const [loading, setLoading] = useState(true);
   const [isOpen, setIsOpen] = useState(false);
@@ -116,12 +116,15 @@ export function CompanySelector() {
       // Selecionar org: priorizar a já selecionada se tiver PHP ativo, senão primeira
       if (phpActiveOrgs.length > 0) {
         const currentOrgHasPhp = currentOrg && phpActiveOrgs.find(o => o.id === currentOrg.id);
+        const selectedOrg = currentOrgHasPhp ? currentOrg : phpActiveOrgs[0];
         if (!currentOrgHasPhp) {
           console.log('[CompanySelector] Selecionando primeira org:', phpActiveOrgs[0].name);
-          setCurrentOrg(phpActiveOrgs[0]);
         } else {
           console.log('[CompanySelector] Org atual já tem PHP:', currentOrg?.name);
         }
+        // Sincroniza AMBOS os contextos (currentOrg + phpContextOrg)
+        setCurrentOrg(selectedOrg);
+        setPhpContextOrg(selectedOrg.id, selectedOrg.name);
       }
     } catch (err) {
       console.error('Erro inesperado:', err);
@@ -133,6 +136,7 @@ export function CompanySelector() {
 
   function handleSelectOrg(org: Organization) {
     setCurrentOrg(org);
+    setPhpContextOrg(org.id, org.name);
     setIsOpen(false);
   }
 
