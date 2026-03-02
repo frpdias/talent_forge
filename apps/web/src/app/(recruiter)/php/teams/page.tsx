@@ -170,11 +170,11 @@ export default function TeamsPage() {
 
       if (res.ok) {
         const lines = [
-          `✅ ${data.created?.length ?? 0} time(s) criado(s)`,
-          ...(data.created?.length ? [`Criados: ${data.created.join(', ')}`] : []),
-          ...(data.skipped?.length ? [`Ignorados (já existem): ${data.skipped.join(', ')}`] : []),
-          ...(data.errors?.length ? [`Erros: ${data.errors.join(', ')}`] : []),
+          ...(data.created?.length ? [`✅ ${data.created.length} time(s) criado(s): ${data.created.join(', ')}`] : []),
+          ...(data.updated?.length ? [`🔄 ${data.updated.length} time(s) atualizado(s): ${data.updated.join(', ')}`] : []),
+          ...(data.errors?.length ? [`❌ Erros: ${data.errors.join(', ')}`] : []),
         ];
+        if (lines.length === 0) lines.push('Nenhuma alteração necessária.');
         alert(lines.join('\n'));
         loadTeams();
       } else {

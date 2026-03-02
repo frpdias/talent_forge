@@ -70,24 +70,21 @@ export async function POST(request: NextRequest) {
       }, { status: 400 });
     }
 
-    // 3. Buscar times já existentes para evitar duplicatas
+    // 3. Buscar times já existentes para evitar duplicatas (mas atualizar member_count)
     const { data: existingTeams } = await supabase
       .from('teams')
-      .select('name')
+      .select('id, name')
       .eq('org_id', orgId);
 
-    const existingNames = new Set((existingTeams || []).map((t: any) => t.name.toLowerCase()));
+    const existingTeamMap = new Map<string, string>();
+    (existingTeams || []).forEach((t: any) => existingTeamMap.set(t.name.toLowerCase(), t.id));
 
     const created: string[] = [];
-    const skipped: string[] = [];
+    const updated: string[] = [];
     const errors: string[] = [];
 
-    // 4. Para cada departamento, criar o time
+    // 4. Para cada departamento, criar ou atualizar o time
     for (const [department, members] of byDepartment.entries()) {
-      if (existingNames.has(department.toLowerCase())) {
-        skipped.push(`${department} (já existe)`);
-        continue;
-      }
 
       // Identificar o gestor:
       // Estratégia: employee cujo `id` aparece como `manager_id` de outros no grupo.
@@ -106,6 +103,41 @@ export async function POST(request: NextRequest) {
         // Fallback: primeiro employee sem manager_id apontando para dentro do dept, com user_id
         const topLevel = members.find((m) => !memberIds.has(m.manager_id as string) && m.user_id);
         managerUserId = topLevel?.user_id || members.find((m) => m.user_id)?.user_id || null;
+      }
+
+      const existingTeamId = existingTeamMap.get(department.toLowerCase());
+
+      if (existingTeamId) {
+        // Time já existe — ATUALIZAR member_count e manager_id
+        const { error: updateError } = await supabase
+          .from('teams')
+          .update({
+            member_count: members.length,
+            manager_id: managerUserId,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', existingTeamId);
+
+        if (updateError) {
+          console.error(`[auto-create] Erro ao atualizar time "${department}":`, updateError);
+          errors.push(`${department}: ${updateError.message}`);
+        } else {
+          // Adicionar novos membros com user_id à team_members (se não existem)
+          const membersWithUserId = members.filter((m) => m.user_id);
+          if (membersWithUserId.length > 0) {
+            const teamMemberRows = membersWithUserId.map((m) => ({
+              team_id: existingTeamId,
+              user_id: m.user_id,
+              role_in_team: m.user_id === managerUserId ? 'lead' : 'member',
+            }));
+            // upsert: ignora conflitos (employee já é membro)
+            await supabase
+              .from('team_members')
+              .upsert(teamMemberRows, { onConflict: 'team_id,user_id', ignoreDuplicates: true });
+          }
+          updated.push(`${department} (${members.length} membro(s))`);
+        }
+        continue;
       }
 
       // Criar o time — member_count = TODOS os funcionários do departamento
@@ -149,9 +181,9 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json({
-      message: `${created.length} time(s) criado(s) com sucesso`,
+      message: `${created.length} criado(s), ${updated.length} atualizado(s)`,
       created,
-      skipped,
+      updated,
       errors,
     }, { status: 201 });
   } catch (err: any) {

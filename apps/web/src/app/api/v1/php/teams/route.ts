@@ -18,7 +18,16 @@ async function getAuthUser(request: NextRequest) {
 
 /**
  * GET /api/v1/php/teams
- * Lista os times de uma organização com contagem real de membros
+ * Lista os times de uma organização com contagem dinâmica de membros.
+ *
+ * A contagem de membros é calculada a partir dos employees ativos cujo
+ * `department` corresponde ao `name` do time. Isso garante que a contagem
+ * esteja sempre atualizada, independentemente de quando o time foi criado.
+ *
+ * Conforme Arquitetura Canônica:
+ * - teams.org_id → organizations.id
+ * - employees.organization_id → organizations.id (note: campo diferente)
+ * - Relação implícita: teams.name ↔ employees.department
  */
 export async function GET(request: NextRequest) {
   try {
@@ -33,12 +42,10 @@ export async function GET(request: NextRequest) {
 
     const supabase = getSupabase();
 
+    // 1. Busca todos os times da org
     let query = supabase
       .from('teams')
-      .select(`
-        id, org_id, name, description, manager_id, member_count, created_at, updated_at,
-        team_members(count)
-      `)
+      .select('id, org_id, name, description, manager_id, member_count, created_at, updated_at')
       .eq('org_id', orgId)
       .order('name', { ascending: true });
 
@@ -53,17 +60,31 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Erro ao buscar times' }, { status: 500 });
     }
 
-    // Normaliza contagem de membros
-    // Usa member_count (armazenado) como principal, pois inclui todos os 
-    // funcionários do departamento. team_members só tem employees com user_id (auth).
+    // 2. Busca contagem real de employees por departamento (fonte de verdade)
+    const { data: activeEmployees } = await supabase
+      .from('employees')
+      .select('department')
+      .eq('organization_id', orgId)
+      .eq('status', 'active');
+
+    const deptCountMap: Record<string, number> = {};
+    (activeEmployees || []).forEach((e: any) => {
+      const dept = (e.department || '').trim();
+      if (dept) deptCountMap[dept] = (deptCountMap[dept] || 0) + 1;
+    });
+
+    // 3. Normaliza contagem: usa o count real de employees do departamento
     const teams = (data || []).map((team: any) => {
+      const deptCount = deptCountMap[team.name] || 0;
       const storedCount = team.member_count ?? 0;
-      const authMemberCount = team.team_members?.[0]?.count ?? 0;
-      return {
-        ...team,
-        member_count: Math.max(storedCount, authMemberCount),
-        team_members: undefined,
-      };
+      const realCount = Math.max(deptCount, storedCount);
+
+      // Auto-corrige member_count no banco se divergiu
+      if (realCount !== storedCount) {
+        supabase.from('teams').update({ member_count: realCount }).eq('id', team.id).then();
+      }
+
+      return { ...team, member_count: realCount };
     });
 
     return NextResponse.json({ data: teams, total: teams.length });
