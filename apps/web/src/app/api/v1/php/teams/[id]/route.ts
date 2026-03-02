@@ -44,7 +44,7 @@ export async function GET(request: NextRequest, { params }: Params) {
       return NextResponse.json({ error: 'Time não encontrado' }, { status: 404 });
     }
 
-    // Busca membros do time (user_id → auth.users, schema canônico)
+    // Busca membros do time via team_members (apenas employees com auth user_id)
     const { data: members } = await supabase
       .from('team_members')
       .select('id, team_id, user_id, role_in_team, joined_at')
@@ -62,14 +62,55 @@ export async function GET(request: NextRequest, { params }: Params) {
       (emps || []).forEach((e: any) => { employeeMap[e.user_id] = e; });
     }
 
-    const normalizedMembers = (members || []).map((m: any) => ({
-      id: m.id,
-      team_id: m.team_id,
-      user_id: m.user_id,
-      role_in_team: m.role_in_team,
-      joined_at: m.joined_at,
-      employee: employeeMap[m.user_id] || null,
-    }));
+    // Busca TODOS os employees do departamento correspondente ao nome do time
+    // (para times criados automaticamente por "Criar por Área")
+    const { data: deptEmployees } = await supabase
+      .from('employees')
+      .select('id, full_name, position, department, manager_id, user_id')
+      .eq('organization_id', orgId)
+      .eq('department', team.name)
+      .eq('status', 'active')
+      .order('full_name', { ascending: true });
+
+    // Merge: employees do departamento + membros de team_members
+    const seenIds = new Set<string>();
+    const normalizedMembers: any[] = [];
+
+    // Primeiro: employees do departamento (a maioria dos membros)
+    for (const emp of (deptEmployees || [])) {
+      seenIds.add(emp.user_id || emp.id);
+      // Verifica se tem um registro em team_members para pegar role
+      const tmRecord = (members || []).find((m: any) => m.user_id === emp.user_id);
+      normalizedMembers.push({
+        id: tmRecord?.id || emp.id,
+        team_id: teamId,
+        user_id: emp.user_id,
+        role_in_team: tmRecord?.role_in_team || 'member',
+        joined_at: tmRecord?.joined_at || team.created_at,
+        employee: emp,
+      });
+    }
+
+    // Depois: membros de team_members que NÃO são do departamento (adicionados manualmente)
+    for (const m of (members || [])) {
+      if (seenIds.has(m.user_id)) continue;
+      seenIds.add(m.user_id);
+      normalizedMembers.push({
+        id: m.id,
+        team_id: m.team_id,
+        user_id: m.user_id,
+        role_in_team: m.role_in_team,
+        joined_at: m.joined_at,
+        employee: employeeMap[m.user_id] || null,
+      });
+    }
+
+    // Atualizar member_count se divergiu
+    const actualCount = normalizedMembers.length;
+    if (actualCount !== team.member_count) {
+      await supabase.from('teams').update({ member_count: actualCount }).eq('id', teamId);
+      team.member_count = actualCount;
+    }
 
     // Busca dados do gestor via employees.user_id (manager_id = auth.users.id)
     let manager = null;

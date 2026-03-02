@@ -53,12 +53,18 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Erro ao buscar times' }, { status: 500 });
     }
 
-    // Normaliza contagem real de membros
-    const teams = (data || []).map((team: any) => ({
-      ...team,
-      member_count: team.team_members?.[0]?.count ?? team.member_count ?? 0,
-      team_members: undefined,
-    }));
+    // Normaliza contagem de membros
+    // Usa member_count (armazenado) como principal, pois inclui todos os 
+    // funcionários do departamento. team_members só tem employees com user_id (auth).
+    const teams = (data || []).map((team: any) => {
+      const storedCount = team.member_count ?? 0;
+      const authMemberCount = team.team_members?.[0]?.count ?? 0;
+      return {
+        ...team,
+        member_count: Math.max(storedCount, authMemberCount),
+        team_members: undefined,
+      };
+    });
 
     return NextResponse.json({ data: teams, total: teams.length });
   } catch (err: any) {

@@ -108,7 +108,7 @@ export async function POST(request: NextRequest) {
         managerUserId = topLevel?.user_id || members.find((m) => m.user_id)?.user_id || null;
       }
 
-      // Criar o time
+      // Criar o time — member_count = TODOS os funcionários do departamento
       const { data: team, error: teamError } = await supabase
         .from('teams')
         .insert({
@@ -116,7 +116,7 @@ export async function POST(request: NextRequest) {
           name: department,
           description: `Time de ${department} — criado automaticamente a partir da estrutura organizacional`,
           manager_id: managerUserId,
-          member_count: 0,
+          member_count: members.length,
         })
         .select('id, name')
         .single();
@@ -127,7 +127,7 @@ export async function POST(request: NextRequest) {
         continue;
       }
 
-      // Adicionar membros com user_id ao time
+      // Adicionar membros com user_id à tabela team_members (para features de auth)
       const membersWithUserId = members.filter((m) => m.user_id);
       if (membersWithUserId.length > 0) {
         const teamMemberRows = membersWithUserId.map((m) => ({
@@ -143,15 +143,9 @@ export async function POST(request: NextRequest) {
         if (membersError) {
           console.warn(`[auto-create] Aviso: erro ao adicionar membros no time "${department}":`, membersError.message);
         }
-
-        // Atualizar member_count
-        await supabase
-          .from('teams')
-          .update({ member_count: membersWithUserId.length })
-          .eq('id', team.id);
       }
 
-      created.push(`${department} (${membersWithUserId.length} membro(s))`);
+      created.push(`${department} (${members.length} membro(s))`);
     }
 
     return NextResponse.json({

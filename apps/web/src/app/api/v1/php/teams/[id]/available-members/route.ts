@@ -33,6 +33,18 @@ export async function GET(request: NextRequest, { params }: Params) {
     const { id: teamId } = await params;
     const supabase = getSupabase();
 
+    // Busca o time para saber seu nome (usado como referência de departamento)
+    const { data: team } = await supabase
+      .from('teams')
+      .select('name, org_id')
+      .eq('id', teamId)
+      .eq('org_id', orgId)
+      .single();
+
+    if (!team) {
+      return NextResponse.json({ error: 'Time não encontrado' }, { status: 404 });
+    }
+
     // user_ids já no time (team_members.user_id = auth.users.id)
     const { data: currentMembers } = await supabase
       .from('team_members')
@@ -41,13 +53,15 @@ export async function GET(request: NextRequest, { params }: Params) {
 
     const memberAuthIds = (currentMembers || []).map((m: any) => m.user_id).filter(Boolean);
 
-    // Employees com conta Supabase (user_id IS NOT NULL) que ainda não estão no time
+    // Employees da org que NÃO estão no departamento correspondente ao time
+    // E NÃO já estão em team_members
+    // (employees do departamento já aparecem como membros do time automaticamente)
     let query = supabase
       .from('employees')
       .select('id, full_name, position, department, manager_id, user_id')
       .eq('organization_id', orgId)
       .eq('status', 'active')
-      .not('user_id', 'is', null)  // somente employees com conta Supabase
+      .neq('department', team.name) // excluir employees do departamento do time
       .order('full_name', { ascending: true });
 
     if (memberAuthIds.length > 0) {

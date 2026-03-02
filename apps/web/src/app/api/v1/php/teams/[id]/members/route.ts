@@ -53,7 +53,7 @@ export async function POST(request: NextRequest, { params }: Params) {
       return NextResponse.json({ error: 'Time não encontrado' }, { status: 404 });
     }
 
-    // Valida que o employee existe, pertence à org e tem conta Supabase
+    // Valida que o employee existe e pertence à org
     const { data: employee } = await supabase
       .from('employees')
       .select('id, user_id')
@@ -65,43 +65,38 @@ export async function POST(request: NextRequest, { params }: Params) {
       return NextResponse.json({ error: 'Funcionário não encontrado' }, { status: 404 });
     }
 
-    if (!employee.user_id) {
-      return NextResponse.json(
-        { error: 'Este funcionário não possui conta de acesso configurada e não pode ser adicionado ao time' },
-        { status: 422 }
-      );
-    }
-
-    // Insere usando auth user_id (schema canônico: team_members.user_id → auth.users)
-    const { data, error } = await supabase
-      .from('team_members')
-      .insert({ team_id: teamId, user_id: employee.user_id, role_in_team })
-      .select()
-      .single();
-
-    if (error) {
-      if (error.code === '23505') {
-        return NextResponse.json({ error: 'Funcionário já está neste time' }, { status: 409 });
-      }
-      console.error('[team/members] POST error:', error);
-      return NextResponse.json({ error: 'Erro ao adicionar membro' }, { status: 500 });
-    }
-
-    // Atualiza member_count
-    try {
-      await supabase.rpc('update_team_member_count', { p_team_id: teamId });
-    } catch {
-      // Fallback manual se a função não existir
-      const { count } = await supabase
+    // Se o employee tem user_id, insere na tabela team_members (vínculo auth)
+    if (employee.user_id) {
+      const { data, error } = await supabase
         .from('team_members')
-        .select('id', { count: 'exact', head: true })
-        .eq('team_id', teamId);
-      if (count !== null) {
-        await supabase.from('teams').update({ member_count: count }).eq('id', teamId);
+        .insert({ team_id: teamId, user_id: employee.user_id, role_in_team })
+        .select()
+        .single();
+
+      if (error) {
+        if (error.code === '23505') {
+          return NextResponse.json({ error: 'Funcionário já está neste time' }, { status: 409 });
+        }
+        console.error('[team/members] POST error:', error);
+        return NextResponse.json({ error: 'Erro ao adicionar membro' }, { status: 500 });
       }
     }
 
-    return NextResponse.json(data, { status: 201 });
+    // Atualiza member_count incrementando
+    try {
+      // Incrementa member_count no time
+      const { data: currentTeam } = await supabase
+        .from('teams')
+        .select('member_count')
+        .eq('id', teamId)
+        .single();
+      const newCount = (currentTeam?.member_count ?? 0) + 1;
+      await supabase.from('teams').update({ member_count: newCount }).eq('id', teamId);
+    } catch (e) {
+      console.warn('[team/members] Erro ao atualizar member_count:', e);
+    }
+
+    return NextResponse.json({ success: true }, { status: 201 });
   } catch (err: any) {
     return NextResponse.json({ error: err.message || 'Erro interno' }, { status: 500 });
   }
