@@ -16,8 +16,10 @@ import {
   Shield,
   Check,
   GitBranch,
+  ArrowRightLeft,
 } from 'lucide-react';
 import TeamOrgChartModal from '@/components/php/TeamOrgChartModal';
+import TransferEmployeeModal from '@/components/php/TransferEmployeeModal';
 import { useOrgStore } from '@/lib/store';
 import { createClient, getAuthToken } from '@/lib/supabase/client';
 
@@ -104,6 +106,13 @@ export default function TeamDetailsPage() {
   const [addingMember, setAddingMember] = useState(false);
   const [selectedRole, setSelectedRole] = useState<'member' | 'lead' | 'coordinator'>('member');
   const [showOrgChart, setShowOrgChart] = useState(false);
+  const [transferEmployee, setTransferEmployee] = useState<{
+    id: string;
+    full_name: string;
+    position: string | null;
+    department: string | null;
+    manager_id: string | null;
+  } | null>(null);
 
   const loadTeam = useCallback(async () => {
     if (!effectiveOrgId || !teamId) return;
@@ -486,7 +495,7 @@ export default function TeamDetailsPage() {
                     )}
                   </div>
                 </div>
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2">
                   <select
                     value={member.role_in_team}
                     onChange={(e) => handleUpdateRole(member.employee?.id || member.user_id, e.target.value as any)}
@@ -496,6 +505,23 @@ export default function TeamDetailsPage() {
                     <option value="lead">Líder</option>
                     <option value="coordinator">Coordenador</option>
                   </select>
+                  <button
+                    onClick={() => {
+                      if (member.employee) {
+                        setTransferEmployee({
+                          id: member.employee.id,
+                          full_name: member.employee.full_name,
+                          position: member.employee.position,
+                          department: member.employee.department,
+                          manager_id: member.employee.manager_id,
+                        });
+                      }
+                    }}
+                    className="p-2 text-gray-400 hover:text-[#1F4ED8] hover:bg-[#1F4ED8]/10 rounded-lg transition-colors"
+                    title="Transferir / Alterar hierarquia"
+                  >
+                    <ArrowRightLeft className="w-4 h-4" />
+                  </button>
                   <button
                     onClick={() => handleRemoveMember(
                       member.employee?.id || member.user_id, 
@@ -521,6 +547,19 @@ export default function TeamDetailsPage() {
         teamName={team.name}
         members={team.members}
       />
+
+      {/* Transfer Employee Modal */}
+      {transferEmployee && (
+        <TransferEmployeeModal
+          isOpen={true}
+          onClose={() => setTransferEmployee(null)}
+          onSuccess={() => loadTeam()}
+          employee={transferEmployee}
+          currentTeamName={team.name}
+          orgId={effectiveOrgId!}
+          getToken={getAuthToken}
+        />
+      )}
 
       {/* Add Member Modal */}
       {showAddMember && (
