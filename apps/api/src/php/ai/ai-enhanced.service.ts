@@ -219,7 +219,7 @@ export class AiEnhancedService {
 
     // Fetch TFCI assessments
     let tfciQuery = this.supabase
-      .from('php_tfci_assessments')
+      .from('tfci_assessments')
       .select('*')
       .eq('org_id', orgId)
       .order('created_at', { ascending: false })
@@ -227,15 +227,15 @@ export class AiEnhancedService {
 
     // Fetch NR-1 assessments
     let nr1Query = this.supabase
-      .from('php_nr1_assessments')
+      .from('nr1_risk_assessments')
       .select('*')
       .eq('org_id', orgId)
       .order('created_at', { ascending: false })
       .limit(100);
 
-    // Fetch COPC assessments
+    // Fetch COPC metrics
     let copcQuery = this.supabase
-      .from('php_copc_assessments')
+      .from('copc_metrics')
       .select('*')
       .eq('org_id', orgId)
       .order('created_at', { ascending: false })

@@ -12,23 +12,33 @@ interface CopcMetric {
   team_id?: string;
   metric_date: string;
   overall_performance_score: number;
+  // Quality (35%)
   quality_score: number;
-  efficiency_score: number;
-  effectiveness_score: number;
-  cx_score: number;
-  people_score: number;
-  status: 'excellent' | 'good' | 'warning' | 'critical';
+  rework_rate: number;
+  // Efficiency (20%)
+  process_adherence_rate: number;
+  average_handle_time: number;
+  // Effectiveness (20%)
+  first_call_resolution_rate: number;
+  delivery_consistency: number;
+  // CX (15%)
+  customer_satisfaction_score: number;
+  nps_score: number;
+  // People (10%)
+  absenteeism_rate: number;
+  engagement_score: number;
+  operational_stress_level: number;
   notes?: string;
   created_at: string;
-  updated_at: string;
+  [key: string]: unknown;
 }
 
 const COPC_CATEGORIES = [
-  { key: 'quality_score', label: 'Qualidade', weight: 35, description: 'Qualidade do serviço prestado' },
-  { key: 'efficiency_score', label: 'Eficiência', weight: 20, description: 'Otimização de recursos e tempo' },
-  { key: 'effectiveness_score', label: 'Efetividade', weight: 20, description: 'Alcance de objetivos e metas' },
-  { key: 'cx_score', label: 'Customer Experience', weight: 15, description: 'Experiência do cliente' },
-  { key: 'people_score', label: 'People (Bem-estar)', weight: 10, description: 'Bem-estar da equipe' },
+  { key: 'quality_score', label: 'Qualidade', weight: 35, description: 'Quality Score (QA principal)' },
+  { key: 'process_adherence_rate', label: 'Eficiência', weight: 20, description: 'Aderência a processos operacionais' },
+  { key: 'first_call_resolution_rate', label: 'Efetividade', weight: 20, description: 'Resolução na primeira chamada / entrega' },
+  { key: 'customer_satisfaction_score', label: 'Customer Experience', weight: 15, description: 'Satisfação do cliente (CSAT)' },
+  { key: 'people_inverted', label: 'People (Bem-estar)', weight: 10, description: 'Bem-estar da equipe (100 - absenteísmo)' },
 ];
 
 export default function CopcMetricDetailPage() {
@@ -112,6 +122,10 @@ export default function CopcMetricDetailPage() {
   }
 
   const overallColor = getScoreColor(metric.overall_performance_score);
+  const derivedStatus = metric.overall_performance_score >= 85 ? 'excellent'
+    : metric.overall_performance_score >= 70 ? 'good'
+    : metric.overall_performance_score >= 50 ? 'warning'
+    : 'critical';
 
   return (
     <div className="min-h-screen bg-[#FAFAF8] p-6">
@@ -145,9 +159,9 @@ export default function CopcMetricDetailPage() {
                   </p>
                 </div>
                 <span className={`text-xs px-3 py-1 rounded-full ${
-                  metric.status === 'excellent' ? 'bg-green-100 text-green-800' :
-                  metric.status === 'good' ? 'bg-blue-100 text-blue-800' :
-                  metric.status === 'warning' ? 'bg-yellow-100 text-yellow-800' :
+                  derivedStatus === 'excellent' ? 'bg-green-100 text-green-800' :
+                  derivedStatus === 'good' ? 'bg-blue-100 text-blue-800' :
+                  derivedStatus === 'warning' ? 'bg-yellow-100 text-yellow-800' :
                   'bg-red-100 text-red-800'
                 }`}>
                   {overallColor.label}
@@ -166,7 +180,9 @@ export default function CopcMetricDetailPage() {
 
           <div className="space-y-4">
             {COPC_CATEGORIES.map((category) => {
-              const score = metric[category.key as keyof CopcMetric] as number;
+              const score = category.key === 'people_inverted'
+                ? (100 - (metric.absenteeism_rate || 0))
+                : (metric[category.key] as number) || 0;
               const color = getScoreColor(score);
 
               return (
@@ -206,11 +222,11 @@ export default function CopcMetricDetailPage() {
               Score Geral = (Qualidade × 0.35) + (Eficiência × 0.20) + (Efetividade × 0.20) + (CX × 0.15) + (People × 0.10)
             </p>
             <p className="font-mono">
-              = ({metric.quality_score.toFixed(1)} × 0.35) + 
-              ({metric.efficiency_score.toFixed(1)} × 0.20) + 
-              ({metric.effectiveness_score.toFixed(1)} × 0.20) + 
-              ({metric.cx_score.toFixed(1)} × 0.15) + 
-              ({metric.people_score.toFixed(1)} × 0.10)
+              = ({(metric.quality_score || 0).toFixed(1)} × 0.35) + 
+              ({(metric.process_adherence_rate || 0).toFixed(1)} × 0.20) + 
+              ({(metric.first_call_resolution_rate || 0).toFixed(1)} × 0.20) + 
+              ({(metric.customer_satisfaction_score || 0).toFixed(1)} × 0.15) + 
+              ({(100 - (metric.absenteeism_rate || 0)).toFixed(1)} × 0.10)
             </p>
             <p className="font-mono font-bold">
               = {metric.overall_performance_score.toFixed(2)}
@@ -230,39 +246,39 @@ export default function CopcMetricDetailPage() {
 
         {/* Recommendations */}
         <div className={`rounded-lg p-6 ${
-          metric.status === 'critical' || metric.status === 'warning'
+          derivedStatus === 'critical' || derivedStatus === 'warning'
             ? 'bg-red-50 border border-red-200'
             : 'bg-green-50 border border-green-200'
         }`}>
           <h3 className={`text-lg font-semibold mb-3 ${
-            metric.status === 'critical' || metric.status === 'warning'
+            derivedStatus === 'critical' || derivedStatus === 'warning'
               ? 'text-red-900'
               : 'text-green-900'
           }`}>
-            {metric.status === 'critical' && <><AlertTriangle className="w-5 h-5 inline mr-2" />Ação Urgente Necessária</>}
-            {metric.status === 'warning' && <><AlertTriangle className="w-5 h-5 inline mr-2" />Recomendações de Melhoria</>}
-            {(metric.status === 'good' || metric.status === 'excellent') && <><TrendingUp className="w-5 h-5 inline mr-2" />Desempenho Positivo</>}
+            {derivedStatus === 'critical' && <><AlertTriangle className="w-5 h-5 inline mr-2" />Ação Urgente Necessária</>}
+            {derivedStatus === 'warning' && <><AlertTriangle className="w-5 h-5 inline mr-2" />Recomendações de Melhoria</>}
+            {(derivedStatus === 'good' || derivedStatus === 'excellent') && <><TrendingUp className="w-5 h-5 inline mr-2" />Desempenho Positivo</>}
           </h3>
           <ul className={`space-y-2 text-sm ${
-            metric.status === 'critical' || metric.status === 'warning'
+            derivedStatus === 'critical' || derivedStatus === 'warning'
               ? 'text-red-800'
               : 'text-green-800'
           }`}>
-            {metric.status === 'critical' && (
+            {derivedStatus === 'critical' && (
               <>
                 <li>• Criar plano de ação imediato para reverter scores críticos</li>
                 <li>• Identificar causas raiz dos baixos índices de performance</li>
                 <li>• Considerar intervenções de liderança e suporte adicional</li>
               </>
             )}
-            {metric.status === 'warning' && (
+            {derivedStatus === 'warning' && (
               <>
                 <li>• Monitorar tendências nas próximas medições</li>
                 <li>• Implementar melhorias incrementais nas áreas de atenção</li>
                 <li>• Realizar feedback com equipe sobre desafios operacionais</li>
               </>
             )}
-            {(metric.status === 'good' || metric.status === 'excellent') && (
+            {(derivedStatus === 'good' || derivedStatus === 'excellent') && (
               <>
                 <li>• Manter práticas atuais e documentar processos bem-sucedidos</li>
                 <li>• Compartilhar boas práticas com outras equipes</li>
@@ -274,7 +290,7 @@ export default function CopcMetricDetailPage() {
 
         {/* Metadata */}
         <div className="mt-6 text-sm text-[#999999] text-center">
-          Atualizado em {new Date(metric.updated_at).toLocaleString('pt-BR')}
+          Registrado em {new Date(metric.created_at).toLocaleString('pt-BR')}
         </div>
       </div>
     </div>

@@ -70,13 +70,13 @@ export class DashboardService {
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
     const { data: assessments, count } = await this.supabase
-      .from('php_tfci_assessments')
+      .from('tfci_assessments')
       .select('overall_score, created_at', { count: 'exact' })
       .eq('org_id', orgId)
       .gte('created_at', thirtyDaysAgo.toISOString());
 
     const { count: activeCycles } = await this.supabase
-      .from('php_tfci_cycles')
+      .from('tfci_cycles')
       .select('id', { count: 'exact', head: true })
       .eq('org_id', orgId)
       .eq('status', 'active');
@@ -101,7 +101,7 @@ export class DashboardService {
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
     const { data: assessments, count } = await this.supabase
-      .from('php_nr1_assessments')
+      .from('nr1_risk_assessments')
       .select('risk_level, created_at', { count: 'exact' })
       .eq('org_id', orgId)
       .gte('created_at', thirtyDaysAgo.toISOString());
@@ -126,8 +126,8 @@ export class DashboardService {
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
     const { data: assessments, count } = await this.supabase
-      .from('php_copc_assessments')
-      .select('quality_score, efficiency_score, created_at', { count: 'exact' })
+      .from('copc_metrics')
+      .select('quality_score, process_adherence_rate, created_at', { count: 'exact' })
       .eq('org_id', orgId)
       .gte('created_at', thirtyDaysAgo.toISOString());
 
@@ -136,7 +136,7 @@ export class DashboardService {
       : 0;
 
     const avgEfficiency = assessments && assessments.length > 0
-      ? assessments.reduce((sum, a) => sum + (a.efficiency_score || 0), 0) / assessments.length
+      ? assessments.reduce((sum, a) => sum + (a.process_adherence_rate || 0), 0) / assessments.length
       : 0;
 
     const trend = this.calculateTrend(assessments || [], 'quality_score');
@@ -195,7 +195,7 @@ export class DashboardService {
 
     // Count employees with pending assessments (simplified)
     const { count: pendingAssessments } = await this.supabase
-      .from('php_tfci_assessment_participants')
+      .from('tfci_assessments')
       .select('id', { count: 'exact', head: true })
       .eq('status', 'pending');
 
