@@ -31,6 +31,7 @@ interface TeamMember {
     position: string | null;
     department: string | null;
     manager_id: string | null;
+    hierarchy_depth?: number;
   };
 }
 
@@ -441,20 +442,36 @@ export default function TeamDetailsPage() {
           </div>
         ) : (
           <div className="divide-y divide-gray-100">
-            {team.members.map((member) => (
+            {team.members.map((member) => {
+              const depth = member.employee?.hierarchy_depth ?? 0;
+              const isLeader = depth === 0;
+              const indent = depth * 24; // px por nível hierárquico
+
+              return (
               <div key={member.id} className="p-4 flex items-center justify-between hover:bg-gray-50">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center">
-                    <User className="w-5 h-5 text-gray-500" />
+                <div className="flex items-center gap-3" style={{ marginLeft: `${indent}px` }}>
+                  {depth > 0 && (
+                    <span className="text-gray-300 text-sm select-none" style={{ marginRight: '-4px' }}>
+                      {'└'}
+                    </span>
+                  )}
+                  <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                    isLeader ? 'bg-[#1F4ED8]/15 ring-2 ring-[#1F4ED8]/30' : 'bg-gray-200'
+                  }`}>
+                    {isLeader ? (
+                      <Crown className="w-5 h-5 text-[#1F4ED8]" />
+                    ) : (
+                      <User className="w-5 h-5 text-gray-500" />
+                    )}
                   </div>
                   <div>
-                    <p className="font-medium text-gray-900">
+                    <p className={`font-medium ${isLeader ? 'text-[#1F4ED8]' : 'text-gray-900'}`}>
                       {member.employee?.full_name || 'Funcionário'}
                     </p>
                     {member.employee?.position && (
                       <p className="text-sm text-gray-500">{member.employee.position}</p>
                     )}
-                    {member.employee?.department && (
+                    {member.employee?.department && member.employee.department !== team?.name && (
                       <p className="text-xs text-gray-400">{member.employee.department}</p>
                     )}
                   </div>
@@ -481,7 +498,8 @@ export default function TeamDetailsPage() {
                   </button>
                 </div>
               </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>

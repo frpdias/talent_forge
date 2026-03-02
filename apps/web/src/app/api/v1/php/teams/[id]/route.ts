@@ -69,17 +69,69 @@ export async function GET(request: NextRequest, { params }: Params) {
       .select('id, full_name, position, department, manager_id, user_id')
       .eq('organization_id', orgId)
       .eq('department', team.name)
-      .eq('status', 'active')
-      .order('full_name', { ascending: true });
+      .eq('status', 'active');
 
-    // Merge: employees do departamento + membros de team_members
+    // --- ORDENAÇÃO HIERÁRQUICA (organograma: maior → menor) ---
+    // Constrói árvore a partir de manager_id e percorre em pre-order (DFS)
+    const deptList = deptEmployees || [];
+    const deptIdSet = new Set(deptList.map((e: any) => e.id));
+    const childrenMap: Record<string, any[]> = {};
+    const roots: any[] = [];
+
+    for (const emp of deptList) {
+      // Se manager_id não está no dept OU é null → é raiz do dept
+      if (!emp.manager_id || !deptIdSet.has(emp.manager_id)) {
+        roots.push(emp);
+      } else {
+        if (!childrenMap[emp.manager_id]) childrenMap[emp.manager_id] = [];
+        childrenMap[emp.manager_id].push(emp);
+      }
+    }
+
+    // Ordena raízes e filhos por position (Diretor > Gerente > Coordenador > Analista > demais)
+    const positionPriority = (pos: string | null): number => {
+      if (!pos) return 99;
+      const p = pos.toLowerCase();
+      if (p.includes('diretor') || p.includes('ceo') || p.includes('presidente') || p.includes('vp')) return 1;
+      if (p.includes('gerente') || p.includes('superintendente')) return 2;
+      if (p.includes('coordenador') || p.includes('supervisor')) return 3;
+      if (p.includes('líder') || p.includes('lider') || p.includes('especialista')) return 4;
+      if (p.includes('analista') || p.includes('consultor')) return 5;
+      if (p.includes('assistente') || p.includes('auxiliar')) return 6;
+      if (p.includes('estagiári') || p.includes('estagiario') || p.includes('aprendiz')) return 7;
+      return 8;
+    };
+
+    const sortByPosition = (a: any, b: any) => {
+      const pa = positionPriority(a.position);
+      const pb = positionPriority(b.position);
+      if (pa !== pb) return pa - pb;
+      return (a.full_name || '').localeCompare(b.full_name || '');
+    };
+
+    roots.sort(sortByPosition);
+    Object.values(childrenMap).forEach((children) => children.sort(sortByPosition));
+
+    // Pre-order DFS para obter lista ordenada hierarquicamente
+    const hierarchicalList: { emp: any; depth: number }[] = [];
+    const walkTree = (node: any, depth: number) => {
+      hierarchicalList.push({ emp: node, depth });
+      const children = childrenMap[node.id] || [];
+      for (const child of children) {
+        walkTree(child, depth + 1);
+      }
+    };
+    for (const root of roots) {
+      walkTree(root, 0);
+    }
+
+    // Merge: employees do departamento (ordenados hierarquicamente) + membros manuais
     const seenIds = new Set<string>();
     const normalizedMembers: any[] = [];
 
-    // Primeiro: employees do departamento (a maioria dos membros)
-    for (const emp of (deptEmployees || [])) {
+    // Primeiro: employees do departamento na ordem hierárquica
+    for (const { emp, depth } of hierarchicalList) {
       seenIds.add(emp.user_id || emp.id);
-      // Verifica se tem um registro em team_members para pegar role
       const tmRecord = (members || []).find((m: any) => m.user_id === emp.user_id);
       normalizedMembers.push({
         id: tmRecord?.id || emp.id,
@@ -87,7 +139,7 @@ export async function GET(request: NextRequest, { params }: Params) {
         user_id: emp.user_id,
         role_in_team: tmRecord?.role_in_team || 'member',
         joined_at: tmRecord?.joined_at || team.created_at,
-        employee: emp,
+        employee: { ...emp, hierarchy_depth: depth },
       });
     }
 
