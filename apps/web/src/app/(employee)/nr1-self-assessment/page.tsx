@@ -3,7 +3,6 @@
 import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
-import { API_V1_URL } from '@/lib/api-config';
 import { Heart, AlertTriangle, CheckCircle, Info, ArrowLeft, XCircle } from 'lucide-react';
 
 interface SelfAssessmentData {
@@ -249,7 +248,7 @@ function NR1SelfAssessmentContent() {
         ...(invitationData && { invitation_id: invitationData.id })
       };
 
-      const response = await fetch('${API_V1_URL}/php/nr1/self-assessments', {
+      const response = await fetch('/api/v1/php/nr1/self-assessments', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -369,7 +368,7 @@ function NR1SelfAssessmentContent() {
         </p>
         <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
           <div className="flex items-start gap-3">
-            <Info className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
+            <Info className="w-5 h-5 text-blue-600 mt-0.5 shrink-0" />
             <div className="text-sm text-gray-700">
               <p className="font-semibold text-[#141042] mb-1">Sobre esta avaliação:</p>
               <p>Você está avaliando como <strong>percebe</strong> seu ambiente de trabalho. Não existem respostas certas ou erradas. Seja honesto(a) para que possamos melhorar as condições de trabalho.</p>
@@ -545,7 +544,7 @@ function NR1SelfAssessmentContent() {
 
             <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
               <div className="flex items-start gap-3">
-                <AlertTriangle className="w-5 h-5 text-yellow-600 mt-0.5 flex-shrink-0" />
+                <AlertTriangle className="w-5 h-5 text-yellow-600 mt-0.5 shrink-0" />
                 <p className="text-sm text-gray-700">
                   <strong>Atenção:</strong> Após enviar, você não poderá alterar suas respostas. Revise cuidadosamente antes de finalizar.
                 </p>

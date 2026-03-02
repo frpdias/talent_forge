@@ -2,14 +2,22 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Plus, AlertTriangle, CheckCircle, Users } from 'lucide-react';
+import { Plus, AlertTriangle, CheckCircle, Users, BarChart3, Clock, Send } from 'lucide-react';
 import { useOrgStore } from '@/lib/store';
-import { createClient, getAuthToken } from '@/lib/supabase/client';
+import { getAuthToken } from '@/lib/supabase/client';
 
 interface Nr1Assessment {
   id: string;
   assessment_date: string;
   overall_risk_level: 'low' | 'medium' | 'high';
+  overall_risk?: string;
+  is_campaign?: boolean;
+  campaign_name?: string;
+  scope?: string;
+  scope_target?: string;
+  total_invited?: number;
+  total_responded?: number;
+  status?: string;
   team_id?: string;
   user_id?: string;
   workload_pace_risk: number;
@@ -30,11 +38,12 @@ export default function Nr1ListPage() {
   const effectiveOrgId = phpContextOrgId || currentOrg?.id;
   const [assessments, setAssessments] = useState<Nr1Assessment[]>([]);
   const [loading, setLoading] = useState(true);
+  const [aggregating, setAggregating] = useState<string | null>(null);
   const [stats, setStats] = useState({
     total: 0,
-    high_risk: 0,
-    medium_risk: 0,
-    low_risk: 0,
+    campaigns_active: 0,
+    campaigns_completed: 0,
+    total_responses: 0,
   });
 
   useEffect(() => {
@@ -73,11 +82,12 @@ export default function Nr1ListPage() {
       const list: Nr1Assessment[] = Array.isArray(data) ? data : [];
       setAssessments(list);
 
+      const campaigns = list.filter(a => a.is_campaign);
       setStats({
         total: list.length,
-        high_risk: list.filter((a) => a.overall_risk_level === 'high').length,
-        medium_risk: list.filter((a) => a.overall_risk_level === 'medium').length,
-        low_risk: list.filter((a) => a.overall_risk_level === 'low').length,
+        campaigns_active: campaigns.filter(a => a.status === 'active').length,
+        campaigns_completed: campaigns.filter(a => a.status === 'completed').length,
+        total_responses: campaigns.reduce((sum, a) => sum + (a.total_responded || 0), 0),
       });
     } catch (error) {
       console.error('Erro ao carregar assessments:', error);
@@ -87,13 +97,41 @@ export default function Nr1ListPage() {
     }
   };
 
+  const handleAggregate = async (campaignId: string) => {
+    setAggregating(campaignId);
+    try {
+      const token = await getAuthToken() ?? '';
+      const res = await fetch(`/api/v1/php/nr1/assessments/${campaignId}/aggregate`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'x-org-id': effectiveOrgId || '',
+        },
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        alert(`Erro: ${err.error || 'Erro ao agregar'}`);
+        return;
+      }
+
+      const result = await res.json();
+      alert(`✅ Agregação concluída! Risco geral: ${result.aggregation.overall_risk_level} (${result.aggregation.total_responses} respostas)`);
+      if (effectiveOrgId) fetchAssessments(effectiveOrgId);
+    } catch (error: any) {
+      alert(`Erro: ${error.message}`);
+    } finally {
+      setAggregating(null);
+    }
+  };
+
   const getRiskColor = (level: string) => {
     switch (level) {
-      case 'high':
+      case 'high': case 'alto':
         return 'text-red-600 bg-red-50';
-      case 'medium':
+      case 'medium': case 'médio':
         return 'text-yellow-600 bg-yellow-50';
-      case 'low':
+      case 'low': case 'baixo':
         return 'text-green-600 bg-green-50';
       default:
         return 'text-[#666666] bg-[#FAFAF8]';
@@ -102,15 +140,31 @@ export default function Nr1ListPage() {
 
   const getRiskLabel = (level: string) => {
     switch (level) {
-      case 'high':
-        return 'Alto';
-      case 'medium':
-        return 'Médio';
-      case 'low':
-        return 'Baixo';
-      default:
-        return level;
+      case 'high': case 'alto': return 'Alto';
+      case 'medium': case 'médio': return 'Médio';
+      case 'low': case 'baixo': return 'Baixo';
+      default: return level || '—';
     }
+  };
+
+  const getStatusBadge = (status: string | undefined) => {
+    switch (status) {
+      case 'active':
+        return { label: 'Em Andamento', color: 'text-blue-600 bg-blue-50' };
+      case 'completed':
+        return { label: 'Concluída', color: 'text-green-600 bg-green-50' };
+      case 'cancelled':
+        return { label: 'Cancelada', color: 'text-gray-600 bg-gray-50' };
+      case 'draft':
+        return { label: 'Rascunho', color: 'text-yellow-600 bg-yellow-50' };
+      default:
+        return { label: 'Avaliação Manual', color: 'text-purple-600 bg-purple-50' };
+    }
+  };
+
+  const getCompletionPercent = (a: Nr1Assessment) => {
+    if (!a.total_invited || a.total_invited === 0) return 0;
+    return Math.round(((a.total_responded || 0) / a.total_invited) * 100);
   };
 
   if (loading) {
@@ -131,7 +185,7 @@ export default function Nr1ListPage() {
               NR-1 Digital — Riscos Psicossociais
             </h1>
             <p className="text-[#666666] mt-1">
-              Compliance legal e gestão de saúde ocupacional
+              Campanhas de avaliação baseadas nas respostas dos colaboradores
             </p>
           </div>
           <button
@@ -139,7 +193,7 @@ export default function Nr1ListPage() {
             className="flex items-center gap-2 px-4 py-2 bg-[#141042] text-white rounded-lg hover:bg-[#1a1656] transition"
           >
             <Plus className="w-5 h-5" />
-            Nova Avaliação
+            Nova Campanha
           </button>
         </div>
 
@@ -147,7 +201,7 @@ export default function Nr1ListPage() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           <div className="bg-white border border-[#E5E5DC] rounded-xl shadow-[0_2px_8px_rgba(20,16,66,0.06),0_1px_2px_rgba(20,16,66,0.04)] p-6">
             <div className="flex items-center gap-3">
-              <Users className="w-8 h-8 text-[#3B82F6]" />
+              <BarChart3 className="w-8 h-8 text-[#3B82F6]" />
               <div>
                 <p className="text-[#999999] text-sm">Total Avaliações</p>
                 <p className="text-2xl font-bold text-[#141042]">{stats.total}</p>
@@ -157,20 +211,10 @@ export default function Nr1ListPage() {
 
           <div className="bg-white border border-[#E5E5DC] rounded-xl shadow-[0_2px_8px_rgba(20,16,66,0.06),0_1px_2px_rgba(20,16,66,0.04)] p-6">
             <div className="flex items-center gap-3">
-              <AlertTriangle className="w-8 h-8 text-[#EF4444]" />
+              <Clock className="w-8 h-8 text-[#3B82F6]" />
               <div>
-                <p className="text-[#999999] text-sm">Risco Alto</p>
-                <p className="text-2xl font-bold text-[#EF4444]">{stats.high_risk}</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white border border-[#E5E5DC] rounded-xl shadow-[0_2px_8px_rgba(20,16,66,0.06),0_1px_2px_rgba(20,16,66,0.04)] p-6">
-            <div className="flex items-center gap-3">
-              <AlertTriangle className="w-8 h-8 text-[#F59E0B]" />
-              <div>
-                <p className="text-[#999999] text-sm">Risco Médio</p>
-                <p className="text-2xl font-bold text-[#F59E0B]">{stats.medium_risk}</p>
+                <p className="text-[#999999] text-sm">Campanhas Ativas</p>
+                <p className="text-2xl font-bold text-[#3B82F6]">{stats.campaigns_active}</p>
               </div>
             </div>
           </div>
@@ -179,8 +223,18 @@ export default function Nr1ListPage() {
             <div className="flex items-center gap-3">
               <CheckCircle className="w-8 h-8 text-[#10B981]" />
               <div>
-                <p className="text-[#999999] text-sm">Risco Baixo</p>
-                <p className="text-2xl font-bold text-[#10B981]">{stats.low_risk}</p>
+                <p className="text-[#999999] text-sm">Campanhas Concluídas</p>
+                <p className="text-2xl font-bold text-[#10B981]">{stats.campaigns_completed}</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white border border-[#E5E5DC] rounded-xl shadow-[0_2px_8px_rgba(20,16,66,0.06),0_1px_2px_rgba(20,16,66,0.04)] p-6">
+            <div className="flex items-center gap-3">
+              <Users className="w-8 h-8 text-[#8B5CF6]" />
+              <div>
+                <p className="text-[#999999] text-sm">Total Respostas</p>
+                <p className="text-2xl font-bold text-[#8B5CF6]">{stats.total_responses}</p>
               </div>
             </div>
           </div>
@@ -188,10 +242,17 @@ export default function Nr1ListPage() {
 
         {/* Table */}
         <div className="bg-white border border-[#E5E5DC] rounded-xl shadow-[0_2px_8px_rgba(20,16,66,0.06),0_1px_2px_rgba(20,16,66,0.04)] overflow-hidden">
-          <div className="px-6 py-4 border-b border-[#E5E5DC]">
+          <div className="px-6 py-4 border-b border-[#E5E5DC] flex items-center justify-between">
             <h2 className="text-lg font-semibold text-[#141042]">
-              Histórico de Avaliações NR-1
+              Campanhas & Avaliações NR-1
             </h2>
+            <button
+              onClick={() => router.push('/php/nr1/invitations')}
+              className="text-sm text-[#3B82F6] hover:text-[#2563EB] font-medium flex items-center gap-1"
+            >
+              <Send className="w-4 h-4" />
+              Gerenciar Convites
+            </button>
           </div>
 
           <div className="overflow-x-auto">
@@ -199,13 +260,16 @@ export default function Nr1ListPage() {
               <thead className="bg-[#FAFAF8]">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-[#666666] uppercase tracking-wider">
-                    Data
+                    Campanha / Data
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-[#666666] uppercase tracking-wider">
-                    Nível de Risco
+                    Status
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-[#666666] uppercase tracking-wider">
-                    Dimensões Críticas
+                    Participação
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-[#666666] uppercase tracking-wider">
+                    Risco Geral
                   </th>
                   <th className="px-6 py-3 text-right text-xs font-medium text-[#666666] uppercase tracking-wider">
                     Ações
@@ -214,18 +278,11 @@ export default function Nr1ListPage() {
               </thead>
               <tbody className="bg-white divide-y divide-[#E5E5DC]">
                 {assessments.map((assessment) => {
-                  const criticalDimensions = [
-                    assessment.workload_pace_risk,
-                    assessment.goal_pressure_risk,
-                    assessment.role_clarity_risk,
-                    assessment.autonomy_control_risk,
-                    assessment.leadership_support_risk,
-                    assessment.peer_collaboration_risk,
-                    assessment.recognition_justice_risk,
-                    assessment.communication_change_risk,
-                    assessment.conflict_harassment_risk,
-                    assessment.recovery_boundaries_risk,
-                  ].filter(score => score === 3).length;
+                  const statusBadge = getStatusBadge(assessment.status);
+                  const completion = getCompletionPercent(assessment);
+                  const isCampaign = assessment.is_campaign;
+                  const riskLevel = assessment.overall_risk || assessment.overall_risk_level;
+                  const canAggregate = isCampaign && assessment.status === 'active' && (assessment.total_responded || 0) > 0;
 
                   return (
                     <tr
@@ -233,31 +290,66 @@ export default function Nr1ListPage() {
                       className="hover:bg-[#FAFAF8] cursor-pointer"
                       onClick={() => router.push(`/php/nr1/${assessment.id}`)}
                     >
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-[#141042]">
-                        {new Date(assessment.assessment_date).toLocaleDateString('pt-BR')}
+                      <td className="px-6 py-4">
+                        <div>
+                          <p className="text-sm font-medium text-[#141042]">
+                            {assessment.campaign_name || `Avaliação ${new Date(assessment.assessment_date).toLocaleDateString('pt-BR')}`}
+                          </p>
+                          <p className="text-xs text-[#999999]">
+                            {new Date(assessment.assessment_date).toLocaleDateString('pt-BR')}
+                            {assessment.scope_target && ` · ${assessment.scope_target}`}
+                          </p>
+                        </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span
-                          className={`px-3 py-1 rounded-full text-xs font-medium ${getRiskColor(
-                            assessment.overall_risk_level
-                          )}`}
-                        >
-                          {getRiskLabel(assessment.overall_risk_level)}
+                        <span className={`px-3 py-1 rounded-full text-xs font-medium ${statusBadge.color}`}>
+                          {statusBadge.label}
                         </span>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-[#666666]">
-                        {criticalDimensions > 0 ? (
-                          <span className="text-[#EF4444]">
-                            {criticalDimensions} dimensão(ões) crítica(s)
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        {isCampaign ? (
+                          <div className="flex items-center gap-2">
+                            <div className="flex-1 max-w-30 bg-gray-200 rounded-full h-2">
+                              <div
+                                className="bg-[#10B981] h-2 rounded-full transition-all"
+                                style={{ width: `${completion}%` }}
+                              />
+                            </div>
+                            <span className="text-xs text-[#666666]">
+                              {assessment.total_responded || 0}/{assessment.total_invited || 0} ({completion}%)
+                            </span>
+                          </div>
+                        ) : (
+                          <span className="text-xs text-[#999999]">Manual</span>
+                        )}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        {riskLevel ? (
+                          <span className={`px-3 py-1 rounded-full text-xs font-medium ${getRiskColor(riskLevel)}`}>
+                            {getRiskLabel(riskLevel)}
                           </span>
                         ) : (
-                          'Nenhuma'
+                          <span className="text-xs text-[#999999]">Aguardando</span>
                         )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        <button className="text-[#141042] hover:text-[#1a1656]">
-                          Ver Detalhes
-                        </button>
+                        <div className="flex items-center justify-end gap-2">
+                          {canAggregate && (
+                            <button
+                              onClick={(e) => { e.stopPropagation(); handleAggregate(assessment.id); }}
+                              disabled={aggregating === assessment.id}
+                              className="px-3 py-1 text-xs bg-[#10B981] text-white rounded-lg hover:bg-[#059669] transition disabled:opacity-50"
+                            >
+                              {aggregating === assessment.id ? 'Agregando...' : 'Agregar Resultados'}
+                            </button>
+                          )}
+                          <button
+                            onClick={(e) => { e.stopPropagation(); router.push(`/php/nr1/${assessment.id}`); }}
+                            className="text-[#141042] hover:text-[#1a1656]"
+                          >
+                            Detalhes
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   );
@@ -268,12 +360,16 @@ export default function Nr1ListPage() {
 
           {assessments.length === 0 && (
             <div className="text-center py-12">
-              <p className="text-[#999999]">Nenhuma avaliação encontrada</p>
+              <Users className="w-12 h-12 text-[#E5E5DC] mx-auto mb-3" />
+              <p className="text-[#999999] mb-1">Nenhuma campanha encontrada</p>
+              <p className="text-sm text-[#999999] mb-4">
+                Crie uma campanha para coletar avaliações dos colaboradores
+              </p>
               <button
                 onClick={() => router.push('/php/nr1/new')}
-                className="mt-4 text-[#141042] hover:text-[#1a1656] font-medium"
+                className="text-[#141042] hover:text-[#1a1656] font-medium"
               >
-                Criar primeira avaliação
+                Criar primeira campanha
               </button>
             </div>
           )}
