@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import { getAuthToken } from '@/lib/supabase/client';
 
 const dimensions = [
   { key: 'collaboration_score', label: 'Colaboração', description: 'Trabalha bem em equipe, compartilha conhecimento' },
@@ -68,9 +69,12 @@ export default function AssessmentFormPage() {
     setSubmitting(true);
 
     try {
+      const token = await getAuthToken();
+      if (!token) { alert('Sessão expirada. Faça login novamente.'); setSubmitting(false); return; }
+
       const response = await fetch('/api/v1/php/tfci/assessments', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify({
           cycle_id: cycleId,
           target_user_id: formData.target_user_id,

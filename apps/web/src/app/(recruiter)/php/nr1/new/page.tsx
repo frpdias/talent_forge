@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Save, ArrowLeft } from 'lucide-react';
 import { useOrgStore } from '@/lib/store';
+import { getAuthToken } from '@/lib/supabase/client';
 
 const NR1_DIMENSIONS = [
   { key: 'workload_pace_risk', name: 'Carga de Trabalho & Ritmo' },
@@ -40,10 +41,17 @@ export default function NewNr1AssessmentPage() {
     setLoading(true);
 
     try {
+      const token = await getAuthToken();
+      if (!token) {
+        alert('Sessão expirada. Faça login novamente.');
+        return;
+      }
+
       const response = await fetch('/api/v1/php/nr1/assessments', {
         method: 'POST',
-        headers: { 
+        headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
           'x-org-id': effectiveOrgId!,
         },
         body: JSON.stringify({
@@ -55,7 +63,8 @@ export default function NewNr1AssessmentPage() {
       if (response.ok) {
         router.push('/php/nr1');
       } else {
-        alert('Erro ao criar avaliação');
+        const err = await response.json().catch(() => ({}));
+        alert(`Erro ao criar avaliação: ${err.error || response.statusText}`);
       }
     } catch (error) {
       console.error('Erro:', error);
