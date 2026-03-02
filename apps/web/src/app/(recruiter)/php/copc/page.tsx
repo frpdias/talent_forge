@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { BarChart3, Plus } from 'lucide-react';
 import { useOrgStore } from '@/lib/store';
 import { createClient, getAuthToken } from '@/lib/supabase/client';
 
@@ -130,12 +131,22 @@ export default function CopcDashboard() {
               Performance operacional e bem-estar organizacional
             </p>
           </div>
-          <Link
-            href="/php/copc/new"
-            className="px-6 py-3 bg-[#141042] text-white rounded-lg hover:bg-[#1a1554] transition-colors"
-          >
-            + Nova Métrica
-          </Link>
+          <div className="flex items-center gap-3">
+            <Link
+              href="/php/copc/areas"
+              className="flex items-center gap-2 px-4 py-2.5 bg-white text-[#141042] font-medium border border-[#E5E5DC] rounded-lg hover:bg-[#FAFAF8] hover:border-[#141042] transition-all shadow-sm"
+            >
+              <BarChart3 className="w-4 h-4" />
+              KPIs por Área
+            </Link>
+            <Link
+              href="/php/copc/new"
+              className="flex items-center gap-2 px-5 py-2.5 bg-[#141042] text-white font-medium rounded-lg hover:bg-[#1D1A5A] transition-all shadow-sm"
+            >
+              <Plus className="w-5 h-5" />
+              Nova Métrica
+            </Link>
+          </div>
         </div>
 
         {/* Overall COPC Score */}
