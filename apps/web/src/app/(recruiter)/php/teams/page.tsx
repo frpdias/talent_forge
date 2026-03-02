@@ -10,9 +10,10 @@ import {
   Trash2,
   Edit2,
   Building2,
+  Wand2,
 } from 'lucide-react';
 import { useOrgStore } from '@/lib/store';
-import { createClient, getAuthToken } from '@/lib/supabase/client';
+import { getAuthToken } from '@/lib/supabase/client';
 
 interface Team {
   id: string;
@@ -23,6 +24,14 @@ interface Team {
   member_count: number;
   created_at: string;
   updated_at: string;
+}
+
+interface Employee {
+  id: string;
+  full_name: string;
+  position: string | null;
+  department: string | null;
+  user_id: string | null;
 }
 
 interface CreateTeamForm {
@@ -41,8 +50,9 @@ export default function TeamsPage() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [createForm, setCreateForm] = useState<CreateTeamForm>({ name: '', description: '', manager_id: '' });
   const [creating, setCreating] = useState(false);
+  const [autoCreating, setAutoCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [orgMembers, setOrgMembers] = useState<any[]>([]);
+  const [employees, setEmployees] = useState<Employee[]>([]);
 
   const loadTeams = useCallback(async () => {
     if (!effectiveOrgId) return;
@@ -64,38 +74,42 @@ export default function TeamsPage() {
         const data = await res.json();
         setTeams(data.data || []);
       }
-    } catch (error) {
-      console.error('Erro ao carregar times:', error);
+    } catch (err) {
+      console.error('Erro ao carregar times:', err);
     } finally {
       setLoading(false);
     }
   }, [effectiveOrgId, search]);
 
-  const loadOrgMembers = useCallback(async () => {
+  // Carrega funcionários da empresa para o dropdown de gestor
+  const loadEmployees = useCallback(async () => {
     if (!effectiveOrgId) return;
 
     try {
       const token = await getAuthToken();
-      const res = await fetch(`/api/v1/organizations/${effectiveOrgId}/members`, {
-        headers: {
-          Authorization: `Bearer ${token ?? ''}`,
-          'x-org-id': effectiveOrgId,
-        },
-      });
+      const res = await fetch(
+        `/api/v1/php/employees?organization_id=${effectiveOrgId}&status=active`,
+        {
+          headers: {
+            Authorization: `Bearer ${token ?? ''}`,
+            'x-org-id': effectiveOrgId,
+          },
+        }
+      );
 
       if (res.ok) {
-        const data = await res.json();
-        setOrgMembers(data || []);
+        const data: Employee[] = await res.json();
+        setEmployees(data);
       }
-    } catch (error) {
-      console.error('Erro ao carregar membros:', error);
+    } catch (err) {
+      console.error('Erro ao carregar funcionários:', err);
     }
   }, [effectiveOrgId]);
 
   useEffect(() => {
     loadTeams();
-    loadOrgMembers();
-  }, [loadTeams, loadOrgMembers]);
+    loadEmployees();
+  }, [loadTeams, loadEmployees]);
 
   const handleCreateTeam = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -129,10 +143,47 @@ export default function TeamsPage() {
         const err = await res.json();
         setError(err.message || 'Erro ao criar time');
       }
-    } catch (error) {
+    } catch {
       setError('Erro de conexão');
     } finally {
       setCreating(false);
+    }
+  };
+
+  const handleAutoCreate = async () => {
+    if (!effectiveOrgId) return;
+    if (!confirm('Criar times automaticamente agrupando funcionários por departamento e gestor?\n\nTimes já existentes com o mesmo nome serão ignorados.')) return;
+
+    try {
+      setAutoCreating(true);
+      const token = await getAuthToken();
+
+      const res = await fetch('/api/v1/php/teams/auto-create', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token ?? ''}`,
+          'x-org-id': effectiveOrgId,
+        },
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        const lines = [
+          `✅ ${data.created?.length ?? 0} time(s) criado(s)`,
+          ...(data.created?.length ? [`Criados: ${data.created.join(', ')}`] : []),
+          ...(data.skipped?.length ? [`Ignorados (já existem): ${data.skipped.join(', ')}`] : []),
+          ...(data.errors?.length ? [`Erros: ${data.errors.join(', ')}`] : []),
+        ];
+        alert(lines.join('\n'));
+        loadTeams();
+      } else {
+        alert(`❌ ${data.error || 'Erro ao criar times automaticamente'}`);
+      }
+    } catch {
+      alert('❌ Erro de conexão');
+    } finally {
+      setAutoCreating(false);
     }
   };
 
@@ -156,7 +207,7 @@ export default function TeamsPage() {
         const err = await res.json();
         alert(err.message || 'Erro ao excluir time');
       }
-    } catch (error) {
+    } catch {
       alert('Erro de conexão');
     }
   };
@@ -165,6 +216,9 @@ export default function TeamsPage() {
     team.name.toLowerCase().includes(search.toLowerCase()) ||
     team.description?.toLowerCase().includes(search.toLowerCase())
   );
+
+  // Apenas employees com user_id podem ser gestores (teams.manager_id → auth.users.id)
+  const managerCandidates = employees.filter((e) => e.user_id);
 
   const stats = {
     total: teams.length,
@@ -181,13 +235,24 @@ export default function TeamsPage() {
             Gestão de equipes e agrupamento de colaboradores
           </p>
         </div>
-        <button
-          onClick={() => setShowCreateModal(true)}
-          className="flex items-center gap-2 px-4 py-2 bg-[#1F4ED8] text-white rounded-lg hover:bg-[#1845B8] transition-colors"
-        >
-          <Plus className="w-5 h-5" />
-          Novo Time
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={handleAutoCreate}
+            disabled={autoCreating}
+            className="flex items-center gap-2 px-4 py-2 border border-[#1F4ED8] text-[#1F4ED8] rounded-lg hover:bg-[#1F4ED8]/5 transition-colors disabled:opacity-50"
+            title="Criar times automaticamente por departamento e gestor"
+          >
+            <Wand2 className="w-4 h-4" />
+            {autoCreating ? 'Criando...' : 'Criar por Área'}
+          </button>
+          <button
+            onClick={() => setShowCreateModal(true)}
+            className="flex items-center gap-2 px-4 py-2 bg-[#1F4ED8] text-white rounded-lg hover:bg-[#1845B8] transition-colors"
+          >
+            <Plus className="w-5 h-5" />
+            Novo Time
+          </button>
+        </div>
       </div>
 
       {/* Stats Cards */}
@@ -242,19 +307,29 @@ export default function TeamsPage() {
           <h3 className="text-lg font-semibold text-[#141042] mb-2">
             {search ? 'Nenhum time encontrado' : 'Nenhum time cadastrado'}
           </h3>
-          <p className="text-[#666666] mb-4">
+          <p className="text-[#666666] mb-6">
             {search
               ? 'Tente ajustar sua busca'
-              : 'Crie seu primeiro time para começar a organizar seus colaboradores'}
+              : 'Crie times manualmente ou importe automaticamente a partir dos departamentos dos funcionários'}
           </p>
           {!search && (
-            <button
-              onClick={() => setShowCreateModal(true)}
-              className="inline-flex items-center gap-2 px-4 py-2 bg-[#1F4ED8] text-white rounded-lg hover:bg-[#1845B8] transition-colors"
-            >
-              <Plus className="w-5 h-5" />
-              Criar Primeiro Time
-            </button>
+            <div className="flex items-center justify-center gap-3">
+              <button
+                onClick={handleAutoCreate}
+                disabled={autoCreating}
+                className="inline-flex items-center gap-2 px-4 py-2 border border-[#1F4ED8] text-[#1F4ED8] rounded-lg hover:bg-[#1F4ED8]/5 transition-colors disabled:opacity-50"
+              >
+                <Wand2 className="w-4 h-4" />
+                {autoCreating ? 'Criando...' : 'Criar por Área'}
+              </button>
+              <button
+                onClick={() => setShowCreateModal(true)}
+                className="inline-flex items-center gap-2 px-4 py-2 bg-[#1F4ED8] text-white rounded-lg hover:bg-[#1845B8] transition-colors"
+              >
+                <Plus className="w-5 h-5" />
+                Criar Manualmente
+              </button>
+            </div>
           )}
         </div>
       ) : (
@@ -368,12 +443,19 @@ export default function TeamsPage() {
                     className="w-full px-3 py-2 border border-[#E5E5DC] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1F4ED8]"
                   >
                     <option value="">Selecione um gestor (opcional)</option>
-                    {orgMembers.map((member) => (
-                      <option key={member.user_id} value={member.user_id}>
-                        {member.user_profiles?.full_name || member.user_profiles?.email || member.user_id}
+                    {managerCandidates.map((emp) => (
+                      <option key={emp.id} value={emp.user_id!}>
+                        {emp.full_name}
+                        {emp.position ? ` — ${emp.position}` : ''}
+                        {emp.department ? ` (${emp.department})` : ''}
                       </option>
                     ))}
                   </select>
+                  {employees.length > 0 && managerCandidates.length === 0 && (
+                    <p className="mt-1 text-xs text-[#999999]">
+                      Nenhum funcionário com conta de acesso encontrado. Cadastre o email do funcionário para habilitá-lo como gestor.
+                    </p>
+                  )}
                 </div>
 
                 <div className="flex gap-3 pt-4">

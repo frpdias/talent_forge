@@ -40,7 +40,7 @@ export async function GET(request: NextRequest) {
     const supabase = getSupabase();
     let query = supabase
       .from('employees')
-      .select('id, full_name, cpf, email, phone, position, department, hire_date, status, manager_id, created_at')
+      .select('id, full_name, cpf, email, phone, position, department, hire_date, status, manager_id, user_id, created_at')
       .eq('organization_id', orgId)
       .order('full_name', { ascending: true });
 
