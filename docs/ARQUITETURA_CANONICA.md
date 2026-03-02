@@ -4775,6 +4775,427 @@ git push origin main
 
 ---
 
+### 🔗 Sprint 18: Job Publisher Engine — Publicação Multi-Canal (Setembro-Outubro 2026)
+
+**Objetivo:** Motor de publicação automática de vagas em plataformas externas (Gupy, Vagas.com, LinkedIn, Indeed) via API/feeds oficiais — sem RPA ou scraping.
+
+**Princípio:** A vaga canônica vive no TalentForge (`jobs`). Os adapters traduzem e publicam nos canais. O status de cada canal é rastreado independentemente.
+
+---
+
+#### 🏗️ Arquitetura — Publisher Engine
+
+```
+┌──────────────────────────────────────────────────────┐
+│                   TALENT FORGE                        │
+│                                                       │
+│  ┌─────────┐    ┌──────────────────┐                 │
+│  │  jobs    │───▸│  Job Canonical   │                 │
+│  │ (table)  │    │     Model        │                 │
+│  └─────────┘    └────────┬─────────┘                 │
+│                          │                            │
+│               ┌──────────▼──────────┐                │
+│               │  Publisher Engine    │                │
+│               │  (Fila + Retry)     │                │
+│               └──┬───┬───┬───┬─────┘                │
+│                  │   │   │   │                        │
+│         ┌────────┘   │   │   └────────┐              │
+│         ▼            ▼   ▼            ▼              │
+│    ┌────────┐  ┌─────┐ ┌──────┐  ┌───────┐         │
+│    │ Gupy   │  │Vagas│ │Linke-│  │Indeed │         │
+│    │Adapter │  │Adpt │ │dIn   │  │Adapter│         │
+│    └───┬────┘  └──┬──┘ └──┬───┘  └───┬───┘         │
+│        │          │       │          │               │
+└────────┼──────────┼───────┼──────────┼───────────────┘
+         ▼          ▼       ▼          ▼
+     Gupy API   Vagas API  LinkedIn  Indeed
+     (REST)     (REST)     Job Post  Job Sync
+                           API       API/XML
+```
+
+---
+
+#### 📦 Modelo Canônico da Vaga (Job Canonical Model)
+
+O modelo canônico é a representação única e normalizada da vaga no TalentForge. Cada adapter extrai os campos que precisa e adapta ao formato da plataforma destino.
+
+```typescript
+// packages/types/src/job-canonical.ts
+interface JobCanonical {
+  // — Identidade
+  id: string;                        // UUID do TalentForge
+  org_id: string;                    // Organização dona da vaga
+  title: string;                     // Título da vaga
+  description: string;               // Descrição completa (HTML ou Markdown)
+  
+  // — Localização
+  location: string;                  // Cidade/Estado
+  remote_policy?: 'on_site' | 'hybrid' | 'remote';
+  country?: string;                  // ISO 3166-1 alpha-2 (default: 'BR')
+  
+  // — Compensação
+  salary_min?: number;
+  salary_max?: number;
+  salary_currency?: string;          // ISO 4217 (default: 'BRL')
+  benefits?: string;                 // Texto livre ou JSON
+  
+  // — Requisitos
+  employment_type: 'full_time' | 'part_time' | 'contract' | 'internship' | 'temporary';
+  seniority: 'intern' | 'junior' | 'mid' | 'senior' | 'lead' | 'manager' | 'director' | 'executive';
+  skills?: string[];                 // Tags de competência
+  education_level?: string;          // Nível mínimo
+  experience_years?: number;         // Anos de experiência
+  
+  // — Controle
+  status: 'draft' | 'open' | 'on_hold' | 'closed';
+  expires_at?: string;               // ISO 8601
+  created_by: string;                // UUID do recrutador
+  created_at: string;
+  updated_at: string;
+}
+```
+
+---
+
+#### 🗄️ Schema de Banco — Tabelas de Publicação
+
+```sql
+-- =====================================================================
+-- job_publication_channels — Canais configurados por organização
+-- =====================================================================
+CREATE TABLE IF NOT EXISTS job_publication_channels (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  org_id UUID REFERENCES organizations(id) ON DELETE CASCADE NOT NULL,
+  channel_code TEXT NOT NULL CHECK (channel_code IN (
+    'gupy', 'vagas', 'linkedin', 'indeed', 'catho', 'infojobs', 'custom'
+  )),
+  display_name TEXT NOT NULL,
+  is_active BOOLEAN DEFAULT FALSE,
+  credentials JSONB DEFAULT '{}'::jsonb,    -- Tokens/API keys (encrypted at rest)
+  config JSONB DEFAULT '{}'::jsonb,          -- Configurações específicas do canal
+  last_sync_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(org_id, channel_code)
+);
+
+-- =====================================================================
+-- job_publications — Status de publicação de cada vaga em cada canal
+-- =====================================================================
+CREATE TABLE IF NOT EXISTS job_publications (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  job_id UUID REFERENCES jobs(id) ON DELETE CASCADE NOT NULL,
+  channel_id UUID REFERENCES job_publication_channels(id) ON DELETE CASCADE NOT NULL,
+  external_id TEXT,                           -- ID da vaga na plataforma externa
+  external_url TEXT,                          -- URL pública da vaga no canal
+  status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN (
+    'pending', 'publishing', 'published', 'failed', 'expired', 'unpublished'
+  )),
+  payload_sent JSONB,                        -- Payload enviado ao canal (auditoria)
+  response_received JSONB,                   -- Resposta do canal (auditoria)
+  error_message TEXT,
+  retry_count INTEGER DEFAULT 0,
+  published_at TIMESTAMPTZ,
+  expires_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(job_id, channel_id)
+);
+
+-- =====================================================================
+-- job_publication_logs — Log de auditoria (cada tentativa registrada)
+-- =====================================================================
+CREATE TABLE IF NOT EXISTS job_publication_logs (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  publication_id UUID REFERENCES job_publications(id) ON DELETE CASCADE NOT NULL,
+  action TEXT NOT NULL CHECK (action IN (
+    'create', 'publish', 'update', 'unpublish', 'expire', 'retry', 'webhook'
+  )),
+  status TEXT NOT NULL,                      -- 'success' | 'error'
+  request_payload JSONB,
+  response_payload JSONB,
+  error_detail TEXT,
+  duration_ms INTEGER,                       -- Tempo de resposta do canal
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- RLS
+ALTER TABLE job_publication_channels ENABLE ROW LEVEL SECURITY;
+ALTER TABLE job_publications ENABLE ROW LEVEL SECURITY;
+ALTER TABLE job_publication_logs ENABLE ROW LEVEL SECURITY;
+
+-- Policies (org_id via join para publications e logs)
+CREATE POLICY channels_org_access ON job_publication_channels
+  FOR ALL USING (
+    EXISTS (SELECT 1 FROM org_members om 
+            WHERE om.org_id = job_publication_channels.org_id 
+            AND om.user_id = auth.uid() AND om.status = 'active')
+  );
+
+CREATE POLICY publications_org_access ON job_publications
+  FOR ALL USING (
+    EXISTS (SELECT 1 FROM jobs j
+            JOIN org_members om ON om.org_id = j.org_id
+            WHERE j.id = job_publications.job_id
+            AND om.user_id = auth.uid() AND om.status = 'active')
+  );
+
+CREATE POLICY logs_org_access ON job_publication_logs
+  FOR ALL USING (
+    EXISTS (SELECT 1 FROM job_publications jp
+            JOIN jobs j ON j.id = jp.job_id
+            JOIN org_members om ON om.org_id = j.org_id
+            WHERE jp.id = job_publication_logs.publication_id
+            AND om.user_id = auth.uid() AND om.status = 'active')
+  );
+```
+
+---
+
+#### 🔌 Adapters por Canal
+
+**Prioridade de implementação (baseada em abertura da API):**
+
+| # | Canal | Método | Viabilidade | Pré-requisitos |
+|---|-------|--------|-------------|----------------|
+| 1 | **Gupy** | REST API (OAuth) | ✅ Alta | Conta empresarial + credenciais OAuth |
+| 2 | **Vagas for Business** | REST API (API Key) | ✅ Alta | Conta empresarial + API Key |
+| 3 | **LinkedIn** | Job Posting API | ⚠️ Média | Programa de parceiros / ATS autorizado |
+| 4 | **Indeed** | Job Sync API (GraphQL) ou XML Feed | ⚠️ Média | Parceria ATS ou feed XML aprovado |
+| 5 | **Catho** | A definir | ❓ Investigar | Contato comercial |
+| 6 | **InfoJobs** | A definir | ❓ Investigar | Contato comercial |
+
+---
+
+##### 1. Gupy Adapter (API pública oficial)
+
+```typescript
+// apps/api/src/publisher/adapters/gupy.adapter.ts
+interface GupyAdapter {
+  // Fluxo: Create (rascunho) → Publish (ativa)
+  createJob(canonical: JobCanonical): Promise<{ externalId: string }>;
+  publishJob(externalId: string): Promise<void>;
+  updateJob(externalId: string, canonical: JobCanonical): Promise<void>;
+  unpublishJob(externalId: string): Promise<void>;
+  getJobStatus(externalId: string): Promise<GupyJobStatus>;
+}
+
+// Endpoints Gupy:
+// POST   /jobs              → Cria rascunho
+// PATCH  /jobs/{id}         → Publica/atualiza
+// DELETE /jobs/{id}         → Remove
+// Webhooks: candidatura recebida → atualiza pipeline no Forge
+```
+
+**Mapeamento Gupy:**
+| JobCanonical | Gupy Field | Notas |
+|---|---|---|
+| `title` | `name` | — |
+| `description` | `description` | HTML aceito |
+| `location` | `address.city` | Precisa decompor |
+| `employment_type` | `type` | Mapeamento de enum |
+| `salary_min/max` | `salary.min/max` | — |
+| `seniority` | `careerLevel` | Mapeamento de enum |
+| `skills` | `desiredSkills` | Array de strings |
+
+##### 2. Vagas for Business Adapter
+
+```typescript
+// apps/api/src/publisher/adapters/vagas.adapter.ts
+interface VagasAdapter {
+  publishJob(canonical: JobCanonical): Promise<{ externalId: string; url: string }>;
+  updateJob(externalId: string, canonical: JobCanonical): Promise<void>;
+  closeJob(externalId: string): Promise<void>;
+  getApplications(externalId: string): Promise<VagasApplication[]>;
+}
+
+// Endpoints Vagas for Business:
+// POST   /api/jobs         → Publica vaga
+// PUT    /api/jobs/{id}    → Atualiza
+// DELETE /api/jobs/{id}    → Encerra
+// GET    /api/jobs/{id}/applications → Candidaturas
+```
+
+##### 3. LinkedIn Adapter (requer parceria)
+
+```typescript
+// apps/api/src/publisher/adapters/linkedin.adapter.ts
+interface LinkedInAdapter {
+  // Requer: ATS Partner Program enrollment
+  postJob(canonical: JobCanonical): Promise<{ externalId: string; url: string }>;
+  updateJob(externalId: string, canonical: JobCanonical): Promise<void>;
+  closeJob(externalId: string): Promise<void>;
+}
+
+// Pré-requisito: Inscrição no LinkedIn ATS Partner Program
+// Endpoint: POST /v2/simpleJobPostings (ou /v2/jobPostings)
+// Auth: OAuth 2.0 com scope r_liteprofile + w_member_social + rw_jobs
+```
+
+##### 4. Indeed Adapter (feed XML ou API)
+
+```typescript
+// apps/api/src/publisher/adapters/indeed.adapter.ts
+interface IndeedAdapter {
+  // Opção A: XML Feed (mais fácil de aprovar)
+  generateXmlFeed(jobs: JobCanonical[]): string;
+  
+  // Opção B: Job Sync API (GraphQL, requer parceria)
+  syncJob(canonical: JobCanonical): Promise<{ externalId: string }>;
+  deleteJob(externalId: string): Promise<void>;
+}
+
+// XML Feed: Gerar em /api/feeds/indeed.xml (cron atualiza a cada 6h)
+// Job Sync API: GraphQL mutation createJob / updateJob
+```
+
+---
+
+#### 🔀 Endpoints REST no TalentForge
+
+```
+POST   /api/v1/jobs                       → Cria vaga (modelo canônico)
+GET    /api/v1/jobs/:id                    → Detalhe da vaga + status por canal
+POST   /api/v1/jobs/:id/publish            → Publica em canais selecionados
+POST   /api/v1/jobs/:id/unpublish          → Despublica de canais selecionados
+GET    /api/v1/jobs/:id/channels           → Status por canal (published/pending/error)
+POST   /api/v1/jobs/:id/channels/:channel  → Publica em canal específico
+DELETE /api/v1/jobs/:id/channels/:channel  → Despublica de canal específico
+GET    /api/v1/jobs/:id/publication-logs    → Logs de auditoria
+
+POST   /api/v1/webhooks/gupy              → Webhook: eventos Gupy → pipeline
+POST   /api/v1/webhooks/vagas             → Webhook: eventos Vagas → pipeline
+POST   /api/v1/webhooks/linkedin          → Webhook: eventos LinkedIn → pipeline
+
+GET    /api/v1/organizations/:orgId/channels         → Canais configurados
+POST   /api/v1/organizations/:orgId/channels         → Configurar canal (credenciais)
+PATCH  /api/v1/organizations/:orgId/channels/:id     → Atualizar credenciais
+DELETE /api/v1/organizations/:orgId/channels/:id     → Remover canal
+
+GET    /api/feeds/indeed.xml              → XML Feed para Indeed (público, com auth token)
+```
+
+---
+
+#### 📂 Estrutura de Pastas (monorepo)
+
+```
+apps/
+  api/src/
+    publisher/
+      publisher.module.ts              → NestJS module
+      publisher.service.ts             → Orquestra publicação (fila + retry)
+      publisher.controller.ts          → Endpoints REST
+      job-canonical.mapper.ts          → jobs (DB) → JobCanonical
+      adapters/
+        adapter.interface.ts           → Interface base (publishJob, updateJob, etc.)
+        gupy.adapter.ts               → Conector Gupy (REST/OAuth)
+        vagas.adapter.ts              → Conector Vagas for Business
+        linkedin.adapter.ts           → Conector LinkedIn (Job Posting API)
+        indeed.adapter.ts             → Conector Indeed (XML + GraphQL)
+      webhooks/
+        gupy-webhook.handler.ts       → Processa eventos Gupy
+        vagas-webhook.handler.ts      → Processa eventos Vagas
+      feeds/
+        indeed-feed.generator.ts      → Gera XML feed para Indeed
+  web/src/
+    app/(recruiter)/
+      jobs/
+        [id]/
+          publish/page.tsx            → UI de publicação multi-canal
+          channels/page.tsx           → Status por canal
+    app/api/v1/
+      jobs/
+        [id]/
+          publish/route.ts            → Next.js API route (proxy ou direto)
+          channels/route.ts
+      webhooks/
+        gupy/route.ts
+        vagas/route.ts
+      feeds/
+        indeed.xml/route.ts
+    components/
+      publisher/
+        ChannelSelector.tsx           → Seleção de canais para publicar
+        PublicationStatus.tsx          → Badge de status por canal
+        PublicationTimeline.tsx        → Timeline de eventos de publicação
+```
+
+---
+
+#### ⚡ Publisher Engine — Fluxo de Publicação
+
+```
+1. Recrutador cria vaga (POST /api/v1/jobs)
+   └─▸ Salva em `jobs` (status: 'draft')
+
+2. Recrutador clica "Publicar" e seleciona canais
+   └─▸ POST /api/v1/jobs/:id/publish { channels: ['gupy', 'vagas'] }
+
+3. Publisher Engine (para cada canal):
+   a. Cria registro em `job_publications` (status: 'pending')
+   b. Mapeia JobCanonical → formato do canal (adapter)
+   c. Envia para API do canal
+   d. Se sucesso:
+      - status → 'published', salva external_id e external_url
+      - Log em job_publication_logs (action: 'publish', status: 'success')
+   e. Se erro:
+      - status → 'failed', salva error_message
+      - Log em job_publication_logs (action: 'publish', status: 'error')
+      - Agenda retry (backoff exponencial: 1min, 5min, 30min, 2h)
+      - Máx 5 retries → notifica recrutador
+
+4. Webhooks (ex: candidato aplica via Gupy):
+   └─▸ POST /api/v1/webhooks/gupy
+   └─▸ Identifica vaga pelo external_id
+   └─▸ Cria application no pipeline do Forge
+   └─▸ Log em job_publication_logs (action: 'webhook')
+```
+
+---
+
+#### 🛡️ Segurança e Compliance
+
+- **Credenciais criptografadas**: `job_publication_channels.credentials` armazena tokens OAuth/API keys — campo JSONB com encrypt/decrypt via `pgcrypto` ou aplicação
+- **Nunca logar credenciais**: `payload_sent` em logs NUNCA inclui tokens; sanitizar antes de persistir
+- **Rate limiting por canal**: Respeitar limites de cada API (ex: Gupy 60 req/min)
+- **Audit trail completo**: Cada tentativa gera registro em `job_publication_logs` com request/response
+- **Webhooks**: Validar assinatura (HMAC) quando o canal suportar
+- **RLS**: Todas tabelas com RLS via `org_id` (join chain: `publications → jobs → org_members`)
+
+---
+
+#### 🚫 Anti-padrões (NÃO IMPLEMENTAR)
+
+| ❌ Anti-padrão | ✅ Correto |
+|---|---|
+| RPA/Selenium para publicar em sites | API oficial / XML feed |
+| Scraping de candidaturas | Webhooks + API de retorno |
+| Credenciais hardcoded | `job_publication_channels.credentials` (criptografado) |
+| Retry infinito | Máx 5 retries + notificação de falha |
+| Publicação síncrona (bloqueia UI) | Fila assíncrona com status polling |
+| Bypass de RLS nas tabelas de publicação | Join chain via `jobs.org_id` |
+
+---
+
+#### 📅 Fases de Implementação
+
+| Fase | Canais | Estimativa | Entregável |
+|---|---|---|---|
+| **Fase 1** | Gupy + Vagas for Business | 3 semanas | Publisher Engine + 2 adapters + UI de publicação |
+| **Fase 2** | LinkedIn (com parceria) | 2 semanas | LinkedIn adapter + enrollment no partner program |
+| **Fase 3** | Indeed (XML feed + API) | 2 semanas | Feed XML + adapter GraphQL |
+| **Fase 4** | Catho + InfoJobs | 2 semanas | Investigação + adapters (se API disponível) |
+| **Fase 5** | Webhooks bidirecionais | 1 semana | Candidaturas externas → pipeline TalentForge |
+
+**Pré-requisitos por canal:**
+1. **Gupy**: Criar conta developer no portal Gupy → obter OAuth client_id/secret
+2. **Vagas for Business**: Solicitar API Key via painel empresarial
+3. **LinkedIn**: Inscrição no LinkedIn ATS Partner Program (pode levar 2-4 semanas de aprovação)
+4. **Indeed**: Solicitar acesso à Job Sync API ou configurar XML Feed Publisher ID
+
+---
+
 ## 🎓 DECISÕES ARQUITETURAIS CHAVE
 
 ### 1. Por que JSONB para settings ao invés de colunas?
@@ -4925,6 +5346,18 @@ CREATE TYPE alert_level AS ENUM ('none', 'watch', 'warning', 'critical');
 ---
 
 ## 📝 Histórico de Versões
+
+### v4.0 (2026-03-02)
+- ✅ **Score de Conformidade**: 100% mantido
+- ✅ **Job Publisher Engine (Sprint 18)**: Arquitetura completa do motor de publicação multi-canal de vagas
+- ✅ **Modelo Canônico de Vaga**: `JobCanonical` interface documentada (título, localização, compensação, requisitos, controle)
+- ✅ **4 Adapters planejados**: Gupy (REST/OAuth), Vagas for Business (REST/API Key), LinkedIn (Job Posting API/parceria), Indeed (XML Feed + GraphQL)
+- ✅ **Schema de banco**: `job_publication_channels`, `job_publications`, `job_publication_logs` com RLS completo
+- ✅ **Publisher Engine**: Fila assíncrona + retry com backoff exponencial + audit trail
+- ✅ **Endpoints REST**: 13 endpoints documentados (publish, channels, webhooks, feeds)
+- ✅ **Anti-padrões**: Proibido RPA/scraping — apenas APIs oficiais e feeds XML
+- ✅ **Fases de implementação**: 5 fases com estimativas e pré-requisitos por canal
+- ✅ **fix(companies)**: Migração de API calls de NestJS para Next.js API routes locais (commit `305d163`)
 
 ### v3.9 (2026-03-01)
 - ✅ **Score de Conformidade**: 100% mantido (Sprint 20)
