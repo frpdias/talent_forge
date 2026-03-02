@@ -1,6 +1,6 @@
 # Arquitetura Canônica — TalentForge
 
-**Última atualização**: 2026-03-02 | **Score de Conformidade**: ✅ 100% (Sprint 21: Teams — contagem dinâmica, auto-create update, ordenação hierárquica)
+**Última atualização**: 2026-03-03 | **Score de Conformidade**: ✅ 100% (Sprint 22: PHP Automation — TFCI PUT/selector, scores calculator, NR-1 bulk select, COPC CSV import)
 
 ## 📜 FONTE DA VERDADE — PRINCÍPIO FUNDAMENTAL
 
@@ -1202,6 +1202,13 @@ LEGENDA:
   - `GET /php/teams/:id` retorna membros ordenados por hierarquia (DFS pre-order via `manager_id`)
   - Frontend exibe indentação visual, ícone Crown para líderes, conectores `└` para subordinados
   - Campo `hierarchy_depth` (0=topo) retornado pela API para cada membro
+- ✅ Sprint 22: **PHP Automation — Gaps de Automação Resolvidos**
+  - `PUT /php/tfci/cycles/:id` com validação de transição de status (draft→active→completed, cancelamento)
+  - `POST /php/scores/calculate` — calculador de `php_integrated_scores` (TFCI 30% + NR-1 40% + COPC 30%)
+  - TFCI Assess: seletor real de funcionários (dropdown com busca por nome/cargo/departamento) substituindo input UUID manual
+  - NR-1 Invitations: checkbox "Selecionar Todos" / "Desselecionar Todos" para convites em lote
+  - COPC New: aba "Importar CSV" com parse, validação de colunas/ranges, preview tabular, e importação em lote (`metric_source: csv_import`)
+  - Design System compliance: todas as páginas PHP agora usam cores canônicas (#141042, #E5E5DC, #FAFAF8)
 - 📊 **Score de Conformidade**: 100%
 
 ### 📂 Estrutura de Rotas PHP (28 páginas)
@@ -1968,12 +1975,31 @@ PATCH  /api/v1/php/settings            # Atualizar configurações
 POST   /api/v1/php/tfci/cycles         # Criar ciclo
 GET    /api/v1/php/tfci/cycles         # Listar ciclos
 GET    /api/v1/php/tfci/cycles/:id     # Detalhe ciclo
-PATCH  /api/v1/php/tfci/cycles/:id     # Atualizar ciclo (ex: status → active)
+PUT    /api/v1/php/tfci/cycles/:id     # Atualizar ciclo (com state machine)
 DELETE /api/v1/php/tfci/cycles/:id     # Deletar ciclo
 ```
 - **Guard:** `@UseGuards(PhpModuleGuard)` (verifica módulo ativo)
 - **Validations:** DTOs com class-validator
-- **Status:** ✅ Implementado completo
+- **Status Transitions (PUT):**
+  - `draft` → `active` | `cancelled`
+  - `active` → `completed` | `cancelled`
+  - `completed` → (terminal, sem transições)
+  - `cancelled` → (terminal, sem transições)
+  - PUT aceita: `{ name?, start_date?, end_date?, status?, description? }`
+- **Status:** ✅ Implementado completo (Sprint 22: PUT com state machine)
+
+#### PHP Integrated Scores (1 endpoint) ✅
+```
+POST   /api/v1/php/scores/calculate    # Calcular e upsert scores integrados
+```
+- **Guard:** Auth + `x-org-id`
+- **Body:** `{ team_id?: string }` (opcional, filtra por time)
+- **Lógica:**
+  - TFCI: avg `overall_score` últimos 90 dias (1-5 → 0-100)
+  - NR-1: avg 10 dimensões risco invertidas (risk 1→100, 3→0) últimos 90 dias
+  - COPC: avg `overall_performance_score` últimos 90 dias (0-100)
+  - Upsert em `php_integrated_scores` com cálculo de trend (up/down/stable ±2)
+- **Status:** ✅ Implementado Sprint 22
 
 #### TFCI Assessments (3 endpoints) ✅
 ```
@@ -4858,7 +4884,7 @@ Próxima revisão: Sprint 12 (Action Plans + Settings)
 
 ---
 
-**FIM DO DOCUMENTO** — Versão 3.9 (Sprint 20 + Companies CRUD + PHP Design System + NR-1 fixes)
+**FIM DO DOCUMENTO** — Versão 4.0 (Sprint 22 + PHP Automation: TFCI PUT/selector, scores calculator, NR-1 bulk, COPC CSV)
 ```sql
 CREATE TYPE risk_level AS ENUM ('low', 'medium', 'high', 'critical');
 CREATE TYPE assessment_status AS ENUM ('draft', 'active', 'completed', 'cancelled');

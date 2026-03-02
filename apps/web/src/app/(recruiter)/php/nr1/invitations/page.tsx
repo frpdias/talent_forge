@@ -267,6 +267,28 @@ export default function InvitationsPage() {
             <p className="text-gray-600 mb-4">Selecione os funcionários para receber convite de auto-avaliação NR-1</p>
             
             <div className="bg-white p-4 rounded-lg border border-gray-200 max-h-64 overflow-y-auto mb-4">
+              {/* Select All / Deselect All */}
+              {employees.length > 0 && (
+                <div className="flex items-center gap-3 p-2 border-b border-gray-200 mb-2 sticky top-0 bg-white z-10">
+                  <input
+                    type="checkbox"
+                    checked={selectedEmployees.length === employees.length && employees.length > 0}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        setSelectedEmployees(employees.map((emp) => emp.id));
+                      } else {
+                        setSelectedEmployees([]);
+                      }
+                    }}
+                    className="w-4 h-4 text-blue-600"
+                  />
+                  <span className="text-sm font-semibold text-gray-700">
+                    {selectedEmployees.length === employees.length
+                      ? `Desselecionar Todos (${employees.length})`
+                      : `Selecionar Todos (${employees.length})`}
+                  </span>
+                </div>
+              )}
               {employees.map((emp) => (
                 <label key={emp.id} className="flex items-center gap-3 p-2 hover:bg-gray-50 rounded cursor-pointer">
                   <input

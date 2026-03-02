@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(lsof -p 97144)",
+      "Read(//Users/fernandodias/Desktop/PROJETO_TALENT_FORGE/apps/web/**)",
+      "Bash(kill 97144 97121 97102)",
+      "Bash(npm view next versions --json)",
+      "Bash(node -e \":*)",
+      "Bash(npm view next dist-tags)",
+      "Bash(npm install next@15.3.9 -w tf-web)",
+      "Bash(npm run build:web)"
+    ]
+  }
+}
