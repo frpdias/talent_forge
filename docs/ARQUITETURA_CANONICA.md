@@ -1,6 +1,6 @@
 # Arquitetura Canônica — TalentForge
 
-**Última atualização**: 2026-03-01 | **Score de Conformidade**: ✅ 100% (Sprint 20: Companies CRUD + sidebar PHP canônico + Design System PHP + NR-1 fixes)
+**Última atualização**: 2026-03-02 | **Score de Conformidade**: ✅ 100% (Sprint 21: Teams — contagem dinâmica, auto-create update, ordenação hierárquica)
 
 ## 📜 FONTE DA VERDADE — PRINCÍPIO FUNDAMENTAL
 
@@ -1196,6 +1196,12 @@ LEGENDA:
   - Top 3 gestores com badges de ranking
 - ✅ Sprint 15: **Realtime Dashboard** (php_notifications, php_user_presence, php_comments, php_edit_locks)
 - ✅ Sprint 16: **Teams CRUD completo** (TeamsModule + TeamsController + páginas frontend)
+- ✅ Sprint 21: **Teams — Contagem Dinâmica + Ordenação Hierárquica**
+  - `GET /php/teams` agora calcula `member_count` dinamicamente via `employees.department ↔ teams.name`
+  - `POST /php/teams/auto-create` atualiza times existentes (member_count, manager_id) em vez de ignorá-los
+  - `GET /php/teams/:id` retorna membros ordenados por hierarquia (DFS pre-order via `manager_id`)
+  - Frontend exibe indentação visual, ícone Crown para líderes, conectores `└` para subordinados
+  - Campo `hierarchy_depth` (0=topo) retornado pela API para cada membro
 - 📊 **Score de Conformidade**: 100%
 
 ### 📂 Estrutura de Rotas PHP (28 páginas)
@@ -1302,18 +1308,24 @@ apps/web/src/app/(recruiter)/php/
 | GET | `/php/employees/valid-managers` | Gestores válidos por nível |
 | GET | `/php/employees/hierarchy-config` | Configuração de hierarquia |
 
-##### Teams (9 endpoints) ✅ IMPLEMENTADO Sprint 16
+##### Teams (10 endpoints) ✅ IMPLEMENTADO Sprint 16 + Sprint 21
 | Método | Rota | Descrição |
 |--------|------|-----------|
-| GET | `/php/teams` | Lista times da org |
+| GET | `/php/teams` | Lista times da org (member_count dinâmico via employees.department) |
 | POST | `/php/teams` | Cria novo time |
-| GET | `/php/teams/:id` | Detalhes do time com membros |
+| GET | `/php/teams/:id` | Detalhes do time com membros **ordenados por hierarquia** (DFS) |
 | PATCH | `/php/teams/:id` | Atualiza time |
 | DELETE | `/php/teams/:id` | Remove time |
 | POST | `/php/teams/:id/members` | Adiciona membro ao time |
 | DELETE | `/php/teams/:id/members/:userId` | Remove membro do time |
 | PATCH | `/php/teams/:id/members/:userId/role` | Atualiza papel do membro |
 | GET | `/php/teams/:id/available-members` | Lista membros disponíveis |
+| POST | `/php/teams/auto-create` | Cria/atualiza times a partir de employees.department |
+
+**Notas de implementação (Sprint 21):**
+- `GET /php/teams`: Conta membros dinamicamente consultando `employees WHERE department = teams.name AND status = 'active'`. Usa `Math.max(deptCount, storedCount)` e auto-corrige o valor no banco se divergente.
+- `POST /php/teams/auto-create`: Times existentes são **atualizados** (member_count, manager_id, updated_at) em vez de ignorados. Retorna `{ created[], updated[], errors[] }`.
+- `GET /php/teams/:id`: Constrói árvore hierárquica via `manager_id` com DFS pre-order. Raízes = funcionários cujo `manager_id` é null ou aponta para fora do departamento. Desempate por prioridade de cargo: Diretor(1) > Gerente(2) > Coordenador(3) > Líder(4) > Analista(5) > Assistente(6) > Estagiário(7). Retorna `hierarchy_depth` (0=topo) em cada objeto de membro.
 
 ##### Outros
 | Método | Rota | Descrição |
@@ -1435,9 +1447,10 @@ teams (
 )
 ```
 - **Propósito:** Agrupamento de colaboradores para análises coletivas
+- **⚠️ Relação implícita:** `teams.name ↔ employees.department` — usado para contagem dinâmica de membros e auto-create de times
 - **Índices:** org_id, manager_id
 - **RLS:** ✅ Implementado (membros veem, gestores gerenciam)
-- **Status:** ✅ **IMPLEMENTADO Sprint 16** (TeamsModule + 9 endpoints + UI)
+- **Status:** ✅ **IMPLEMENTADO Sprint 16 + Sprint 21** (9 endpoints + auto-create + contagem dinâmica + ordenação hierárquica)
 
 #### 3. **team_members** — Membros de Equipes ✅
 ```sql
@@ -1451,9 +1464,10 @@ team_members (
 )
 ```
 - **Propósito:** Relacionamento M:N usuário-time
+- **⚠️ Nota:** A maioria dos colaboradores em `employees` não possui `user_id` (conta auth). A contagem real de membros deve ser feita via `employees.department`, não via `team_members`.
 - **Índices:** team_id, user_id
 - **RLS:** ✅ Implementado (membros veem, gestores gerenciam)
-- **Status:** ✅ **IMPLEMENTADO Sprint 16** (CRUD via TeamsService)
+- **Status:** ✅ **IMPLEMENTADO Sprint 16 + Sprint 21** (CRUD via TeamsService + contagem via employees)
 
 #### 4. **nr1_dimensions** — Catálogo NR-1 v1.0
 ```sql
@@ -1799,6 +1813,8 @@ employees (
 ```
 - **Propósito:** Funcionários das empresas clientes (usado no PHP Module)
 - **⚠️ Nota:** NÃO confundir com `candidates` (processo de recrutamento)
+- **⚠️ Relação com Teams:** `employees.department` vincula implicitamente ao `teams.name` da mesma org. Usado para contagem dinâmica e auto-create de times.
+- **⚠️ Hierarquia:** `hierarchy_level` existe no schema mas é NULL para todos os registros atuais. A hierarquia real é construída via `manager_id` (self-reference) com DFS tree walk.
 - **Índices:** organization_id, manager_id, user_id, status, hire_date, department
 - **RLS:** Admins full access, membros da org leem
 - **Status:** ✅ Sprint 15 completo (11 endpoints + hierarquia + import CSV)
@@ -2339,8 +2355,8 @@ WHERE org_id = $1 AND user_id = auth.uid() AND status = 'active';
 
 | Item | Banco | API | UI | Status |
 |------|-------|-----|-----|--------|
-| `teams` | ✅ Tabela existe | ✅ 9 endpoints | ✅ 2 páginas | ✅ **IMPLEMENTADO Sprint 16** |
-| `team_members` | ✅ Tabela existe | ✅ Via TeamsService | ✅ Página detalhes | ✅ **IMPLEMENTADO Sprint 16** |
+| `teams` | ✅ Tabela existe | ✅ 10 endpoints | ✅ 2 páginas | ✅ **Sprint 16 + 21** (contagem dinâmica + hierarquia) |
+| `team_members` | ✅ Tabela existe | ✅ Via TeamsService | ✅ Página detalhes | ✅ **Sprint 16 + 21** (contagem via employees.department) |
 | `employees` | ✅ Tabela existe | ✅ 11 endpoints | ✅ Página existe | ✅ Completo |
 | `php_notifications` | ✅ Tabela existe | ✅ Via realtime | ✅ Dashboard | ✅ Completo |
 | `php_user_presence` | ✅ Tabela existe | ✅ Via realtime | ✅ Dashboard | ✅ Completo |
@@ -4916,6 +4932,17 @@ CREATE TYPE alert_level AS ENUM ('none', 'watch', 'warning', 'critical');
 - ✅ **Dashboard background**: gradiente sutil `bg-linear-to-br from-[#FAFAF8] via-[#F5F4FB]`
 - ✅ **Vercel team**: documentado `fernando-dias-projects-e4b4044b` / orgId `team_lwke1raX8NIzKHkR5z2CPFR5`
 - ✅ **API URL**: `NEXT_PUBLIC_API_BASE_URL` sem `/api/v1`; `api-config.ts` compõe `API_V1_URL`
+
+### v3.7 (2026-03-02)
+- ✅ **Score de Conformidade**: 100% mantido (Sprint 21)
+- ✅ **Teams contagem dinâmica**: `GET /php/teams` calcula `member_count` via `employees.department ↔ teams.name` em vez de depender do valor armazenado
+- ✅ **Teams auto-create update**: `POST /php/teams/auto-create` agora atualiza times existentes (member_count, manager_id) em vez de ignorá-los
+- ✅ **Teams ordenação hierárquica**: `GET /php/teams/:id` retorna membros ordenados por organograma (DFS pre-order via `manager_id`)
+- ✅ **Frontend hierarchy**: Indentação visual por `hierarchy_depth`, ícone Crown para líderes, conectores `└`, nomes de líderes em azul
+- ✅ **Relação documentada**: `teams.name ↔ employees.department` (relação implícita para contagem e auto-create)
+- ✅ **Nota team_members**: Documentado que maioria dos employees não tem `user_id`; contagem deve usar `employees.department`
+- ✅ **employees.hierarchy_level**: Documentado que campo existe mas é NULL; hierarquia real via `manager_id` DFS
+- ✅ **positionPriority**: Algoritmo de sorting: Diretor(1) > Gerente(2) > Coordenador(3) > Líder(4) > Analista(5) > Assistente(6) > Estagiário(7)
 
 ### v3.6 (2026-02-28)
 - ✅ **Score de Conformidade**: 100% mantido (Sprint 17)
