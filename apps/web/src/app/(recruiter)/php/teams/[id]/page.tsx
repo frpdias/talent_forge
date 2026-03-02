@@ -15,7 +15,9 @@ import {
   Crown,
   Shield,
   Check,
+  GitBranch,
 } from 'lucide-react';
+import TeamOrgChartModal from '@/components/php/TeamOrgChartModal';
 import { useOrgStore } from '@/lib/store';
 import { createClient, getAuthToken } from '@/lib/supabase/client';
 
@@ -101,6 +103,7 @@ export default function TeamDetailsPage() {
   const [loadingAvailable, setLoadingAvailable] = useState(false);
   const [addingMember, setAddingMember] = useState(false);
   const [selectedRole, setSelectedRole] = useState<'member' | 'lead' | 'coordinator'>('member');
+  const [showOrgChart, setShowOrgChart] = useState(false);
 
   const loadTeam = useCallback(async () => {
     if (!effectiveOrgId || !teamId) return;
@@ -398,6 +401,13 @@ export default function TeamDetailsPage() {
             </div>
             <div className="flex gap-2">
               <button
+                onClick={() => setShowOrgChart(true)}
+                className="flex items-center gap-2 px-3 py-2 bg-[#1F4ED8]/10 text-[#1F4ED8] hover:bg-[#1F4ED8]/20 rounded-lg transition-colors font-medium"
+              >
+                <GitBranch className="w-4 h-4" />
+                Organograma
+              </button>
+              <button
                 onClick={() => setEditing(true)}
                 className="flex items-center gap-2 px-3 py-2 text-gray-600 hover:text-[#1F4ED8] hover:bg-gray-100 rounded-lg transition-colors"
               >
@@ -503,6 +513,14 @@ export default function TeamDetailsPage() {
           </div>
         )}
       </div>
+
+      {/* Org Chart Modal */}
+      <TeamOrgChartModal
+        isOpen={showOrgChart}
+        onClose={() => setShowOrgChart(false)}
+        teamName={team.name}
+        members={team.members}
+      />
 
       {/* Add Member Modal */}
       {showAddMember && (
