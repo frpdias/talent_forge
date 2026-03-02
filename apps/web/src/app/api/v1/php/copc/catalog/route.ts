@@ -54,17 +54,37 @@ export async function GET(request: NextRequest) {
 
     // Agrupar por categoria
     const byCategory: Record<string, typeof data> = {};
-    const departments = new Set<string>();
+    const catalogDepts = new Set<string>();
 
     for (const metric of data || []) {
       if (!byCategory[metric.category]) byCategory[metric.category] = [];
       byCategory[metric.category].push(metric);
-      if (metric.department) departments.add(metric.department);
+      if (metric.department) catalogDepts.add(metric.department);
     }
+
+    // Buscar departamentos reais da organização (employees)
+    let orgDepartments: string[] = [];
+    if (orgId) {
+      const { data: empDepts } = await supabase
+        .from('employees')
+        .select('department')
+        .eq('organization_id', orgId)
+        .eq('status', 'active')
+        .not('department', 'is', null);
+
+      if (empDepts) {
+        orgDepartments = [...new Set(empDepts.map(e => e.department as string).filter(Boolean))];
+      }
+    }
+
+    // Mesclar: departamentos reais + departamentos do catálogo
+    const allDepts = [...new Set([...orgDepartments, ...catalogDepts])].sort();
 
     return NextResponse.json({
       total: data?.length || 0,
-      departments: Array.from(departments).sort(),
+      departments: allDepts,
+      org_departments: orgDepartments,
+      catalog_departments: Array.from(catalogDepts).sort(),
       by_category: byCategory,
       metrics: data || [],
     });

@@ -86,6 +86,7 @@ export default function CopcAreasPage() {
   const [loading, setLoading] = useState(true);
   const [activeDept, setActiveDept] = useState<string | null>(null);
   const [departments, setDepartments] = useState<string[]>([]);
+  const [catalogDepts, setCatalogDepts] = useState<Set<string>>(new Set());
   const [catalog, setCatalog] = useState<CatalogMetric[]>([]);
   const [entries, setEntries] = useState<MetricEntry[]>([]);
   const [deptScores, setDeptScores] = useState<Record<string, DeptScore>>({});
@@ -109,6 +110,7 @@ export default function CopcAreasPage() {
       const data = await res.json();
       setCatalog(data.metrics || []);
       if (data.departments?.length) setDepartments(data.departments);
+      if (data.catalog_departments) setCatalogDepts(new Set(data.catalog_departments));
     }
   }, [orgId, activeDept]);
 
@@ -270,6 +272,9 @@ export default function CopcAreasPage() {
 
         {/* Department Selector */}
         <div className="mb-6">
+          <p className="text-xs text-[#999999] mb-2">
+            Departamentos carregados da estrutura da organização
+          </p>
           <div className="flex flex-wrap gap-3">
             <button
               onClick={() => setActiveDept(null)}
@@ -281,19 +286,27 @@ export default function CopcAreasPage() {
             >
               Todas as Áreas
             </button>
-            {departments.map(dept => (
-              <button
-                key={dept}
-                onClick={() => setActiveDept(dept)}
-                className={`px-4 py-2 rounded-lg border text-sm font-medium transition-all duration-200 ${
-                  activeDept === dept
-                    ? 'bg-[#141042] text-white border-[#141042]'
-                    : 'bg-white text-[#666666] border-[#E5E5DC] hover:border-[#141042] hover:text-[#141042]'
-                }`}
-              >
-                {DEPT_ICONS[dept] || '📊'} {dept}
-              </button>
-            ))}
+            {departments.map(dept => {
+              const hasTemplates = catalogDepts.has(dept);
+              return (
+                <button
+                  key={dept}
+                  onClick={() => setActiveDept(dept)}
+                  className={`px-4 py-2 rounded-lg border text-sm font-medium transition-all duration-200 ${
+                    activeDept === dept
+                      ? 'bg-[#141042] text-white border-[#141042]'
+                      : 'bg-white text-[#666666] border-[#E5E5DC] hover:border-[#141042] hover:text-[#141042]'
+                  }`}
+                >
+                  {DEPT_ICONS[dept] || '📊'} {dept}
+                  {!hasTemplates && (
+                    <span className="ml-1.5 text-[10px] opacity-60" title="Sem KPIs específicos — usando genéricos">
+                      (genérico)
+                    </span>
+                  )}
+                </button>
+              );
+            })}
           </div>
         </div>
 
@@ -313,13 +326,14 @@ export default function CopcAreasPage() {
               <div className="col-span-full text-center py-16 bg-white rounded-xl border border-[#E5E5DC]">
                 <p className="text-4xl mb-4">📊</p>
                 <h3 className="text-lg font-semibold text-[#141042] mb-2">
-                  Nenhuma área configurada ainda
+                  Nenhum departamento encontrado
                 </h3>
                 <p className="text-[#666666] text-sm mb-4">
-                  Aplique a migration do catálogo dinâmico para começar.
+                  Cadastre funcionários com departamento na tabela de colaboradores,
+                  ou aplique a migration do catálogo dinâmico para usar os templates.
                 </p>
                 <p className="text-xs text-[#999999]">
-                  Áreas disponíveis: Vendas, Produção, Administrativo (30 KPIs pré-configurados)
+                  Os departamentos são carregados automaticamente da estrutura de colaboradores da organização.
                 </p>
               </div>
             ) : (

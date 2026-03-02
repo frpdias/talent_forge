@@ -67,10 +67,26 @@ export async function GET(
       ? latestEntries.reduce((sum, e) => sum + (e.overall_score || 0), 0) / latestEntries.length
       : 0;
 
+    // Buscar departamentos reais da organização
+    const { data: empDepts } = await supabase
+      .from('employees')
+      .select('department')
+      .eq('organization_id', orgId)
+      .eq('status', 'active')
+      .not('department', 'is', null);
+
+    const orgDepartments = empDepts
+      ? [...new Set(empDepts.map(e => e.department as string).filter(Boolean))].sort()
+      : [];
+
+    // Mesclar departamentos reais + departamentos com dados
+    const allDepts = [...new Set([...orgDepartments, ...departments])].sort();
+
     return NextResponse.json({
       org_id: orgId,
       overall_score: Math.round(overallAvg * 100) / 100,
-      departments,
+      departments: allDepts,
+      org_departments: orgDepartments,
       by_department: latestByDept,
       trends: entries,
     });
