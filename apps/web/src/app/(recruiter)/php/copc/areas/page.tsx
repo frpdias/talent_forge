@@ -2,7 +2,12 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, Plus, X } from 'lucide-react';
+import {
+  ArrowLeft, Plus, X, BarChart3, Calculator,
+  DollarSign, Factory, ClipboardList, Phone, Monitor,
+  Users, Briefcase, Wallet, Megaphone, Settings, Cpu,
+  type LucideIcon,
+} from 'lucide-react';
 import { useOrgStore } from '@/lib/store';
 import { getAuthToken } from '@/lib/supabase/client';
 
@@ -45,13 +50,45 @@ interface DeptScore {
   metric_date: string;
 }
 
-const DEPT_ICONS: Record<string, string> = {
-  Vendas: '💰',
-  Produção: '🏭',
-  Administrativo: '📋',
-  Atendimento: '📞',
-  TI: '💻',
-  RH: '👥',
+/* ─── Department icon + color mapping (Design System) ─────── */
+interface DeptStyle {
+  icon: LucideIcon;
+  bg: string;
+  text: string;
+}
+
+const DEPT_STYLES: Record<string, DeptStyle> = {
+  Vendas:             { icon: DollarSign,    bg: 'bg-emerald-100', text: 'text-emerald-600' },
+  Produção:           { icon: Factory,       bg: 'bg-orange-100',  text: 'text-orange-600' },
+  Administrativo:     { icon: ClipboardList, bg: 'bg-blue-100',    text: 'text-blue-600' },
+  Administração:      { icon: ClipboardList, bg: 'bg-blue-100',    text: 'text-blue-600' },
+  Atendimento:        { icon: Phone,         bg: 'bg-violet-100',  text: 'text-violet-600' },
+  TI:                 { icon: Monitor,       bg: 'bg-indigo-100',  text: 'text-indigo-600' },
+  'Recursos Humanos': { icon: Users,         bg: 'bg-rose-100',    text: 'text-rose-600' },
+  RH:                 { icon: Users,         bg: 'bg-rose-100',    text: 'text-rose-600' },
+  Comercial:          { icon: Briefcase,     bg: 'bg-sky-100',     text: 'text-sky-600' },
+  Financeiro:         { icon: Wallet,        bg: 'bg-teal-100',    text: 'text-teal-600' },
+  Marketing:          { icon: Megaphone,     bg: 'bg-amber-100',   text: 'text-amber-600' },
+  Operações:          { icon: Settings,      bg: 'bg-slate-100',   text: 'text-slate-600' },
+  Tecnologia:         { icon: Cpu,           bg: 'bg-purple-100',  text: 'text-purple-600' },
+};
+
+const DEFAULT_STYLE: DeptStyle = { icon: BarChart3, bg: 'bg-[#141042]/10', text: 'text-[#141042]' };
+
+const getDeptStyle = (dept: string): DeptStyle => DEPT_STYLES[dept] || DEFAULT_STYLE;
+
+const DeptIconBox = ({ dept }: { dept: string }) => {
+  const { icon: Icon, bg, text } = getDeptStyle(dept);
+  return (
+    <div className={`p-2 ${bg} rounded-lg shrink-0`}>
+      <Icon className={`w-5 h-5 ${text}`} />
+    </div>
+  );
+};
+
+const DeptIconInline = ({ dept, size = 'w-4 h-4' }: { dept: string; size?: string }) => {
+  const { icon: Icon, text } = getDeptStyle(dept);
+  return <Icon className={`${size} ${text}`} />;
 };
 
 const CATEGORY_LABELS: Record<string, string> = {
@@ -288,17 +325,20 @@ export default function CopcAreasPage() {
             </button>
             {departments.map(dept => {
               const hasTemplates = catalogDepts.has(dept);
+              const { icon: DIcon, text: dtc } = getDeptStyle(dept);
+              const isActive = activeDept === dept;
               return (
                 <button
                   key={dept}
                   onClick={() => setActiveDept(dept)}
-                  className={`px-4 py-2 rounded-lg border text-sm font-medium transition-all duration-200 ${
-                    activeDept === dept
+                  className={`flex items-center gap-1.5 px-4 py-2 rounded-lg border text-sm font-medium transition-all duration-200 ${
+                    isActive
                       ? 'bg-[#141042] text-white border-[#141042]'
                       : 'bg-white text-[#666666] border-[#E5E5DC] hover:border-[#141042] hover:text-[#141042]'
                   }`}
                 >
-                  {DEPT_ICONS[dept] || '📊'} {dept}
+                  <DIcon className={`w-3.5 h-3.5 shrink-0 ${isActive ? '' : dtc}`} />
+                  {dept}
                   {!hasTemplates && (
                     <span className="ml-1.5 text-[10px] opacity-60" title="Sem KPIs específicos — usando genéricos">
                       (genérico)
@@ -324,7 +364,7 @@ export default function CopcAreasPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
             {departments.length === 0 ? (
               <div className="col-span-full text-center py-16 bg-white rounded-xl border border-[#E5E5DC]">
-                <p className="text-4xl mb-4">📊</p>
+                <BarChart3 className="w-12 h-12 text-[#999999] mx-auto mb-4" />
                 <h3 className="text-lg font-semibold text-[#141042] mb-2">
                   Nenhum departamento encontrado
                 </h3>
@@ -339,14 +379,17 @@ export default function CopcAreasPage() {
             ) : (
               departments.map(dept => {
                 const score = deptScores[dept];
+                const { icon: DIcon, bg: dbg, text: dtc } = getDeptStyle(dept);
                 return (
                   <button
                     key={dept}
                     onClick={() => setActiveDept(dept)}
-                    className="text-left p-6 bg-white rounded-xl border border-[#E5E5DC] shadow-[0_2px_8px_rgba(20,16,66,0.06),0_1px_2px_rgba(20,16,66,0.04)] hover:shadow-[0_8px_32px_rgba(20,16,66,0.10),0_2px_8px_rgba(20,16,66,0.06)] hover:-translate-y-px transition-all duration-300"
+                    className="text-left p-6 bg-white rounded-xl border border-[#E5E5DC] shadow-[0_2px_8px_rgba(20,16,66,0.06),0_1px_2px_rgba(20,16,66,0.04)] hover:shadow-[0_8px_32px_rgba(20,16,66,0.10),0_2px_8px_rgba(20,16,66,0.06)] hover:-translate-y-px transition-all duration-300 group"
                   >
                     <div className="flex items-center gap-3 mb-4">
-                      <span className="text-2xl">{DEPT_ICONS[dept] || '📊'}</span>
+                      <div className={`p-2 ${dbg} rounded-lg shrink-0`}>
+                        <DIcon className={`w-5 h-5 ${dtc}`} />
+                      </div>
                       <h3 className="text-lg font-semibold text-[#141042]">{dept}</h3>
                     </div>
                     {score ? (
@@ -386,9 +429,10 @@ export default function CopcAreasPage() {
               <div className={`mb-6 p-6 rounded-xl border-2 ${scoreBg(deptScores[activeDept].overall_score)}`}>
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                   <div>
-                    <p className="text-sm font-medium mb-1">
-                      {DEPT_ICONS[activeDept] || '📊'} COPC Score — {activeDept}
-                    </p>
+                    <div className="flex items-center gap-2 text-sm font-medium mb-1">
+                      <DeptIconInline dept={activeDept} />
+                      COPC Score — {activeDept}
+                    </div>
                     <p className="text-5xl font-bold">
                       {deptScores[activeDept].overall_score?.toFixed(1)}
                     </p>
@@ -593,8 +637,9 @@ export default function CopcAreasPage() {
 
             {/* Category Explanation */}
             <div className="bg-[#FAFAF8] rounded-xl border border-[#E5E5DC] p-6">
-              <h3 className="text-sm font-semibold text-[#141042] mb-3">
-                📐 Como o Score COPC é calculado para {activeDept}
+              <h3 className="flex items-center gap-2 text-sm font-semibold text-[#141042] mb-3">
+                <Calculator className="w-4 h-4 text-[#666666]" />
+                Como o Score COPC é calculado para {activeDept}
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-5 gap-4 text-xs">
                 {Object.entries(CATEGORY_LABELS).map(([key, label]) => (
