@@ -22,7 +22,7 @@ import {
 } from '@/components/ui/dialog';
 import { DashboardHeader } from '@/components/DashboardHeader';
 import { Users, UserPlus, Mail, Trash2, Shield } from 'lucide-react';
-import { createBrowserClient } from '@supabase/ssr';
+import { getAuthToken } from '@/lib/supabase/client';
 
 interface TeamMember {
   id: string;
@@ -52,11 +52,6 @@ export default function TeamPage() {
   const [inviteRole, setInviteRole] = useState('recruiter');
   const [dialogOpen, setDialogOpen] = useState(false);
 
-  const supabase = createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  );
-
   useEffect(() => {
     loadTeamMembers();
   }, []);
@@ -65,11 +60,11 @@ export default function TeamPage() {
     try {
       setLoading(true);
 
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) return;
+      const token = await getAuthToken();
+      if (!token) return;
 
       const res = await fetch('/api/v1/team/members', {
-        headers: { Authorization: `Bearer ${session.access_token}` },
+        headers: { Authorization: `Bearer ${token}` },
       });
 
       if (!res.ok) throw new Error(await res.text());

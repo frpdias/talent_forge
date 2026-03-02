@@ -48,7 +48,7 @@ export async function GET(request: NextRequest) {
       .from('copc_metrics')
       .select('*')
       .eq('org_id', orgId)
-      .order('recorded_at', { ascending: false })
+      .order('created_at', { ascending: false })
       .limit(limit);
 
     if (error) {
@@ -97,17 +97,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Buscar organization do usuário
-    const { data: orgMember } = await supabase
-      .from('org_members')
-      .select('org_id')
-      .eq('user_id', user.id)
-      .single();
-
-    if (!orgMember?.org_id) {
+    const orgId = request.headers.get('x-org-id');
+    if (!orgId) {
       return NextResponse.json(
-        { error: 'Usuário não pertence a nenhuma organização' },
-        { status: 403 }
+        { error: 'x-org-id é obrigatório' },
+        { status: 400 }
       );
     }
 
@@ -117,7 +111,7 @@ export async function POST(request: NextRequest) {
     const { data: metric, error } = await supabase
       .from('copc_metrics')
       .insert({
-        org_id: orgMember.org_id,
+        org_id: orgId,
         ...body,
         created_by: user.id,
       })

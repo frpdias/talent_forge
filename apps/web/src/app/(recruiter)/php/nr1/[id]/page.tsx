@@ -2,20 +2,18 @@
 
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { ArrowLeft, AlertTriangle, CheckCircle, Clock, FileText, Plus } from 'lucide-react';
-import { createClient, getAuthToken } from '@/lib/supabase/client';
+import { ArrowLeft, AlertTriangle, CheckCircle, Clock, FileText } from 'lucide-react';
+import { getAuthToken } from '@/lib/supabase/client';
 import { useOrgStore } from '@/lib/store';
 
 interface Nr1Assessment {
   id: string;
   org_id: string;
-  assessed_user_id: string;
-  assessed_by_id: string;
   assessment_date: string;
-  overall_risk_level: 'low' | 'medium' | 'high' | 'critical';
-  risk_score: number;
-  status: 'draft' | 'completed' | 'action_plan_created';
-  action_plan_id?: string;
+  overall_risk_level: 'low' | 'medium' | 'high';
+  action_plan: string | null;
+  action_plan_status: 'open' | 'in_progress' | 'closed' | null;
+  assessed_by: string | null;
   workload_pace_risk: number;
   goal_pressure_risk: number;
   role_clarity_risk: number;
@@ -26,7 +24,6 @@ interface Nr1Assessment {
   communication_change_risk: number;
   conflict_harassment_risk: number;
   recovery_boundaries_risk: number;
-  comments?: string;
   created_at: string;
   updated_at: string;
 }
@@ -47,9 +44,23 @@ const NR1_DIMENSIONS = [
 const RISK_COLORS = {
   1: { bg: 'bg-green-100', text: 'text-green-800', label: 'Baixo', border: 'border-green-200' },
   2: { bg: 'bg-yellow-100', text: 'text-yellow-800', label: 'Médio', border: 'border-yellow-200' },
-  3: { bg: 'bg-orange-100', text: 'text-orange-800', label: 'Alto', border: 'border-orange-200' },
-  4: { bg: 'bg-red-100', text: 'text-red-800', label: 'Crítico', border: 'border-red-200' },
-};
+  3: { bg: 'bg-red-100', text: 'text-red-800', label: 'Alto', border: 'border-red-200' },
+} as const;
+
+function calcRiskScore(a: Nr1Assessment): number {
+  return (
+    a.workload_pace_risk +
+    a.goal_pressure_risk +
+    a.role_clarity_risk +
+    a.autonomy_control_risk +
+    a.leadership_support_risk +
+    a.peer_collaboration_risk +
+    a.recognition_justice_risk +
+    a.communication_change_risk +
+    a.conflict_harassment_risk +
+    a.recovery_boundaries_risk
+  ) / 10;
+}
 
 export default function Nr1DetailPage() {
   const params = useParams();
@@ -81,7 +92,7 @@ export default function Nr1DetailPage() {
         {
           headers: {
             'Authorization': `Bearer ${token}`,
-            'x-org-id': effectiveOrgId!,
+            'x-org-id': effectiveOrgId,
           },
         }
       );
@@ -97,13 +108,6 @@ export default function Nr1DetailPage() {
     } finally {
       setLoading(false);
     }
-  };
-
-  const getRiskLevel = (score: number): 1 | 2 | 3 | 4 => {
-    if (score >= 4) return 4;
-    if (score >= 3) return 3;
-    if (score >= 2) return 2;
-    return 1;
   };
 
   if (loading) {
@@ -131,6 +135,8 @@ export default function Nr1DetailPage() {
     );
   }
 
+  const riskScore = calcRiskScore(assessment);
+
   return (
     <div className="min-h-screen bg-[#FAFAF8] p-6">
       <div className="max-w-5xl mx-auto">
@@ -148,36 +154,23 @@ export default function Nr1DetailPage() {
             <div className="flex items-start justify-between">
               <div>
                 <h1 className="text-2xl font-bold text-[#141042] mb-2">
-                  Avaliação NR-1 - Riscos Psicossociais
+                  Avaliação NR-1 — Riscos Psicossociais
                 </h1>
                 <div className="flex items-center gap-4 text-sm text-[#666666]">
                   <span>Data: {new Date(assessment.assessment_date).toLocaleDateString('pt-BR')}</span>
-                  <span>Score: {assessment.risk_score.toFixed(1)}</span>
+                  <span>Score médio: {riskScore.toFixed(1)}</span>
                 </div>
               </div>
 
-              <div className="flex flex-col items-end gap-2">
-                <span className={`px-3 py-1 rounded-full text-xs font-medium border ${
-                  assessment.overall_risk_level === 'critical' ? 'bg-red-100 text-red-800 border-red-200' :
-                  assessment.overall_risk_level === 'high' ? 'bg-orange-100 text-orange-800 border-orange-200' :
-                  assessment.overall_risk_level === 'medium' ? 'bg-yellow-100 text-yellow-800 border-yellow-200' :
-                  'bg-green-100 text-green-800 border-green-200'
-                }`}>
-                  Risco {assessment.overall_risk_level === 'critical' ? 'Crítico' : 
-                         assessment.overall_risk_level === 'high' ? 'Alto' :
-                         assessment.overall_risk_level === 'medium' ? 'Médio' : 'Baixo'}
-                </span>
-
-                <span className={`text-xs px-2 py-1 rounded ${
-                  assessment.status === 'completed' ? 'bg-green-100 text-green-800' :
-                  assessment.status === 'draft' ? 'bg-gray-100 text-gray-800' :
-                  'bg-blue-100 text-blue-800'
-                }`}>
-                  {assessment.status === 'draft' && 'Rascunho'}
-                  {assessment.status === 'completed' && 'Concluída'}
-                  {assessment.status === 'action_plan_created' && 'Com Plano'}
-                </span>
-              </div>
+              <span className={`px-3 py-1 rounded-full text-xs font-medium border ${
+                assessment.overall_risk_level === 'high'
+                  ? 'bg-red-100 text-red-800 border-red-200'
+                  : assessment.overall_risk_level === 'medium'
+                  ? 'bg-yellow-100 text-yellow-800 border-yellow-200'
+                  : 'bg-green-100 text-green-800 border-green-200'
+              }`}>
+                Risco {assessment.overall_risk_level === 'high' ? 'Alto' : assessment.overall_risk_level === 'medium' ? 'Médio' : 'Baixo'}
+              </span>
             </div>
           </div>
         </div>
@@ -191,8 +184,8 @@ export default function Nr1DetailPage() {
           <div className="space-y-4">
             {NR1_DIMENSIONS.map((dimension) => {
               const score = assessment[dimension.key as keyof Nr1Assessment] as number;
-              const level = getRiskLevel(score);
-              const riskColor = RISK_COLORS[level];
+              const level = score as 1 | 2 | 3;
+              const riskColor = RISK_COLORS[level] ?? RISK_COLORS[1];
 
               return (
                 <div key={dimension.key} className="flex items-center gap-4">
@@ -202,18 +195,17 @@ export default function Nr1DetailPage() {
                         {dimension.label}
                       </span>
                       <span className={`px-2 py-0.5 rounded text-xs font-medium border ${riskColor.bg} ${riskColor.text} ${riskColor.border}`}>
-                        {riskColor.label} ({score.toFixed(1)})
+                        {riskColor.label} ({score})
                       </span>
                     </div>
-                    <div className="w-full bg-gray-200 rounded-full h-2">
+                    <div className="w-full bg-[#E5E5DC] rounded-full h-2">
                       <div
                         className={`h-2 rounded-full ${
-                          level === 4 ? 'bg-red-500' :
-                          level === 3 ? 'bg-orange-500' :
-                          level === 2 ? 'bg-yellow-500' :
+                          score === 3 ? 'bg-red-500' :
+                          score === 2 ? 'bg-yellow-500' :
                           'bg-green-500'
                         }`}
-                        style={{ width: `${(score / 5) * 100}%` }}
+                        style={{ width: `${(score / 3) * 100}%` }}
                       />
                     </div>
                   </div>
@@ -223,64 +215,45 @@ export default function Nr1DetailPage() {
           </div>
         </div>
 
-        {/* Comentários */}
-        {assessment.comments && (
-          <div className="bg-white rounded-lg border border-[#E5E5DC] p-6 mb-6">
-            <h2 className="text-lg font-semibold text-[#141042] mb-3 flex items-center gap-2">
-              <FileText className="w-5 h-5" />
-              Observações e Comentários
-            </h2>
-            <p className="text-[#666666] whitespace-pre-wrap">{assessment.comments}</p>
-          </div>
-        )}
-
         {/* Plano de Ação */}
         <div className="bg-white rounded-lg border border-[#E5E5DC] p-6">
-          <h2 className="text-lg font-semibold text-[#141042] mb-3">
+          <h2 className="text-lg font-semibold text-[#141042] mb-3 flex items-center gap-2">
+            <FileText className="w-5 h-5" />
             Plano de Ação
           </h2>
 
-          {assessment.action_plan_id ? (
-            <div className="flex items-center justify-between p-4 bg-green-50 border border-green-200 rounded-lg">
-              <div className="flex items-center gap-3">
+          {assessment.action_plan ? (
+            <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+              <div className="flex items-center gap-3 mb-2">
                 <CheckCircle className="w-5 h-5 text-green-600" />
-                <div>
-                  <p className="text-sm font-medium text-green-800">Plano de Ação Criado</p>
-                  <p className="text-xs text-green-600">ID: {assessment.action_plan_id.slice(0, 8)}...</p>
-                </div>
+                <span className="text-sm font-medium text-green-800">
+                  Status: {
+                    assessment.action_plan_status === 'closed' ? 'Concluído' :
+                    assessment.action_plan_status === 'in_progress' ? 'Em andamento' :
+                    'Aberto'
+                  }
+                </span>
               </div>
-              <button
-                onClick={() => router.push(`/php/action-plans/${assessment.action_plan_id}`)}
-                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm"
-              >
-                Ver Plano
-              </button>
+              <p className="text-sm text-green-800 whitespace-pre-wrap">{assessment.action_plan}</p>
             </div>
           ) : (
-            <div className="flex items-center justify-between p-4 bg-[#FAFAF8] border border-[#E5E5DC] rounded-lg">
-              <div className="flex items-center gap-3">
-                <Clock className="w-5 h-5 text-[#666666]" />
-                <div>
-                  <p className="text-sm font-medium text-[#666666]">Nenhum plano de ação criado</p>
-                  <p className="text-xs text-[#999999]">Recomenda-se criar um plano para riscos altos/críticos</p>
-                </div>
+            <div className="flex items-center gap-3 p-4 bg-[#FAFAF8] border border-[#E5E5DC] rounded-lg">
+              <Clock className="w-5 h-5 text-[#666666]" />
+              <div>
+                <p className="text-sm font-medium text-[#666666]">Nenhum plano de ação registrado</p>
+                <p className="text-xs text-[#999999]">
+                  {assessment.overall_risk_level === 'high'
+                    ? 'Recomenda-se criar um plano de ação para os fatores de risco alto'
+                    : 'Monitorar periodicamente os fatores de risco'}
+                </p>
               </div>
-              {(assessment.overall_risk_level === 'high' || assessment.overall_risk_level === 'critical') && (
-                <button
-                  onClick={() => router.push(`/php/action-plans/new?assessment_id=${assessment.id}`)}
-                  className="px-4 py-2 bg-[#141042] text-white rounded-lg hover:bg-[#1a1557] transition-colors text-sm flex items-center gap-2"
-                >
-                  <Plus className="w-4 h-4" />
-                  Criar Plano
-                </button>
-              )}
             </div>
           )}
         </div>
 
         {/* Metadados */}
         <div className="mt-6 text-sm text-[#999999] text-center">
-          Criado em {new Date(assessment.created_at).toLocaleString('pt-BR')} • 
+          Criado em {new Date(assessment.created_at).toLocaleString('pt-BR')} ·
           Atualizado em {new Date(assessment.updated_at).toLocaleString('pt-BR')}
         </div>
       </div>
