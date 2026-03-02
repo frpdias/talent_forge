@@ -232,7 +232,7 @@ export default function NewEmployeePage() {
         status: formData.status,
       };
 
-      const response = await fetch('${API_V1_URL}/php/employees', {
+      const response = await fetch(`${API_V1_URL}/php/employees`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,

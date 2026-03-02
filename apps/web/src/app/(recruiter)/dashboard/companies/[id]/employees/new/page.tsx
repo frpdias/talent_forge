@@ -183,7 +183,7 @@ export default function NewEmployeePage() {
       
       console.log('Criando funcionário:', payload);
 
-      const response = await fetch('${API_V1_URL}/php/employees', {
+      const response = await fetch(`${API_V1_URL}/php/employees`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,

@@ -59,7 +59,7 @@ export default function ImportCSVDialog({
       formData.append('file', file);
       formData.append('organization_id', companyId);
 
-      const response = await fetch('${API_V1_URL}/php/employees/import', {
+      const response = await fetch(`${API_V1_URL}/php/employees/import`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,

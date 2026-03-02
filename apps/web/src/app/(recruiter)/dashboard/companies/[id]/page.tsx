@@ -19,6 +19,7 @@ interface Company {
   id: string;
   name: string;
   orgType?: string;
+  org_type?: string;
   slug?: string;
   cnpj?: string;
   email?: string;
@@ -30,8 +31,11 @@ interface Company {
   industry?: string;
   size?: string;
   parentOrgId?: string;
+  parent_org_id?: string;
   createdAt: string;
+  created_at?: string;
   updatedAt?: string;
+  updated_at?: string;
 }
 
 interface Employee {
@@ -174,8 +178,17 @@ function CompanyDetailContent() {
       });
 
       if (response.ok) {
-        const data = await response.json();
-        console.log('Company data:', data);
+        const raw = await response.json();
+        console.log('Company data:', raw);
+
+        // Normalizar snake_case → camelCase para compatibilidade
+        const data: Company = {
+          ...raw,
+          orgType: raw.org_type || raw.orgType,
+          parentOrgId: raw.parent_org_id || raw.parentOrgId,
+          createdAt: raw.created_at || raw.createdAt,
+          updatedAt: raw.updated_at || raw.updatedAt,
+        };
         
         // Verificar se a empresa pertence a este recrutador
         if (data.parentOrgId && data.parentOrgId !== currentOrg.id) {
@@ -404,7 +417,7 @@ function CompanyDetailContent() {
                 <select
                   value={selectedHierarchyFilter}
                   onChange={(e) => setSelectedHierarchyFilter(e.target.value)}
-                  className="px-3 py-2 border border-[#E5E5DC] rounded-lg text-sm text-[#141042] bg-white focus:outline-none focus:ring-2 focus:ring-[#141042] focus:border-transparent min-w-[300px]"
+                  className="px-3 py-2 border border-[#E5E5DC] rounded-lg text-sm text-[#141042] bg-white focus:outline-none focus:ring-2 focus:ring-[#141042] focus:border-transparent min-w-75"
                 >
                   <option value="all">Todos os cargos ({employees.length})</option>
                   {availablePositions.length > 0 ? (
@@ -755,7 +768,7 @@ function CompanyInfoTab({ company, employees, phpModuleActive, phpLoading, toggl
           {/* Card Módulo PHP */}
           <div className={`rounded-xl border-2 p-6 transition-all ${
             phpModuleActive 
-              ? 'bg-gradient-to-r from-green-50 to-emerald-50 border-green-200' 
+              ? 'bg-linear-to-r from-green-50 to-emerald-50 border-green-200' 
               : 'bg-gray-50 border-gray-200'
           }`}>
             <div className="flex items-start justify-between">
@@ -982,17 +995,17 @@ function CompanyInfoTab({ company, employees, phpModuleActive, phpLoading, toggl
                       key={manager.id}
                       className={`relative rounded-xl p-5 ${
                         index === 0 
-                          ? 'bg-gradient-to-br from-amber-50 to-orange-50 border-2 border-amber-200' 
+                          ? 'bg-linear-to-br from-amber-50 to-orange-50 border-2 border-amber-200' 
                           : 'bg-[#FAFAF8] border border-[#E5E5DC]'
                       }`}
                     >
                       {/* Badge de posição */}
                       <div className={`absolute -top-3 -left-3 w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm shadow-md ${
                         index === 0 
-                          ? 'bg-gradient-to-br from-amber-400 to-orange-500 text-white' 
+                          ? 'bg-linear-to-br from-amber-400 to-orange-500 text-white' 
                           : index === 1
-                            ? 'bg-gradient-to-br from-gray-300 to-gray-400 text-white'
-                            : 'bg-gradient-to-br from-amber-600 to-amber-700 text-white'
+                            ? 'bg-linear-to-br from-gray-300 to-gray-400 text-white'
+                            : 'bg-linear-to-br from-amber-600 to-amber-700 text-white'
                       }`}>
                         {index + 1}º
                       </div>
@@ -1132,7 +1145,7 @@ function CompanyInfoTab({ company, employees, phpModuleActive, phpLoading, toggl
                       <span className="w-6 h-6 rounded-full bg-[#141042]/10 flex items-center justify-center text-xs font-medium text-[#141042]">
                         {index + 1}
                       </span>
-                      <span className="text-sm text-[#141042] truncate max-w-[140px]" title={dept}>
+                      <span className="text-sm text-[#141042] truncate max-w-35" title={dept}>
                         {dept}
                       </span>
                     </div>

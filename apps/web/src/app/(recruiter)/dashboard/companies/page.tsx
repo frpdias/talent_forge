@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation';
 import { Building2, Plus, Search, Edit, Eye, Trash2, MapPin, Mail, Phone } from 'lucide-react';
 import { useOrgStore } from '@/lib/store';
 import { HIERARCHY_LEVELS } from '@/lib/constants/hierarchy';
-import { API_V1_URL } from '@/lib/api-config';
 import { getAuthToken } from '@/lib/supabase/client';
 
 interface Company {
@@ -162,7 +161,7 @@ export default function RecruiterCompaniesPage() {
       }
       
       // Buscar empresas onde parent_org_id = currentOrg.id (empresas deste recrutador)
-      const response = await fetch(`${API_V1_URL}/organizations?parent_org_id=${currentOrg.id}`, {
+      const response = await fetch(`/api/v1/organizations?parent_org_id=${currentOrg.id}`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
@@ -201,8 +200,8 @@ export default function RecruiterCompaniesPage() {
       }
 
       const endpoint = editingCompany
-        ? `${API_V1_URL}/organizations/${editingCompany.id}`
-        : `${API_V1_URL}/organizations`;
+        ? `/api/v1/organizations/${editingCompany.id}`
+        : `/api/v1/organizations`;
       
       const method = editingCompany ? 'PATCH' : 'POST';
       
@@ -255,7 +254,7 @@ export default function RecruiterCompaniesPage() {
 
           console.log('Criando administrador:', adminPayload);
 
-          const adminResponse = await fetch(`${API_V1_URL}/php/employees`, {
+          const adminResponse = await fetch(`/api/v1/php/employees`, {
             method: 'POST',
             headers: {
               'Authorization': `Bearer ${token}`,
@@ -345,7 +344,7 @@ export default function RecruiterCompaniesPage() {
         return;
       }
 
-      const response = await fetch(`${API_V1_URL}/organizations/${id}`, {
+      const response = await fetch(`/api/v1/organizations/${id}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,
