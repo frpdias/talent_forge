@@ -98,17 +98,19 @@ export default function TransferEmployeeModal({
           'x-org-id': orgId,
         };
 
-        // Load teams
+        // Load teams — API returns { data: Team[], total: number }
         const teamsRes = await fetch('/api/v1/php/teams', { headers });
         if (teamsRes.ok) {
-          const teamsData = await teamsRes.json();
-          setTeams(teamsData || []);
+          const teamsJson = await teamsRes.json();
+          const teamsArr = Array.isArray(teamsJson) ? teamsJson : (teamsJson.data || teamsJson.teams || []);
+          setTeams(teamsArr);
         }
 
         // Load all employees (potential managers) — use GET with large limit
         const empsRes = await fetch('/api/v1/php/employees?limit=500', { headers });
         if (empsRes.ok) {
-          const empsData = await empsRes.json();
+          const empsRaw = await empsRes.json();
+          const empsData = Array.isArray(empsRaw) ? empsRaw : (empsRaw.data || empsRaw.employees || []);
           const allEmps: ManagerOption[] = (empsData || [])
             .filter((e: any) => e.id !== employee.id && e.status === 'active')
             .map((e: any) => ({
