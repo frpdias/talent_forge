@@ -17,6 +17,8 @@ import {
   Copy,
   CheckCircle,
   Building,
+  Globe,
+  Send,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -228,6 +230,12 @@ export default function JobDetailsPage() {
                 Editar
               </Button>
             </Link>
+            <Link href={`/dashboard/jobs/${jobId}/publish`}>
+              <Button className="bg-[#141042] hover:bg-[#0e0c31]">
+                <Send className="h-4 w-4 mr-2" />
+                Publicar
+              </Button>
+            </Link>
             <Button variant="outline" onClick={copyJobLink}>
               {copied ? (
                 <>
@@ -391,6 +399,27 @@ export default function JobDetailsPage() {
                   <Trash2 className="h-4 w-4 mr-2" />
                   {deleting ? 'Excluindo...' : 'Excluir Vaga'}
                 </Button>
+              </CardContent>
+            </Card>
+
+            {/* Publication Card */}
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-black">Publicações</CardTitle>
+                  <Globe className="h-4 w-4 text-gray-400" />
+                </div>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-gray-500 mb-3">
+                  Distribua esta vaga nos principais portais de emprego.
+                </p>
+                <Link href={`/dashboard/jobs/${jobId}/publish`}>
+                  <Button className="w-full bg-[#141042] hover:bg-[#0e0c31]" size="sm">
+                    <Send className="h-4 w-4 mr-2" />
+                    Gerenciar Publicações
+                  </Button>
+                </Link>
               </CardContent>
             </Card>
 

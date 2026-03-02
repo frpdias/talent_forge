@@ -20,6 +20,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { DashboardHeader } from '@/components/DashboardHeader';
 import { createBrowserClient } from '@supabase/ssr';
+import { PublicationBadges } from '@/components/publisher/PublicationStatus';
 
 interface Job {
   id: string;
@@ -54,6 +55,7 @@ export default function JobsPage() {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [pubsByJob, setPubsByJob] = useState<Map<string, any[]>>(new Map());
 
   const supabase = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -125,6 +127,21 @@ export default function JobsPage() {
         });
 
         setJobs(enrichedJobs);
+
+        // Carregar publicações ativas por vaga
+        const { data: pubs } = await supabase
+          .from('job_publications')
+          .select('job_id, status, external_url, job_publication_channels(channel_code, display_name)')
+          .in('job_id', jobIds)
+          .eq('status', 'published');
+
+        const map = new Map<string, any[]>();
+        (pubs || []).forEach((p: any) => {
+          const list = map.get(p.job_id) || [];
+          list.push(p);
+          map.set(p.job_id, list);
+        });
+        setPubsByJob(map);
       } else {
         setJobs(data || []);
       }
@@ -302,6 +319,10 @@ export default function JobsPage() {
                           <span>Tempo médio: {job.avg_time_to_hire || 0}d</span>
                         </div>
                       </div>
+
+                      {pubsByJob.get(job.id)?.length ? (
+                        <PublicationBadges publications={pubsByJob.get(job.id) as any} />
+                      ) : null}
 
                       <div className="mt-4 pt-4 border-t border-(--divider) flex items-center justify-between">
                         <span className="text-xs text-gray-400">
