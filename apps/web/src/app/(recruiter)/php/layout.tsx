@@ -116,50 +116,50 @@ export default function PhpLayout({ children }: { children: ReactNode }) {
           </div>
         </div>
 
-        {/* Company Context or Org Selector */}
-        {phpContextOrgId ? (
-          <div className="px-3 py-3 border-b border-white/10 shrink-0">
-            <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-[#F97316]/10 border border-[#F97316]/20">
-              <Building2 className="h-4 w-4 text-[#F97316] shrink-0" />
-              <div className="flex-1 min-w-0">
-                <p className="text-[10px] text-[#F97316]/70 uppercase tracking-wider font-semibold">Empresa</p>
-                <p className="text-sm text-white/90 truncate font-medium">{phpContextOrgName}</p>
+        {/* Company Context — sempre permite trocar via dropdown */}
+        <div className="px-3 py-3 border-b border-white/10 shrink-0">
+          <button
+            onClick={() => setOrgDropdownOpen(!orgDropdownOpen)}
+            className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors ${
+              phpContextOrgId
+                ? 'bg-[#F97316]/10 border border-[#F97316]/20 hover:bg-[#F97316]/15'
+                : 'border border-white/10 bg-white/5 hover:bg-white/10'
+            }`}
+          >
+            <div className="flex items-center gap-2 min-w-0">
+              <Building2 className={`h-4 w-4 shrink-0 ${phpContextOrgId ? 'text-[#F97316]' : 'text-white/40'}`} />
+              <div className="flex-1 min-w-0 text-left">
+                {phpContextOrgId && (
+                  <p className="text-[10px] text-[#F97316]/70 uppercase tracking-wider font-semibold">Empresa</p>
+                )}
+                <p className={`truncate font-medium ${phpContextOrgId ? 'text-sm text-white/90' : 'text-sm text-white/75'}`}>
+                  {phpContextOrgName || currentOrg?.name || 'Selecionar empresa'}
+                </p>
               </div>
             </div>
-          </div>
-        ) : (
-          <div className="px-3 py-3 border-b border-white/10 shrink-0">
-            <button
-              onClick={() => setOrgDropdownOpen(!orgDropdownOpen)}
-              className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm border border-white/10 bg-white/5 hover:bg-white/10 transition-colors"
-            >
-              <div className="flex items-center gap-2 min-w-0">
-                <Building2 className="h-4 w-4 text-white/40 shrink-0" />
-                <span className="truncate text-white/75">
-                  {currentOrg?.name || 'Selecionar empresa'}
-                </span>
-              </div>
-              <ChevronDown className={`h-4 w-4 text-white/40 transition-transform shrink-0 ${orgDropdownOpen ? 'rotate-180' : ''}`} />
-            </button>
-            {orgDropdownOpen && (
-              <div className="mt-2 rounded-lg border border-white/10 bg-white/10 max-h-40 overflow-y-auto">
-                {organizations.map((org) => (
-                  <button
-                    key={org.id}
-                    onClick={() => {
-                      setCurrentOrg(org);
-                      setPhpContextOrg(org.id, org.name);
-                      setOrgDropdownOpen(false);
-                    }}
-                    className={`w-full text-left px-3 py-2 text-sm text-white/75 hover:bg-white/10 hover:text-white transition-colors ${currentOrg?.id === org.id ? 'bg-white/15 text-white font-medium' : ''}`}
-                  >
-                    {org.name}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
+            <ChevronDown className={`h-4 w-4 shrink-0 transition-transform ${phpContextOrgId ? 'text-[#F97316]/50' : 'text-white/40'} ${orgDropdownOpen ? 'rotate-180' : ''}`} />
+          </button>
+          {orgDropdownOpen && (
+            <div className="mt-2 rounded-lg border border-white/10 bg-white/10 max-h-40 overflow-y-auto">
+              {organizations.length === 0 && (
+                <p className="px-3 py-2 text-xs text-white/40">Nenhuma empresa disponível. Volte ao Dashboard para carregar.</p>
+              )}
+              {organizations.map((org) => (
+                <button
+                  key={org.id}
+                  onClick={() => {
+                    setCurrentOrg(org);
+                    setPhpContextOrg(org.id, org.name);
+                    setOrgDropdownOpen(false);
+                  }}
+                  className={`w-full text-left px-3 py-2 text-sm text-white/75 hover:bg-white/10 hover:text-white transition-colors ${phpContextOrgId === org.id ? 'bg-white/15 text-white font-medium' : ''}`}
+                >
+                  {org.name}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
 
         {/* Navigation */}
         <nav className="flex-1 px-3 py-4 space-y-0.5">
