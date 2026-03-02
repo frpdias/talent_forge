@@ -9,7 +9,7 @@ import {
   UserCheck, Building, Hash, Layers
 } from 'lucide-react';
 import { useOrgStore } from '@/lib/store';
-import { createClient } from '@/lib/supabase/client';
+import { createClient, getAuthToken } from '@/lib/supabase/client';
 import { API_V1_URL } from '@/lib/api-config';
 import OrgChart from '@/components/OrgChart';
 import ImportCSVDialog from '@/components/ImportCSVDialog';
@@ -82,13 +82,7 @@ function CompanyDetailContent() {
   const [phpLoading, setPhpLoading] = useState(false);
 
   useEffect(() => {
-    const loadAuth = async () => {
-      const { data: { session } } = await createClient().auth.getSession();
-      if (session?.access_token) {
-        setAuthToken(session.access_token);
-      }
-    };
-    loadAuth();
+    getAuthToken().then(token => { if (token) setAuthToken(token); });
   }, []);
 
   useEffect(() => {
@@ -97,7 +91,9 @@ function CompanyDetailContent() {
       loadEmployees();
       loadPhpModuleStatus();
     } else if (companyId && !currentOrg?.id) {
-      console.warn('⏳ Aguardando currentOrg ser populado...');
+      // Se após 3s currentOrg ainda não chegou, para o spinner
+      const t = setTimeout(() => setLoading(false), 3000);
+      return () => clearTimeout(t);
     }
   }, [companyId, currentOrg?.id]);
 
@@ -161,18 +157,11 @@ function CompanyDetailContent() {
   const loadCompany = async () => {
     try {
       setLoading(true);
-      
-      const { data: { session } } = await createClient().auth.getSession();
-      const token = session?.access_token;
-      
-      console.log('🔍 Debug loadCompany:', { 
-        hasToken: !!token, 
-        currentOrg,
-        currentOrgId: currentOrg?.id 
-      });
-      
+
+      const token = await getAuthToken();
+
       if (!token || !currentOrg?.id) {
-        console.error('❌ Token ou organização não encontrados', { token: !!token, currentOrg });
+        console.error('❌ Token ou organização não encontrados', { hasToken: !!token, currentOrg });
         setLoading(false);
         return;
       }
@@ -208,18 +197,10 @@ function CompanyDetailContent() {
 
   const loadEmployees = async () => {
     try {
-      const { data: { session } } = await createClient().auth.getSession();
-      const token = session?.access_token;
-      
-      console.log('🔍 Debug loadEmployees:', { 
-        hasToken: !!token, 
-        currentOrg,
-        currentOrgId: currentOrg?.id,
-        companyId 
-      });
-      
+      const token = await getAuthToken();
+
       if (!token || !currentOrg?.id) {
-        console.error('❌ Token ou organização não encontrados', { token: !!token, currentOrg });
+        console.error('❌ Token ou organização não encontrados', { hasToken: !!token, currentOrg });
         return;
       }
       
@@ -253,9 +234,8 @@ function CompanyDetailContent() {
     if (!confirm('Tem certeza que deseja excluir este funcionário?')) return;
 
     try {
-      const { data: { session } } = await createClient().auth.getSession();
-      const token = session?.access_token;
-      
+      const token = await getAuthToken();
+
       if (!token || !currentOrg?.id) {
         console.error('Token ou organização não encontrados');
         return;
