@@ -21,6 +21,7 @@ import { Badge } from '@/components/ui/badge';
 import { DashboardHeader } from '@/components/DashboardHeader';
 import { createBrowserClient } from '@supabase/ssr';
 import { PublicationBadges } from '@/components/publisher/PublicationStatus';
+import { NewJobModal } from '@/components/jobs/NewJobModal';
 
 interface Job {
   id: string;
@@ -56,6 +57,7 @@ export default function JobsPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [pubsByJob, setPubsByJob] = useState<Map<string, any[]>>(new Map());
+  const [showNewJobModal, setShowNewJobModal] = useState(false);
 
   const supabase = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -190,12 +192,10 @@ export default function JobsPage() {
                 Gerencie suas oportunidades de trabalho
               </p>
             </div>
-            <Link href="/dashboard/jobs/new">
-              <Button>
-                <Plus className="h-4 w-4" />
-                Nova Vaga
-              </Button>
-            </Link>
+            <Button onClick={() => setShowNewJobModal(true)}>
+              <Plus className="h-4 w-4" />
+              Nova Vaga
+            </Button>
           </div>
         </div>
       </div>
@@ -251,12 +251,10 @@ export default function JobsPage() {
                   : 'Comece criando sua primeira vaga'}
               </p>
               {!searchQuery && (
-                <Link href="/dashboard/jobs/new">
-                  <Button>
-                    <Plus className="h-4 w-4" />
-                    Criar Vaga
-                  </Button>
-                </Link>
+                <Button onClick={() => setShowNewJobModal(true)}>
+                  <Plus className="h-4 w-4" />
+                  Criar Vaga
+                </Button>
               )}
             </CardContent>
           </Card>
@@ -344,6 +342,12 @@ export default function JobsPage() {
           </div>
         )}
       </div>
+
+      <NewJobModal
+        isOpen={showNewJobModal}
+        onClose={() => setShowNewJobModal(false)}
+        onSuccess={() => { void loadJobs(); }}
+      />
     </div>
   );
 }
