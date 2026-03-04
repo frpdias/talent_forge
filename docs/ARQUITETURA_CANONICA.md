@@ -1,6 +1,6 @@
 # Arquitetura Canônica — TalentForge
 
-**Última atualização**: 2026-03-03 | **Score de Conformidade**: ✅ 100% (Sprint 25: Qualidade — ESLint ativo, Playwright E2E, Jest unitário, Error Boundaries)
+**Última atualização**: 2026-03-03 | **Score de Conformidade**: ✅ 100% (Sprint 26: Pipeline bug fix + fase Em Documentação + API Routes applications)
 
 ## 📜 FONTE DA VERDADE — PRINCÍPIO FUNDAMENTAL
 
@@ -184,7 +184,8 @@ PROJETO_TALENT_FORGE/
 │   │   ├── 20260202_nr1_self_assessment.sql ✅ Self-assessment NR-1
 │   │   ├── 20260202_tfci_peer_selection_system.sql ✅ Seleção de pares TFCI
 │   │   ├── 20260204_organization_corporate_fields.sql ✅ Campos corporativos
-│   │   └── 20260205_realtime_dashboard.sql ✅ NOVO (Notifications + Presence + Comments + Locks)
+│   │   ├── 20260205_realtime_dashboard.sql ✅ Notifications + Presence + Comments + Locks
+│   │   └── 20260303_application_status_in_documentation.sql ✅ NOVO (enum application_status + 'in_documentation')
 │   ├── VALIDATE_IMPROVEMENTS.sql  # Script de validação
 │   └── README.md                  # Instruções de migrations
 │
@@ -2760,7 +2761,9 @@ Dashboard dedicado em `/admin/security` com:
 | `/api/v1/organizations/:id` | ✅ | — | ✅ | Inclui campos corporativos (Sprint 15) |
 | `/api/v1/jobs` | ✅ | ⏳ | — | 3 jobs retornados |
 | `/api/v1/candidates` | ✅ | ⏳ | — | 3 candidates retornados |
-| `/api/v1/applications` | ✅ | ⏳ | — | 4 applications retornadas |
+| `/api/v1/applications` | ✅ | ✅ | — | **Next.js Route** — Supabase direto, filtro via jobs.org_id (Sprint 26) |
+| `/api/v1/applications/:id/stage` | — | — | ✅ PATCH | Mover fase no pipeline (Sprint 26) |
+| `/api/v1/applications/:id/status` | — | — | ✅ PATCH | Alterar status candidatura (Sprint 26) |
 | `/api/v1/reports/dashboard` | ✅ | — | — | Dashboard stats OK |
 | `/api/v1/reports/pipelines` | ✅ | — | — | 3 jobs com pipelines |
 | `/api/v1/reports/assessments` | ✅ | — | — | Corrigido (usava colunas legadas) |
@@ -5345,7 +5348,46 @@ Próxima revisão: Sprint 12 (Action Plans + Settings)
 
 ---
 
-**FIM DO DOCUMENTO** — Versão 4.1 (Sprint 25: Qualidade — ESLint, Playwright, Jest, Error Boundaries)
+## Sprint 26 — Pipeline Bug Fix + Em Documentação (2026-03-03)
+
+**Objetivo:** Corrigir candidatos não carregando no pipeline e adicionar nova fase.
+
+### Problema resolvido
+- **Bug:** `GET /api/v1/applications` não existia como Next.js Route — frontend chamava NestJS (instável em produção) e recebia 404
+- **Causa raiz:** Todas as outras rotas já foram migradas para Next.js API Routes, mas `applications` ficou para trás
+
+### Implementações
+- ✅ **`GET/POST /api/v1/applications`** — Nova Next.js Route com Supabase direto
+  - Filtro multi-tenant via `jobs!inner(org_id)` (applications não tem org_id)
+  - Segurança: `getAuthUser()` retorna 401 sem Bearer token
+- ✅ **`PATCH /api/v1/applications/[id]/stage`** — Move candidatura de fase + registra `application_events`
+- ✅ **`PATCH /api/v1/applications/[id]/status`** — Altera status da candidatura
+- ✅ **Migration `20260303_application_status_in_documentation.sql`** aplicada em produção
+  - `ALTER TYPE application_status ADD VALUE IF NOT EXISTS 'in_documentation' AFTER 'in_process'`
+  - Fluxo completo: `applied → in_process → in_documentation → hired | rejected`
+- ✅ **Pipeline Kanban:** coluna `in_documentation` (violeta) entre "Em Avaliação" e "Contratados"
+- ✅ **`packages/types/enums.ts`:** `ApplicationStatus.IN_DOCUMENTATION = 'in_documentation'`
+- ✅ **E2E:** teste `GET /api/v1/applications returns 401` adicionado em `03-api-auth.spec.ts`
+
+### Enum application_status (atualizado)
+```sql
+CREATE TYPE application_status AS ENUM (
+  'applied',          -- Novas Candidaturas
+  'in_process',       -- Em Avaliação
+  'in_documentation', -- Em Documentação ✨ NOVO Sprint 26
+  'hired',            -- Contratados
+  'rejected'          -- Não Aprovados
+);
+```
+
+### Resultados
+- Build: ✅ 103 páginas (+1 nova rota), exit code 0
+- Playwright: ✅ 8/8 passando
+- Commit: `03ce0c3`
+
+---
+
+**FIM DO DOCUMENTO** — Versão 4.2 (Sprint 26: Pipeline bug fix + fase Em Documentação + API Routes applications)
 ```sql
 CREATE TYPE risk_level AS ENUM ('low', 'medium', 'high', 'critical');
 CREATE TYPE assessment_status AS ENUM ('draft', 'active', 'completed', 'cancelled');
