@@ -131,9 +131,9 @@ export function PeerSelection({
           }`}
         >
           {message.type === 'success' ? (
-            <CheckCircle2 className="w-5 h-5 flex-shrink-0" />
+            <CheckCircle2 className="w-5 h-5 shrink-0" />
           ) : (
-            <AlertCircle className="w-5 h-5 flex-shrink-0" />
+            <AlertCircle className="w-5 h-5 shrink-0" />
           )}
           <span>{message.text}</span>
         </div>
@@ -251,7 +251,7 @@ export function PeerSelection({
 
       {/* Botão de finalizar */}
       {quota && quota.remaining === 0 && (
-        <div className="bg-gradient-to-r from-blue-50 to-green-50 border border-blue-200 rounded-lg p-6">
+        <div className="bg-linear-to-r from-blue-50 to-green-50 border border-blue-200 rounded-lg p-6">
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-lg font-semibold text-gray-900 mb-1">

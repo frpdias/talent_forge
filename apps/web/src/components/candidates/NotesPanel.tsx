@@ -211,7 +211,7 @@ export function NotesPanel({
     <Card className={className}>
       <CardHeader className="pb-3">
         <div className="flex items-center gap-2">
-          <StickyNote className="w-5 h-5 text-[var(--tf-warning)]" />
+          <StickyNote className="w-5 h-5 text-tf-warning" />
           <div className="flex-1">
             <CardTitle className="text-sm">
               Anotações - {contextLabel}
@@ -230,8 +230,8 @@ export function NotesPanel({
             value={newNote}
             onChange={(e) => setNewNote(e.target.value)}
             placeholder={placeholder || `Adicione suas anotações sobre ${contextLabel.toLowerCase()}...`}
-            className="w-full px-3 py-2 text-sm border border-[var(--border)] rounded-lg 
-                     focus:outline-none focus:ring-2 focus:ring-[var(--tf-accent)] focus:border-transparent 
+            className="w-full px-3 py-2 text-sm border border-border rounded-lg 
+                     focus:outline-none focus:ring-2 focus:ring-tf-accent focus:border-transparent 
                      bg-white resize-none transition-all"
             rows={3}
             disabled={saving}
@@ -251,12 +251,12 @@ export function NotesPanel({
         {/* Notes List */}
         <div className="space-y-3 max-h-96 overflow-y-auto">
           {loading ? (
-            <div className="text-center py-6 text-sm text-[var(--foreground-muted)]">
+            <div className="text-center py-6 text-sm text-foreground-muted">
               Carregando anotações...
             </div>
           ) : notes.length === 0 ? (
-            <div className="text-center py-8 text-sm text-[var(--foreground-muted)]">
-              <StickyNote className="w-8 h-8 mx-auto mb-2 text-[var(--tf-gray-400)]" />
+            <div className="text-center py-8 text-sm text-foreground-muted">
+              <StickyNote className="w-8 h-8 mx-auto mb-2 text-gray-400" />
               <p className="font-medium">Nenhuma anotação ainda.</p>
               <p className="text-xs mt-1">
                 Adicione observações importantes enquanto avalia o candidato.
@@ -266,7 +266,7 @@ export function NotesPanel({
             notes.map((note) => (
               <div
                 key={note.id}
-                className="bg-[var(--tf-gray-50)] rounded-lg p-3 border border-[var(--border)] hover:border-[var(--border-hover)] transition-colors"
+                className="bg-gray-50 rounded-lg p-3 border border-border hover:border-(--border-hover) transition-colors"
               >
                 {editingId === note.id ? (
                   // Edit Mode
@@ -274,8 +274,8 @@ export function NotesPanel({
                     <textarea
                       value={editText}
                       onChange={(e) => setEditText(e.target.value)}
-                      className="w-full px-2 py-1.5 text-sm border border-[var(--border)] rounded 
-                               focus:outline-none focus:ring-2 focus:ring-[var(--tf-accent)] resize-none"
+                      className="w-full px-2 py-1.5 text-sm border border-border rounded 
+                               focus:outline-none focus:ring-2 focus:ring-tf-accent resize-none"
                       rows={3}
                       disabled={saving}
                     />
@@ -305,20 +305,20 @@ export function NotesPanel({
                   <div>
                     <div className="flex items-start justify-between gap-2 mb-2">
                       <div className="flex-1 min-w-0">
-                        <p className="text-xs font-medium text-[var(--foreground)]">
+                        <p className="text-xs font-medium text-foreground">
                           {note.authorName}
                         </p>
-                        <p className="text-xs text-[var(--foreground-muted)]">
+                        <p className="text-xs text-foreground-muted">
                           {formatDate(note.createdAt)}
                           {note.updatedAt && note.updatedAt !== note.createdAt && (
-                            <span className="ml-1 text-[var(--tf-warning)]">(editado)</span>
+                            <span className="ml-1 text-tf-warning">(editado)</span>
                           )}
                         </p>
                       </div>
-                      <div className="flex gap-1 flex-shrink-0">
+                      <div className="flex gap-1 shrink-0">
                         <button
                           onClick={() => handleStartEdit(note)}
-                          className="p-1 text-[var(--foreground-muted)] hover:text-[var(--tf-accent)] 
+                          className="p-1 text-foreground-muted hover:text-tf-accent 
                                    hover:bg-white rounded transition-colors"
                           title="Editar"
                         >
@@ -326,7 +326,7 @@ export function NotesPanel({
                         </button>
                         <button
                           onClick={() => handleDelete(note.id)}
-                          className="p-1 text-[var(--foreground-muted)] hover:text-[var(--tf-error)] 
+                          className="p-1 text-foreground-muted hover:text-tf-error 
                                    hover:bg-white rounded transition-colors"
                           title="Excluir"
                         >
@@ -334,10 +334,10 @@ export function NotesPanel({
                         </button>
                       </div>
                     </div>
-                    <p className="text-sm text-[var(--foreground)] whitespace-pre-wrap leading-relaxed">
+                    <p className="text-sm text-foreground whitespace-pre-wrap leading-relaxed">
                       {note.note}
                     </p>
-                    <p className="text-[11px] text-[var(--foreground-muted)] mt-2">
+                    <p className="text-[11px] text-foreground-muted mt-2">
                       Contexto: {contextLabels[note.context as keyof typeof contextLabels] || note.context}
                     </p>
                   </div>
