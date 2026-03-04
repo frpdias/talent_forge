@@ -8,7 +8,6 @@ import {
   Users,
   ClipboardList,
   TrendingUp,
-  Plus,
   ArrowUpRight,
   ArrowDownRight,
   MoreHorizontal,
@@ -439,18 +438,10 @@ export default function DashboardPage() {
             Acompanhe suas métricas de recrutamento em tempo real
           </p>
         </div>
-        <div className="flex flex-col sm:flex-row gap-3">
-          <button className="flex items-center justify-center space-x-2 px-4 py-2 border border-[#E5E5DC] text-[#666666] rounded-lg hover:bg-[#FAFAF8] transition-colors">
-            <Clock className="w-4 h-4" />
-            <span>Último mês</span>
-          </button>
-          <Link href="/dashboard/jobs/new">
-            <button className="w-full sm:w-auto flex items-center justify-center space-x-2 px-4 py-2 bg-[#141042] text-white rounded-lg hover:bg-[#141042]/90 transition-colors">
-              <Plus className="w-4 h-4" />
-              <span>Nova Vaga</span>
-            </button>
-          </Link>
-        </div>
+        <button className="flex items-center justify-center space-x-2 px-4 py-2 border border-[#E5E5DC] text-[#666666] rounded-lg hover:bg-[#FAFAF8] transition-colors">
+          <Clock className="w-4 h-4" />
+          <span>Último mês</span>
+        </button>
       </div>
 
       {/* Stats Grid */}
@@ -641,17 +632,17 @@ export default function DashboardPage() {
           <div className="bg-white border border-[#E5E5DC] rounded-xl p-4 sm:p-6 shadow-[0_2px_8px_rgba(20,16,66,0.06),0_1px_2px_rgba(20,16,66,0.04)]">
             <h3 className="text-base font-semibold text-[#141042] mb-4">Ações Rápidas</h3>
             <div className="space-y-3">
-              <Link href="/dashboard/jobs/new" className="block">
+              <Link href="/dashboard/jobs" className="block">
                 <div className="flex items-center gap-3 p-3 rounded-lg border border-[#E5E5DC] hover:border-[#3B82F6] hover:bg-[#3B82F6]/5 transition-all group">
                   <div className="p-2 bg-[#3B82F6]/10 rounded-lg group-hover:bg-[#3B82F6]/20 transition-colors">
                     <Briefcase className="w-4 h-4 text-[#3B82F6]" />
                   </div>
                   <div>
                     <p className="text-sm font-medium text-[#141042]">
-                      Criar Nova Vaga
+                      Gerenciar Vagas
                     </p>
                     <p className="text-xs text-[#666666]">
-                      Publique uma nova oportunidade
+                      Veja e crie oportunidades
                     </p>
                   </div>
                 </div>
