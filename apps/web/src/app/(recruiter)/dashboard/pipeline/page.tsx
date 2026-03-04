@@ -47,6 +47,7 @@ interface Column {
 const STATUS_COLUMNS = [
   { id: 'applied', title: 'Novas Candidaturas', color: 'from-blue-500 to-blue-600', bgColor: 'bg-blue-50', borderColor: 'border-blue-200', icon: Users },
   { id: 'in_process', title: 'Em Avaliação', color: 'from-amber-500 to-amber-600', bgColor: 'bg-amber-50', borderColor: 'border-amber-200', icon: Clock },
+  { id: 'in_documentation', title: 'Em Documentação', color: 'from-violet-500 to-violet-600', bgColor: 'bg-violet-50', borderColor: 'border-violet-200', icon: ArrowRight },
   { id: 'hired', title: 'Contratados', color: 'from-emerald-500 to-emerald-600', bgColor: 'bg-emerald-50', borderColor: 'border-emerald-200', icon: CheckCircle2 },
   { id: 'rejected', title: 'Não Aprovados', color: 'from-red-500 to-red-600', bgColor: 'bg-red-50', borderColor: 'border-red-200', icon: XCircle },
 ];
@@ -383,7 +384,7 @@ export default function PipelinePage() {
 
   // Calculate stats
   const totalCandidates = applicationsCache.length;
-  const inProcessCount = applicationsCache.filter(a => a.status === 'in_process').length;
+  const inProcessCount = applicationsCache.filter(a => a.status === 'in_process' || a.status === 'in_documentation').length;
   const hiredCount = applicationsCache.filter(a => a.status === 'hired').length;
   const conversionRate = totalCandidates > 0 ? Math.round((hiredCount / totalCandidates) * 100) : 0;
 

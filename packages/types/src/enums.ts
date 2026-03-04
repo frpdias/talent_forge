@@ -25,6 +25,7 @@ export enum SeniorityLevel {
 export enum ApplicationStatus {
   APPLIED = 'applied',
   IN_PROCESS = 'in_process',
+  IN_DOCUMENTATION = 'in_documentation',
   HIRED = 'hired',
   REJECTED = 'rejected',
 }
