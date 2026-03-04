@@ -32,9 +32,7 @@ export async function GET(request: NextRequest) {
         .single();
       
       isAdmin = profile?.user_type === 'admin';
-      console.log('[Admin Tenants API] User:', user.email, 'Metadata:', metadataUserType, 'Profile:', profile?.user_type, 'isAdmin:', isAdmin);
     } else {
-      console.log('[Admin Tenants API] User:', user.email, 'Admin via metadata:', metadataUserType);
     }
 
     if (!isAdmin) {

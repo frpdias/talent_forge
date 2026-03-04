@@ -5,6 +5,13 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+/** Extrai a mensagem de um erro de tipo unknown de forma type-safe */
+export function getErrorMessage(err: unknown): string {
+  if (err instanceof Error) return err.message;
+  if (typeof err === 'string') return err;
+  return 'Ocorreu um erro inesperado';
+}
+
 export function formatDate(date: string | Date) {
   return new Intl.DateTimeFormat('pt-BR', {
     day: '2-digit',

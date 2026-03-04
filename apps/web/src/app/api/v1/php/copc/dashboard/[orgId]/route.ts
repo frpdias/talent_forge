@@ -115,7 +115,7 @@ export async function GET(
       trends,
       details: data,
     });
-  } catch (error: unknown) {
+  } catch (error: any) {
     const msg = error instanceof Error ? error.message : 'Erro interno';
     console.error('Erro no GET /api/v1/php/copc/dashboard/[orgId]:', error);
     return NextResponse.json(

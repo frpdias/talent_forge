@@ -433,7 +433,6 @@ export default function AiChatPage() {
                         body: JSON.stringify({ org_id: orgId }),
                       });
                       const data = await res.json();
-                      console.log('Turnover predictions:', data);
                       toast({
                         title: 'Análise concluída',
                         description: `${data.predictions_count} colaboradores analisados`,
@@ -473,7 +472,6 @@ export default function AiChatPage() {
                         body: JSON.stringify({ org_id: orgId, months_ahead: 3 }),
                       });
                       const data = await res.json();
-                      console.log('Performance forecast:', data);
                       toast({
                         title: 'Previsão gerada',
                         description: `${data.forecasts_count} módulos analisados`,
@@ -512,7 +510,6 @@ export default function AiChatPage() {
                         body: JSON.stringify({ org_id: orgId, goal }),
                       });
                       const data = await res.json();
-                      console.log('Smart recommendations:', data);
                       toast({
                         title: 'Recomendações geradas',
                         description: `${data.recommendations?.length || 0} ações sugeridas`,

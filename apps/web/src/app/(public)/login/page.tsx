@@ -37,8 +37,6 @@ function LoginContent() {
 
       if (authError) throw authError;
 
-      console.log('✅ Login successful:', data.user.email);
-      console.log('🔄 Redirecting to middleware for proper routing...');
       
       // Small delay to ensure session is persisted
       await new Promise(resolve => setTimeout(resolve, 500));
@@ -53,18 +51,12 @@ function LoginContent() {
       // Redirect based on user_type from profile or metadata
       const userType = profile?.user_type || data.user.user_metadata?.user_type || 'candidate';
       
-      console.log('📊 User Type:', userType);
-      console.log('📊 Profile:', profile);
-      console.log('📊 Metadata:', data.user.user_metadata);
       
       if (userType === 'admin') {
-        console.log('📌 Admin detected - redirecting to /admin');
         window.location.href = '/admin';
       } else if (userType === 'recruiter') {
-        console.log('📌 Recruiter detected - redirecting to /dashboard');
         window.location.href = '/dashboard';
       } else {
-        console.log('📌 Candidate detected - redirecting to /candidate');
         window.location.href = '/candidate';
       }
     } catch (err: any) {

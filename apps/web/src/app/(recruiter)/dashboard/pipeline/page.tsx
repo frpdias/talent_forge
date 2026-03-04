@@ -124,7 +124,6 @@ export default function PipelinePage() {
 
         resolvedOrgId = orgMembership?.org_id || null;
       }
-      console.log('🔍 [Pipeline] Debug:', { userId: user?.id, orgId: resolvedOrgId, hasToken: !!token });
       
       if (!token || !resolvedOrgId) {
         console.error('❌ [Pipeline] Sem token ou orgId');
@@ -182,7 +181,6 @@ export default function PipelinePage() {
         }
       }
 
-      console.log('✅ [Pipeline] Aplicações retornadas da API:', applications);
 
       const normalizedApplications = (applications as any || []).map((app: any) => ({
         id: app.id,
@@ -198,7 +196,6 @@ export default function PipelinePage() {
         current_stage: app.currentStage || null,
       }));
 
-      console.log('📊 [Pipeline] Aplicações normalizadas:', normalizedApplications.length, normalizedApplications);
 
       const stages = normalizedApplications
         .map((app: any) => app.current_stage)

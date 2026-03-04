@@ -40,12 +40,9 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
-    console.log('🔍 [Metrics API] Iniciando busca de métricas para org:', id);
     const { admin, error: adminError } = await ensureAdmin();
     if (adminError) return adminError;
-    console.log('✅ [Metrics API] Supabase admin client criado');
 
-    console.log('📊 [Metrics API] Buscando métricas para org_id:', id);
 
     // Buscar métricas da view
     const { data: metrics, error: metricsError } = await admin
@@ -54,7 +51,6 @@ export async function GET(
       .eq('org_id', id)
       .single();
 
-    console.log('📈 [Metrics API] Resultado da query:', { metrics, error: metricsError });
 
     if (metricsError) {
       console.error('❌ [Metrics API] Error fetching metrics:', metricsError);
@@ -65,7 +61,6 @@ export async function GET(
       }, { status: 500 });
     }
     
-    console.log('✅ [Metrics API] Métricas encontradas para:', metrics?.org_name);
 
     // Buscar breakdown detalhado do banco
     const { data: dbBreakdown } = await admin.rpc('get_org_detailed_metrics', {

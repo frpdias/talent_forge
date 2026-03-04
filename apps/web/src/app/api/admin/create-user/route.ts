@@ -147,19 +147,7 @@ export async function POST(request: Request) {
           { status: 500 }
         );
       }
-
-      console.log('✅ Organização criada e recruiter vinculado:', {
-        org_id: org.id,
-        org_name: org.name,
-        user_id: authData.user.id
-      });
     }
-
-    console.log('✅ Usuário criado:', {
-      id: authData.user.id,
-      email,
-      userType,
-    });
 
     return NextResponse.json({
       success: true,

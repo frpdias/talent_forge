@@ -48,7 +48,6 @@ export default function CandidateApplicationsPage() {
         const { data: apps, error: appsError } = await supabase
           .rpc('get_my_applications');
 
-        console.log('🔍 DEBUG RPC get_my_applications:', { apps, appsError, userId: userData.user.id, email: userEmail });
 
         if (appsError) {
           console.error('❌ Erro na RPC:', appsError);
@@ -57,7 +56,6 @@ export default function CandidateApplicationsPage() {
           return;
         }
 
-        console.log('✅ Aplicações retornadas:', apps);
 
         const mapped = (apps || []).map((app: any) => ({
           id: app.application_id,

@@ -254,25 +254,20 @@ export default function CandidateDashboard() {
         const { data: { user } } = await supabase.auth.getUser();
         const { data: { session } } = await supabase.auth.getSession();
         
-        console.log('[CandidateDash] User:', user?.id);
-        console.log('[CandidateDash] Session:', !!session);
         
         if (!session?.access_token) {
-          console.log('[CandidateDash] No access token');
           setColorError('Não autenticado');
           setColorLoading(false);
           return;
         }
         
         if (!user?.id) {
-          console.log('[CandidateDash] No user id');
           setColorError('Usuário não identificado');
           setColorLoading(false);
           return;
         }
         
         // Buscar diretamente do Supabase para validar os dados
-        console.log('[CandidateDash] Buscando assessment completado...');
         const { data: colorData, error: colorError } = await supabase
           .from('color_assessments')
           .select('*')
@@ -282,7 +277,6 @@ export default function CandidateDashboard() {
           .limit(1)
           .maybeSingle();
         
-        console.log('[CandidateDash] Supabase result:', colorData);
         
         if (colorError) {
           console.error('[CandidateDash] Supabase error:', colorError);
@@ -292,10 +286,8 @@ export default function CandidateDashboard() {
         }
         
         if (colorData) {
-          console.log('[CandidateDash] Encontrado assessment:', colorData);
           setColorResult(colorData);
         } else {
-          console.log('[CandidateDash] Nenhum assessment completado encontrado');
           setColorResult(null);
         }
       } catch (err: any) {
@@ -340,10 +332,8 @@ export default function CandidateDashboard() {
         }
         
         if (piData) {
-          console.log('[CandidateDash] PI encontrado:', piData);
           setPiResult(piData);
         } else {
-          console.log('[CandidateDash] Nenhum PI completado encontrado');
           setPiResult(null);
         }
       } catch (err: any) {

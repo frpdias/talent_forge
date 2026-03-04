@@ -6,6 +6,7 @@ import { Header } from '@/components/layout';
 import { Card, CardContent, Button, Input, Textarea, Select } from '@/components/ui';
 import { useOrgStore } from '@/lib/store';
 import { jobsApi } from '@/lib/api';
+import type { EmploymentType, SeniorityLevel, JobStatus } from '@talentforge/types';
 import { useAuth } from '@/lib/auth';
 import { ArrowLeft, Save } from 'lucide-react';
 import Link from 'next/link';
@@ -47,7 +48,9 @@ export default function NewJobPage() {
 
       const data = {
         ...form,
-        status,
+        status: status as JobStatus,
+        employmentType: form.employmentType as EmploymentType,
+        seniorityLevel: form.seniorityLevel as SeniorityLevel,
         minSalary: form.minSalary ? Number(form.minSalary) : undefined,
         maxSalary: form.maxSalary ? Number(form.maxSalary) : undefined,
       };

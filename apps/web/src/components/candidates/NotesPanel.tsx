@@ -54,16 +54,14 @@ export function NotesPanel({
     const getAuth = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session?.access_token) {
-        console.log('[NotesPanel] Token obtido');
       }
       
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
-        console.log('[NotesPanel] User ID:', user.id);
         setUserId(user.id);
         const label =
-          (user.user_metadata as any)?.full_name ||
-          (user.user_metadata as any)?.name ||
+          user.user_metadata?.full_name ||
+          user.user_metadata?.name ||
           user.email ||
           'Você';
         setUserLabel(label);
@@ -75,7 +73,6 @@ export function NotesPanel({
 
   // Load notes on mount and when context changes
   useEffect(() => {
-    console.log('[NotesPanel] useEffect triggered:', { candidateId, context, userId: !!userId });
     if (userId) {
       loadNotes();
     }
@@ -83,11 +80,9 @@ export function NotesPanel({
 
   const loadNotes = async () => {
     if (!userId) {
-      console.log('[NotesPanel] Missing userId');
       return;
     }
     
-    console.log('[NotesPanel] Loading notes:', { candidateId, context });
     
     try {
       setLoading(true);
@@ -116,7 +111,6 @@ export function NotesPanel({
         updatedAt: note.updated_at,
       }));
 
-      console.log('[NotesPanel] Loaded notes:', mappedNotes);
       setNotes(mappedNotes);
     } catch (error) {
       console.error('[NotesPanel] Failed to load notes:', error);
@@ -128,11 +122,9 @@ export function NotesPanel({
 
   const handleAddNote = async () => {
     if (!newNote.trim() || !userId) {
-      console.log('[NotesPanel] Cannot add note:', { hasText: !!newNote.trim(), userId: !!userId });
       return;
     }
 
-    console.log('[NotesPanel] Adding note:', { candidateId, context, noteLength: newNote.length });
     
     try {
       setSaving(true);
@@ -147,7 +139,6 @@ export function NotesPanel({
 
       if (error) throw error;
 
-      console.log('[NotesPanel] Note created successfully');
       setNewNote('');
       await loadNotes();
     } catch (error) {

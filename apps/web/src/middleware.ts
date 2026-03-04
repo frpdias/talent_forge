@@ -142,20 +142,16 @@ export async function middleware(request: NextRequest) {
     // Get user_type from user metadata (canonical model)
     const userType = user.user_metadata?.user_type || 'candidate';
     
-    console.log('[MIDDLEWARE] User:', user.email, '| Metadata user_type:', user.user_metadata?.user_type, '| Final userType:', userType);
 
     // Redirect authenticated users away from auth pages
     if (pathname === '/login' || pathname === '/register') {
       const url = request.nextUrl.clone();
       // Redirect based on user type
       if (userType === 'admin') {
-        console.log('[MIDDLEWARE] Redirecionando admin para /admin');
         url.pathname = '/admin';
       } else if (userType === 'recruiter') {
-        console.log('[MIDDLEWARE] Redirecionando recrutador para /dashboard');
         url.pathname = '/dashboard';
       } else {
-        console.log('[MIDDLEWARE] Redirecionando candidato para /candidate');
         url.pathname = '/candidate';
       }
       return NextResponse.redirect(url);
@@ -164,7 +160,6 @@ export async function middleware(request: NextRequest) {
     // Protect admin routes - only allow access for admin users
     if (pathname.startsWith('/admin')) {
       if (userType !== 'admin') {
-        console.log('[MIDDLEWARE] Bloqueando acesso não-admin a área administrativa');
         const url = request.nextUrl.clone();
         url.pathname = userType === 'recruiter' ? '/dashboard' : '/candidate';
         return NextResponse.redirect(url);
@@ -174,7 +169,6 @@ export async function middleware(request: NextRequest) {
     // Protect recruiter routes - allow recruiter and admin
     if (pathname.startsWith('/dashboard')) {
       if (userType !== 'recruiter' && userType !== 'admin') {
-        console.log('[MIDDLEWARE] Bloqueando acesso de candidato a área do recrutador');
         const url = request.nextUrl.clone();
         url.pathname = '/candidate';
         return NextResponse.redirect(url);
@@ -184,7 +178,6 @@ export async function middleware(request: NextRequest) {
     // Protect candidate routes - only allow access for candidate users
     if (pathname.startsWith('/candidate') || pathname.startsWith('/cadastro')) {
       if (userType === 'recruiter' || userType === 'admin') {
-        console.log('[MIDDLEWARE] Bloqueando acesso de recrutador/admin a área do candidato');
         const url = request.nextUrl.clone();
         url.pathname = '/dashboard';
         return NextResponse.redirect(url);

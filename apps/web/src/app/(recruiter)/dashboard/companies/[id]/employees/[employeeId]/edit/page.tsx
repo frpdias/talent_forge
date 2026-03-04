@@ -62,7 +62,6 @@ export default function EditEmployeePage() {
 
   // Hidratar a store no cliente
   useEffect(() => {
-    console.log('🔑 Iniciando hidratação da store...');
     useOrgStore.persist.rehydrate();
     setTimeout(() => {
       setStoreHydrated(true);
@@ -70,9 +69,7 @@ export default function EditEmployeePage() {
   }, []);
 
   useEffect(() => {
-    console.log('🔍 useEffect check:', { storeHydrated, currentOrgId: currentOrg?.id, employeeId });
     if (storeHydrated && currentOrg?.id && employeeId) {
-      console.log('🔄 Carregando dados com org:', currentOrg.id);
       loadEmployee();
       loadManagers();
     }
@@ -90,7 +87,6 @@ export default function EditEmployeePage() {
       }
       
       const url = `${API_V1_URL}/php/employees/${employeeId}`;
-      console.log('📡 Buscando employee:', { employeeId, orgId: currentOrg.id, url });
       
       const response = await fetch(url, {
         headers: {
@@ -99,11 +95,9 @@ export default function EditEmployeePage() {
         },
       });
 
-      console.log('📡 Resposta:', response.status, response.statusText);
 
       if (response.ok) {
         const employee = await response.json();
-        console.log('✅ Funcionário carregado:', employee);
         const formattedCPF = formatCPF(employee.cpf || '');
         setOriginalCPF(formattedCPF); // Salvar CPF original
         setFormData({
@@ -212,12 +206,6 @@ export default function EditEmployeePage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    console.log('🚀 handleSubmit iniciado');
-    console.log('📋 FormData atual:', formData);
-    console.log('📋 CPF atual:', formData.cpf, 'length:', formData.cpf.length);
-    console.log('📋 CPF validação:', validateCPF(formData.cpf));
-    console.log('🏢 CompanyId:', companyId);
-    console.log('🏢 CurrentOrg:', currentOrg);
     
     // Validações
     const newErrors: Record<string, string> = {};
@@ -243,12 +231,10 @@ export default function EditEmployeePage() {
     }
     
     if (Object.keys(newErrors).length > 0) {
-      console.log('❌ Erros de validação:', newErrors);
       setErrors(newErrors);
       return;
     }
 
-    console.log('✅ Validações passaram');
     setLoading(true);
 
     try {
@@ -276,8 +262,6 @@ export default function EditEmployeePage() {
         }
       };
       
-      console.log('📤 Enviando payload:', payload);
-      console.log('🔑 x-org-id:', currentOrg?.id || companyId);
 
       const response = await fetch(`${API_V1_URL}/php/employees/${employeeId}`, {
         method: 'PATCH',
@@ -289,10 +273,8 @@ export default function EditEmployeePage() {
         body: JSON.stringify(payload),
       });
 
-      console.log('📡 Response status:', response.status, response.statusText);
 
       if (response.ok) {
-        console.log('✅ Funcionário atualizado com sucesso!');
         alert('Funcionário atualizado com sucesso!');
         router.push(`/dashboard/companies/${companyId}?tab=employees`);
       } else {

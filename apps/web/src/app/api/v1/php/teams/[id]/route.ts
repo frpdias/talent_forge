@@ -53,7 +53,7 @@ export async function GET(request: NextRequest, { params }: Params) {
 
     // Busca dados de employee para cada membro via employees.user_id
     const memberUserIds = (members || []).map((m: any) => m.user_id).filter(Boolean);
-    let employeeMap: Record<string, any> = {};
+    const employeeMap: Record<string, any> = {};
     if (memberUserIds.length > 0) {
       const { data: emps } = await supabase
         .from('employees')

@@ -29,7 +29,7 @@ export function InterviewScheduler({ candidateId, jobId, onSchedule }: Interview
     time: '',
     duration: 60,
     location: '',
-    type: 'video' as const,
+    type: 'video' as 'presencial' | 'video' | 'phone',
     interviewers: [] as string[],
     notes: '',
   });
@@ -160,7 +160,7 @@ export function InterviewScheduler({ candidateId, jobId, onSchedule }: Interview
                       <button
                         key={type.value}
                         type="button"
-                        onClick={() => setFormData({ ...formData, type: type.value as any })}
+                        onClick={() => setFormData({ ...formData, type: type.value as 'presencial' | 'video' | 'phone' })}
                         className={`p-3 border-2 rounded-lg transition-all ${
                           formData.type === type.value
                             ? 'border-blue-600 bg-blue-50'

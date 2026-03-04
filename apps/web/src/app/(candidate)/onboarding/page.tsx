@@ -577,7 +577,6 @@ export default function CandidateOnboarding() {
   };
 
   const handleFinish = async () => {
-    console.log('🚀 handleFinish iniciado', { profileId, userId });
     
     if (!profileId || !userId) {
       setError('Perfil não encontrado. Tente refazer o cadastro.');
@@ -593,7 +592,6 @@ export default function CandidateOnboarding() {
       let resumeFilename = '';
 
       if (resumeFile) {
-        console.log('📄 Tentando upload de currículo...', resumeFile.name);
         try {
           // Validate file size (5MB max)
           const maxSize = 5 * 1024 * 1024; // 5MB in bytes
@@ -628,7 +626,6 @@ export default function CandidateOnboarding() {
 
             resumeUrl = publicUrl;
             resumeFilename = resumeFile.name;
-            console.log('✅ Upload concluído:', fileName);
           }
         } catch (uploadErr: any) {
           console.error('❌ Resume upload error:', uploadErr);
@@ -637,7 +634,6 @@ export default function CandidateOnboarding() {
       }
 
       // Mark onboarding as completed
-      console.log('💾 Atualizando candidate_profiles...', profileId);
       const { error: candidateError } = await supabase
         .from('candidate_profiles')
         .update({
@@ -653,7 +649,6 @@ export default function CandidateOnboarding() {
         throw candidateError;
       }
 
-      console.log('✅ Perfil atualizado com sucesso! Redirecionando...');
       
       // Success! Redirect to candidate dashboard
       window.location.href = '/candidate';
@@ -1361,7 +1356,6 @@ export default function CandidateOnboarding() {
               <button
                 type="button"
                 onClick={() => {
-                  console.log('Finalizando cadastro...', { profileId, userId, resumeFile });
                   handleFinish();
                 }}
                 disabled={loading}

@@ -40,11 +40,9 @@ function AuthContent() {
 
     if (actualUserType === 'candidate') {
       // New candidate after registration - go to onboarding
-      console.log('✅ Novo candidato registrado - redirecionando para /cadastro');
       router.push('/cadastro');
     } else {
       // Recruiter/admin - go to dashboard
-      console.log('✅ Recrutador registrado - redirecionando para /dashboard');
       router.push('/dashboard');
     }
   }, [router, userType]);

@@ -90,7 +90,7 @@ export async function GET(
       by_department: latestByDept,
       trends: entries,
     });
-  } catch (error: unknown) {
+  } catch (error: any) {
     const msg = error instanceof Error ? error.message : 'Erro interno';
     return NextResponse.json({ error: msg }, { status: 500 });
   }

@@ -198,7 +198,6 @@ export function usePhpRealtime(options: UsePhpRealtimeOptions): UsePhpRealtimeRe
     });
 
     socket.on('connect', () => {
-      console.log('[PhpRealtime] Connected');
       setState(prev => ({ ...prev, isConnected: true }));
       
       // Join org room
@@ -206,7 +205,6 @@ export function usePhpRealtime(options: UsePhpRealtimeOptions): UsePhpRealtimeRe
     });
 
     socket.on('disconnect', () => {
-      console.log('[PhpRealtime] Disconnected');
       setState(prev => ({ ...prev, isConnected: false }));
     });
 

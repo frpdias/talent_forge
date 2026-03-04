@@ -84,7 +84,6 @@ export function useCurrentOrg(): CurrentOrgResult {
     if (!fetchedRef.current) {
       const timeout = setTimeout(() => {
         if (!phpContextOrgId && !currentOrg?.id) {
-          console.log('[useCurrentOrg] Fallback para busca no DB');
           fetchedRef.current = true;
           fetchFromDb();
         }
@@ -101,7 +100,6 @@ export function useCurrentOrg(): CurrentOrgResult {
   // Debug log quando org muda
   useEffect(() => {
     if (orgId) {
-      console.log('[useCurrentOrg] Org atual:', orgId, orgName, phpContextOrgId ? '(PHP context)' : '');
     }
   }, [orgId, orgName, phpContextOrgId]);
 

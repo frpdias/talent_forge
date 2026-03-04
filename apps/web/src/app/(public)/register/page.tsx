@@ -120,12 +120,6 @@ function RegisterContent() {
         throw new Error('Configuração do Supabase não encontrada. Configure as variáveis de ambiente.');
       }
 
-      console.log('📝 Registrando usuário com:', {
-        email: normalizedEmail,
-        user_type: userType,
-        full_name: normalizedName,
-      });
-
       const { data, error: authError } = await supabase.auth.signUp({
         email: normalizedEmail,
         password,
@@ -138,8 +132,6 @@ function RegisterContent() {
         },
       });
 
-      console.log('✅ SignUp result:', data);
-      console.log('❌ SignUp error:', authError);
 
       if (authError) {
         console.error('Supabase Auth Error:', authError);

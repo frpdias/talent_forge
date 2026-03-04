@@ -30,7 +30,9 @@ export enum ApplicationStatus {
 }
 
 export enum JobStatus {
+  DRAFT = 'draft',
   OPEN = 'open',
+  PAUSED = 'paused',
   ON_HOLD = 'on_hold',
   CLOSED = 'closed',
 }

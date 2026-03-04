@@ -181,7 +181,6 @@ export default function NewEmployeePage() {
         manager_id: formData.manager_id || undefined,
       };
       
-      console.log('Criando funcionário:', payload);
 
       const response = await fetch(`${API_V1_URL}/php/employees`, {
         method: 'POST',

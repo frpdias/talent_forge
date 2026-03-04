@@ -44,7 +44,6 @@ export async function getUserOrganization(
   const member = members[0];
 
   if (members.length > 1) {
-    console.log(`User ${user.id} has ${members.length} organizations. Using org_id: ${member.org_id}`);
   }
 
   return member;

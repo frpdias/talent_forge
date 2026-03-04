@@ -77,13 +77,7 @@ export default function CandidatesPage() {
   async function loadCandidateDetails(candidate: Candidate) {
     try {
       setDetailsLoading(true);
-      
-      console.log('[loadCandidateDetails] Carregando dados do candidato:', {
-        id: candidate.id,
-        user_id: candidate.user_id,
-        email: candidate.email
-      });
-      
+
       // Buscar perfil completo - tenta por user_id e email
       let profiles: any[] = [];
       
@@ -94,7 +88,6 @@ export default function CandidatesPage() {
           .eq('user_id', candidate.user_id)
           .order('updated_at', { ascending: false });
         profiles = profilesByUser || [];
-        console.log('[loadCandidateDetails] Profiles por user_id:', profiles.length);
       }
       
       if (profiles.length === 0 && candidate.email) {
@@ -104,12 +97,10 @@ export default function CandidatesPage() {
           .eq('email', candidate.email)
           .order('updated_at', { ascending: false });
         profiles = profilesByEmail || [];
-        console.log('[loadCandidateDetails] Profiles por email:', profiles.length);
       }
       
       const profile = profiles?.[0] || null;
       const profileIds = profiles?.map(p => p.id) || [];
-      console.log('[loadCandidateDetails] Profile selecionado:', profile?.id);
       
       // Buscar experiências
       let experiences: any[] = [];
@@ -120,7 +111,6 @@ export default function CandidatesPage() {
           .in('candidate_profile_id', profileIds)
           .order('start_date', { ascending: false });
         experiences = expData || [];
-        console.log('[loadCandidateDetails] Experiências:', experiences.length);
       }
       
       // Buscar educação
@@ -132,7 +122,6 @@ export default function CandidatesPage() {
           .in('candidate_profile_id', profileIds)
           .order('start_year', { ascending: false });
         education = eduData || [];
-        console.log('[loadCandidateDetails] Educação:', education.length);
       }
       
       // Buscar assessments principais (DISC)
@@ -145,7 +134,6 @@ export default function CandidatesPage() {
       if (assessmentError) {
         console.error('[loadCandidateDetails] Erro ao carregar assessments:', assessmentError);
       } else {
-        console.log('[loadCandidateDetails] Testes DISC:', assessments?.length || 0);
       }
       
       // Buscar testes de cores (user_id do candidato)
@@ -157,9 +145,7 @@ export default function CandidatesPage() {
           .eq('candidate_user_id', candidate.user_id)
           .order('created_at', { ascending: false });
         colorAssessments = colorData || [];
-        console.log('[loadCandidateDetails] Testes de Cores:', colorAssessments.length, colorError ? `(Erro: ${colorError.message})` : '');
       } else {
-        console.log('[loadCandidateDetails] Sem user_id, pulando testes de cores');
       }
       
       // Buscar testes PI (user_id do candidato)
@@ -171,9 +157,7 @@ export default function CandidatesPage() {
           .eq('candidate_user_id', candidate.user_id)
           .order('created_at', { ascending: false });
         piAssessments = piData || [];
-        console.log('[loadCandidateDetails] Testes PI:', piAssessments.length, piError ? `(Erro: ${piError.message})` : '');
       } else {
-        console.log('[loadCandidateDetails] Sem user_id, pulando testes PI');
       }
       
       // Combinar todos os assessments
@@ -182,13 +166,7 @@ export default function CandidatesPage() {
         ...colorAssessments.map(a => ({ ...a, test_type: 'color', type: 'color' })),
         ...piAssessments.map(a => ({ ...a, test_type: 'pi', type: 'pi' })),
       ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-      
-      console.log('[loadCandidateDetails] Total de testes combinados:', allAssessments.length, {
-        disc: (assessments || []).length,
-        color: colorAssessments.length,
-        pi: piAssessments.length
-      });
-      
+
       setCandidateDetails({
         profile,
         experiences,

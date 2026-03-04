@@ -258,7 +258,7 @@ export function PeerSelection({
                 Seleção Completa! 🎉
               </h3>
               <p className="text-gray-600">
-                Você escolheu todos os pares necessários. Clique em "Finalizar" para gerar os
+                Você escolheu todos os pares necessários. Clique em &ldquo;Finalizar&rdquo; para gerar os
                 sorteios automáticos e criar as avaliações.
               </p>
             </div>

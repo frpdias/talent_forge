@@ -125,9 +125,7 @@ export default function ColorTestPage() {
     const newAnswers = { ...answers, [currentQuestion.id]: color };
     setAnswers(newAnswers);
     try {
-      console.log('[ColorTest] Salvando resposta:', { assessmentId, questionId: currentQuestion.id, color });
       const resp = await colorApi.submitResponse(assessmentId, currentQuestion.id, color, token);
-      console.log('[ColorTest] Resposta salva com sucesso:', resp);
       
       // Verifica se é a última pergunta
       if (currentIndex < questions.length - 1) {
@@ -135,7 +133,6 @@ export default function ColorTestPage() {
         setCurrentIndex((prev) => prev + 1);
       } else {
         // É a última pergunta, finaliza o teste automaticamente
-        console.log('[ColorTest] Última pergunta respondida, finalizando teste...');
         setSaving(false);
         await finalizeTest(newAnswers);
         return;
@@ -154,11 +151,7 @@ export default function ColorTestPage() {
       return;
     }
     const answersToCheck = finalAnswers || answers;
-    console.log('[ColorTest] Verificando respostas:', { 
-      totalRespostas: Object.keys(answersToCheck).length, 
-      totalPerguntas: questions.length 
-    });
-    
+
     // Permitir finalização se tiver pelo menos 80% das respostas ou se for chamado pela última pergunta
     if (Object.keys(answersToCheck).length < questions.length * 0.8 && !finalAnswers) {
       alert(`Responda mais perguntas antes de finalizar. (${Object.keys(answersToCheck).length}/${questions.length})`);
@@ -166,9 +159,7 @@ export default function ColorTestPage() {
     }
     try {
       setSaving(true);
-      console.log('[ColorTest] Finalizando teste...', { assessmentId });
       const res = await colorApi.finalize(assessmentId, token);
-      console.log('[ColorTest] Resultado da finalização:', res);
       const resData = (res as any)?.data ?? res;
       const scores = (resData as any)?.scores as Record<ColorCode, number> | undefined;
       if (!scores) {

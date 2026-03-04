@@ -56,7 +56,6 @@ export function PhpOrgSelector() {
       const orgIds = memberships.map(m => m.org_id);
       
       if (orgIds.length === 0) {
-        console.log('[PhpOrgSelector] Usuário não pertence a nenhuma org');
         setPhpOrgs([]);
         setLoading(false);
         return;
@@ -73,7 +72,6 @@ export function PhpOrgSelector() {
       }
 
       const activeOrgIds = new Set((activations || []).map(a => a.org_id));
-      console.log('[PhpOrgSelector] Orgs com PHP ativo:', activeOrgIds);
 
       const orgs = memberships
         .filter(m => activeOrgIds.has(m.org_id))
@@ -90,7 +88,6 @@ export function PhpOrgSelector() {
         })
         .filter(Boolean) as PhpOrg[];
 
-      console.log('[PhpOrgSelector] Orgs filtradas com PHP ativo:', orgs.map(o => o.name));
       setPhpOrgs(orgs);
       
       // Se a org atual não tem PHP ativo, selecionar a primeira que tem
@@ -105,7 +102,6 @@ export function PhpOrgSelector() {
   };
 
   const handleSelectOrg = (org: PhpOrg) => {
-    console.log('[PhpOrgSelector] Selecionando org:', org.id, org.name);
     setCurrentOrg(org);
     setDropdownOpen(false);
   };

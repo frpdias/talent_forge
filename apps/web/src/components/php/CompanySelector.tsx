@@ -62,7 +62,6 @@ export function CompanySelector() {
       }
 
       const orgIds = memberships.map(m => m.org_id);
-      console.log('[CompanySelector] Orgs do usuário:', orgIds);
 
       // Buscar quais orgs têm PHP ativo na tabela php_module_activations
       const { data: activations, error: activationsError } = await supabase
@@ -71,14 +70,12 @@ export function CompanySelector() {
         .in('org_id', orgIds)
         .eq('is_active', true);
 
-      console.log('[CompanySelector] Ativações PHP encontradas:', activations);
 
       if (activationsError) {
         console.error('Erro ao buscar ativações PHP:', activationsError);
       }
 
       const activePhpOrgIds = new Set((activations || []).map(a => a.org_id));
-      console.log('[CompanySelector] Orgs com PHP ativo:', Array.from(activePhpOrgIds));
 
       // Se não há orgs com PHP ativo, mostrar mensagem
       if (activePhpOrgIds.size === 0) {
@@ -109,7 +106,6 @@ export function CompanySelector() {
         orgType: org.org_type || 'client'
       }));
 
-      console.log('[CompanySelector] Orgs com PHP ativo:', phpActiveOrgs.length, phpActiveOrgs.map(o => o.name));
       
       setOrganizations(phpActiveOrgs);
       
@@ -118,9 +114,7 @@ export function CompanySelector() {
         const currentOrgHasPhp = currentOrg && phpActiveOrgs.find(o => o.id === currentOrg.id);
         const selectedOrg = currentOrgHasPhp ? currentOrg : phpActiveOrgs[0];
         if (!currentOrgHasPhp) {
-          console.log('[CompanySelector] Selecionando primeira org:', phpActiveOrgs[0].name);
         } else {
-          console.log('[CompanySelector] Org atual já tem PHP:', currentOrg?.name);
         }
         // Sincroniza AMBOS os contextos (currentOrg + phpContextOrg)
         setCurrentOrg(selectedOrg);

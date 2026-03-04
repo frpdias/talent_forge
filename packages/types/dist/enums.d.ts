@@ -24,7 +24,9 @@ export declare enum ApplicationStatus {
     REJECTED = "rejected"
 }
 export declare enum JobStatus {
+    DRAFT = "draft",
     OPEN = "open",
+    PAUSED = "paused",
     ON_HOLD = "on_hold",
     CLOSED = "closed"
 }

@@ -218,15 +218,8 @@ function CompanyDetailContent() {
         },
       });
 
-      console.log('📡 Response employees:', { 
-        status: response.status, 
-        ok: response.ok,
-        url: response.url 
-      });
-
       if (response.ok) {
         const data = await response.json();
-        console.log('✅ Employees loaded:', data);
         setEmployees(data);
       } else {
         const errorText = await response.text();
@@ -274,14 +267,6 @@ function CompanyDetailContent() {
   // Obter cargos disponíveis (position, não hierarchy_level)
   const availablePositions = [...new Set(employees.map(e => e.position).filter(Boolean))].sort();
   
-  // Debug
-  console.log('🔍 Debug filtro:', { 
-    employeesCount: employees.length, 
-    availablePositions,
-    selectedHierarchyFilter,
-    filteredCount: filteredEmployees.length 
-  });
-
   if (loading) {
     return (
       <div className="min-h-screen bg-[#FAFAF8] p-6 flex items-center justify-center">

@@ -220,7 +220,6 @@ export default function RecruiterCompaniesPage() {
         orgType: 'company', // Sempre company
       };
 
-      console.log('Enviando payload:', payload);
 
       const response = await fetch(endpoint, {
         method,
@@ -232,7 +231,6 @@ export default function RecruiterCompaniesPage() {
       });
 
       const responseData = await response.json();
-      console.log('Resposta da API:', responseData);
 
       if (response.ok) {
         // Se for nova empresa (não edição), criar administrador
@@ -252,7 +250,6 @@ export default function RecruiterCompaniesPage() {
             organization_id: companyId,
           };
 
-          console.log('Criando administrador:', adminPayload);
 
           const adminResponse = await fetch(`/api/v1/php/employees`, {
             method: 'POST',
@@ -269,7 +266,6 @@ export default function RecruiterCompaniesPage() {
             console.error('Erro ao criar administrador:', adminError);
             alert('⚠️ Empresa criada, mas houve erro ao criar o administrador. Você pode adicioná-lo manualmente.');
           } else {
-            console.log('✅ Administrador criado com sucesso');
           }
         }
 

@@ -40,13 +40,11 @@ export default function TenantsPage() {
 
   async function fetchTenants() {
     try {
-      console.log('[Tenants] Buscando via API...');
       
       // Usar API route que tem acesso admin (service role)
       const response = await fetch('/api/admin/tenants');
       const result = await response.json();
       
-      console.log('[Tenants] Resultado API:', result);
 
       if (!response.ok || !result.success) {
         console.error('Error fetching tenants:', result.error);

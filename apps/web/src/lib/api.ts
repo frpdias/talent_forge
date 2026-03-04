@@ -1,4 +1,5 @@
 import { API_V1_URL } from './api-config';
+import type { CreateJobDto, UpdateJobDto, CreateCandidateDto, UpdateCandidateDto } from '@talentforge/types';
 
 const API_URL = API_V1_URL;
 
@@ -47,7 +48,7 @@ export async function apiFetch<T>(
 
     return response.json();
   } catch (err: any) {
-    if (err?.name === 'AbortError') {
+    if ((err as Error)?.name === 'AbortError') {
       throw new Error('Request timed out');
     }
     throw err;
@@ -79,7 +80,7 @@ export const organizationsApi = {
 
 // Jobs
 export const jobsApi = {
-  create: (data: any, token: string, orgId: string) =>
+  create: (data: CreateJobDto, token: string, orgId: string) =>
     apiFetch('/jobs', {
       method: 'POST',
       body: JSON.stringify(data),
@@ -95,7 +96,7 @@ export const jobsApi = {
   get: (id: string, token: string, orgId: string) =>
     apiFetch(`/jobs/${id}`, { token, orgId }),
   
-  update: (id: string, data: any, token: string, orgId: string) =>
+  update: (id: string, data: UpdateJobDto, token: string, orgId: string) =>
     apiFetch(`/jobs/${id}`, {
       method: 'PATCH',
       body: JSON.stringify(data),
@@ -113,7 +114,7 @@ export const jobsApi = {
 
 // Candidates
 export const candidatesApi = {
-  create: (data: any, token: string, orgId: string) =>
+  create: (data: CreateCandidateDto, token: string, orgId: string) =>
     apiFetch('/candidates', {
       method: 'POST',
       body: JSON.stringify(data),
@@ -129,7 +130,7 @@ export const candidatesApi = {
   get: (id: string, token: string, orgId: string) =>
     apiFetch(`/candidates/${id}`, { token, orgId }),
   
-  update: (id: string, data: any, token: string, orgId: string) =>
+  update: (id: string, data: UpdateCandidateDto, token: string, orgId: string) =>
     apiFetch(`/candidates/${id}`, {
       method: 'PATCH',
       body: JSON.stringify(data),

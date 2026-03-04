@@ -84,7 +84,6 @@ export default function RecruiterLayout({ children }: { children: React.ReactNod
           return;
         }
         
-        console.log('[RecruiterLayout] userId:', userId);
 
         // Carregar perfil do usuário
         const { data: profile, error: profileError } = await supabase
@@ -112,45 +111,42 @@ export default function RecruiterLayout({ children }: { children: React.ReactNod
           return;
         }
 
-        console.log('[RecruiterLayout] memberships raw:', memberships);
 
-        const orgs = (memberships || [])
-          .map((member: any) => {
+        const orgs: Organization[] = (memberships || [])
+          .flatMap((member) => {
             const org = Array.isArray(member.organizations)
               ? member.organizations[0]
               : member.organizations;
 
             if (!org) {
               console.warn('[RecruiterLayout] Membership sem org:', member);
-              return null;
+              return [];
             }
 
-            return {
-              id: org.id,
-              name: org.name,
-              orgType: org.org_type,
-              slug: org.slug,
-              role: member.role,
-            };
-          })
-          .filter(Boolean);
+            return [{
+              id: org.id as string,
+              name: org.name as string,
+              orgType: org.org_type as string,
+              slug: org.slug as string,
+              role: member.role as string,
+            }];
+          });
 
-        console.log('[RecruiterLayout] orgs processadas:', orgs);
 
         if (!ignore && orgs.length > 0) {
-          setOrganizations(orgs as any);
-          
+          setOrganizations(orgs);
+
           // Definir primeira org como nome padrão
           if (orgs[0]) {
-            setOrgName((orgs[0] as any).name);
+            setOrgName(orgs[0].name);
           }
-          
+
           if (!currentOrg) {
-            let preferredOrg = orgs[0] as any;
+            let preferredOrg: Organization = orgs[0];
 
             try {
               const counts = await Promise.all(
-                (orgs as any[]).map(async (org) => {
+                orgs.map(async (org) => {
                   const { count } = await supabase
                     .from('jobs')
                     .select('id', { count: 'exact', head: true })

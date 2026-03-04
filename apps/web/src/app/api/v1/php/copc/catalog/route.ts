@@ -88,7 +88,7 @@ export async function GET(request: NextRequest) {
       by_category: byCategory,
       metrics: data || [],
     });
-  } catch (error: unknown) {
+  } catch (error: any) {
     const msg = error instanceof Error ? error.message : 'Erro interno';
     return NextResponse.json({ error: msg }, { status: 500 });
   }
@@ -140,7 +140,7 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json(data, { status: 201 });
-  } catch (error: unknown) {
+  } catch (error: any) {
     const msg = error instanceof Error ? error.message : 'Erro interno';
     return NextResponse.json({ error: msg }, { status: 500 });
   }

@@ -46,21 +46,17 @@ export default function InvitationsPage() {
   const loadData = async (organizationId: string) => {
     setLoading(true);
     try {
-      console.log('🏢 Org ID:', organizationId);
 
       // Buscar convites
-      console.log('🔄 Buscando convites...');
       await loadInvitations(organizationId);
 
       // Buscar funcionários disponíveis
-      console.log('👥 Buscando funcionários...');
       const { data: emps, error: empError } = await supabase
         .from('employees')
         .select('id, full_name, position, department')
         .eq('organization_id', organizationId)
         .order('full_name');
 
-      console.log('📊 Funcionários encontrados:', emps?.length || 0, 'Erro:', empError);
 
       setEmployees(emps || []);
     } catch (error: any) {
@@ -74,10 +70,8 @@ export default function InvitationsPage() {
   const loadInvitations = async (org_id: string) => {
     try {
       const token = await getAuthToken();
-      console.log('🎫 Token presente:', !!token);
       
       const url = `/api/v1/php/nr1/invitations?org_id=${org_id}`;
-      console.log('🌐 Chamando API:', url);
       
       const res = await fetch(url, {
         headers: {
@@ -86,7 +80,6 @@ export default function InvitationsPage() {
         },
       });
 
-      console.log('📡 Status da resposta:', res.status);
 
       if (!res.ok) {
         const errorText = await res.text();
@@ -95,7 +88,6 @@ export default function InvitationsPage() {
       }
       
       const json = await res.json();
-      console.log('✅ Convites recebidos:', json.invitations?.length || 0);
       setInvitations(json.invitations || []);
     } catch (error) {
       console.error('❌ Erro ao buscar convites:', error);

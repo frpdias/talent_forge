@@ -65,7 +65,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
       if (!profile || profile.user_type !== 'admin') {
         // Não é admin - redirecionar para dashboard ou login
-        console.log('⛔ Acesso negado: usuário não é admin');
         router.push('/dashboard');
         return;
       }
