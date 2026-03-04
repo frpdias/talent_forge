@@ -12,9 +12,8 @@ import {
   UserCheck,
   FileBarChart,
   UserPlus,
-  Settings, 
+  Settings,
   LogOut,
-  Plus,
   ChevronDown,
   Building2,
   Search,
@@ -321,17 +320,6 @@ export default function RecruiterLayout({ children }: { children: React.ReactNod
             );
           })}
         </nav>
-
-        {/* Quick Action Button */}
-        <div className="px-3 py-3 border-t border-white/10">
-          <Link
-            href="/dashboard/jobs?new=1"
-            className="flex items-center justify-center gap-2 w-full px-4 py-2.5 bg-white/15 hover:bg-white/20 border border-white/20 text-white text-sm font-medium rounded-lg transition-all duration-200"
-          >
-            <Plus className="w-4 h-4" />
-            <span>Nova Vaga</span>
-          </Link>
-        </div>
 
         {/* User Section */}
         <div className="p-3 border-t border-white/10">

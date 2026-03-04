@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { 
   Briefcase, 
   Plus, 
@@ -50,15 +50,14 @@ const statusLabels = {
   closed: 'Fechada',
 };
 
-function JobsPageInner() {
+export default function JobsPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const [jobs, setJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [pubsByJob, setPubsByJob] = useState<Map<string, any[]>>(new Map());
-  const [showNewJobModal, setShowNewJobModal] = useState(() => searchParams.get('new') === '1');
+  const [showNewJobModal, setShowNewJobModal] = useState(false);
 
   const supabase = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -346,23 +345,9 @@ function JobsPageInner() {
 
       <NewJobModal
         isOpen={showNewJobModal}
-        onClose={() => {
-          setShowNewJobModal(false);
-          // Limpa o ?new=1 da URL sem recarregar
-          if (searchParams.get('new') === '1') {
-            router.replace('/dashboard/jobs');
-          }
-        }}
+        onClose={() => setShowNewJobModal(false)}
         onSuccess={() => { void loadJobs(); }}
       />
     </div>
-  );
-}
-
-export default function JobsPage() {
-  return (
-    <Suspense>
-      <JobsPageInner />
-    </Suspense>
   );
 }

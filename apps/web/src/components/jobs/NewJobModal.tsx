@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import { Save } from 'lucide-react';
 import { Modal } from '@/components/ui/modal';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
