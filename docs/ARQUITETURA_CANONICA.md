@@ -1,6 +1,6 @@
 # Arquitetura Canônica — TalentForge
 
-**Última atualização**: 2026-03-03 | **Score de Conformidade**: ✅ 100% (Sprint 22: PHP Automation — TFCI PUT/selector, scores calculator, NR-1 bulk select, COPC CSV import)
+**Última atualização**: 2026-03-03 | **Score de Conformidade**: ✅ 100% (Sprint 25: Qualidade — ESLint ativo, Playwright E2E, Jest unitário, Error Boundaries)
 
 ## 📜 FONTE DA VERDADE — PRINCÍPIO FUNDAMENTAL
 
@@ -5305,7 +5305,47 @@ Próxima revisão: Sprint 12 (Action Plans + Settings)
 
 ---
 
-**FIM DO DOCUMENTO** — Versão 4.0 (Sprint 22 + PHP Automation: TFCI PUT/selector, scores calculator, NR-1 bulk, COPC CSV)
+---
+
+## Sprint 25 — Qualidade de Código (2026-03-03)
+
+**Objetivo:** Elevar a qualidade base do codebase com segurança (type safety, testes, error recovery).
+
+### FASE 1 — Limpeza e Type Safety
+- ✅ **142 console.log removidos** de 29 arquivos (produção silenciosa)
+- ✅ **ESLint ativo** no build (`ignoreDuringBuilds: false`)
+- ✅ `eslint.config.mjs` reescrito com `FlatCompat` (ESLint 9 + next/core-web-vitals)
+- ✅ `JobStatus` enum completado com `DRAFT` e `PAUSED` em `packages/types`
+- ✅ `dashboard/layout.tsx` tipado com `Organization[]` via flatMap
+- ✅ Arquivos mortos removidos: `page-backup.tsx`, `page-simple.tsx`
+
+### FASE 2 — Testes Automatizados
+- ✅ **Playwright E2E** — 7 testes contra produção (Chromium headless):
+  - `e2e/01-auth-pages`: login e register renderizam corretamente
+  - `e2e/02-auth-redirect`: rotas protegidas redirecionam para /login
+  - `e2e/03-api-auth`: APIs PHP retornam 401 sem Bearer token
+- ✅ **Jest unitário** — 8 testes para `lib/api.ts` (`apiFetch`):
+  - Headers obrigatórios (Content-Type, Authorization, x-org-id)
+  - Erro HTTP 4xx/5xx com mensagem do body
+  - Timeout (AbortError → "Request timed out")
+  - Re-throw de erros de rede
+- **Arquivos de teste:** `apps/web/e2e/`, `apps/web/__tests__/lib/`, `apps/web/playwright.config.ts`
+
+### FASE 3 — Error Boundaries
+- ✅ `(recruiter)/error.tsx` — captura erros no dashboard de recrutadores
+- ✅ `(admin)/error.tsx` — captura erros no painel admin
+- ✅ `(candidate)/error.tsx` — captura erros na área do candidato
+- ✅ `not-found.tsx` — página 404 global com link de retorno
+- Design: paleta oficial `#141042` + `#FAFAF8` + `border #E5E5DC`
+
+### Resultados
+- Build: ✅ 102 páginas, exit code 0
+- Playwright: ✅ 7/7 passando
+- Jest: ✅ 8/8 passando
+
+---
+
+**FIM DO DOCUMENTO** — Versão 4.1 (Sprint 25: Qualidade — ESLint, Playwright, Jest, Error Boundaries)
 ```sql
 CREATE TYPE risk_level AS ENUM ('low', 'medium', 'high', 'critical');
 CREATE TYPE assessment_status AS ENUM ('draft', 'active', 'completed', 'cancelled');
