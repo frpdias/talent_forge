@@ -1,6 +1,6 @@
 # Arquitetura Canônica — TalentForge
 
-**Última atualização**: 2026-03-03 | **Score de Conformidade**: ✅ 100% (Sprint 26: Pipeline bug fix + fase Em Documentação + API Routes applications)
+**Última atualização**: 2026-03-04 | **Score de Conformidade**: ✅ 100% (Sprint 28: Plano de Melhoria Módulo Recrutamento + Padronização Modal)
 
 ## 📜 FONTE DA VERDADE — PRINCÍPIO FUNDAMENTAL
 
@@ -840,6 +840,202 @@ SELECT * FROM v_recruiter_performance WHERE org_id = '<uuid>';
 ```
 
 **RLS aplicado:** Todas views respeitam automaticamente o RLS das tabelas base.
+
+---
+
+## 0.9) Dependências Completas do Projeto
+
+> Versões canônicas de todas as dependências do monorepo. Não atualizar versões de forma ad-hoc — qualquer upgrade deve ser avaliado com cuidado e registrado aqui.
+
+### Monorepo raiz (`package.json`)
+
+```json
+{
+  "engines": { "node": ">=20.0.0" },
+  "workspaces": ["apps/*", "packages/*"],
+  "dependencies": {
+    "@supabase/ssr": "0.5.2",
+    "@supabase/supabase-js": "2.46.2"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  },
+  "overrides": {
+    "@types/react": "^18",
+    "@types/react-dom": "^18"
+  }
+}
+```
+
+> **⚠️ `overrides` obrigatórios:** Evitam que npm hoisting instale `@types/react@19` na raiz, o que causaria erros TS2786 com lucide-react e outros pacotes de UI.
+
+---
+
+### Frontend (`apps/web/package.json`)
+
+#### Dependencies (produção)
+| Pacote | Versão | Finalidade |
+|--------|--------|------------|
+| `next` | `^15.5.9` | Framework principal (App Router) |
+| `react` | `^18.3.1` | UI library |
+| `react-dom` | `^18.3.1` | DOM renderer |
+| `react-is` | `^18.3.1` | Introspection React (requerido por styled-components e outros) |
+| `@supabase/supabase-js` | `2.46.2` | Cliente Supabase (query, auth) |
+| `@supabase/ssr` | `0.5.2` | Helpers SSR Supabase (cookies Next.js) |
+| `zustand` | `^5.0.10` | State management global |
+| `@dnd-kit/core` | `^6.1.0` | Drag-and-drop core (pipeline kanban) |
+| `@dnd-kit/sortable` | `^8.0.0` | Drag-and-drop sortable |
+| `@dnd-kit/utilities` | `^3.2.2` | Utilities para @dnd-kit |
+| `@hello-pangea/dnd` | `^18.0.1` | DnD alternativo (algumas views) |
+| `lucide-react` | `^0.468.0` | Ícones SVG |
+| `recharts` | `^3.6.0` | Gráficos (PHP dashboard, analytics) |
+| `date-fns` | `^4.1.0` | Manipulação de datas |
+| `clsx` | `^2.0.0` | Concatenação condicional de classes CSS |
+| `tailwind-merge` | `^2.2.0` | Merge de classes Tailwind sem conflitos |
+| `sonner` | `^1.7.4` | Toast notifications |
+| `socket.io-client` | `^4.8.3` | WebSocket cliente (notificações real-time) |
+| `jspdf` | `^4.0.0` | Geração de PDF (relatórios NR-1, TFCI) |
+| `jspdf-autotable` | `^5.0.7` | Plugin tabelas para jsPDF |
+| `xlsx` | `^0.18.5` | Import/export Excel (importação de funcionários) |
+| `@vercel/analytics` | `^1.6.1` | Analytics Vercel (prod) |
+| `@vercel/speed-insights` | `^1.3.1` | Speed insights Vercel (prod) |
+
+#### DevDependencies (build/lint/test)
+| Pacote | Versão | Finalidade |
+|--------|--------|------------|
+| `typescript` | `^5` | Compilador TypeScript |
+| `tailwindcss` | `^4` | CSS framework (Tailwind v4 CSS-first) |
+| `@tailwindcss/postcss` | `^4` | PostCSS plugin para Tailwind 4 |
+| `eslint` | `^9` | Linter |
+| `eslint-config-next` | `15.5.9` | Config eslint para Next.js **(= versão do next)** |
+| `@types/node` | `^20` | Types Node.js |
+| `@types/react` | `^18` | Types React 18 **(nunca ^19 com React 18)** |
+| `@types/react-dom` | `^18` | Types ReactDOM 18 |
+| `jest` | `^29.7.0` | Test runner |
+| `jest-environment-jsdom` | `^29.7.0` | Ambiente DOM para Jest |
+| `@testing-library/react` | `^14.1.2` | Testing Library React |
+| `@testing-library/jest-dom` | `^6.1.5` | Matchers DOM para Jest |
+| `@types/jest` | `^29.5.11` | Types Jest |
+| `@playwright/test` | `^1.58.2` | Testes E2E |
+
+> **Regra crítica**: `eslint-config-next` DEVE ter versão **idêntica** ao `next` instalado. Mismatch causa processo silencioso (sem output, sem erro).
+
+---
+
+### Backend (`apps/api/package.json`)
+
+#### Dependencies (produção)
+| Pacote | Versão | Finalidade |
+|--------|--------|------------|
+| `@nestjs/common` | `^11.0.1` | Core NestJS |
+| `@nestjs/core` | `^11.0.1` | Core NestJS |
+| `@nestjs/config` | `^4.0.0` | Config module (env vars) |
+| `@nestjs/platform-express` | `^11.0.1` | HTTP adapter Express |
+| `@nestjs/platform-socket.io` | `^11.1.13` | WebSocket (Socket.IO) |
+| `@nestjs/websockets` | `^11.1.13` | WebSocket decorators |
+| `@nestjs/swagger` | `^11.0.0` | Swagger/OpenAPI docs em `/docs` |
+| `@supabase/supabase-js` | `^2.39.0` | Cliente Supabase (backend) |
+| `@talentforge/types` | `*` | Tipos compartilhados do monorepo |
+| `class-validator` | `^0.14.1` | Validação de DTOs |
+| `class-transformer` | `^0.5.1` | Transform/serialize objetos |
+| `rxjs` | `^7.8.1` | Reactive extensions (requerido pelo NestJS) |
+| `reflect-metadata` | `^0.2.2` | Metadata reflection (decorators TypeScript) |
+| `openai` | `^4.77.0` | Cliente OpenAI (IA generativa) |
+| `socket.io` | `^4.8.3` | WebSocket servidor |
+| `lru-cache` | `^11.2.6` | Cache in-memory LRU |
+
+#### DevDependencies
+| Pacote | Versão | Finalidade |
+|--------|--------|------------|
+| `@nestjs/cli` | `^11.0.0` | CLI NestJS (build, scaffold) |
+| `@nestjs/schematics` | `^11.0.0` | Schematics para CLI |
+| `@nestjs/testing` | `^11.0.1` | Testing module NestJS |
+| `typescript` | `^5.7.3` | Compilador TypeScript |
+| `ts-node` | `^10.9.2` | TS execution (dev) |
+| `ts-jest` | `^29.2.5` | Jest com TypeScript |
+| `jest` | `^30.0.0` | Test runner |
+| `supertest` | `^7.0.0` | HTTP testing |
+| `prettier` | `^3.4.2` | Formatador de código |
+| `@vercel/node` | `^3.0.0` | Vercel serverless adapter |
+
+---
+
+### MCP Server (`packages/mcp/package.json`)
+
+| Pacote | Versão | Finalidade |
+|--------|--------|------------|
+| `@modelcontextprotocol/sdk` | `^1.27.1` | SDK MCP (tools, resources, prompts) |
+| `@supabase/supabase-js` | `2.46.2` | Cliente Supabase |
+| `zod` | `^3.22.4` | Schema validation para tools MCP |
+| `esbuild` (dev) | `^0.25.0` | Bundler ultra-rápido (~10ms build) |
+
+> **Build**: `npm run build:mcp` → `esbuild` gera `packages/mcp/dist/server.js`  
+> **Start**: `packages/mcp/start.sh` (auto-sourcia `apps/api/.env`)  
+> **Inspect**: `npm run mcp:inspect` → MCP Inspector visual
+
+---
+
+### Types (`packages/types`)
+
+Pacote interno de tipos TypeScript compartilhados pelo monorepo. Sem dependências externas — apenas `typescript` em devDependencies.
+
+**Enums principais exportados:**
+- `UserType`: `recruiter | candidate | admin | headhunter`
+- `ApplicationStatus`: `applied | in_process | in_documentation | hired | rejected`
+- `JobStatus`: `draft | active | paused | closed`
+- `OrgMemberRole`: `admin | manager | member | viewer`
+
+---
+
+### Comandos de execução local (referência rápida)
+
+```bash
+# ── Pré-requisitos ──────────────────────────────────────────────────
+node --version   # >= 20.0.0 obrigatório (usar: nvm use 20)
+npm --version    # >= 10
+
+# ── Instalação ──────────────────────────────────────────────────────
+# SEMPRE da raiz do monorepo (nunca de apps/web ou apps/api)
+cd /caminho/para/PROJETO_TALENT_FORGE
+npm install
+
+# ── Desenvolvimento ─────────────────────────────────────────────────
+npm run dev           # API (3001) + Web (3000) via concurrently
+npm run dev:web       # Apenas Next.js em http://localhost:3000
+npm run dev:api       # Apenas NestJS em http://localhost:3001
+
+# ── Build ────────────────────────────────────────────────────────────
+npm run build         # Build completo (api + web)
+npm run build:web     # Apenas web
+npm run build:api     # Apenas api
+npm run build:mcp     # MCP server (esbuild ~10ms)
+
+# ── MCP ─────────────────────────────────────────────────────────────
+npm run mcp:start     # Inicia MCP server
+npm run mcp:inspect   # Abre MCP Inspector
+
+# ── Qualidade ───────────────────────────────────────────────────────
+npm run lint          # ESLint (api + web)
+npm run test          # Jest (api)
+
+# ── Banco de dados ──────────────────────────────────────────────────
+npm run db:migrate    # supabase db push (requer CLI Supabase)
+npm run db:reset      # supabase db reset
+
+# ── Limpeza emergencial (node_modules corrompido) ───────────────────
+rm -rf node_modules apps/web/node_modules apps/api/node_modules \
+       packages/mcp/node_modules packages/types/node_modules \
+       package-lock.json apps/web/.next
+npm cache clean --force
+npm install
+```
+
+> **⚠️ Turbopack e novas rotas**: Ao criar novos arquivos de rota Next.js (`route.ts`, `page.tsx`) enquanto `next dev --turbopack` está rodando, é **obrigatório reiniciar o servidor**:
+> ```bash
+> lsof -ti :3000 | xargs kill -9
+> npm run dev:web
+> ```
+> O hot-reload do Turbopack detecta mudanças em arquivos **existentes**, mas não descobre arquivos de rota **novos** automaticamente.
 
 ---
 
@@ -5387,7 +5583,186 @@ CREATE TYPE application_status AS ENUM (
 
 ---
 
-**FIM DO DOCUMENTO** — Versão 4.2 (Sprint 26: Pipeline bug fix + fase Em Documentação + API Routes applications)
+## Sprint 27 — Headhunter Org Fallback Fix (2026-03-03)
+
+**Objetivo:** Corrigir pipeline mostrando zero candidatos para usuários do tipo headhunter (multi-org).
+
+### Problema resolvido
+- **Bug:** `limit(1)` sem ordem na query de `org_members` retornava org errada para headhunters que são membros de múltiplas organizações
+- **Causa raiz:** Um headhunter pode ser `admin` da própria org E `member/manager` de orgs clientes — `limit(1)` sem `ORDER BY` escolhia aleatoriamente entre elas
+
+### Fix aplicado em `apps/web/src/app/(recruiter)/dashboard/pipeline/page.tsx`
+
+```tsx
+// ❌ ANTES (bug — org indeterminada para headhunter multi-org)
+const { data: orgMembership } = await supabase
+  .from('org_members').select('org_id')
+  .eq('user_id', user?.id).limit(1).maybeSingle();
+resolvedOrgId = orgMembership?.org_id || null;
+
+// ✅ DEPOIS (correto — prioriza role admin = própria org do headhunter)
+const { data: orgMemberships } = await supabase
+  .from('org_members').select('org_id, role')
+  .eq('user_id', user.id).eq('status', 'active')
+  .order('created_at', { ascending: true });
+const adminOrg = orgMemberships.find(m => m.role === 'admin');
+const managerOrg = orgMemberships.find(m => m.role === 'manager');
+resolvedOrgId = adminOrg?.org_id || managerOrg?.org_id || orgMemberships[0].org_id;
+```
+
+### Lógica de prioridade de org (headhunter)
+| Prioridade | Role | Org selecionada |
+|-----------|------|-----------------|
+| 1ª | `admin` | Própria org do headhunter |
+| 2ª | `manager` | Org onde é gestor |
+| 3ª | qualquer | Primeira org ativa por `created_at` |
+
+### ⚠️ Problema com Turbopack (documentado)
+Novas **rotas** Next.js criadas enquanto `next dev --turbopack` está rodando **não são detectadas por hot-reload**. Exige reinício manual:
+```bash
+# Matar o servidor
+lsof -ti :3000 | xargs kill -9
+# Reiniciar
+npm run dev:web
+```
+Somente arquivos existentes são recarregados automaticamente; novos arquivos de rota precisam de restart.
+
+### Resultados
+- Pipeline de candidatos funcionando para todos os perfis (recruiter, headhunter, admin)
+- Commit: `294c6bd` + fix headhunter aplicado
+
+---
+
+## Sprint 28 — Plano de Melhoria Módulo Recrutamento (2026-03-04)
+
+**Objetivo:** Avaliar 360° o módulo de recrutamento e documentar roadmap de evolução.
+
+### Avaliação 360° — Notas por área
+
+| Área | Nota | Justificativa |
+|------|------|---------------|
+| Arquitetura técnica | 8/10 | Sólida. Pequenas inconsistências de cliente Supabase |
+| Segurança | 9/10 | RLS, JWT, multi-tenant corretos |
+| Performance | 5/10 | Sem paginação, componentes monolíticos |
+| Completude de produto | 6/10 | Falta career page pública, rastreamento, filtros |
+| UX/UI | 7/10 | Design system consistente, mas telas sobrecarregadas |
+| Manutenibilidade | 6/10 | `CandidatesPage` com 1.317 linhas é risco |
+
+**Nota geral: 6.8/10**
+
+### Gaps críticos identificados
+
+| # | Problema | Impacto |
+|---|---------|--------|
+| 1 | Sem página pública de vagas (career page) | Alto |
+| 2 | Pipeline sem filtro por vaga | Alto |
+| 3 | Sem paginação em candidatos/vagas | Alto |
+| 4 | Reports ainda usa NestJS instável | Médio |
+| 5 | Sem rastreamento de origem das candidaturas | Médio |
+| 6 | Modais de criação abrem páginas novas (UX ruim) | Médio |
+
+### Roadmap aprovado
+
+#### Sprint A — Career Page Pública
+**Rota:** `(public)/vagas/page.tsx`, `(public)/empresas/[slug]/page.tsx`, `(public)/empresas/[slug]/vagas/[jobId]/page.tsx`
+
+**Campos novos em `jobs`:**
+```sql
+ALTER TABLE jobs ADD COLUMN IF NOT EXISTS is_public BOOLEAN DEFAULT false;
+ALTER TABLE jobs ADD COLUMN IF NOT EXISTS description_html TEXT;
+ALTER TABLE jobs ADD COLUMN IF NOT EXISTS benefits TEXT[];
+ALTER TABLE jobs ADD COLUMN IF NOT EXISTS requirements TEXT[];
+ALTER TABLE jobs ADD COLUMN IF NOT EXISTS application_deadline DATE;
+```
+
+**Campos novos em `organizations`:**
+```sql
+ALTER TABLE organizations ADD COLUMN IF NOT EXISTS slug TEXT UNIQUE;
+ALTER TABLE organizations ADD COLUMN IF NOT EXISTS career_page_enabled BOOLEAN DEFAULT false;
+ALTER TABLE organizations ADD COLUMN IF NOT EXISTS career_page_headline TEXT;
+ALTER TABLE organizations ADD COLUMN IF NOT EXISTS career_page_logo_url TEXT;
+ALTER TABLE organizations ADD COLUMN IF NOT EXISTS career_page_color TEXT DEFAULT '#141042';
+```
+
+**View pública:**
+```sql
+CREATE OR REPLACE VIEW v_public_jobs AS
+SELECT j.id, j.title, j.department, j.location, j.type,
+  j.salary_min, j.salary_max, j.description_html,
+  j.benefits, j.requirements, j.application_deadline, j.created_at,
+  o.name AS org_name, o.slug AS org_slug,
+  o.career_page_headline, o.career_page_logo_url, o.career_page_color
+FROM jobs j
+JOIN organizations o ON o.id = j.org_id
+WHERE j.status = 'active' AND j.is_public = true AND o.career_page_enabled = true;
+GRANT SELECT ON v_public_jobs TO anon, authenticated;
+```
+
+**Integração landing page:** Adicionar link `Vagas` no nav de `(public)/page.tsx` e seção "Vagas em Destaque".
+
+#### Sprint B — Pipeline com Filtro por Vaga
+- Seletor de vaga no topo do kanban (dropdown)
+- URL param: `/dashboard/pipeline?job=<uuid>`
+- Badge com nome da vaga em cada card
+
+#### Sprint C — Paginação e Performance
+- Paginação cursor-based via `.range(from, to)` do Supabase
+- Refactor `CandidatesPage` (1.317 linhas) em: `CandidateCard`, `CandidateFilters`, `CandidateDetailDrawer`, `CandidateAssessmentsTab`
+
+#### Sprint D — Rastreamento de Origem
+```sql
+ALTER TABLE applications
+  ADD COLUMN IF NOT EXISTS source TEXT CHECK (source IN (
+    'direct_link','career_page','linkedin','indeed','referral','whatsapp','other'
+  )),
+  ADD COLUMN IF NOT EXISTS utm_source TEXT,
+  ADD COLUMN IF NOT EXISTS utm_medium TEXT,
+  ADD COLUMN IF NOT EXISTS utm_campaign TEXT;
+```
+
+#### Sprint E — Migrar Reports para Next.js Routes
+- Remover `reportsApi` (NestJS) de `dashboard/reports/page.tsx`
+- Queries diretas ao Supabase via route handlers
+- Adicionar `in_documentation` em `STATUS_LABELS`
+
+#### Sprint F — Limpeza
+- Remover `page-backup.tsx` e `page-simple.tsx`
+- Padronizar `createBrowserClient` → `createClient` em todas as telas
+- Corrigir `statusColors` jobs: `open` → `active`, `on_hold` → `paused`
+
+#### Sprint G1 — Modais Translúcidos de Criação
+
+**Padrão visual canônico para criação rápida:**
+
+| Propriedade | Valor |
+|-------------|-------|
+| Overlay | `bg-[#141042]/40 backdrop-blur-sm` |
+| Container | `bg-white/95 rounded-2xl shadow-2xl border border-white/20` |
+| Animação | `animate-in fade-in-0 zoom-in-95 duration-200` |
+| Título | `text-lg font-semibold text-[#141042]` |
+| Botão salvar | `bg-[#141042] hover:bg-[#1a1554] text-white` |
+
+**Novo componente:** `apps/web/src/components/ui/creation-modal.tsx`
+
+**Mudanças em `jobs/page.tsx`:**
+- Botão `+ Nova Vaga`: de `Link href="/dashboard/jobs/new"` → `onClick={() => setShowNewJobModal(true)}`
+- Modal tamanho `lg` com todos os campos do formulário inline
+- Após salvar: `void loadJobs()` + toast (sonner)
+
+**Mudanças em `candidates/page.tsx`:**
+- Adicionar botão `+ Novo Candidato` (com `UserPlus`) no header
+- Modal tamanho `md`
+- Corrigir `candidatesApi` → Supabase direto
+- Corrigir fallback de org (mesmo padrão Sprint 27 — prioridade por role)
+
+**Regra:** Páginas `/dashboard/jobs/new` e `/candidates/new` são **mantidas** como fallback de URL direta.
+
+### Documento de referência
+`docs/PLANO_MELHORIA_MODULO_RECRUTAMENTO.md` — avaliação 360° completa com wireframes, SQL e specs técnicas por sprint.
+
+---
+
+**FIM DO DOCUMENTO** — Versão 4.4 (Sprint 28: Plano de Melhoria Módulo Recrutamento + Padronização Modal)
 ```sql
 CREATE TYPE risk_level AS ENUM ('low', 'medium', 'high', 'critical');
 CREATE TYPE assessment_status AS ENUM ('draft', 'active', 'completed', 'cancelled');

@@ -115,15 +115,21 @@ export default function PipelinePage() {
       let resolvedOrgId = currentOrg?.id || null;
 
       // Fallback: derive org from membership if store is not ready
-      if (!resolvedOrgId) {
-        const { data: orgMembership } = await supabase
+      // Prioriza org onde usuário é admin (própria org do headhunter/recruiter)
+      if (!resolvedOrgId && user?.id) {
+        const { data: orgMemberships } = await supabase
           .from('org_members')
-          .select('org_id')
-          .eq('user_id', user?.id)
-          .limit(1)
-          .maybeSingle();
+          .select('org_id, role')
+          .eq('user_id', user.id)
+          .eq('status', 'active')
+          .order('created_at', { ascending: true });
 
-        resolvedOrgId = orgMembership?.org_id || null;
+        if (orgMemberships && orgMemberships.length > 0) {
+          // Prefere onde é admin (própria org headhunter) → manager → qualquer
+          const adminOrg = orgMemberships.find((m: any) => m.role === 'admin');
+          const managerOrg = orgMemberships.find((m: any) => m.role === 'manager');
+          resolvedOrgId = adminOrg?.org_id || managerOrg?.org_id || orgMemberships[0].org_id;
+        }
       }
       
       if (!token || !resolvedOrgId) {
