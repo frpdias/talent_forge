@@ -3,11 +3,16 @@
 import { Briefcase, FileText, Clock, MapPin, Building2, ArrowUpRight, Brain, Sparkles, User, TrendingUp } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
-import { RadarChart, Radar, PolarGrid, PolarAngleAxis, Tooltip as RechartsTooltip, ResponsiveContainer } from 'recharts';
+import dynamic from 'next/dynamic';
 import { createClient } from '@/lib/supabase/client';
 import ColorTestModal from '@/components/candidate/ColorTestModal';
 import PiTestModal from '@/components/candidate/PiTestModal';
 import DiscTestModal from '@/components/candidate/DiscTestModal';
+
+const AssessmentRadarChart = dynamic(
+  () => import('@/components/candidate/AssessmentRadarChart'),
+  { ssr: false }
+);
 
 interface RealJob {
   id: string;
@@ -217,9 +222,10 @@ export default function CandidateDashboard() {
         setDiscError(null);
 
         try {
+          // Busca assessment DISC mais recente (completed)
           const { data: latestAssessment, error: latestError } = await supabase
             .from('assessments')
-            .select('id, traits, assessment_type, status')
+            .select('id, raw_score, interpreted_score, assessment_type, status, disc_assessments(dominance_score,influence_score,steadiness_score,conscientiousness_score,primary_profile,secondary_profile,description)')
             .eq('candidate_user_id', user.id)
             .eq('assessment_type', 'disc')
             .eq('status', 'completed')
@@ -232,16 +238,30 @@ export default function CandidateDashboard() {
             setDiscError(latestError.message);
           }
 
-          const discTraits = (latestAssessment as any)?.traits?.disc;
-          if (discTraits) {
+          // Tenta ler de disc_assessments (join) primeiro, depois fallback para JSONB
+          const discJoin = (latestAssessment as any)?.disc_assessments;
+          const discRaw = (latestAssessment as any)?.interpreted_score?.disc
+            ?? (latestAssessment as any)?.raw_score?.disc;
+
+          if (discJoin?.primary_profile) {
             setDiscResult({
-              primary_profile: discTraits.primary ?? discTraits.primary_profile ?? '',
-              secondary_profile: discTraits.secondary ?? discTraits.secondary_profile ?? null,
-              dominance_score: Number(discTraits.D ?? discTraits.dominance_score ?? 0),
-              influence_score: Number(discTraits.I ?? discTraits.influence_score ?? 0),
-              steadiness_score: Number(discTraits.S ?? discTraits.steadiness_score ?? 0),
-              conscientiousness_score: Number(discTraits.C ?? discTraits.conscientiousness_score ?? 0),
-              description: discTraits.description ?? null,
+              primary_profile: discJoin.primary_profile ?? '',
+              secondary_profile: discJoin.secondary_profile ?? null,
+              dominance_score: Number(discJoin.dominance_score ?? 0),
+              influence_score: Number(discJoin.influence_score ?? 0),
+              steadiness_score: Number(discJoin.steadiness_score ?? 0),
+              conscientiousness_score: Number(discJoin.conscientiousness_score ?? 0),
+              description: discJoin.description ?? null,
+            });
+          } else if (discRaw) {
+            setDiscResult({
+              primary_profile: discRaw.primary ?? discRaw.primary_profile ?? '',
+              secondary_profile: discRaw.secondary ?? discRaw.secondary_profile ?? null,
+              dominance_score: Number(discRaw.D ?? discRaw.dominance_score ?? 0),
+              influence_score: Number(discRaw.I ?? discRaw.influence_score ?? 0),
+              steadiness_score: Number(discRaw.S ?? discRaw.steadiness_score ?? 0),
+              conscientiousness_score: Number(discRaw.C ?? discRaw.conscientiousness_score ?? 0),
+              description: discRaw.description ?? null,
             });
           } else {
             setDiscResult(null);
@@ -377,16 +397,12 @@ export default function CandidateDashboard() {
         if (!user) return;
 
         const [
-          { data: appsData },
+          { data: appsRpc },
           { data: jobsData },
           { data: profileData },
         ] = await Promise.all([
-          supabase
-            .from('applications')
-            .select('id, status, created_at, jobs!inner(title, organizations!inner(name))')
-            .eq('candidate_user_id', user.id)
-            .order('created_at', { ascending: false })
-            .limit(5),
+          // get_my_applications já tem fallback por email — funciona mesmo sem candidates.user_id preenchido
+          supabase.rpc('get_my_applications'),
           supabase.rpc('get_matched_jobs'),
           supabase
             .from('candidate_profiles')
@@ -395,7 +411,13 @@ export default function CandidateDashboard() {
             .maybeSingle(),
         ]);
 
-        const apps = (appsData as RealApplication[] | null) || [];
+        // Mapear para o shape RealApplication esperado pelo restante da página
+        const apps: RealApplication[] = ((appsRpc as any[]) || []).slice(0, 5).map((a) => ({
+          id: a.application_id,
+          status: a.status,
+          created_at: a.created_at,
+          jobs: { title: a.job_title || 'Vaga', organizations: null },
+        }));
         const jobs = (jobsData as RealJob[] | null) || [];
         const profile = profileData as any;
 
@@ -425,64 +447,44 @@ export default function CandidateDashboard() {
 
   return (
     <div className="space-y-4 sm:space-y-6 lg:space-y-8 pb-16 lg:pb-0">
-      {/* DISC Test Banner */}
-      <div className="bg-linear-to-r from-[#141042] to-[#3B82F6] rounded-xl sm:rounded-2xl p-4 sm:p-6 lg:p-8 relative overflow-hidden cursor-pointer hover:shadow-[0_8px_32px_rgba(20,16,66,0.18)] transition-all duration-300" onClick={() => setActiveTestModal('disc')}>
+      {/* Welcome + Testes Banner */}
+      <div className="bg-linear-to-r from-[#141042] to-[#3B82F6] rounded-xl sm:rounded-2xl p-4 sm:p-6 lg:p-8 relative overflow-hidden">
         <div className="absolute right-0 top-0 w-32 sm:w-64 h-32 sm:h-64 bg-white/10 rounded-full blur-3xl" />
         <div className="relative flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           <div className="flex-1">
-            <div className="flex items-center space-x-2 mb-2">
-              <Brain className="w-6 h-6 text-white" />
-              <h3 className="text-lg sm:text-xl font-semibold text-white">Teste de Personalidade</h3>
-            </div>
-            <p className="text-white/80 text-sm sm:text-base mb-4">
-              Descubra seu perfil profissional e destaque-se para recrutadores
+            <h2 className="text-lg sm:text-xl lg:text-2xl font-semibold text-white! mb-1">
+              Olá, {displayName}!
+            </h2>
+            <p className="text-white! text-sm sm:text-base mb-3">
+              {openJobsCount > 0
+                ? <><span className="font-semibold">{openJobsCount} vaga{openJobsCount !== 1 ? 's' : ''}</span> abertas disponíveis para você.</>
+                : 'Acompanhe suas candidaturas e explore novas vagas.'}
             </p>
+            <div className="flex items-center gap-2 text-white/70! text-xs">
+              <Brain className="w-4 h-4" />
+              <span>Complete seu perfil comportamental e destaque-se para recrutadores</span>
+            </div>
           </div>
-          <div className="flex flex-wrap gap-3 items-center justify-end">
+          <div className="flex flex-wrap gap-3 items-center lg:justify-end">
             <button
-              className="flex-1 basis-0 min-w-35 text-center bg-white text-[#141042] px-6 py-2.5 rounded-lg font-medium hover:bg-white/90 transition-colors text-sm sm:text-base"
-              onClick={(e) => {
-                e.stopPropagation();
-                setActiveTestModal('disc');
-              }}
+              className="flex-1 basis-0 min-w-28 text-center bg-white text-[#141042] px-5 py-2.5 rounded-lg font-medium hover:bg-white/90 transition-colors text-sm"
+              onClick={() => setActiveTestModal('disc')}
             >
               DISC
             </button>
             <button
-              className="flex-1 basis-0 min-w-35 text-center bg-white/20 text-white px-6 py-2.5 rounded-lg font-medium hover:bg-white/30 transition-colors text-sm sm:text-base border border-white/30"
-              onClick={(e) => {
-                e.stopPropagation();
-                setActiveTestModal('color-test');
-              }}
+              className="flex-1 basis-0 min-w-28 text-center bg-white/20 text-white px-5 py-2.5 rounded-lg font-medium hover:bg-white/30 transition-colors text-sm border border-white/30"
+              onClick={() => setActiveTestModal('color-test')}
             >
               Cores
             </button>
             <button
-              className="flex-1 basis-0 min-w-35 text-center bg-white/20 text-white px-6 py-2.5 rounded-lg font-medium hover:bg-white/30 transition-colors text-sm sm:text-base border border-white/30"
-              onClick={(e) => {
-                e.stopPropagation();
-                setActiveTestModal('pi-test');
-              }}
+              className="flex-1 basis-0 min-w-28 text-center bg-white/20 text-white px-5 py-2.5 rounded-lg font-medium hover:bg-white/30 transition-colors text-sm border border-white/30"
+              onClick={() => setActiveTestModal('pi-test')}
             >
               PI
             </button>
           </div>
-        </div>
-      </div>
-
-      {/* Welcome Banner */}
-      <div className="bg-[#141042] rounded-xl sm:rounded-2xl p-4 sm:p-6 lg:p-8 relative overflow-hidden">
-        <div className="absolute right-0 top-0 w-32 sm:w-64 h-32 sm:h-64 bg-white/5 rounded-full blur-3xl" />
-        <div className="relative">
-          <h2 className="text-lg sm:text-xl lg:text-2xl font-semibold text-white! mb-1 sm:mb-2">
-            Olá, {displayName}! 👋
-          </h2>
-          <p className="text-white/80! text-sm sm:text-base">
-            {openJobsCount > 0
-              ? <><span className="text-white! font-semibold">{openJobsCount} vaga{openJobsCount !== 1 ? 's' : ''}</span> abertas disponíveis para você.
-              </>
-              : 'Acompanhe suas candidaturas e explore novas vagas.'}
-          </p>
         </div>
       </div>
 
@@ -707,27 +709,12 @@ export default function CandidateDashboard() {
               {/* Radar Chart */}
               {radarData.length > 0 && (
                 <div className="w-full h-56">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <RadarChart data={radarData} cx="50%" cy="50%" outerRadius="72%">
-                      <PolarGrid stroke="#E5E5DC" />
-                      <PolarAngleAxis
-                        dataKey="subject"
-                        tick={{ fill: '#555', fontSize: 11 }}
-                      />
-                      <Radar
-                        name={title}
-                        dataKey="A"
-                        stroke={accentColor}
-                        fill={accentColor}
-                        fillOpacity={0.2}
-                        strokeWidth={2}
-                      />
-                      <RechartsTooltip
-                        formatter={(v: unknown) => [`${v}${activeModal !== 'colors' ? '%' : ''}`, 'Score']}
-                        contentStyle={{ borderRadius: 8, fontSize: 12, border: '1px solid #E5E5DC' }}
-                      />
-                    </RadarChart>
-                  </ResponsiveContainer>
+                  <AssessmentRadarChart
+                    data={radarData}
+                    title={title}
+                    accentColor={accentColor}
+                    showPercent={activeModal !== 'colors'}
+                  />
                 </div>
               )}
 
@@ -757,24 +744,6 @@ export default function CandidateDashboard() {
           </div>
         );
       })()}
-
-      {/* ══ Modais de teste (full-screen, Supabase direto) ══ */}
-      {activeTestModal === 'color-test' && (
-        <ColorTestModal
-          onClose={(updated) => {
-            setActiveTestModal(null);
-            if (updated) router.refresh();
-          }}
-        />
-      )}
-      {activeTestModal === 'pi-test' && (
-        <PiTestModal
-          onClose={(updated) => {
-            setActiveTestModal(null);
-            if (updated) router.refresh();
-          }}
-        />
-      )}
 
       {/* Stats Grid */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4">
