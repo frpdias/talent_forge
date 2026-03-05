@@ -1,59 +1,60 @@
 'use client';
 
-import { Briefcase, FileText, Bookmark, Eye, Clock, MapPin, Building2, Star, ArrowUpRight, Brain, Sparkles } from 'lucide-react';
+import { Briefcase, FileText, Clock, MapPin, Building2, ArrowUpRight, Brain, Sparkles, User, TrendingUp } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
+import { RadarChart, Radar, PolarGrid, PolarAngleAxis, Tooltip as RechartsTooltip, ResponsiveContainer } from 'recharts';
 import { createClient } from '@/lib/supabase/client';
-import { colorApi } from '@/lib/api';
+import ColorTestModal from '@/components/candidate/ColorTestModal';
+import PiTestModal from '@/components/candidate/PiTestModal';
 
-const stats = [
-  { label: 'Candidaturas', value: '12', icon: FileText },
-  { label: 'Salvas', value: '8', icon: Bookmark },
-  { label: 'Visualizações', value: '156', icon: Eye },
-  { label: 'Entrevistas', value: '3', icon: Briefcase },
-];
+interface RealJob {
+  id: string;
+  title: string;
+  location?: string | null;
+  employment_type?: string | null;
+  seniority?: string | null;
+  salary_min?: number | null;
+  salary_max?: number | null;
+  created_at?: string | null;
+  department?: string | null;
+  org_name?: string | null;
+  match_score?: number | null;
+}
 
-const recommendedJobs = [
-  {
-    id: 1,
-    title: 'Desenvolvedor Full Stack',
-    company: 'TechCorp',
-    location: 'São Paulo, SP',
-    type: 'Remoto',
-    salary: 'R$ 12.000 - R$ 18.000',
-    tags: ['React', 'Node.js', 'TypeScript'],
-    match: 95,
-    posted: '2 dias atrás',
-  },
-  {
-    id: 2,
-    title: 'Frontend Developer Senior',
-    company: 'StartupX',
-    location: 'Rio de Janeiro, RJ',
-    type: 'Híbrido',
-    salary: 'R$ 15.000 - R$ 20.000',
-    tags: ['Vue.js', 'TypeScript', 'Tailwind'],
-    match: 88,
-    posted: '3 dias atrás',
-  },
-  {
-    id: 3,
-    title: 'Tech Lead',
-    company: 'MegaTech',
-    location: 'Belo Horizonte, MG',
-    type: 'Presencial',
-    salary: 'R$ 20.000 - R$ 28.000',
-    tags: ['Liderança', 'Arquitetura', 'AWS'],
-    match: 82,
-    posted: '1 semana atrás',
-  },
-];
+interface RealApplication {
+  id: string;
+  status: string;
+  created_at: string;
+  jobs: { title: string; organizations: { name: string } | null } | null;
+}
 
-const applications = [
-  { job: 'Desenvolvedor Backend', company: 'DataCorp', status: 'Em análise', date: '15 Jan', statusColor: 'amber' },
-  { job: 'Full Stack Developer', company: 'TechLab', status: 'Entrevista agendada', date: '12 Jan', statusColor: 'green' },
-  { job: 'DevOps Engineer', company: 'CloudTech', status: 'Em análise', date: '10 Jan', statusColor: 'amber' },
-];
+const STATUS_MAP: Record<string, { label: string; color: string }> = {
+  applied:          { label: 'Candidatado',        color: 'blue' },
+  screening:        { label: 'Em triagem',          color: 'amber' },
+  in_process:       { label: 'Em avaliação',        color: 'amber' },
+  in_documentation: { label: 'Em documentação',     color: 'violet' },
+  hired:            { label: 'Contratado',          color: 'green' },
+  rejected:         { label: 'Não selecionado',     color: 'red' },
+};
+
+const formatSalaryRange = (min?: number | null, max?: number | null) => {
+  if (!min && !max) return 'A combinar';
+  const fmt = (v: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(v);
+  if (min && max) return `${fmt(min)} — ${fmt(max)}`;
+  if (min) return `A partir de ${fmt(min)}`;
+  return `Até ${fmt(max!)}`;
+};
+
+const timeAgo = (date?: string | null) => {
+  if (!date) return 'Recente';
+  const days = Math.floor((Date.now() - new Date(date).getTime()) / 86400000);
+  if (days === 0) return 'Hoje';
+  if (days === 1) return 'Ontem';
+  if (days < 7) return `${days} dias atrás`;
+  if (days < 30) return `${Math.floor(days / 7)} sem. atrás`;
+  return `${Math.floor(days / 30)} meses atrás`;
+};
 
 type DiscResult = {
   primary_profile: string;
@@ -77,6 +78,16 @@ export default function CandidateDashboard() {
   const [piResult, setPiResult] = useState<any>(null);
   const [piLoading, setPiLoading] = useState(false);
   const [piError, setPiError] = useState<string | null>(null);
+  const [activeModal, setActiveModal] = useState<'disc' | 'colors' | 'pi' | null>(null);
+  const [activeTestModal, setActiveTestModal] = useState<'color-test' | 'pi-test' | null>(null);
+
+  // Dashboard — dados reais
+  const [dashStats, setDashStats] = useState({ total: 0, active: 0, hired: 0, completion: 0 });
+  const [openJobsCount, setOpenJobsCount] = useState(0);
+  const [realJobs, setRealJobs] = useState<RealJob[]>([]);
+  const [realApplications, setRealApplications] = useState<RealApplication[]>([]);
+  const [completionItems, setCompletionItems] = useState<{ label: string; done: boolean }[]>([]);
+  const [dashLoading, setDashLoading] = useState(true);
 
   const discProfileSummary: Record<string, string> = {
     D: 'Foco em resultados, decisão rápida e assertividade.',
@@ -254,20 +265,25 @@ export default function CandidateDashboard() {
         const { data: { user } } = await supabase.auth.getUser();
         const { data: { session } } = await supabase.auth.getSession();
         
+        console.log('[CandidateDash] User:', user?.id);
+        console.log('[CandidateDash] Session:', !!session);
         
         if (!session?.access_token) {
+          console.log('[CandidateDash] No access token');
           setColorError('Não autenticado');
           setColorLoading(false);
           return;
         }
         
         if (!user?.id) {
+          console.log('[CandidateDash] No user id');
           setColorError('Usuário não identificado');
           setColorLoading(false);
           return;
         }
         
         // Buscar diretamente do Supabase para validar os dados
+        console.log('[CandidateDash] Buscando assessment completado...');
         const { data: colorData, error: colorError } = await supabase
           .from('color_assessments')
           .select('*')
@@ -277,6 +293,7 @@ export default function CandidateDashboard() {
           .limit(1)
           .maybeSingle();
         
+        console.log('[CandidateDash] Supabase result:', colorData);
         
         if (colorError) {
           console.error('[CandidateDash] Supabase error:', colorError);
@@ -286,8 +303,10 @@ export default function CandidateDashboard() {
         }
         
         if (colorData) {
+          console.log('[CandidateDash] Encontrado assessment:', colorData);
           setColorResult(colorData);
         } else {
+          console.log('[CandidateDash] Nenhum assessment completado encontrado');
           setColorResult(null);
         }
       } catch (err: any) {
@@ -332,8 +351,10 @@ export default function CandidateDashboard() {
         }
         
         if (piData) {
+          console.log('[CandidateDash] PI encontrado:', piData);
           setPiResult(piData);
         } else {
+          console.log('[CandidateDash] Nenhum PI completado encontrado');
           setPiResult(null);
         }
       } catch (err: any) {
@@ -346,10 +367,65 @@ export default function CandidateDashboard() {
     loadPI();
   }, []);
 
+  // Carrega stats, vagas e candidaturas reais
+  const loadDashboard = useCallback(async () => {
+      setDashLoading(true);
+      try {
+        const supabase = createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+
+        const [
+          { data: appsData },
+          { data: jobsData },
+          { data: profileData },
+        ] = await Promise.all([
+          supabase
+            .from('applications')
+            .select('id, status, created_at, jobs!inner(title, organizations!inner(name))')
+            .eq('candidate_user_id', user.id)
+            .order('created_at', { ascending: false })
+            .limit(5),
+          supabase.rpc('get_matched_jobs'),
+          supabase
+            .from('candidate_profiles')
+            .select('resume_url, current_title, phone, profile_completion_percentage')
+            .eq('user_id', user.id)
+            .maybeSingle(),
+        ]);
+
+        const apps = (appsData as RealApplication[] | null) || [];
+        const jobs = (jobsData as RealJob[] | null) || [];
+        const profile = profileData as any;
+
+        const activeStatuses = ['applied', 'screening', 'in_process', 'in_documentation'];
+        const active = apps.filter((a) => activeStatuses.includes(a.status)).length;
+        const hired = apps.filter((a) => a.status === 'hired').length;
+        const completion = profile?.profile_completion_percentage ?? 0;
+
+        setDashStats({ total: apps.length, active, hired, completion });
+        setOpenJobsCount(jobs.length);
+        setRealJobs(jobs.slice(0, 3));
+        setRealApplications(apps);
+
+        setCompletionItems([
+          { label: 'Cargo atual preenchido',  done: !!profile?.current_title },
+          { label: 'Currículo enviado',        done: !!profile?.resume_url },
+          { label: 'Telefone de contato',      done: !!profile?.phone },
+        ]);
+      } catch (err) {
+        console.error('Erro ao carregar dashboard:', err);
+      } finally {
+        setDashLoading(false);
+      }
+  }, []);
+
+  useEffect(() => { loadDashboard(); }, [loadDashboard]);
+
   return (
     <div className="space-y-4 sm:space-y-6 lg:space-y-8 pb-16 lg:pb-0">
       {/* DISC Test Banner */}
-      <div className="bg-linear-to-r from-purple-600 to-blue-600 rounded-xl sm:rounded-2xl p-4 sm:p-6 lg:p-8 relative overflow-hidden cursor-pointer hover:shadow-xl transition-shadow" onClick={() => router.push('/disc')}>
+      <div className="bg-linear-to-r from-[#141042] to-[#3B82F6] rounded-xl sm:rounded-2xl p-4 sm:p-6 lg:p-8 relative overflow-hidden cursor-pointer hover:shadow-[0_8px_32px_rgba(20,16,66,0.18)] transition-all duration-300" onClick={() => router.push('/disc')}>
         <div className="absolute right-0 top-0 w-32 sm:w-64 h-32 sm:h-64 bg-white/10 rounded-full blur-3xl" />
         <div className="relative flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           <div className="flex-1">
@@ -363,7 +439,7 @@ export default function CandidateDashboard() {
           </div>
           <div className="flex flex-wrap gap-3 items-center justify-end">
             <button
-              className="flex-1 basis-0 min-w-35 text-center bg-white text-purple-600 px-6 py-2.5 rounded-lg font-medium hover:bg-white/90 transition-colors text-sm sm:text-base"
+              className="flex-1 basis-0 min-w-35 text-center bg-white text-[#141042] px-6 py-2.5 rounded-lg font-medium hover:bg-white/90 transition-colors text-sm sm:text-base"
               onClick={(e) => {
                 e.stopPropagation();
                 router.push('/disc');
@@ -372,19 +448,19 @@ export default function CandidateDashboard() {
               DISC
             </button>
             <button
-              className="flex-1 basis-0 min-w-35 text-center bg-white/90 text-[#141042] px-6 py-2.5 rounded-lg font-medium hover:bg-white transition-colors text-sm sm:text-base border border-white/40"
+              className="flex-1 basis-0 min-w-35 text-center bg-white/20 text-white px-6 py-2.5 rounded-lg font-medium hover:bg-white/30 transition-colors text-sm sm:text-base border border-white/30"
               onClick={(e) => {
                 e.stopPropagation();
-                router.push('/color-test');
+                setActiveTestModal('color-test');
               }}
             >
               Cores
             </button>
             <button
-              className="flex-1 basis-0 min-w-35 text-center bg-white/90 text-[#141042] px-6 py-2.5 rounded-lg font-medium hover:bg-white transition-colors text-sm sm:text-base border border-white/40"
+              className="flex-1 basis-0 min-w-35 text-center bg-white/20 text-white px-6 py-2.5 rounded-lg font-medium hover:bg-white/30 transition-colors text-sm sm:text-base border border-white/30"
               onClick={(e) => {
                 e.stopPropagation();
-                router.push('/pi-test');
+                setActiveTestModal('pi-test');
               }}
             >
               PI
@@ -401,311 +477,326 @@ export default function CandidateDashboard() {
             Olá, {displayName}! 👋
           </h2>
           <p className="text-white/80! text-sm sm:text-base">
-            Você tem <span className="text-white! font-semibold">3 novas vagas</span> compatíveis com seu perfil.
+            {openJobsCount > 0
+              ? <><span className="text-white! font-semibold">{openJobsCount} vaga{openJobsCount !== 1 ? 's' : ''}</span> abertas disponíveis para você.
+              </>
+              : 'Acompanhe suas candidaturas e explore novas vagas.'}
           </p>
         </div>
       </div>
 
-      {/* DISC resumo */}
-      <div className="relative overflow-visible rounded-2xl border border-[#E5E5DC] bg-white/90 p-4 sm:p-6 lg:p-7 shadow-[0_12px_40px_-28px_rgba(20,16,66,0.5)]">
-        <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute -top-20 -left-10 h-40 w-40 rounded-full bg-purple-200/50 blur-3xl" />
-          <div className="absolute -bottom-16 -right-8 h-32 w-32 rounded-full bg-blue-200/50 blur-3xl" />
-        </div>
-
-        <div className="relative flex flex-col gap-3">
-          <div className="flex items-start justify-between gap-3">
-            <div className="flex items-center gap-3">
-              {(() => {
-                const colors = getDiscColors(discResult?.primary_profile);
-                return (
-                  <div className={`w-12 h-12 rounded-xl bg-linear-to-br ${colors.bg} ${colors.text} flex items-center justify-center shadow-inner text-2xl font-extrabold`}>
-                    {discResult ? discResult.primary_profile : <Sparkles className="w-6 h-6" />}
-                  </div>
-                );
-              })()}
-              <div>
-                <p className="text-xs uppercase tracking-wide text-purple-700/80 font-semibold">Perfil DISC</p>
+      {/* ══ Perfis Comportamentais — 3 cards lado a lado ══ */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+        {/* ─── DISC ─── */}
+        {(() => {
+          const colors = getDiscColors(discResult?.primary_profile);
+          const discDimLabel: Record<string, string> = { D: 'Dominância', I: 'Influência', S: 'Estabilidade', C: 'Consciência' };
+          const predominant = discResult?.primary_profile ? discDimLabel[discResult.primary_profile] : null;
+          return (
+            <div className="bg-white border border-[#E5E5DC] rounded-xl sm:rounded-2xl p-4 sm:p-5 shadow-[0_2px_8px_rgba(20,16,66,0.06),0_1px_2px_rgba(20,16,66,0.04)] hover:shadow-[0_8px_32px_rgba(20,16,66,0.10),0_2px_8px_rgba(20,16,66,0.06)] hover:-translate-y-0.5 transition-all duration-300 flex flex-col gap-3">
+              <div className="flex items-center gap-3">
+                <div className={`w-11 h-11 rounded-xl bg-linear-to-br ${colors.bg} ${colors.text} flex items-center justify-center text-xl font-bold`}>
+                  {discResult ? discResult.primary_profile : <Sparkles className="w-5 h-5" />}
+                </div>
+                <div>
+                  <p className="text-xs uppercase tracking-wide text-[#666666] font-semibold">Perfil DISC</p>
+                  {predominant && <p className="text-sm font-semibold text-[#141042]">{predominant}</p>}
+                </div>
+              </div>
+              <p className="text-[13px] text-[#555] leading-snug line-clamp-2 flex-1">
+                {discLoading ? 'Carregando...' : discResult
+                  ? (discResult.description || discProfileSummary[discResult.primary_profile] || 'Seu perfil comportamental está disponível.')
+                  : 'Faça o teste para gerar seu resumo comportamental.'}
+              </p>
+              <div className="flex gap-2">
+                {discResult && (
+                  <button
+                    onClick={() => setActiveModal('disc')}
+                    className="flex-1 text-xs font-semibold text-[#141042] bg-[#F5F5F0] hover:bg-[#EAEAE0] py-2 px-3 rounded-lg transition-colors"
+                  >
+                    Ver detalhes
+                  </button>
+                )}
+                <button
+                  onClick={() => router.push('/disc')}
+                  className="flex-1 text-xs font-medium text-[#3B82F6] border border-[#3B82F6]/30 hover:bg-[#3B82F6]/5 py-2 px-3 rounded-lg transition-colors"
+                >
+                  {discResult ? 'Refazer' : 'Fazer teste'}
+                </button>
               </div>
             </div>
-            <button
-              className="text-xs sm:text-sm font-semibold text-purple-700 hover:underline"
-              onClick={() => router.push('/disc')}
-            >
-              Ver/Refazer teste
-            </button>
-          </div>
+          );
+        })()}
 
-          {discLoading && (
-            <p className="text-sm text-[#666]">Carregando seu perfil...</p>
-          )}
-          {!discLoading && discError && (
-            <p className="text-sm text-red-600">Erro ao carregar perfil: {discError}</p>
-          )}
-
-          {!discLoading && discResult && (
-            <>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mt-1">
-                {[
-                  { label: 'Dominância', score: discResult.dominance_score, color: 'from-red-500/70 to-red-600/90', code: 'D', summary: discProfileSummary['D'] },
-                  { label: 'Influência', score: discResult.influence_score, color: 'from-amber-400/80 to-amber-500/90', code: 'I', summary: discProfileSummary['I'] },
-                  { label: 'Estabilidade', score: discResult.steadiness_score, color: 'from-green-500/70 to-green-600/90', code: 'S', summary: discProfileSummary['S'] },
-                  { label: 'Consciência', score: discResult.conscientiousness_score, color: 'from-blue-500/70 to-blue-600/90', code: 'C', summary: discProfileSummary['C'] },
-                ].map((item) => (
-                  <div
-                    key={item.label}
-                    className="relative group p-3 rounded-xl bg-[#F7F7F2] border border-[#EFEFE7]"
-                    title={`${item.label}: ${item.summary || ''}`}
+        {/* ─── Cores ─── */}
+        {(() => {
+          const dominant = colorResult
+            ? (colorLabel[colorResult.primary_color as string] || colorResult.primary_color)
+            : null;
+          const secondary = colorResult
+            ? (colorLabel[colorResult.secondary_color as string] || colorResult.secondary_color)
+            : null;
+          const tagline = colorResult
+            ? colorSummary[colorResult.primary_color as string] || 'Seu mapa de cores predominantes está disponível.'
+            : 'Faça o teste para gerar seu mapa de cores.';
+          return (
+            <div className="bg-white border border-[#E5E5DC] rounded-xl sm:rounded-2xl p-4 sm:p-5 shadow-[0_2px_8px_rgba(20,16,66,0.06),0_1px_2px_rgba(20,16,66,0.04)] hover:shadow-[0_8px_32px_rgba(20,16,66,0.10),0_2px_8px_rgba(20,16,66,0.06)] hover:-translate-y-0.5 transition-all duration-300 flex flex-col gap-3">
+              <div className="flex items-center gap-3">
+                <div className="w-11 h-11 rounded-xl bg-[#F59E0B]/10 text-[#F59E0B] flex items-center justify-center text-xl">👔</div>
+                <div>
+                  <p className="text-xs uppercase tracking-wide text-[#666666] font-semibold">Perfil Cores</p>
+                  {dominant && (
+                    <p className="text-sm font-semibold text-[#141042]">
+                      {dominant}{secondary ? <span className="font-normal text-[#666666]"> · {secondary}</span> : null}
+                    </p>
+                  )}
+                </div>
+              </div>
+              <p className="text-[13px] text-[#555] leading-snug line-clamp-2 flex-1">
+                {colorLoading ? 'Carregando...' : tagline}
+              </p>
+              <div className="flex gap-2">
+                {colorResult && (
+                  <button
+                    onClick={() => setActiveModal('colors')}
+                    className="flex-1 text-xs font-semibold text-[#141042] bg-[#F5F5F0] hover:bg-[#EAEAE0] py-2 px-3 rounded-lg transition-colors"
                   >
-                    <div className="flex items-center justify-between mb-2">
-                      <p className="text-sm font-semibold text-[#444]">{item.label}</p>
-                      <span className="text-xs text-[#666]">{item.score}%</span>
-                    </div>
-                    <div className="h-2 rounded-full bg-[#E5E5DC] overflow-hidden">
-                      <div
-                          className={`h-full rounded-full bg-linear-to-r ${item.color}`}
-                        style={{ width: `${Math.min(item.score, 100)}%` }}
+                    Ver detalhes
+                  </button>
+                )}
+                <button
+                  onClick={() => setActiveTestModal('color-test')}
+                  className="flex-1 text-xs font-medium text-[#3B82F6] border border-[#3B82F6]/30 hover:bg-[#3B82F6]/5 py-2 px-3 rounded-lg transition-colors"
+                >
+                  {colorResult ? 'Refazer' : 'Fazer teste'}
+                </button>
+              </div>
+            </div>
+          );
+        })()}
+
+        {/* ─── PI ─── */}
+        {(() => {
+          const piScores = piResult ? [
+            { label: 'Direção',       val: piResult.scores_adapted?.direcao       ?? piResult.scores_natural?.direcao       ?? 0 },
+            { label: 'Energia Social', val: piResult.scores_adapted?.energia_social ?? piResult.scores_natural?.energia_social ?? 0 },
+            { label: 'Ritmo',         val: piResult.scores_adapted?.ritmo         ?? piResult.scores_natural?.ritmo         ?? 0 },
+            { label: 'Estrutura',     val: piResult.scores_adapted?.estrutura     ?? piResult.scores_natural?.estrutura     ?? 0 },
+          ] : [];
+          const dominantPi = piScores.length ? piScores.reduce((a, b) => a.val >= b.val ? a : b) : null;
+          return (
+            <div className="bg-white border border-[#E5E5DC] rounded-xl sm:rounded-2xl p-4 sm:p-5 shadow-[0_2px_8px_rgba(20,16,66,0.06),0_1px_2px_rgba(20,16,66,0.04)] hover:shadow-[0_8px_32px_rgba(20,16,66,0.10),0_2px_8px_rgba(20,16,66,0.06)] hover:-translate-y-0.5 transition-all duration-300 flex flex-col gap-3">
+              <div className="flex items-center gap-3">
+                <div className="w-11 h-11 rounded-xl bg-[#8B5CF6]/10 text-[#8B5CF6] flex items-center justify-center text-xl">📈</div>
+                <div>
+                  <p className="text-xs uppercase tracking-wide text-[#666666] font-semibold">Perfil PI</p>
+                  {dominantPi && <p className="text-sm font-semibold text-[#141042]">{dominantPi.label}</p>}
+                </div>
+              </div>
+              <p className="text-[13px] text-[#555] leading-snug line-clamp-2 flex-1">
+                {piLoading ? 'Carregando...' : piResult
+                  ? 'Análise preditiva do seu comportamento natural e adaptado no trabalho.'
+                  : 'Faça o teste para gerar sua análise preditiva de comportamento.'}
+              </p>
+              <div className="flex gap-2">
+                {piResult && (
+                  <button
+                    onClick={() => setActiveModal('pi')}
+                    className="flex-1 text-xs font-semibold text-[#141042] bg-[#F5F5F0] hover:bg-[#EAEAE0] py-2 px-3 rounded-lg transition-colors"
+                  >
+                    Ver detalhes
+                  </button>
+                )}
+                <button
+                  onClick={() => setActiveTestModal('pi-test')}
+                  className="flex-1 text-xs font-medium text-[#3B82F6] border border-[#3B82F6]/30 hover:bg-[#3B82F6]/5 py-2 px-3 rounded-lg transition-colors"
+                >
+                  {piResult ? 'Refazer' : 'Fazer teste'}
+                </button>
+              </div>
+            </div>
+          );
+        })()}
+      </div>
+
+      {/* ══ Modal de detalhe dos perfis comportamentais ══ */}
+      {activeModal && (() => {
+        let title = '';
+        let radarData: { subject: string; A: number; fullMark: number }[] = [];
+        let accentColor = '#3B82F6';
+        let primaryLabel = '';
+        let secondaryLabel = '';
+        let testPath = '/disc';
+        const discDimLabel: Record<string, string> = { D: 'Dominância', I: 'Influência', S: 'Estabilidade', C: 'Consciência' };
+
+        if (activeModal === 'disc' && discResult) {
+          title = 'Perfil DISC';
+          accentColor = '#3B82F6';
+          testPath = '/disc';
+          radarData = [
+            { subject: 'D — Dominância',   A: discResult.dominance_score,         fullMark: 100 },
+            { subject: 'I — Influência',    A: discResult.influence_score,         fullMark: 100 },
+            { subject: 'S — Estabilidade',  A: discResult.steadiness_score,        fullMark: 100 },
+            { subject: 'C — Consciência',   A: discResult.conscientiousness_score, fullMark: 100 },
+          ];
+          primaryLabel   = discDimLabel[discResult.primary_profile] || discResult.primary_profile;
+          secondaryLabel = discResult.secondary_profile ? (discDimLabel[discResult.secondary_profile] || discResult.secondary_profile) : '';
+        } else if (activeModal === 'colors' && colorResult) {
+          title = 'Perfil Cores';
+          accentColor = '#F59E0B';
+          testPath = '/color-test';
+          const scores = (colorResult.scores || {}) as Record<string, number>;
+          radarData = [
+            { subject: 'Azul',    A: scores.azul    || 0, fullMark: 80 },
+            { subject: 'Rosa',    A: scores.rosa    || 0, fullMark: 80 },
+            { subject: 'Amarelo', A: scores.amarelo || 0, fullMark: 80 },
+            { subject: 'Verde',   A: scores.verde   || 0, fullMark: 80 },
+            { subject: 'Branco',  A: scores.branco  || 0, fullMark: 80 },
+          ];
+          primaryLabel   = colorLabel[colorResult.primary_color   as string] || colorResult.primary_color   || '';
+          secondaryLabel = colorLabel[colorResult.secondary_color as string] || colorResult.secondary_color || '';
+        } else if (activeModal === 'pi' && piResult) {
+          title = 'Perfil PI';
+          accentColor = '#8B5CF6';
+          testPath = '/pi-test';
+          const sa = piResult.scores_adapted || {};
+          const sn = piResult.scores_natural  || {};
+          radarData = [
+            { subject: 'Direção',        A: Math.round(((sa.direcao       ?? sn.direcao       ?? 0) + 10) / 20 * 100), fullMark: 100 },
+            { subject: 'Energia Social', A: Math.round(((sa.energia_social ?? sn.energia_social ?? 0) + 10) / 20 * 100), fullMark: 100 },
+            { subject: 'Ritmo',          A: Math.round(((sa.ritmo         ?? sn.ritmo         ?? 0) + 10) / 20 * 100), fullMark: 100 },
+            { subject: 'Estrutura',      A: Math.round(((sa.estrutura     ?? sn.estrutura     ?? 0) + 10) / 20 * 100), fullMark: 100 },
+          ];
+          const domPi = radarData.reduce((a, b) => a.A >= b.A ? a : b);
+          primaryLabel = domPi.subject;
+        }
+
+        return (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center p-4"
+            onClick={() => setActiveModal(null)}
+          >
+            <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
+            <div
+              className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 flex flex-col gap-4"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Cabeçalho */}
+              <div className="flex items-start justify-between">
+                <div>
+                  <p className="text-xs uppercase tracking-wide text-[#666666] font-semibold">{title}</p>
+                  {primaryLabel && (
+                    <p className="text-xl font-semibold text-[#141042] mt-0.5">
+                      {primaryLabel}
+                      {secondaryLabel && (
+                        <span className="text-sm font-normal text-[#666666] ml-2">· {secondaryLabel}</span>
+                      )}
+                    </p>
+                  )}
+                </div>
+                <button
+                  onClick={() => setActiveModal(null)}
+                  className="w-8 h-8 flex items-center justify-center rounded-lg text-[#666] hover:bg-[#F5F5F0] transition-colors text-lg"
+                  aria-label="Fechar"
+                >
+                  ✕
+                </button>
+              </div>
+
+              {/* Radar Chart */}
+              {radarData.length > 0 && (
+                <div className="w-full h-56">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <RadarChart data={radarData} cx="50%" cy="50%" outerRadius="72%">
+                      <PolarGrid stroke="#E5E5DC" />
+                      <PolarAngleAxis
+                        dataKey="subject"
+                        tick={{ fill: '#555', fontSize: 11 }}
                       />
-                    </div>
-                    {discProfileSummary[item.code] && (
-                      <div className="pointer-events-none absolute z-10 left-0 right-0 -top-3 transform -translate-y-full opacity-0 scale-95 group-hover:opacity-100 group-hover:scale-100 transition">
-                        <div className="rounded-lg bg-white text-gray-900 text-xs p-3 shadow-lg border border-gray-200">
-                          <p className="font-semibold text-gray-900 mb-1">{item.label}</p>
-                          <p className="text-gray-700 leading-snug">{discProfileSummary[item.code]}</p>
-                        </div>
-                      </div>
-                    )}
+                      <Radar
+                        name={title}
+                        dataKey="A"
+                        stroke={accentColor}
+                        fill={accentColor}
+                        fillOpacity={0.2}
+                        strokeWidth={2}
+                      />
+                      <RechartsTooltip
+                        formatter={(v: unknown) => [`${v}${activeModal !== 'colors' ? '%' : ''}`, 'Score']}
+                        contentStyle={{ borderRadius: 8, fontSize: 12, border: '1px solid #E5E5DC' }}
+                      />
+                    </RadarChart>
+                  </ResponsiveContainer>
+                </div>
+              )}
+
+              {/* Lista de scores */}
+              <div className="grid grid-cols-2 gap-2">
+                {radarData.map((d) => (
+                  <div key={d.subject} className="flex items-center justify-between bg-[#F7F7F2] rounded-lg px-3 py-2">
+                    <span className="text-xs text-[#555] truncate mr-2">{d.subject.split(' — ')[0]}</span>
+                    <span className="text-xs font-semibold text-[#141042]">
+                      {d.A}{activeModal !== 'colors' ? '%' : ''}
+                    </span>
                   </div>
                 ))}
               </div>
-              <p className="text-sm text-[#2E2E2E] leading-relaxed mt-3">
-                {discResult.description ||
-                  'Você é equilibrado(a) e traz uma combinação de características únicas para o trabalho.'}
-              </p>
-            </>
-          )}
 
-          {!discLoading && !discResult && (
-            <p className="text-sm text-[#666]">
-              Ainda não encontramos seu perfil DISC. Faça o teste para gerar seu resumo comportamental.
-            </p>
-          )}
-        </div>
-      </div>
-
-      {/* Perfil Cores */}
-      <div className="relative overflow-visible rounded-2xl border border-[#E5E5DC] bg-white/90 p-4 sm:p-6 lg:p-7 shadow-[0_12px_40px_-28px_rgba(20,16,66,0.5)]">
-        <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute -top-20 -left-10 h-40 w-40 rounded-full bg-amber-200/50 blur-3xl" />
-          <div className="absolute -bottom-16 -right-8 h-32 w-32 rounded-full bg-blue-200/40 blur-3xl" />
-        </div>
-
-        <div className="relative flex flex-col gap-3">
-          <div className="flex items-start justify-between gap-3">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-xl bg-linear-to-br from-amber-300 to-blue-300 text-[#141042] flex items-center justify-center shadow-inner text-2xl font-extrabold">
-                👔
-              </div>
-              <div>
-                <p className="text-xs uppercase tracking-wide text-purple-700/80 font-semibold">Perfil Cores</p>
-              </div>
+              {/* Rodapé */}
+              <button
+                onClick={() => {
+                  setActiveModal(null);
+                  if (activeModal === 'disc') {
+                    router.push('/disc');
+                  } else {
+                    setActiveTestModal(activeModal === 'colors' ? 'color-test' : 'pi-test');
+                  }
+                }}
+                className="w-full text-sm font-medium text-[#3B82F6] border border-[#3B82F6]/30 hover:bg-[#3B82F6]/5 py-2.5 rounded-xl transition-colors"
+              >
+                Refazer teste
+              </button>
             </div>
-            <button
-              className="text-xs sm:text-sm font-semibold text-purple-700 hover:underline"
-              onClick={() => router.push('/color-test')}
-            >
-              Ver/Refazer teste
-            </button>
           </div>
+        );
+      })()}
 
-          {colorLoading && <p className="text-sm text-[#666]">Carregando seu perfil...</p>}
-          {!colorLoading && colorError && (
-            <p className="text-sm text-red-600">Erro ao carregar perfil de cores: {colorError}</p>
-          )}
-
-          {!colorLoading && colorResult && (
-            <>
-              <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 sm:gap-4 mt-1">
-                {([
-                  { code: 'azul', label: 'Azul', colorClasses: 'from-blue-500/70 to-blue-600/90', summary: colorSummary['azul'] },
-                  { code: 'rosa', label: 'Rosa', colorClasses: 'from-rose-400/80 to-rose-500/90', summary: colorSummary['rosa'] },
-                  { code: 'amarelo', label: 'Amarelo', colorClasses: 'from-amber-400/80 to-amber-500/90', summary: colorSummary['amarelo'] },
-                  { code: 'verde', label: 'Verde', colorClasses: 'from-emerald-400/80 to-emerald-500/90', summary: colorSummary['verde'] },
-                  { code: 'branco', label: 'Branco', colorClasses: 'from-slate-300/80 to-slate-400/90', summary: colorSummary['branco'] },
-                ] as const).map((item) => {
-                  const scores = (colorResult.scores || {}) as Record<string, number>;
-                  const val = scores[item.code] || 0;
-                  return (
-                    <div
-                      key={item.code}
-                      className="relative group p-3 rounded-xl bg-[#F7F7F2] border border-[#EFEFE7]"
-                      title={`${item.label}: ${item.summary}`}
-                    >
-                      <div className="flex items-center justify-between mb-2">
-                        <p className="text-sm font-semibold text-[#444]">{item.label}</p>
-                        <span className="text-xs text-[#666]">{val}</span>
-                      </div>
-                      <div className="h-2 rounded-full bg-[#E5E5DC] overflow-hidden">
-                        <div
-                          className={`h-full rounded-full bg-linear-to-r ${item.colorClasses}`}
-                          style={{ width: `${Math.min(val, 80)}%` }}
-                        />
-                      </div>
-                      {item.summary && (
-                        <div className="pointer-events-none absolute z-10 left-0 right-0 -top-3 transform -translate-y-full opacity-0 scale-95 group-hover:opacity-100 group-hover:scale-100 transition">
-                          <div className="rounded-lg bg-white text-gray-900 text-xs p-3 shadow-lg border border-gray-200">
-                            <p className="font-semibold text-gray-900 mb-1">{item.label}</p>
-                            <p className="text-gray-700 leading-snug">{item.summary}</p>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-              <p className="text-sm text-[#2E2E2E] leading-relaxed mt-3">
-                Cor primária:{' '}
-                <strong title={colorSummary[colorResult.primary_color as string] || ''}>
-                  {colorLabel[colorResult.primary_color as string] || colorResult.primary_color || '-'}
-                </strong>{' '}
-                • Secundária:{' '}
-                <strong title={colorSummary[colorResult.secondary_color as string] || ''}>
-                  {colorLabel[colorResult.secondary_color as string] || colorResult.secondary_color || '-'}
-                </strong>
-              </p>
-            </>
-          )}
-
-          {!colorLoading && !colorResult && !colorError && (
-            <p className="text-sm text-[#666]">
-              Ainda não encontramos seu perfil de cores. Faça o teste para gerar seu mapa de cores predominantes.
-            </p>
-          )}
-        </div>
-      </div>
-
-      {/* Perfil PI (Predictive Index) */}
-      <div className="relative overflow-visible rounded-2xl border border-[#E5E5DC] bg-white/90 p-4 sm:p-6 lg:p-7 shadow-[0_12px_40px_-28px_rgba(20,16,66,0.5)]">
-        <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute -top-20 -left-10 h-40 w-40 rounded-full bg-indigo-200/50 blur-3xl" />
-          <div className="absolute -bottom-16 -right-8 h-32 w-32 rounded-full bg-violet-200/40 blur-3xl" />
-        </div>
-
-        <div className="relative flex flex-col gap-3">
-          <div className="flex items-start justify-between gap-3">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-xl bg-linear-to-br from-indigo-400 to-violet-500 text-white flex items-center justify-center shadow-inner text-2xl font-extrabold">
-                📈
-              </div>
-              <div>
-                <p className="text-xs uppercase tracking-wide text-purple-700/80 font-semibold">Perfil PI</p>
-              </div>
-            </div>
-            <button
-              className="text-xs sm:text-sm font-semibold text-purple-700 hover:underline"
-              onClick={() => router.push('/pi-test')}
-            >
-              Ver/Refazer teste
-            </button>
-          </div>
-
-          {piLoading && <p className="text-sm text-[#666]">Carregando seu perfil...</p>}
-          {!piLoading && piError && (
-            <p className="text-sm text-red-600">Erro ao carregar perfil PI: {piError}</p>
-          )}
-
-          {!piLoading && piResult && (
-            <>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mt-1">
-                {[
-                  { 
-                    label: 'Direção', 
-                    score: piResult.scores_adapted?.direcao || piResult.scores_natural?.direcao || 0, 
-                    color: 'from-amber-400/80 to-amber-600/90',
-                    description: 'Influência e controle sobre o ambiente'
-                  },
-                  { 
-                    label: 'Energia Social', 
-                    score: piResult.scores_adapted?.energia_social || piResult.scores_natural?.energia_social || 0, 
-                    color: 'from-rose-400/80 to-rose-600/90',
-                    description: 'Expressividade e interação social'
-                  },
-                  { 
-                    label: 'Ritmo', 
-                    score: piResult.scores_adapted?.ritmo || piResult.scores_natural?.ritmo || 0, 
-                    color: 'from-emerald-400/80 to-emerald-600/90',
-                    description: 'Velocidade e aceleração no trabalho'
-                  },
-                  { 
-                    label: 'Estrutura', 
-                    score: piResult.scores_adapted?.estrutura || piResult.scores_natural?.estrutura || 0, 
-                    color: 'from-blue-400/80 to-blue-600/90',
-                    description: 'Organização e conformidade'
-                  },
-                ].map((item) => {
-                  // Normalizar o score para porcentagem (assumindo que scores variam de -10 a +10)
-                  const normalizedScore = Math.round(((item.score + 10) / 20) * 100);
-                  return (
-                    <div
-                      key={item.label}
-                      className="relative group p-3 rounded-xl bg-[#F7F7F2] border border-[#EFEFE7]"
-                      title={`${item.label}: ${item.description}`}
-                    >
-                      <div className="flex items-center justify-between mb-2">
-                        <p className="text-sm font-semibold text-[#444]">{item.label}</p>
-                        <span className="text-xs text-[#666]">{item.score > 0 ? '+' : ''}{item.score}</span>
-                      </div>
-                      <div className="h-2 rounded-full bg-[#E5E5DC] overflow-hidden">
-                        <div
-                          className={`h-full rounded-full bg-linear-to-r ${item.color}`}
-                          style={{ width: `${normalizedScore}%` }}
-                        />
-                      </div>
-                      <div className="pointer-events-none absolute z-10 left-0 right-0 -top-3 transform -translate-y-full opacity-0 scale-95 group-hover:opacity-100 group-hover:scale-100 transition">
-                        <div className="rounded-lg bg-white text-gray-900 text-xs p-3 shadow-lg border border-gray-200">
-                          <p className="font-semibold text-gray-900 mb-1">{item.label}</p>
-                          <p className="text-gray-700 leading-snug">{item.description}</p>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-              <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-                <p className="text-[#2E2E2E] leading-relaxed">
-                  <span className="font-semibold">Perfil Natural:</span> Como você age naturalmente
-                </p>
-                <p className="text-[#2E2E2E] leading-relaxed">
-                  <span className="font-semibold">Perfil Adaptado:</span> Como você se adapta ao contexto
-                </p>
-              </div>
-              {piResult.gaps && (
-                <p className="text-sm text-[#666] leading-relaxed mt-2">
-                  💡 Diferenças entre perfis indicam áreas de adaptação comportamental no ambiente de trabalho.
-                </p>
-              )}
-            </>
-          )}
-
-          {!piLoading && !piResult && !piError && (
-            <p className="text-sm text-[#666]">
-              Ainda não encontramos seu perfil PI. Faça o teste para gerar sua análise preditiva de comportamento.
-            </p>
-          )}
-        </div>
-      </div>
+      {/* ══ Modais de teste (full-screen, Supabase direto) ══ */}
+      {activeTestModal === 'color-test' && (
+        <ColorTestModal
+          onClose={(updated) => {
+            setActiveTestModal(null);
+            if (updated) router.refresh();
+          }}
+        />
+      )}
+      {activeTestModal === 'pi-test' && (
+        <PiTestModal
+          onClose={(updated) => {
+            setActiveTestModal(null);
+            if (updated) router.refresh();
+          }}
+        />
+      )}
 
       {/* Stats Grid */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4">
-        {stats.map((stat) => (
-          <div key={stat.label} className="bg-white border border-[#E5E5DC] rounded-xl sm:rounded-2xl p-3 sm:p-5 hover:shadow-lg transition-shadow">
-            <div className="flex items-center justify-between mb-2 sm:mb-3">
-              <div className="w-8 h-8 sm:w-10 sm:h-10 bg-[#141042]/5 rounded-lg sm:rounded-xl flex items-center justify-center">
-                <stat.icon className="w-4 h-4 sm:w-5 sm:h-5 text-[#141042]" />
+        {[
+          { label: 'Candidaturas',    value: dashLoading ? '—' : String(dashStats.total),      icon: FileText,  color: 'bg-[#3B82F6]/10 text-[#3B82F6]' },
+          { label: 'Em processo',     value: dashLoading ? '—' : String(dashStats.active),     icon: Briefcase, color: 'bg-[#F59E0B]/10 text-[#F59E0B]' },
+          { label: 'Vagas abertas',   value: dashLoading ? '—' : String(openJobsCount),         icon: Building2, color: 'bg-[#10B981]/10 text-[#10B981]' },
+          { label: 'Perfil completo', value: dashLoading ? '—' : `${dashStats.completion}%`,   icon: User,      color: 'bg-[#8B5CF6]/10 text-[#8B5CF6]' },
+        ].map((stat) => (
+          <div key={stat.label} className="bg-white border border-[#E5E5DC] rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-[0_2px_8px_rgba(20,16,66,0.06),0_1px_2px_rgba(20,16,66,0.04)] hover:shadow-[0_8px_32px_rgba(20,16,66,0.10),0_2px_8px_rgba(20,16,66,0.06)] hover:-translate-y-0.5 transition-all duration-300">
+            <div className="flex items-start justify-between">
+              <div className="flex-1">
+                <p className="text-sm text-[#666666]">{stat.label}</p>
+                <p className="mt-2 text-2xl sm:text-3xl font-semibold text-[#141042]">{stat.value}</p>
+              </div>
+              <div className={`p-2.5 rounded-lg ${stat.color}`}>
+                <stat.icon className="w-5 h-5" />
               </div>
             </div>
-            <p className="text-xl sm:text-2xl font-semibold text-[#141042]">{stat.value}</p>
-            <p className="text-[#666666] text-xs sm:text-sm">{stat.label}</p>
           </div>
         ))}
       </div>
@@ -720,48 +811,76 @@ export default function CandidateDashboard() {
             </a>
           </div>
           
-          {recommendedJobs.map((job) => (
-            <div key={job.id} className="bg-white border border-[#E5E5DC] rounded-xl sm:rounded-2xl p-4 sm:p-6 hover:border-[#141042]/20 hover:shadow-lg transition-all cursor-pointer">
+          {dashLoading && (
+            <p className="text-sm text-[#666666] py-4">Carregando vagas...</p>
+          )}
+          {!dashLoading && realJobs.length === 0 && (
+            <div className="rounded-xl border border-dashed border-[#E5E5DC] bg-white p-6 text-center text-sm text-[#666666]">
+              Nenhuma vaga disponível no momento.
+            </div>
+          )}
+          {!dashLoading && realJobs.map((job) => (
+            <div
+              key={job.id}
+              className="bg-white border border-[#E5E5DC] rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-[0_2px_8px_rgba(20,16,66,0.06),0_1px_2px_rgba(20,16,66,0.04)] hover:shadow-[0_8px_32px_rgba(20,16,66,0.10),0_2px_8px_rgba(20,16,66,0.06)] hover:-translate-y-0.5 transition-all duration-300 cursor-pointer"
+              onClick={() => router.push('/candidate/jobs')}
+            >
               <div className="flex items-start justify-between mb-3 sm:mb-4">
                 <div className="flex items-center space-x-3 sm:space-x-4">
                   <div className="w-10 h-10 sm:w-12 sm:h-12 bg-[#D9D9C6] rounded-lg sm:rounded-xl flex items-center justify-center text-[#453931] font-bold text-base sm:text-lg shrink-0">
-                    {job.company[0]}
+                    {job.title?.[0] ?? 'V'}
                   </div>
                   <div className="min-w-0">
                     <h4 className="text-[#141042] font-semibold text-sm sm:text-base truncate">{job.title}</h4>
-                    <p className="text-[#666666] text-xs sm:text-sm">{job.company}</p>
+                    <p className="text-[#666666] text-xs sm:text-sm">{job.org_name ?? job.department ?? ''}</p>
                   </div>
                 </div>
-                <div className="flex items-center space-x-1 bg-green-50 px-2 sm:px-3 py-1 rounded-full shrink-0 ml-2">
-                  <Star className="w-3 h-3 text-green-600" />
-                  <span className="text-green-600 text-[10px] sm:text-xs font-medium">{job.match}%</span>
+                <div className="flex flex-col items-end shrink-0 ml-2 gap-1">
+                  {job.match_score != null && (
+                    <span
+                      className={`text-[10px] sm:text-xs font-semibold px-2 py-0.5 rounded-full ${
+                        job.match_score >= 70
+                          ? 'bg-[#10B981]/10 text-[#10B981]'
+                          : job.match_score >= 40
+                          ? 'bg-[#F59E0B]/10 text-[#F59E0B]'
+                          : 'bg-[#E5E5DC] text-[#666666]'
+                      }`}
+                    >
+                      {job.match_score}% match
+                    </span>
+                  )}
+                  <span className="text-[#999] text-[10px] sm:text-xs">{timeAgo(job.created_at)}</span>
                 </div>
               </div>
 
               <div className="flex flex-wrap gap-2 sm:gap-4 text-xs sm:text-sm text-[#666666] mb-3 sm:mb-4">
-                <span className="flex items-center space-x-1">
-                  <MapPin className="w-3 h-3 sm:w-4 sm:h-4 shrink-0" />
-                  <span className="truncate">{job.location}</span>
-                </span>
-                <span className="flex items-center space-x-1">
-                  <Building2 className="w-3 h-3 sm:w-4 sm:h-4 shrink-0" />
-                  <span>{job.type}</span>
-                </span>
-                <span className="hidden sm:flex items-center space-x-1">
-                  <Clock className="w-4 h-4 shrink-0" />
-                  <span>{job.posted}</span>
-                </span>
+                {job.location && (
+                  <span className="flex items-center space-x-1">
+                    <MapPin className="w-3 h-3 sm:w-4 sm:h-4 shrink-0" />
+                    <span className="truncate">{job.location}</span>
+                  </span>
+                )}
+                {job.employment_type && (
+                  <span className="flex items-center space-x-1">
+                    <Building2 className="w-3 h-3 sm:w-4 sm:h-4 shrink-0" />
+                    <span>{job.employment_type}</span>
+                  </span>
+                )}
+                {job.seniority && (
+                  <span className="flex items-center space-x-1">
+                    <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4 shrink-0" />
+                    <span>{job.seniority}</span>
+                  </span>
+                )}
               </div>
 
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0">
-                <div className="flex flex-wrap gap-1.5 sm:gap-2">
-                  {job.tags.slice(0, 3).map((tag) => (
-                    <span key={tag} className="px-2 py-1 bg-[#F5F5F0] text-[#666666] text-[10px] sm:text-xs rounded-lg">
-                      {tag}
-                    </span>
-                  ))}
-                </div>
-                <span className="text-[#141042] font-medium text-xs sm:text-sm">{job.salary}</span>
+              <div className="flex items-center justify-between">
+                {job.seniority && (
+                  <span className="px-2 py-1 bg-[#F5F5F0] text-[#666666] text-[10px] sm:text-xs rounded-lg capitalize">{job.seniority}</span>
+                )}
+                <span className="text-[#141042] font-medium text-xs sm:text-sm ml-auto">
+                  {formatSalaryRange(job.salary_min, job.salary_max)}
+                </span>
               </div>
             </div>
           ))}
@@ -779,51 +898,74 @@ export default function CandidateDashboard() {
             </div>
             
             <div className="bg-white border border-[#E5E5DC] rounded-xl sm:rounded-2xl divide-y divide-[#E5E5DC]">
-              {applications.map((app, i) => (
-                <div key={i} className="p-3 sm:p-4 hover:bg-[#FAFAF8] cursor-pointer transition-colors first:rounded-t-xl sm:first:rounded-t-2xl last:rounded-b-xl sm:last:rounded-b-2xl">
-                  <div className="flex items-center justify-between mb-1 sm:mb-2">
-                    <h4 className="text-[#141042] font-medium text-xs sm:text-sm truncate pr-2">{app.job}</h4>
-                    <span className="text-[#999] text-[10px] sm:text-xs shrink-0">{app.date}</span>
+              {dashLoading && (
+                <p className="p-4 text-sm text-[#666666]">Carregando...</p>
+              )}
+              {!dashLoading && realApplications.length === 0 && (
+                <p className="p-4 text-sm text-[#666666]">Nenhuma candidatura ainda.</p>
+              )}
+              {!dashLoading && realApplications.map((app) => {
+                const s = STATUS_MAP[app.status] ?? { label: app.status, color: 'amber' };
+                const colorCls = {
+                  green:  'bg-green-50 text-green-600',
+                  amber:  'bg-amber-50 text-amber-600',
+                  blue:   'bg-blue-50 text-blue-600',
+                  violet: 'bg-violet-50 text-violet-600',
+                  red:    'bg-red-50 text-red-600',
+                }[s.color] ?? 'bg-amber-50 text-amber-600';
+                return (
+                  <div key={app.id} className="p-3 sm:p-4 hover:bg-[#FAFAF8] cursor-pointer transition-colors first:rounded-t-xl sm:first:rounded-t-2xl last:rounded-b-xl sm:last:rounded-b-2xl">
+                    <div className="flex items-center justify-between mb-1 sm:mb-2">
+                      <h4 className="text-[#141042] font-medium text-xs sm:text-sm truncate pr-2">
+                        {app.jobs?.title ?? 'Vaga'}
+                      </h4>
+                      <span className="text-[#999] text-[10px] sm:text-xs shrink-0">{timeAgo(app.created_at)}</span>
+                    </div>
+                    <p className="text-[#666666] text-[10px] sm:text-xs mb-1.5 sm:mb-2">
+                      {(app.jobs?.organizations as any)?.name ?? ''}
+                    </p>
+                    <span className={`inline-block px-2 py-0.5 sm:py-1 text-[10px] sm:text-xs rounded-lg ${colorCls}`}>
+                      {s.label}
+                    </span>
                   </div>
-                  <p className="text-[#666666] text-[10px] sm:text-xs mb-1.5 sm:mb-2">{app.company}</p>
-                  <span className={`inline-block px-2 py-0.5 sm:py-1 text-[10px] sm:text-xs rounded-lg ${
-                    app.statusColor === 'green' 
-                      ? 'bg-green-50 text-green-600' 
-                      : 'bg-amber-50 text-amber-600'
-                  }`}>
-                    {app.status}
-                  </span>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
 
           {/* Profile Completion */}
-          <div className="bg-white border border-[#E5E5DC] rounded-xl sm:rounded-2xl p-4 sm:p-6">
+          <div className="bg-white border border-[#E5E5DC] rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-[0_2px_8px_rgba(20,16,66,0.06),0_1px_2px_rgba(20,16,66,0.04)]">
             <h4 className="text-[#141042] font-semibold text-sm sm:text-base mb-3 sm:mb-4">Completar Perfil</h4>
             <div className="mb-3 sm:mb-4">
               <div className="flex items-center justify-between text-xs sm:text-sm mb-2">
                 <span className="text-[#666666]">Progresso</span>
-                <span className="text-[#141042] font-medium">65%</span>
+                <span className="text-[#141042] font-medium">
+                  {dashLoading ? '—' : `${dashStats.completion}%`}
+                </span>
               </div>
               <div className="w-full bg-[#E5E5DC] rounded-full h-1.5 sm:h-2">
-                <div className="bg-[#141042] h-1.5 sm:h-2 rounded-full" style={{ width: '65%' }} />
+                <div
+                  className="bg-[#141042] h-1.5 sm:h-2 rounded-full transition-all duration-500"
+                  style={{ width: `${dashStats.completion}%` }}
+                />
               </div>
             </div>
-            <div className="space-y-2 sm:space-y-3">
-              <div className="flex items-center space-x-2 sm:space-x-3 text-xs sm:text-sm">
-                <div className="w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-amber-50 flex items-center justify-center shrink-0">
-                  <span className="text-amber-600 text-[10px] sm:text-xs">!</span>
-                </div>
-                <span className="text-[#666666]">Adicionar experiência</span>
+            {!dashLoading && (
+              <div className="space-y-2 sm:space-y-3">
+                {completionItems.map((item) => (
+                  <div key={item.label} className="flex items-center space-x-2 sm:space-x-3 text-xs sm:text-sm">
+                    <div className={`w-4 h-4 sm:w-5 sm:h-5 rounded-full flex items-center justify-center shrink-0 ${
+                      item.done ? 'bg-green-50' : 'bg-amber-50'
+                    }`}>
+                      <span className={`text-[10px] sm:text-xs ${item.done ? 'text-green-600' : 'text-amber-600'}`}>
+                        {item.done ? '✓' : '!'}
+                      </span>
+                    </div>
+                    <span className={item.done ? 'text-[#666666] line-through' : 'text-[#666666]'}>{item.label}</span>
+                  </div>
+                ))}
               </div>
-              <div className="flex items-center space-x-2 sm:space-x-3 text-xs sm:text-sm">
-                <div className="w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-amber-50 flex items-center justify-center shrink-0">
-                  <span className="text-amber-600 text-[10px] sm:text-xs">!</span>
-                </div>
-                <span className="text-[#666666]">Upload do currículo</span>
-              </div>
-            </div>
+            )}
             <button
               type="button"
               onClick={() => router.push('/onboarding')}
@@ -834,6 +976,24 @@ export default function CandidateDashboard() {
           </div>
         </div>
       </div>
+
+      {/* Modais de teste — renderizados fora do fluxo principal */}
+      {activeTestModal === 'color-test' && (
+        <ColorTestModal
+          onClose={(updated) => {
+            setActiveTestModal(null);
+            if (updated) loadDashboard();
+          }}
+        />
+      )}
+      {activeTestModal === 'pi-test' && (
+        <PiTestModal
+          onClose={(updated) => {
+            setActiveTestModal(null);
+            if (updated) loadDashboard();
+          }}
+        />
+      )}
     </div>
   );
 }
