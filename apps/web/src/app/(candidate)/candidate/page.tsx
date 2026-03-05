@@ -222,46 +222,26 @@ export default function CandidateDashboard() {
         setDiscError(null);
 
         try {
-          // Busca assessment DISC mais recente (completed)
-          const { data: latestAssessment, error: latestError } = await supabase
-            .from('assessments')
-            .select('id, raw_score, interpreted_score, assessment_type, status, disc_assessments(dominance_score,influence_score,steadiness_score,conscientiousness_score,primary_profile,secondary_profile,description)')
-            .eq('candidate_user_id', user.id)
-            .eq('assessment_type', 'disc')
-            .eq('status', 'completed')
-            .order('created_at', { ascending: false })
-            .limit(1)
-            .maybeSingle();
+          // get_my_disc_result: fallback por candidates.email (candidatos sem user_id)
+          const { data: discRows, error: discRpcErr } = await supabase
+            .rpc('get_my_disc_result');
 
-          if (latestError) {
-            console.error('Erro ao buscar assessment DISC:', latestError.message);
-            setDiscError(latestError.message);
+          if (discRpcErr) {
+            console.error('Erro ao buscar DISC:', discRpcErr.message);
+            setDiscError(discRpcErr.message);
           }
 
-          // Tenta ler de disc_assessments (join) primeiro, depois fallback para JSONB
-          const discJoin = (latestAssessment as any)?.disc_assessments;
-          const discRaw = (latestAssessment as any)?.interpreted_score?.disc
-            ?? (latestAssessment as any)?.raw_score?.disc;
+          const row = (discRows as any[])?.[0] ?? null;
 
-          if (discJoin?.primary_profile) {
+          if (row?.primary_profile) {
             setDiscResult({
-              primary_profile: discJoin.primary_profile ?? '',
-              secondary_profile: discJoin.secondary_profile ?? null,
-              dominance_score: Number(discJoin.dominance_score ?? 0),
-              influence_score: Number(discJoin.influence_score ?? 0),
-              steadiness_score: Number(discJoin.steadiness_score ?? 0),
-              conscientiousness_score: Number(discJoin.conscientiousness_score ?? 0),
-              description: discJoin.description ?? null,
-            });
-          } else if (discRaw) {
-            setDiscResult({
-              primary_profile: discRaw.primary ?? discRaw.primary_profile ?? '',
-              secondary_profile: discRaw.secondary ?? discRaw.secondary_profile ?? null,
-              dominance_score: Number(discRaw.D ?? discRaw.dominance_score ?? 0),
-              influence_score: Number(discRaw.I ?? discRaw.influence_score ?? 0),
-              steadiness_score: Number(discRaw.S ?? discRaw.steadiness_score ?? 0),
-              conscientiousness_score: Number(discRaw.C ?? discRaw.conscientiousness_score ?? 0),
-              description: discRaw.description ?? null,
+              primary_profile: row.primary_profile ?? '',
+              secondary_profile: row.secondary_profile ?? null,
+              dominance_score: Number(row.dominance_score ?? 0),
+              influence_score: Number(row.influence_score ?? 0),
+              steadiness_score: Number(row.steadiness_score ?? 0),
+              conscientiousness_score: Number(row.conscientiousness_score ?? 0),
+              description: row.description ?? null,
             });
           } else {
             setDiscResult(null);
@@ -303,31 +283,21 @@ export default function CandidateDashboard() {
           return;
         }
         
-        // Buscar diretamente do Supabase para validar os dados
-        console.log('[CandidateDash] Buscando assessment completado...');
-        const { data: colorData, error: colorError } = await supabase
-          .from('color_assessments')
-          .select('*')
-          .eq('candidate_user_id', user.id)
-          .eq('status', 'completed')
-          .order('created_at', { ascending: false })
-          .limit(1)
-          .maybeSingle();
-        
-        console.log('[CandidateDash] Supabase result:', colorData);
+        // get_my_color_result: fallback por candidates.email
+        const { data: colorRows, error: colorError } = await supabase
+          .rpc('get_my_color_result');
         
         if (colorError) {
-          console.error('[CandidateDash] Supabase error:', colorError);
+          console.error('[CandidateDash] Color error:', colorError);
           setColorError(colorError.message);
           setColorLoading(false);
           return;
         }
         
+        const colorData = (colorRows as any[])?.[0] ?? null;
         if (colorData) {
-          console.log('[CandidateDash] Encontrado assessment:', colorData);
           setColorResult(colorData);
         } else {
-          console.log('[CandidateDash] Nenhum assessment completado encontrado');
           setColorResult(null);
         }
       } catch (err: any) {
@@ -354,15 +324,9 @@ export default function CandidateDashboard() {
           return;
         }
         
-        // Buscar PI Assessment completado mais recente
-        const { data: piData, error: piError } = await supabase
-          .from('pi_assessments')
-          .select('*')
-          .eq('candidate_user_id', user.id)
-          .eq('status', 'completed')
-          .order('created_at', { ascending: false })
-          .limit(1)
-          .maybeSingle();
+        // get_my_pi_result: fallback por candidates.email
+        const { data: piRows, error: piError } = await supabase
+          .rpc('get_my_pi_result');
         
         if (piError) {
           console.error('[CandidateDash] PI error:', piError);
@@ -371,11 +335,10 @@ export default function CandidateDashboard() {
           return;
         }
         
+        const piData = (piRows as any[])?.[0] ?? null;
         if (piData) {
-          console.log('[CandidateDash] PI encontrado:', piData);
           setPiResult(piData);
         } else {
-          console.log('[CandidateDash] Nenhum PI completado encontrado');
           setPiResult(null);
         }
       } catch (err: any) {
