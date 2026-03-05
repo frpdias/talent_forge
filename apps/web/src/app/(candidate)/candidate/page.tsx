@@ -7,6 +7,7 @@ import { RadarChart, Radar, PolarGrid, PolarAngleAxis, Tooltip as RechartsToolti
 import { createClient } from '@/lib/supabase/client';
 import ColorTestModal from '@/components/candidate/ColorTestModal';
 import PiTestModal from '@/components/candidate/PiTestModal';
+import DiscTestModal from '@/components/candidate/DiscTestModal';
 
 interface RealJob {
   id: string;
@@ -79,7 +80,7 @@ export default function CandidateDashboard() {
   const [piLoading, setPiLoading] = useState(false);
   const [piError, setPiError] = useState<string | null>(null);
   const [activeModal, setActiveModal] = useState<'disc' | 'colors' | 'pi' | null>(null);
-  const [activeTestModal, setActiveTestModal] = useState<'color-test' | 'pi-test' | null>(null);
+  const [activeTestModal, setActiveTestModal] = useState<'disc' | 'color-test' | 'pi-test' | null>(null);
 
   // Dashboard — dados reais
   const [dashStats, setDashStats] = useState({ total: 0, active: 0, hired: 0, completion: 0 });
@@ -425,7 +426,7 @@ export default function CandidateDashboard() {
   return (
     <div className="space-y-4 sm:space-y-6 lg:space-y-8 pb-16 lg:pb-0">
       {/* DISC Test Banner */}
-      <div className="bg-linear-to-r from-[#141042] to-[#3B82F6] rounded-xl sm:rounded-2xl p-4 sm:p-6 lg:p-8 relative overflow-hidden cursor-pointer hover:shadow-[0_8px_32px_rgba(20,16,66,0.18)] transition-all duration-300" onClick={() => router.push('/disc')}>
+      <div className="bg-linear-to-r from-[#141042] to-[#3B82F6] rounded-xl sm:rounded-2xl p-4 sm:p-6 lg:p-8 relative overflow-hidden cursor-pointer hover:shadow-[0_8px_32px_rgba(20,16,66,0.18)] transition-all duration-300" onClick={() => setActiveTestModal('disc')}>
         <div className="absolute right-0 top-0 w-32 sm:w-64 h-32 sm:h-64 bg-white/10 rounded-full blur-3xl" />
         <div className="relative flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           <div className="flex-1">
@@ -442,7 +443,7 @@ export default function CandidateDashboard() {
               className="flex-1 basis-0 min-w-35 text-center bg-white text-[#141042] px-6 py-2.5 rounded-lg font-medium hover:bg-white/90 transition-colors text-sm sm:text-base"
               onClick={(e) => {
                 e.stopPropagation();
-                router.push('/disc');
+                setActiveTestModal('disc');
               }}
             >
               DISC
@@ -518,7 +519,7 @@ export default function CandidateDashboard() {
                   </button>
                 )}
                 <button
-                  onClick={() => router.push('/disc')}
+                  onClick={() => setActiveTestModal('disc')}
                   className="flex-1 text-xs font-medium text-[#3B82F6] border border-[#3B82F6]/30 hover:bg-[#3B82F6]/5 py-2 px-3 rounded-lg transition-colors"
                 >
                   {discResult ? 'Refazer' : 'Fazer teste'}
@@ -746,11 +747,7 @@ export default function CandidateDashboard() {
               <button
                 onClick={() => {
                   setActiveModal(null);
-                  if (activeModal === 'disc') {
-                    router.push('/disc');
-                  } else {
-                    setActiveTestModal(activeModal === 'colors' ? 'color-test' : 'pi-test');
-                  }
+                  setActiveTestModal(activeModal === 'disc' ? 'disc' : activeModal === 'colors' ? 'color-test' : 'pi-test');
                 }}
                 className="w-full text-sm font-medium text-[#3B82F6] border border-[#3B82F6]/30 hover:bg-[#3B82F6]/5 py-2.5 rounded-xl transition-colors"
               >
@@ -978,6 +975,14 @@ export default function CandidateDashboard() {
       </div>
 
       {/* Modais de teste — renderizados fora do fluxo principal */}
+      {activeTestModal === 'disc' && (
+        <DiscTestModal
+          onClose={(updated) => {
+            setActiveTestModal(null);
+            if (updated) loadDashboard();
+          }}
+        />
+      )}
       {activeTestModal === 'color-test' && (
         <ColorTestModal
           onClose={(updated) => {
