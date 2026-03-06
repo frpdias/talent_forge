@@ -347,7 +347,7 @@ export default function CandidateDetailPage() {
                 ) : (
                   <div className="divide-y divide-gray-100">
                     {applications.map((app) => (
-                      <Link key={app.id} href={`/jobs/${app.jobId}`}>
+                      <Link key={app.id} href={`/dashboard/jobs/${app.jobId}`}>
                         <div className="p-4 hover:bg-gray-50 transition-colors">
                           <div className="flex items-center justify-between">
                             <div>

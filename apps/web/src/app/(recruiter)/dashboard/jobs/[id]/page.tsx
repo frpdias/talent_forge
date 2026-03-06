@@ -49,7 +49,7 @@ interface KanbanData {
 }
 
 export default function JobDetailPage() {
-  const { orgSlug: id } = useParams();
+  const { id } = useParams();
   const router = useRouter();
   const { currentOrg } = useOrgStore();
   const { session } = useAuth();
@@ -203,7 +203,7 @@ export default function JobDetailPage() {
               <UserPlus className="h-4 w-4 mr-2" />
               Adicionar Candidato
             </Button>
-            <Link href={`/jobs/${id}/edit`}>
+            <Link href={`/dashboard/jobs/${id}/edit`}>
               <Button variant="outline">
                 <Edit className="h-4 w-4 mr-2" />
                 Editar
