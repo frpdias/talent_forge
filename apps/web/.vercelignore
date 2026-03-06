@@ -1,0 +1,14 @@
+# Vercel ignore patterns for Web
+
+# Development files
+*.log
+
+# Documentation
+README.md
+
+# IDE
+.vscode/
+.idea/
+
+# Backup
+node_modules_backup/
