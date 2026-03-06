@@ -1,6 +1,6 @@
 # Arquitetura Canônica — TalentForge
 
-**Última atualização**: 2026-03-06 | **Score de Conformidade**: ✅ 100% (Sprint 31: AgendaModal + Google Calendar + interviews table + Git & Deploy estruturado)
+**Última atualização**: 2026-03-06 | **Score de Conformidade**: ✅ 100% (Sprint 32: @talentforge/types dep fix + AgendaModal grid fix + dynamic route conflict + build errors)
 
 ## 📜 FONTE DA VERDADE — PRINCÍPIO FUNDAMENTAL
 
@@ -95,6 +95,10 @@ PROJETO_TALENT_FORGE/
 │       │   │   ├── (recruiter)/     # Rotas recrutador
 │       │   │   │   ├── dashboard/
 │       │   │   │   │   ├── page.tsx           # Dashboard principal
+│       │   │   │   │   ├── jobs/              # ✨ Detalhe de vaga (Sprint 32: movido de jobs/[id])
+│       │   │   │   │   │   └── [id]/
+│       │   │   │   │   │       ├── page.tsx           # Kanban + candidatos da vaga
+│       │   │   │   │   │       └── applications/      # Lista de candidaturas
 │       │   │   │   │   └── companies/         # ✨ Gestão de empresas clientes (Sprint 15/20)
 │       │   │   │   │       ├── page.tsx       # Lista + CRUD + consulta CNPJ via BrasilAPI
 │       │   │   │   │       └── [id]/
@@ -106,8 +110,7 @@ PROJETO_TALENT_FORGE/
 │       │   │   │   ├── candidates/
 │       │   │   │   ├── jobs/
 │       │   │   │   │   ├── page.tsx              # Lista de vagas (único entry point)
-│       │   │   │   │   └── [id]/
-│       │   │   │   │       └── applications/     # Lista de candidaturas da vaga
+│       │   │   │   │   └── new/page.tsx          # Formulário de nova vaga
 │       │   │   │   ├── reports/
 │       │   │   │   └── php/                  # ✨ Módulo PHP (Fartech-only)
 │       │   │   │       ├── layout.tsx        # Header + nav + footer
@@ -6365,7 +6368,76 @@ Re-verifica o horário a cada 60 segundos via `setInterval`.
 
 ---
 
-**FIM DO DOCUMENTO** — Versão 4.9 (Sprint 31: Google Login + Google Calendar Next.js Routes + AgendaModal mensal + upload currículo)
+---
+
+---
+
+## Sprint 32 — Correções Críticas de Build + Roteamento (2026-03-06)
+
+**Objetivo:** Corrigir erros de build bloqueantes no Vercel: dependência ausente `@talentforge/types`, conflito de rota dinâmica e erros de lint/parsing.
+
+### 32.1 — Dependência `@talentforge/types` (build Vercel)
+
+**Problema:** `Cannot find module '@talentforge/types'` no build do Vercel.
+
+**Causa:** npm workspaces exige declaração explícita mesmo para pacotes internos. Sem isso, o Vercel não cria o symlink.
+
+**Arquivos alterados:**
+- `apps/web/package.json` — adicionado `"@talentforge/types": "*"` em `dependencies`
+- `apps/web/next.config.mjs` — adicionado `transpilePackages: ['@talentforge/types']`
+
+### 32.2 — AgendaModal: grid do calendário mensal (visual fix)
+
+**Problema:** Dias do calendário apareciam em coluna única em vez de grade 7×6.
+
+**Causa:** Tailwind v4 CSS-first + Turbopack não emite classes `grid-cols-7` de forma confiável.
+
+**Solução:** Reescrita completa da seção de calendário em `AgendaModal.tsx` com:
+- `display: flex` em rows (6 rows × 7 buttons) com **inline styles**
+- Cada dia é um card com borda, hover, estados visuais (selecionado, hoje, fora do mês)
+- Imune a purge/bundler do Tailwind — não depende de classes geradas
+
+**Arquivo:** `apps/web/src/components/calendar/AgendaModal.tsx`
+
+### 32.3 — Conflito de rota dinâmica `'id' !== 'orgSlug'`
+
+**Problema:** Servidor Next.js falhava ao iniciar:
+```
+Error: You cannot use different slug names for the same dynamic path ('id' !== 'orgSlug')
+```
+
+**Causa:** Next.js App Router exige nomes idênticos de parâmetro para o mesmo segmento de URL em todos os route groups. `(recruiter)/jobs/[orgSlug]` e `(public)/jobs/[orgSlug]` resolviam o mesmo path `/jobs/<x>` — mas qualquer renomeação ainda conflitava.
+
+**Solução:** Arquivo movido para URL diferente:
+- **De:** `apps/web/src/app/(recruiter)/jobs/[orgSlug]/page.tsx`
+- **Para:** `apps/web/src/app/(recruiter)/dashboard/jobs/[id]/page.tsx`
+
+**Links atualizados** (3 arquivos):
+- `(recruiter)/jobs/page.tsx` — `href={\`/jobs/${job.id}\`}` → `href={\`/dashboard/jobs/${job.id}\`}`
+- `(recruiter)/candidates/[id]/page.tsx` — `href={\`/jobs/${app.jobId}\`}` → `href={\`/dashboard/jobs/${app.jobId}\`}`
+- `(recruiter)/dashboard/jobs/[id]/page.tsx` — `useParams()` usa `id` (era `orgSlug`)
+
+**Regra canônica resultante:** A URL de detalhe de vaga para recrutadores é `/dashboard/jobs/[id]` — **NUNCA** `/jobs/[id]` (conflita com rotas públicas).
+
+### 32.4 — Erros de parsing e JSX
+
+**Problema:** `Failed to compile` no Vercel (Type-check & Lint + next build).
+
+**Erros corrigidos:**
+1. `(recruiter)/dashboard/page-backup.tsx:424` — `Parsing error: ')' expected` → **arquivo deletado** (era backup acidental)
+2. `components/jobs/JobDetailsModal.tsx:192` — `/* Overlay */` dentro de JSX sem chaves → corrigido para `{/* Overlay */}`
+
+**Regra canônica:** Arquivos `page-backup.tsx`, `page-simple.tsx` e qualquer `* 2.tsx`/`* 2.ts` são **PROIBIDOS** no repositório — causam erros de build e duplicação.
+
+### Commits
+- `cba8238` — fix(web): add @talentforge/types dep + transpilePackages
+- `3a60ef0` — fix(web): AgendaModal grid + primeira tentativa de renomeação de rota
+- `37f66bb` — fix(routing): move pagina de detalhe de vaga para dashboard/jobs/[id]
+- `f0b165f` — fix(web): deleta page-backup.tsx + comentário JSX inválido em JobDetailsModal
+
+---
+
+**FIM DO DOCUMENTO** — Versão 5.0 (Sprint 32: @talentforge/types + AgendaModal + dynamic route fix + build errors)
 - **Seção 5**: Boas Práticas de Implantação (ciclo de avaliação, comunicação, anonimato)
 - **Seção 6**: FAQ para Auditoria Interna (MTE, fiscalização, jurídico)
 - **Seção 7**: Checklist Pré-Auditoria (documentos, evidências, conformidade)
@@ -6382,6 +6454,14 @@ Re-verifica o horário a cada 60 segundos via `setInterval`.
 ---
 
 ## 📝 Histórico de Versões
+
+### v5.0 (2026-03-06)
+- ✅ **Score de Conformidade**: 100% mantido (Sprint 32)
+- ✅ **@talentforge/types dep fix**: adicionado `"@talentforge/types": "*"` em `apps/web/package.json` + `transpilePackages` em `next.config.mjs` — resolve build Vercel
+- ✅ **AgendaModal calendar grid**: reescrito com `display: flex` + inline styles (fix Tailwind v4 + Turbopack `grid-cols-7`); cada dia é card com borda, hover e estados visuais
+- ✅ **Dynamic route fix**: `(recruiter)/jobs/[orgSlug]` movido para `(recruiter)/dashboard/jobs/[id]` — elimina conflito `'id' !== 'orgSlug'` com `(public)/jobs/[orgSlug]`
+- ✅ **Build errors corrigidos**: `page-backup.tsx` deletado (parsing error L424); comentário `/* Overlay */` → `{/* Overlay */}` em `JobDetailsModal.tsx`
+- ✅ **URL canônica de detalhe de vaga**: `/dashboard/jobs/<id>` (recrutador) — nunca `/jobs/<id>`
 
 ### v4.9 (2026-03-06)
 - ✅ **Score de Conformidade**: 100% mantido (Sprint 31)
