@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "talentforge": {
+      "command": "bash",
+      "args": [
+        "./packages/mcp/start.sh"
+      ]
+    }
+  }
+}

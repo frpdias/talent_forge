@@ -49,7 +49,7 @@ interface KanbanData {
 }
 
 export default function JobDetailPage() {
-  const { id } = useParams();
+  const { orgSlug: id } = useParams();
   const router = useRouter();
   const { currentOrg } = useOrgStore();
   const { session } = useAuth();

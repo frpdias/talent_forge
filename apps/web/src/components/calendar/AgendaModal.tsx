@@ -303,80 +303,118 @@ export function AgendaModal({ onClose }: AgendaModalProps) {
         <div className="flex-1 overflow-y-auto">
 
           {/* ── Month calendar ── */}
-          <div className="px-5 py-4 border-b border-[#E5E5DC]">
+          <div style={{ padding: '16px', borderBottom: '1px solid #E5E5DC' }}>
 
-            {/* weekday headers */}
-            <div className="grid grid-cols-7 mb-2">
+            {/* weekday headers — 7 colunas forçadas via flex */}
+            <div style={{ display: 'flex', gap: '4px', marginBottom: '4px' }}>
               {DAYS_SHORT.map(d => (
-                <div key={d} className="text-center text-[10px] font-bold text-[#BBBBBB] uppercase tracking-widest py-1">
+                <div
+                  key={d}
+                  style={{ flex: '1 1 0', minWidth: 0, textAlign: 'center' }}
+                  className="text-[10px] font-bold text-[#BBBBBB] uppercase tracking-widest py-1"
+                >
                   {d}
                 </div>
               ))}
             </div>
 
-            {/* day grid */}
+            {/* day grid — 6 linhas × 7 colunas via flex rows */}
             {loading ? (
-              <div className="flex items-center justify-center h-36">
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '144px' }}>
                 <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[#141042]" />
               </div>
             ) : (
-              <div className="grid grid-cols-7">
-                {grid.map((day, idx) => {
-                  const inMonth    = isSameMonth(day, viewDate);
-                  const isToday    = isSameDay(day, today);
-                  const isSelected = isSameDay(day, selectedDay);
-                  const dotCount   = interviews.filter(iv => isSameDay(new Date(iv.scheduled_at), day)).length;
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                {Array.from({ length: 6 }, (_, rowIdx) => (
+                  <div key={rowIdx} style={{ display: 'flex', gap: '4px' }}>
+                    {grid.slice(rowIdx * 7, rowIdx * 7 + 7).map((day, colIdx) => {
+                      const inMonth    = isSameMonth(day, viewDate);
+                      const isToday    = isSameDay(day, today);
+                      const isSelected = isSameDay(day, selectedDay);
+                      const dotCount   = interviews.filter(iv => isSameDay(new Date(iv.scheduled_at), day)).length;
 
-                  // Today's circle color: fluorescent green during business hours, dark navy otherwise
-                  const todayBg = isToday
-                    ? inBusinessHours
-                      ? 'bg-[#22c55e] shadow-[0_0_10px_2px_rgba(34,197,94,0.45)]'
-                      : 'bg-[#141042]'
-                    : '';
+                      let bgColor     = '#ffffff';
+                      let borderColor = '#E5E5DC';
+                      let textColor   = '#333333';
+                      let boxShadow   = 'none';
 
-                  return (
-                    <button
-                      key={idx}
-                      onClick={() => handleSelectDay(day)}
-                      className={`
-                        relative flex flex-col items-center pt-2 pb-2.5 gap-1
-                        transition-colors rounded-lg
-                        ${!inMonth ? 'opacity-20 cursor-default pointer-events-none' : 'cursor-pointer hover:bg-[#F5F4FB]'}
-                        ${isSelected && !isToday ? 'bg-[#F5F4FB] ring-1 ring-[#141042]/20 ring-inset' : ''}
-                      `}
-                    >
-                      {/* Day number */}
-                      <span
-                        className={`
-                          w-8 h-8 flex items-center justify-center rounded-full text-sm font-semibold transition-all
-                          ${isToday
-                            ? `${todayBg} text-white`
-                            : isSelected
-                            ? 'text-[#141042] font-bold'
-                            : 'text-[#333333]'}
-                        `}
-                      >
-                        {day.getDate()}
-                      </span>
+                      if (!inMonth) {
+                        bgColor = 'transparent'; borderColor = 'transparent'; textColor = '#cccccc';
+                      } else if (isSelected && isToday) {
+                        bgColor = inBusinessHours ? '#22c55e' : '#141042';
+                        borderColor = 'transparent'; textColor = '#ffffff';
+                        boxShadow = inBusinessHours ? '0 0 8px 2px rgba(34,197,94,0.35)' : 'none';
+                      } else if (isSelected) {
+                        bgColor = '#141042'; borderColor = '#141042'; textColor = '#ffffff';
+                        boxShadow = '0 2px 8px rgba(20,16,66,0.25)';
+                      } else if (isToday) {
+                        bgColor = inBusinessHours ? '#22c55e' : '#141042';
+                        borderColor = 'transparent'; textColor = '#ffffff';
+                        boxShadow = inBusinessHours ? '0 0 8px 2px rgba(34,197,94,0.35)' : 'none';
+                      }
 
-                      {/* Event dots */}
-                      {dotCount > 0 && inMonth ? (
-                        <div className="flex gap-0.5 h-1.5">
-                          {Array.from({ length: Math.min(dotCount, 3) }).map((_, i) => (
-                            <div
-                              key={i}
-                              className={`w-1 h-1 rounded-full ${
-                                isSelected || isToday ? 'bg-[#3B82F6]' : 'bg-[#93C5FD]'
-                              }`}
-                            />
-                          ))}
-                        </div>
-                      ) : (
-                        <div className="h-1.5" /> /* spacer so all cells have equal height */
-                      )}
-                    </button>
-                  );
-                })}
+                      return (
+                        <button
+                          key={colIdx}
+                          onClick={() => inMonth ? handleSelectDay(day) : undefined}
+                          disabled={!inMonth}
+                          style={{
+                            flex: '1 1 0',
+                            minWidth: 0,
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '3px',
+                            padding: '8px 4px',
+                            borderRadius: '10px',
+                            border: `1px solid ${borderColor}`,
+                            backgroundColor: bgColor,
+                            color: textColor,
+                            boxShadow,
+                            cursor: inMonth ? 'pointer' : 'default',
+                            transition: 'all 0.15s ease',
+                            outline: 'none',
+                          }}
+                          onMouseEnter={e => {
+                            if (inMonth && !isSelected && !isToday) {
+                              (e.currentTarget as HTMLButtonElement).style.backgroundColor = '#F5F4FB';
+                              (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(20,16,66,0.3)';
+                            }
+                          }}
+                          onMouseLeave={e => {
+                            if (inMonth && !isSelected && !isToday) {
+                              (e.currentTarget as HTMLButtonElement).style.backgroundColor = bgColor;
+                              (e.currentTarget as HTMLButtonElement).style.borderColor = borderColor;
+                            }
+                          }}
+                        >
+                          {/* Day number */}
+                          <span style={{ fontSize: '13px', fontWeight: 700, lineHeight: 1 }}>
+                            {day.getDate()}
+                          </span>
+
+                          {/* Event dots */}
+                          {dotCount > 0 && inMonth ? (
+                            <div style={{ display: 'flex', gap: '2px', height: '6px', alignItems: 'center' }}>
+                              {Array.from({ length: Math.min(dotCount, 3) }).map((_, i) => (
+                                <div
+                                  key={i}
+                                  style={{
+                                    width: '4px', height: '4px', borderRadius: '50%',
+                                    backgroundColor: (isSelected || isToday) ? 'rgba(255,255,255,0.7)' : '#3B82F6',
+                                  }}
+                                />
+                              ))}
+                            </div>
+                          ) : (
+                            <div style={{ height: '6px' }} />
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                ))}
               </div>
             )}
           </div>
