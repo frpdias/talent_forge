@@ -1,6 +1,6 @@
 # Arquitetura Canônica — TalentForge
 
-**Última atualização**: 2026-03-05 | **Score de Conformidade**: ✅ 100% (Sprint 30.2: Fix RLS application_documents + Perfis comportamentais + Dashboard candidato + Vagas Salvas)
+**Última atualização**: 2026-03-06 | **Score de Conformidade**: ✅ 100% (Sprint 31: AgendaModal + Google Calendar + interviews table + Git/Deploy estruturado)
 
 ## 📜 FONTE DA VERDADE — PRINCÍPIO FUNDAMENTAL
 
@@ -27,6 +27,10 @@
 8. **NUNCA** alterar enums sem migration + validação de dados existentes
 9. **NUNCA** criar componentes fora da estrutura de Design System
 10. **NUNCA** fazer commits direto em `main` sem passar por validação
+11. **NUNCA** usar `git push --force` exceto para restaurar estado correto após push via API GitHub
+12. **NUNCA** fazer deploy pelo Vercel CLI local (`vercel --prod`) — deploy SEMPRE via git push
+13. **NUNCA** criar/editar arquivos sem adicioná-los ao git (`git add`) logo em seguida
+14. **NUNCA** commitar `.env`, `.env.local` ou qualquer arquivo com credenciais
 
 ### ✅ OBRIGATÓRIO EM TODA ALTERAÇÃO
 1. Seguir **exatamente** a estrutura de pastas definida na Seção 0
@@ -326,17 +330,209 @@ const COLORS = {
    - Criar migration em `supabase/migrations/YYYYMMDD_description.sql`
    - Aplicar no Supabase SQL Editor
    - Executar `VALIDATE_IMPROVEMENTS.sql`
-5. **Commit e push**:
+5. **Commitar TODO arquivo novo/modificado imediatamente**:
    ```bash
-   git add .
-   git commit -m "feat: descrição clara"
-   git push origin feat/nova-feature
+   git add apps/web/src/...
+   git commit -m "feat(escopo): descrição em pt-BR"
    ```
-6. **Validar antes de merge**:
-   - Build deve passar: `npm run build` (api + web)
-   - Linter deve passar: `npm run lint`
-   - Types devem passar: `npm run type-check`
-7. **Merge para main** somente após validação completa
+6. **Push para main** (Vercel faz deploy automático):
+   ```bash
+   git push origin main
+   ```
+7. **Validar build no CI** (`.github/workflows/ci.yml` roda automaticamente):
+   - Type-check TypeScript
+   - ESLint
+   - `next build` completo
+
+---
+
+## 🗂️ Git & Deploy — Padrão Canônico (LEIA ANTES DE FAZER QUALQUER PUSH)
+
+### Contexto Histórico — Por que este padrão existe
+
+> Em 2026-03-06, descobriu-se que o repositório rastreava apenas ~10 arquivos desde a criação do projeto. Todos os deploys anteriores eram feitos pelo Vercel CLI local (`vercel --prod`), nunca via git. Quando o Vercel foi conectado ao repositório para deploy automático, o build falhou com *"doesn't have a root layout"* porque `package.json`, `layout.tsx`, `globals.css`, `lib/` e praticamente tudo estavam **fora do git**.
+>
+> **Resolução**: 379 arquivos adicionados em um único commit force-pushed. Tempo perdido: ~4 horas.
+>
+> **Para nunca repetir**: as regras abaixo são obrigatórias a partir desta data.
+
+---
+
+### 📐 Estrutura de Arquivos Git-Rastreados (OBRIGATÓRIO)
+
+Todo arquivo criado no projeto **DEVE ser rastreado pelo git** na mesma sessão em que foi criado:
+
+```
+RASTREADO (git add obrigatório):
+✅ apps/web/src/**          — todo código fonte
+✅ apps/web/package.json    — dependências
+✅ apps/web/next.config.mjs — configuração Next.js
+✅ apps/web/tsconfig.json   — configuração TypeScript
+✅ apps/web/postcss.config.mjs — configuração PostCSS
+✅ apps/web/vercel.json     — configuração Vercel
+✅ apps/web/.gitignore      — regras de ignore do web
+✅ apps/api/src/**          — código NestJS
+✅ apps/api/package.json    — dependências api
+✅ supabase/migrations/**   — todas as migrations SQL
+✅ packages/**              — MCP, types
+✅ docs/**                  — documentação arquitetural
+✅ scripts/**               — scripts de manutenção
+✅ .github/**               — workflows CI
+✅ .gitignore (raiz)        — regras globais de ignore
+✅ package.json (raiz)      — scripts e workspaces monorepo
+
+IGNORADO (nunca commitar):
+🚫 node_modules/
+🚫 .next/
+🚫 apps/api/dist/
+🚫 .env / .env.local / .env.*  (exceto .env.example)
+🚫 build.log
+🚫 .DS_Store
+🚫 .vercel/
+🚫 Arquivos com nomes duplicados: "arquivo 2.tsx" (artefatos locais)
+```
+
+---
+
+### 📝 Padrão de Commits (OBRIGATÓRIO)
+
+**Formato**: `tipo(escopo): descrição em pt-BR (imperativo)`
+
+| Tipo | Quando usar |
+|------|-------------|
+| `feat` | Nova funcionalidade visível ao usuário |
+| `fix` | Correção de bug |
+| `chore` | Infra, configs, dependências, sem código de produto |
+| `refactor` | Reestruturação sem mudança de comportamento |
+| `docs` | Apenas documentação |
+| `test` | Adição/correção de testes |
+| `migration` | Apenas migration SQL |
+
+**Exemplos corretos**:
+```bash
+git commit -m "feat(agenda): adiciona AgendaModal mensal com Google Calendar"
+git commit -m "fix(rls): corrige política de acesso em interviews"
+git commit -m "migration(interviews): cria tabela interviews com RLS"
+git commit -m "chore(ci): adiciona workflow de build e type-check"
+```
+
+**Escopo** = módulo afetado: `agenda`, `candidato`, `recruiter`, `php`, `tfci`, `copc`, `nr1`, `api`, `rls`, `deploy`, `ci`, `docs`.
+
+---
+
+### 🚢 Pipeline de Deploy (FLUXO CANÔNICO)
+
+```
+Desenvolvimento Local
+        ↓
+  git add <arquivo>          ← OBRIGATÓRIO ao criar/modificar arquivo
+        ↓
+  git commit -m "tipo(escopo): descrição"
+        ↓
+  git push origin main
+        ↓
+  GitHub Actions CI          ← .github/workflows/ci.yml
+  ├── type-check (tsc --noEmit)
+  ├── lint (eslint)
+  └── next build             ← falha aqui = NÃO chega ao Vercel
+        ↓ (apenas se CI passar)
+  Vercel Deploy Automático
+  ├── Root Directory: apps/web
+  ├── Build Command: next build
+  ├── Install: npm install --no-package-lock
+  └── Output: .next/
+        ↓
+  https://web-eight-rho-84.vercel.app  (produção)
+```
+
+> **Regra**: Se o CI falhar no GitHub Actions, o Vercel **não** recebe o trigger de deploy. Nunca chega quebrado em produção.
+
+---
+
+### ⚙️ Configuração Vercel (`apps/web/vercel.json`)
+
+```json
+{
+  "framework": "nextjs",
+  "installCommand": "npm install --no-package-lock",
+  "buildCommand": "next build",
+  "outputDirectory": ".next",
+  "env": {
+    "NEXT_TELEMETRY_DISABLED": "1"
+  }
+}
+```
+
+**Variáveis de ambiente obrigatórias no Vercel Dashboard**:
+| Variável | Onde definir |
+|----------|--------------|
+| `NEXT_PUBLIC_SUPABASE_URL` | Vercel → Settings → Environment Variables |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Vercel → Settings → Environment Variables |
+| `SUPABASE_SERVICE_ROLE_KEY` | Vercel → Settings → Environment Variables |
+
+**Nunca** colocar secrets no `vercel.json` — apenas no dashboard.
+
+---
+
+### 🤖 GitHub Actions CI (`.github/workflows/ci.yml`)
+
+Roda automaticamente em todo `git push` que toca `apps/web/**` ou `packages/**`:
+
+- **Job `validate`**: `tsc --noEmit` + `eslint` (bloqueante)
+- **Job `build`**: `next build` completo (bloqueante, depende de `validate`)
+
+**Para verificar secrets no GitHub**: `Settings → Secrets → Actions`.
+Necessário: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`.
+
+---
+
+### 🆘 Procedimento de Emergência — Arquivos Fora do Git
+
+Se descobrir que arquivos do projeto não estão no git:
+
+```bash
+# 1. Identificar o que está faltando
+git ls-files --others --exclude-standard | grep 'apps/web/src'
+
+# 2. Adicionar tudo da pasta afetada
+git add apps/web/src/
+git add apps/web/package.json apps/web/next.config.mjs
+
+# 3. Verificar o que foi adicionado
+git diff --cached --stat
+
+# 4. Commitar
+git commit -m "chore(git): adiciona arquivos ausentes do rastreamento"
+
+# 5. Push (normal, sem --force)
+git push origin main
+```
+
+> ⚠️ `git push --force` **só** é permitido quando o remote tem commits de uma fonte externa (ex: push via GitHub API) que precisam ser sobrescritos. Documente o motivo no commit.
+
+---
+
+### 📊 Checklist Pré-Push (EXECUTAR ANTES DE CADA PUSH PARA MAIN)
+
+```bash
+# 1. Todos os arquivos novos foram adicionados ao git?
+git status --short | grep '^??' | grep 'apps/web/src'
+# → Não deve retornar nada (ou apenas arquivos intencionalmente não rastreados)
+
+# 2. Arquivos secretos não vazaram?
+git diff --cached --name-only | grep -E '\.env|secret|key'
+# → Não deve retornar nada
+
+# 3. Build local passa?
+cd apps/web && npm run build
+# → Deve terminar com '✓ Compiled successfully'
+
+# 4. TypeScript sem erros?
+npx tsc --noEmit
+# → Sem erros
+```
+
+---
 
 ### 🔌 Conexões locais (obrigatório em dev)
 - Web local deve apontar para API local:
