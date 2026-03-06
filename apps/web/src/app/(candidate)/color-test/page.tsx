@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation';
 import { Button, Card, CardContent, CardHeader, CardTitle, Progress } from '@/components/ui';
 import { Activity, LogOut, Sparkles } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
-import { useAuth } from '@/lib/auth';
 
 type ColorCode = 'azul' | 'rosa' | 'amarelo' | 'verde' | 'branco';
 
@@ -60,7 +59,6 @@ export default function ColorTestPage() {
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<ColorResult | null>(null);
   const router = useRouter();
-  const { signOut } = useAuth();
   const supabase = createClient();
 
   const handlePrint = () => {
@@ -233,9 +231,9 @@ export default function ColorTestPage() {
 
             <Button
               variant="ghost"
-              onClick={async () => {
-                await signOut();
-                router.push('/login');
+              onClick={() => {
+                if (!window.confirm('Tem certeza que deseja abandonar o teste? Seu progresso será perdido.')) return;
+                router.push('/candidate');
               }}
               className="border border-[#E5E5DC] bg-white text-[#141042] hover:border-[#141042] hover:bg-[#F5F5F0] flex items-center justify-center gap-2"
             >

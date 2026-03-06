@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { createClient } from '@/lib/supabase/client';
 
 type Block = 'natural' | 'adaptado';
@@ -246,45 +247,53 @@ export default function PiTestModal({ onClose }: Props) {
   const currentBlock: Block = phase === 'natural-descritores' || phase === 'natural-situacional' ? 'natural' : 'adaptado';
   const selectedSet = currentBlock === 'natural' ? naturalDescs : adaptedDescs;
 
-  return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-[#FAFAF8] overflow-y-auto" role="dialog" aria-modal="true">
-      {/* Header */}
-      <div className="sticky top-0 z-10 bg-white border-b border-[#E5E5DC] px-4 sm:px-6 py-3 flex items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-[#8B5CF6]/10 text-[#8B5CF6] flex items-center justify-center text-base">
-            🧬
-          </div>
-          <div>
-            <p className="text-xs uppercase tracking-wide text-[#666666] font-semibold">Predictive Index</p>
-            <p className="text-xs text-[#999]">{PHASE_LABELS[phase]}</p>
-          </div>
-        </div>
-
-        <div className="flex-1 max-w-xs hidden sm:block">
-          <div className="h-1.5 rounded-full bg-[#E5E5DC] overflow-hidden">
-            <div
-              className="h-full rounded-full bg-[#8B5CF6] transition-all duration-300"
-              style={{ width: `${phasePct}%` }}
+  return createPortal(
+    <div className="fixed inset-0 z-9999 flex flex-col overflow-y-auto" style={{ background: '#FAFAF8' }} role="dialog" aria-modal="true">
+      {/* Header — identidade da aplicação */}
+      <div className="sticky top-0 z-10 flex flex-col" style={{ background: '#141042' }}>
+        <div className="flex items-center justify-between px-4 sm:px-6 py-3 gap-4">
+          <div className="flex items-center gap-3">
+            <img
+              src="https://fjudsjzfnysaztcwlwgm.supabase.co/storage/v1/object/public/LOGOS/LOGO4.png"
+              alt="Talent Forge"
+              className="h-7 w-auto opacity-90"
             />
+            <div className="border-l border-white/20 pl-3">
+              <p className="text-xs font-semibold text-white/90 uppercase tracking-wider">Predictive Index</p>
+              <p className="text-[11px] text-white/50">{PHASE_LABELS[phase]}</p>
+            </div>
           </div>
+
+          {!loading && !saving && (
+            <button
+              onClick={() => {
+                if (phase !== 'resultado' && !error) {
+                  if (!window.confirm('Tem certeza que deseja abandonar o teste? Seu progresso será perdido.')) return;
+                }
+                onClose(phase === 'resultado');
+              }}
+              className="w-8 h-8 flex items-center justify-center rounded-lg text-white/60 hover:text-white hover:bg-white/10 transition-colors text-sm"
+              aria-label="Fechar"
+            >
+              ✕
+            </button>
+          )}
         </div>
 
-        {(phase === 'resultado' || (!loading && !saving && !!error)) && (
-          <button
-            onClick={() => onClose(phase === 'resultado')}
-            className="w-8 h-8 flex items-center justify-center rounded-lg text-[#666] hover:bg-[#F5F5F0] transition-colors text-base"
-            aria-label="Fechar"
-          >
-            ✕
-          </button>
-        )}
+        {/* Barra de progresso */}
+        <div className="h-1 bg-white/10">
+          <div
+            className="h-full bg-[#10B981] transition-all duration-300"
+            style={{ width: `${phasePct}%` }}
+          />
+        </div>
       </div>
 
       {/* Body */}
-      <div className="flex-1 flex flex-col items-center justify-start px-4 py-8 max-w-2xl mx-auto w-full">
+      <div className="flex-1 flex flex-col items-center justify-start px-6 sm:px-10 py-10 max-w-5xl mx-auto w-full">
         {loading && (
           <div className="text-center mt-16">
-            <div className="inline-block animate-spin rounded-full h-10 w-10 border-b-2 border-[#8B5CF6]" />
+            <div className="inline-block animate-spin rounded-full h-10 w-10 border-b-2 border-[#141042]" />
             <p className="mt-3 text-sm text-[#666]">Carregando...</p>
           </div>
         )}
@@ -300,12 +309,12 @@ export default function PiTestModal({ onClose }: Props) {
         {!loading && !error && (phase === 'natural-descritores' || phase === 'adaptado-descritores') && (
           <>
             <div className="w-full mb-4">
-              <h2 className="text-base sm:text-lg font-semibold text-[#141042]">
+              <h2 className="text-xl sm:text-2xl font-semibold text-[#141042]">
                 {phase === 'natural-descritores'
                   ? 'Selecione as palavras que MELHOR descrevem você naturalmente.'
                   : 'Selecione as palavras que descrevem como você age NO TRABALHO.'}
               </h2>
-              <p className="text-xs text-[#999] mt-1">{selectedSet.size} selecionadas</p>
+              <p className="text-sm text-[#999] mt-2">{selectedSet.size} selecionadas</p>
             </div>
 
             <div className="w-full flex flex-wrap gap-2">
@@ -315,7 +324,7 @@ export default function PiTestModal({ onClose }: Props) {
                   <button
                     key={d.id}
                     onClick={() => toggleDescriptor(d.id, currentBlock)}
-                    className={`px-3 py-1.5 rounded-full border text-xs font-medium transition-all duration-150 ${
+                    className={`px-4 py-2 rounded-full border text-sm font-medium transition-all duration-150 ${
                       sel
                         ? 'bg-[#141042] text-white border-[#141042]'
                         : 'bg-white text-[#141042] border-[#E5E5DC] hover:border-[#141042]/30'
@@ -353,16 +362,16 @@ export default function PiTestModal({ onClose }: Props) {
                 <p className="text-xs text-[#999] mb-1">
                   {phase === 'natural-situacional' ? 'Natural' : 'Adaptado'} — {sIdx + 1}/{situational.length}
                 </p>
-                <h2 className="text-base sm:text-lg font-semibold text-[#141042]">{q.prompt}</h2>
+                <h2 className="text-xl sm:text-2xl font-semibold text-[#141042]">{q.prompt}</h2>
               </div>
 
-              <div className="w-full grid grid-cols-1 gap-3">
+              <div className="w-full grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {opts.map(({ key, text, axis }) => (
                   <button
                     key={key}
                     onClick={() => handleSituational(axis)}
                     disabled={saving}
-                    className="w-full text-left px-4 py-3 rounded-xl border border-[#E5E5DC] bg-white hover:border-[#141042]/30 hover:-translate-y-0.5 transition-all text-sm text-[#141042] shadow-[0_1px_4px_rgba(20,16,66,0.06)]"
+                    className="w-full text-left px-5 py-4 rounded-xl border border-[#E5E5DC] bg-white hover:border-[#141042]/30 hover:-translate-y-0.5 transition-all text-base text-[#141042] shadow-[0_1px_4px_rgba(20,16,66,0.06)]"
                   >
                     <span className="font-semibold mr-2 text-[#999]">{key.toUpperCase()}.</span>
                     {text}
@@ -434,6 +443,7 @@ export default function PiTestModal({ onClose }: Props) {
           </div>
         )}
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

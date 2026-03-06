@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { createClient } from '@/lib/supabase/client';
 
 type ColorCode = 'azul' | 'rosa' | 'amarelo' | 'verde' | 'branco';
@@ -146,46 +147,54 @@ export default function ColorTestModal({ onClose }: Props) {
   const pct = questions.length ? Math.round((totalAnswered / questions.length) * 100) : 0;
   const currentQ = questions[currentIndex];
 
-  return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-[#FAFAF8] overflow-y-auto" role="dialog" aria-modal="true">
-      {/* Header */}
-      <div className="sticky top-0 z-10 bg-white border-b border-[#E5E5DC] px-4 sm:px-6 py-3 flex items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-[#F59E0B]/10 text-[#F59E0B] flex items-center justify-center text-base">
-            👔
-          </div>
-          <div>
-            <p className="text-xs uppercase tracking-wide text-[#666666] font-semibold">Teste das Cores</p>
-            {!result && questions.length > 0 && (
-              <p className="text-xs text-[#999]">{currentIndex + 1} / {questions.length}</p>
-            )}
-          </div>
-        </div>
-
-        {!result && questions.length > 0 && (
-          <div className="flex-1 max-w-xs hidden sm:block">
-            <div className="h-1.5 rounded-full bg-[#E5E5DC] overflow-hidden">
-              <div
-                className="h-full rounded-full bg-[#F59E0B] transition-all duration-300"
-                style={{ width: `${pct}%` }}
-              />
+  return createPortal(
+    <div className="fixed inset-0 z-9999 flex flex-col overflow-y-auto" style={{ background: '#FAFAF8' }} role="dialog" aria-modal="true">
+      {/* Header — identidade da aplicação */}
+      <div className="sticky top-0 z-10 flex flex-col" style={{ background: '#141042' }}>
+        <div className="flex items-center justify-between px-4 sm:px-6 py-3 gap-4">
+          <div className="flex items-center gap-3">
+            <img
+              src="https://fjudsjzfnysaztcwlwgm.supabase.co/storage/v1/object/public/LOGOS/LOGO4.png"
+              alt="Talent Forge"
+              className="h-7 w-auto opacity-90"
+            />
+            <div className="border-l border-white/20 pl-3">
+              <p className="text-xs font-semibold text-white/90 uppercase tracking-wider">Teste das Cores</p>
+              {!result && questions.length > 0 && (
+                <p className="text-[11px] text-white/50">{totalAnswered} de {questions.length} respondidas</p>
+              )}
             </div>
           </div>
-        )}
 
-        {(result || (!loading && !saving)) && (
-          <button
-            onClick={() => onClose(!!result)}
-            className="w-8 h-8 flex items-center justify-center rounded-lg text-[#666] hover:bg-[#F5F5F0] transition-colors text-base"
-            aria-label="Fechar"
-          >
-            ✕
-          </button>
+          {(!loading && !saving) && (
+            <button
+              onClick={() => {
+                if (!result) {
+                  if (!window.confirm('Tem certeza que deseja abandonar o teste? Seu progresso será perdido.')) return;
+                }
+                onClose(!!result);
+              }}
+              className="w-8 h-8 flex items-center justify-center rounded-lg text-white/60 hover:text-white hover:bg-white/10 transition-colors text-sm"
+              aria-label="Fechar"
+            >
+              ✕
+            </button>
+          )}
+        </div>
+
+        {/* Barra de progresso */}
+        {!result && questions.length > 0 && (
+          <div className="h-1 bg-white/10">
+            <div
+              className="h-full bg-[#10B981] transition-all duration-300"
+              style={{ width: `${pct}%` }}
+            />
+          </div>
         )}
       </div>
 
       {/* Body */}
-      <div className="flex-1 flex flex-col items-center justify-center px-4 py-8 max-w-2xl mx-auto w-full">
+      <div className="flex-1 flex flex-col items-center justify-start px-6 sm:px-10 py-10 max-w-5xl mx-auto w-full">
         {loading && (
           <div className="text-center">
             <div className="inline-block animate-spin rounded-full h-10 w-10 border-b-2 border-[#F59E0B]" />
@@ -204,10 +213,10 @@ export default function ColorTestModal({ onClose }: Props) {
           <>
             <div className="w-full mb-6">
               <p className="text-xs uppercase tracking-wide text-[#999] font-semibold mb-1">Pergunta {currentIndex + 1}</p>
-              <h2 className="text-base sm:text-lg font-semibold text-[#141042] leading-snug">{currentQ.prompt}</h2>
+              <h2 className="text-xl sm:text-2xl font-semibold text-[#141042] leading-snug">{currentQ.prompt}</h2>
             </div>
 
-            <div className="w-full grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="w-full grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {COLORS.map(({ code, grad, border }) => {
                 const text = currentQ[`option_${code}` as keyof Question] as string;
                 const selected = answers[currentQ.id] === code;
@@ -216,7 +225,7 @@ export default function ColorTestModal({ onClose }: Props) {
                     key={code}
                     onClick={() => handleSelect(code)}
                     disabled={saving}
-                    className={`group relative overflow-hidden rounded-xl border px-4 py-4 text-left transition-all duration-200 ${
+                    className={`group relative overflow-hidden rounded-xl border px-6 py-5 text-left transition-all duration-200 ${
                       selected ? `${border} bg-[#F7F7F2] scale-[0.98]` : 'border-[#E5E5DC] bg-white hover:border-[#141042]/30 hover:-translate-y-0.5'
                     } shadow-[0_1px_4px_rgba(20,16,66,0.06)]`}
                   >
@@ -228,7 +237,7 @@ export default function ColorTestModal({ onClose }: Props) {
                         code === 'amarelo' ? 'bg-amber-400' :
                         code === 'verde' ? 'bg-emerald-400' : 'bg-gray-400'
                       }`} />
-                      <p className="text-xs sm:text-sm text-[#141042] leading-snug">{text}</p>
+                      <p className="text-sm sm:text-base text-[#141042] leading-relaxed">{text}</p>
                     </div>
                   </button>
                 );
@@ -290,6 +299,7 @@ export default function ColorTestModal({ onClose }: Props) {
           </div>
         )}
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
