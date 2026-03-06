@@ -1,0 +1,396 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { ArrowLeft, TrendingUp, TrendingDown, Minus, AlertCircle } from 'lucide-react';
+import { createClient, getAuthToken } from '@/lib/supabase/client';
+import { useOrgStore } from '@/lib/store';
+import {
+  LineChart,
+  Line,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+} from 'recharts';
+
+interface CopcMetric {
+  id: string;
+  metric_date: string;
+  overall_performance_score: number;
+  quality_score: number;
+  efficiency_score: number;
+  effectiveness_score: number;
+  cx_score: number;
+  people_score: number;
+}
+
+interface TrendData {
+  category: string;
+  current: number;
+  previous: number;
+  change: number;
+  trend: 'up' | 'down' | 'stable';
+}
+
+export default function CopcTrendsPage() {
+  const router = useRouter();
+  const { currentOrg, phpContextOrgId } = useOrgStore();
+  const effectiveOrgId = phpContextOrgId || currentOrg?.id;
+  const [loading, setLoading] = useState(true);
+  const [metrics, setMetrics] = useState<CopcMetric[]>([]);
+  const [trends, setTrends] = useState<TrendData[]>([]);
+  const [period, setPeriod] = useState<'7d' | '30d' | '90d'>('30d');
+
+  useEffect(() => {
+    if (effectiveOrgId) {
+      loadMetrics();
+    }
+  }, [effectiveOrgId, period]);
+
+  const loadMetrics = async () => {
+    try {
+      setLoading(true);
+      const token = await getAuthToken();
+
+      if (!token || !effectiveOrgId) {
+        console.error('Token ou organização não encontrados');
+        return;
+      }
+
+      const response = await fetch(
+        `/api/v1/php/copc/metrics?org_id=${effectiveOrgId}&period=${period}`,
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'x-org-id': effectiveOrgId!,
+          },
+        }
+      );
+
+      if (response.ok) {
+        const data: CopcMetric[] = await response.json();
+        setMetrics(data);
+        calculateTrends(data);
+      }
+    } catch (error) {
+      console.error('Error loading metrics:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const calculateTrends = (data: CopcMetric[]) => {
+    if (data.length < 2) {
+      setTrends([]);
+      return;
+    }
+
+    // Ordenar por data (mais recente primeiro)
+    const sorted = [...data].sort((a, b) => 
+      new Date(b.metric_date).getTime() - new Date(a.metric_date).getTime()
+    );
+
+    const latest = sorted[0];
+    const previous = sorted[1];
+
+    const categories = [
+      { key: 'overall_performance_score', label: 'Score Geral' },
+      { key: 'quality_score', label: 'Qualidade' },
+      { key: 'efficiency_score', label: 'Eficiência' },
+      { key: 'effectiveness_score', label: 'Efetividade' },
+      { key: 'cx_score', label: 'Customer Experience' },
+      { key: 'people_score', label: 'People (Bem-estar)' },
+    ];
+
+    const trendData: TrendData[] = categories.map(cat => {
+      const current = latest[cat.key as keyof CopcMetric] as number;
+      const prev = previous[cat.key as keyof CopcMetric] as number;
+      const change = current - prev;
+      const percentChange = ((change / prev) * 100);
+
+      let trend: 'up' | 'down' | 'stable' = 'stable';
+      if (Math.abs(percentChange) > 2) {
+        trend = change > 0 ? 'up' : 'down';
+      }
+
+      return {
+        category: cat.label,
+        current,
+        previous: prev,
+        change: percentChange,
+        trend,
+      };
+    });
+
+    setTrends(trendData);
+  };
+
+  const getTrendIcon = (trend: 'up' | 'down' | 'stable') => {
+    switch (trend) {
+      case 'up':
+        return <TrendingUp className="w-5 h-5 text-green-600" />;
+      case 'down':
+        return <TrendingDown className="w-5 h-5 text-red-600" />;
+      default:
+        return <Minus className="w-5 h-5 text-gray-400" />;
+    }
+  };
+
+  const getTrendColor = (trend: 'up' | 'down' | 'stable') => {
+    switch (trend) {
+      case 'up':
+        return 'bg-green-50 border-green-200 text-green-800';
+      case 'down':
+        return 'bg-red-50 border-red-200 text-red-800';
+      default:
+        return 'bg-gray-50 border-gray-200 text-gray-800';
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#FAFAF8] p-6 flex items-center justify-center">
+        <p className="text-[#666666]">Carregando análise de tendências...</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-[#FAFAF8] p-6">
+      <div className="max-w-6xl mx-auto">
+        {/* Header */}
+        <div className="mb-6">
+          <button
+            onClick={() => router.push('/php/copc')}
+            className="flex items-center gap-2 text-[#666666] hover:text-[#141042] mb-4"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Voltar para Métricas COPC
+          </button>
+
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold text-[#141042] mb-2">
+                Análise de Tendências COPC
+              </h1>
+              <p className="text-[#666666]">
+                Acompanhe a evolução das métricas ao longo do tempo
+              </p>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-[#666666]">Período:</span>
+              <select
+                value={period}
+                onChange={(e) => setPeriod(e.target.value as '7d' | '30d' | '90d')}
+                className="px-4 py-2 border border-[#E5E5DC] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#141042]"
+              >
+                <option value="7d">Últimos 7 dias</option>
+                <option value="30d">Últimos 30 dias</option>
+                <option value="90d">Últimos 90 dias</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        {/* Summary Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+          <div className="bg-white rounded-lg border border-[#E5E5DC] p-6">
+            <p className="text-sm text-[#666666] mb-2">Total de Métricas</p>
+            <p className="text-3xl font-bold text-[#141042]">{metrics.length}</p>
+          </div>
+
+          <div className="bg-white rounded-lg border border-[#E5E5DC] p-6">
+            <p className="text-sm text-[#666666] mb-2">Tendências Positivas</p>
+            <p className="text-3xl font-bold text-green-600">
+              {trends.filter(t => t.trend === 'up').length}
+            </p>
+          </div>
+
+          <div className="bg-white rounded-lg border border-[#E5E5DC] p-6">
+            <p className="text-sm text-[#666666] mb-2">Tendências Negativas</p>
+            <p className="text-3xl font-bold text-red-600">
+              {trends.filter(t => t.trend === 'down').length}
+            </p>
+          </div>
+        </div>
+
+        {/* Line Chart — Evolução temporal */}
+        {metrics.length >= 2 && (
+          <div className="bg-white rounded-lg border border-[#E5E5DC] p-6 mb-6">
+            <h2 className="text-xl font-semibold text-[#141042] mb-4">
+              Evolução do Score Geral (COPC)
+            </h2>
+            <ResponsiveContainer width="100%" height={280}>
+              <LineChart
+                data={[...metrics]
+                  .sort((a, b) => new Date(a.metric_date).getTime() - new Date(b.metric_date).getTime())
+                  .map((m) => ({
+                    data: new Date(m.metric_date).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }),
+                    Geral: m.overall_performance_score?.toFixed(1),
+                    Qualidade: m.quality_score?.toFixed(1),
+                    Eficiência: m.efficiency_score?.toFixed(1),
+                    Efetividade: m.effectiveness_score?.toFixed(1),
+                    CX: m.cx_score?.toFixed(1),
+                    People: m.people_score?.toFixed(1),
+                  }))}
+                margin={{ top: 5, right: 20, left: 0, bottom: 5 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" stroke="#E5E5DC" />
+                <XAxis dataKey="data" tick={{ fontSize: 12, fill: '#666666' }} />
+                <YAxis domain={[0, 100]} tick={{ fontSize: 12, fill: '#666666' }} />
+                <Tooltip
+                  contentStyle={{ borderColor: '#E5E5DC', borderRadius: 8, fontSize: 12 }}
+                />
+                <Legend wrapperStyle={{ fontSize: 12 }} />
+                <Line type="monotone" dataKey="Geral" stroke="#141042" strokeWidth={2} dot={{ r: 3 }} />
+                <Line type="monotone" dataKey="Qualidade" stroke="#10B981" strokeWidth={1.5} dot={false} />
+                <Line type="monotone" dataKey="Eficiência" stroke="#3B82F6" strokeWidth={1.5} dot={false} />
+                <Line type="monotone" dataKey="Efetividade" stroke="#8B5CF6" strokeWidth={1.5} dot={false} />
+                <Line type="monotone" dataKey="CX" stroke="#F59E0B" strokeWidth={1.5} dot={false} />
+                <Line type="monotone" dataKey="People" stroke="#EC4899" strokeWidth={1.5} dot={false} />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        )}
+
+        {/* Bar Chart — Comparação atual vs anterior */}
+        {trends.length > 0 && (
+          <div className="bg-white rounded-lg border border-[#E5E5DC] p-6 mb-6">
+            <h2 className="text-xl font-semibold text-[#141042] mb-4">
+              Comparação por Categoria (Atual vs Anterior)
+            </h2>
+            <ResponsiveContainer width="100%" height={280}>
+              <BarChart
+                data={trends.map((t) => ({
+                  categoria: t.category,
+                  Atual: Number(t.current.toFixed(1)),
+                  Anterior: Number(t.previous.toFixed(1)),
+                }))}
+                margin={{ top: 5, right: 20, left: 0, bottom: 5 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" stroke="#E5E5DC" />
+                <XAxis dataKey="categoria" tick={{ fontSize: 11, fill: '#666666' }} />
+                <YAxis domain={[0, 100]} tick={{ fontSize: 12, fill: '#666666' }} />
+                <Tooltip
+                  contentStyle={{ borderColor: '#E5E5DC', borderRadius: 8, fontSize: 12 }}
+                />
+                <Legend wrapperStyle={{ fontSize: 12 }} />
+                <Bar dataKey="Atual" fill="#141042" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="Anterior" fill="#E5E5DC" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        )}
+
+        {/* Trends Table */}
+        {trends.length === 0 ? (
+          <div className="bg-white rounded-lg border border-[#E5E5DC] p-12 text-center">
+            <AlertCircle className="w-16 h-16 text-[#E5E5DC] mx-auto mb-4" />
+            <p className="text-[#666666] mb-2">
+              Dados insuficientes para análise de tendências
+            </p>
+            <p className="text-sm text-[#999999]">
+              São necessárias pelo menos 2 métricas para calcular tendências
+            </p>
+          </div>
+        ) : (
+          <div className="bg-white rounded-lg border border-[#E5E5DC] overflow-hidden">
+            <div className="p-6 border-b border-[#E5E5DC]">
+              <h2 className="text-xl font-semibold text-[#141042]">
+                Comparação Período Atual vs Anterior
+              </h2>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-[#FAFAF8]">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-[#666666] uppercase tracking-wider">
+                      Categoria
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-[#666666] uppercase tracking-wider">
+                      Atual
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-[#666666] uppercase tracking-wider">
+                      Anterior
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-[#666666] uppercase tracking-wider">
+                      Variação
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-[#666666] uppercase tracking-wider">
+                      Tendência
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-[#E5E5DC]">
+                  {trends.map((trend) => (
+                    <tr key={trend.category} className="hover:bg-[#FAFAF8]">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-[#141042]">
+                        {trend.category}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-[#141042]">
+                        <span className="font-bold">{trend.current.toFixed(1)}</span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-[#666666]">
+                        {trend.previous.toFixed(1)}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm">
+                        <span className={`font-medium ${
+                          trend.change > 0 ? 'text-green-600' :
+                          trend.change < 0 ? 'text-red-600' :
+                          'text-gray-600'
+                        }`}>
+                          {trend.change > 0 ? '+' : ''}{trend.change.toFixed(1)}%
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full border ${getTrendColor(trend.trend)}`}>
+                          {getTrendIcon(trend.trend)}
+                          <span className="text-xs font-medium">
+                            {trend.trend === 'up' ? 'Crescimento' :
+                             trend.trend === 'down' ? 'Declínio' :
+                             'Estável'}
+                          </span>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {/* Insights */}
+        {trends.length > 0 && (
+          <div className="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-6">
+            <h3 className="text-lg font-semibold text-blue-900 mb-3">
+              💡 Insights Automáticos
+            </h3>
+            <ul className="space-y-2 text-sm text-blue-800">
+              {trends.some(t => t.trend === 'down' && t.category === 'Score Geral') && (
+                <li>• <strong>Atenção:</strong> O score geral está em declínio. Revisar todas as categorias.</li>
+              )}
+              {trends.filter(t => t.trend === 'down').length >= 3 && (
+                <li>• <strong>Alerta:</strong> Múltiplas categorias em declínio. Ação corretiva necessária.</li>
+              )}
+              {trends.filter(t => t.trend === 'up').length >= 4 && (
+                <li>• <strong>Positivo:</strong> Tendência geral de melhoria. Manter práticas atuais.</li>
+              )}
+              {trends.some(t => t.category === 'People (Bem-estar)' && t.trend === 'down') && (
+                <li>• <strong>Importante:</strong> Bem-estar da equipe em declínio. Considerar ações de suporte.</li>
+              )}
+              <li>• Compare as tendências com metas organizacionais e ajuste estratégias conforme necessário.</li>
+            </ul>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}

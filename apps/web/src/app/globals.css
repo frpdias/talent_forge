@@ -1,0 +1,610 @@
+@import "tailwindcss";
+@source "../**/*.{tsx,ts,jsx,js}";
+
+/* ============================================
+   TALENT FORGE - Enterprise Design System
+   Corporate Senior Level Styling
+   ============================================ */
+
+:root {
+  /* Primary Brand - Deep Purple (Arquitetura Canônica Oficial) */
+  --tf-primary: #141042;
+  --tf-primary-hover: #1E1859;
+  --tf-primary-active: #2A2270;
+  --tf-primary-light: #3B2E88;
+  
+  /* Secondary - Success Green (Arquitetura Canônica Oficial) */
+  --tf-secondary: #10B981;
+  --tf-secondary-hover: #059669;
+  --tf-secondary-light: #34D399;
+  
+  /* Accent - Blue Informativo (Arquitetura Canônica Oficial) */
+  --tf-accent: #3B82F6;
+  --tf-accent-hover: #2563EB;
+  --tf-accent-light: #60A5FA;
+  --tf-accent-subtle: #DBEAFE;
+  
+  /* Success - Corporate Green */
+  --tf-success: #10B981;
+  --tf-success-light: #34D399;
+  --tf-success-subtle: #D1FAE5;
+  
+  /* Warning - Professional Amber */
+  --tf-warning: #D97706;
+  --tf-warning-light: #F59E0B;
+  --tf-warning-subtle: #FFFBEB;
+  
+  /* Error - Refined Red */
+  --tf-error: #DC2626;
+  --tf-error-light: #EF4444;
+  --tf-error-subtle: #FEF2F2;
+  
+  /* Neutrals - Clean Grays */
+  --tf-gray-50: #F8FAFC;
+  --tf-gray-100: #F1F5F9;
+  --tf-gray-200: #E2E8F0;
+  --tf-gray-300: #CBD5E1;
+  --tf-gray-400: #94A3B8;
+  --tf-gray-500: #64748B;
+  --tf-gray-600: #475569;
+  --tf-gray-700: #334155;
+  --tf-gray-800: #1E293B;
+  --tf-gray-900: #0F172A;
+  
+  /* Backgrounds */
+  --background: #FFFFFF;
+  --background-subtle: #FAFAF8;
+  --background-muted: #F5F5F0;
+  --foreground: #141042;
+  --foreground-muted: #666666;
+  
+  /* Borders & Dividers */
+  --border: #E5E5DC;
+  --border-hover: #D4D4C8;
+  --divider: #F5F5F0;
+  
+  /* Shadows — atmosféricas tintadas com a cor primária */
+  --shadow-xs:  0 1px 3px rgba(20, 16, 66, 0.04);
+  --shadow-sm:  0 2px 8px rgba(20, 16, 66, 0.06), 0 1px 2px rgba(20, 16, 66, 0.04);
+  --shadow-md:  0 4px 16px rgba(20, 16, 66, 0.08), 0 2px 4px rgba(20, 16, 66, 0.05);
+  --shadow-lg:  0 8px 32px rgba(20, 16, 66, 0.10), 0 2px 8px rgba(20, 16, 66, 0.06);
+  --shadow-xl:  0 16px 48px rgba(20, 16, 66, 0.12), 0 4px 16px rgba(20, 16, 66, 0.08);
+
+  /* Glass tokens — Apple Liquid Glass */
+  --glass-bg:            rgba(255, 255, 255, 0.80);
+  --glass-bg-heavy:      rgba(255, 255, 255, 0.92);
+  --glass-bg-tinted:     rgba(20, 16, 66, 0.04);
+  --glass-border:        rgba(255, 255, 255, 0.50);
+  --glass-border-subtle: rgba(20, 16, 66, 0.08);
+  --glass-specular:      inset 0 1px 0 rgba(255, 255, 255, 0.70);
+  --glass-shadow:        0 8px 32px rgba(20, 16, 66, 0.09), inset 0 1px 0 rgba(255, 255, 255, 0.70);
+
+  /* Easing curves */
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-smooth: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  
+  /* Ring */
+  --ring: #3B82F6;
+  --ring-offset: #FFFFFF;
+  
+  /* Legacy compatibility */
+  --fartech-primary: var(--tf-primary);
+  --fartech-primary-light: var(--tf-primary-hover);
+  --muted: var(--background-muted);
+  --muted-foreground: var(--foreground-muted);
+  
+  /* Radius */
+  --radius-sm: 0.375rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+}
+
+@theme inline {
+  /* Design Tokens */
+  --color-tf-primary: var(--tf-primary);
+  --color-tf-primary-hover: var(--tf-primary-hover);
+  --color-tf-accent: var(--tf-accent);
+  --color-tf-accent-hover: var(--tf-accent-hover);
+  --color-tf-accent-subtle: var(--tf-accent-subtle);
+  --color-tf-success: var(--tf-success);
+  --color-tf-success-subtle: var(--tf-success-subtle);
+  --color-tf-warning: var(--tf-warning);
+  --color-tf-warning-subtle: var(--tf-warning-subtle);
+  --color-tf-error: var(--tf-error);
+  --color-tf-error-subtle: var(--tf-error-subtle);
+  
+  --color-gray-50: var(--tf-gray-50);
+  --color-gray-100: var(--tf-gray-100);
+  --color-gray-200: var(--tf-gray-200);
+  --color-gray-300: var(--tf-gray-300);
+  --color-gray-400: var(--tf-gray-400);
+  --color-gray-500: var(--tf-gray-500);
+  --color-gray-600: var(--tf-gray-600);
+  --color-gray-700: var(--tf-gray-700);
+  --color-gray-800: var(--tf-gray-800);
+  --color-gray-900: var(--tf-gray-900);
+  
+  --color-background: var(--background);
+  --color-background-subtle: var(--background-subtle);
+  --color-foreground: var(--foreground);
+  --color-foreground-muted: var(--foreground-muted);
+  --color-border: var(--border);
+  
+  --font-sans: 'Inter', var(--font-geist-sans), -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, sans-serif;
+  --font-mono: var(--font-geist-mono), 'SF Mono', Monaco, 'Cascadia Code', monospace;
+}
+
+/* ============================================
+   BASE STYLES - Enterprise Foundation
+   ============================================ */
+
+* {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+html {
+  scroll-behavior: smooth;
+  font-size: 16px;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+  line-height: 1.6;
+  letter-spacing: -0.011em;
+  font-size: 0.9375rem; /* 15px - optimal readability */
+}
+
+/* ============================================
+   TYPOGRAPHY - Corporate Scale
+   ============================================ */
+
+h1 {
+  font-size: 2rem;
+  letter-spacing: -0.025em;
+  font-weight: 600;
+  line-height: 1.2;
+  color: var(--foreground);
+}
+
+h2 {
+  font-size: 1.5rem;
+  letter-spacing: -0.02em;
+  font-weight: 600;
+  line-height: 1.25;
+  color: var(--foreground);
+}
+
+h3 {
+  font-size: 1.25rem;
+  letter-spacing: -0.015em;
+  font-weight: 600;
+  line-height: 1.3;
+  color: var(--foreground);
+}
+
+h4 {
+  font-size: 1.125rem;
+  letter-spacing: -0.01em;
+  font-weight: 600;
+  line-height: 1.35;
+  color: var(--foreground);
+}
+
+h5 {
+  font-size: 1rem;
+  letter-spacing: -0.01em;
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--foreground);
+}
+
+h6 {
+  font-size: 0.875rem;
+  letter-spacing: 0;
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--foreground);
+}
+
+p {
+  font-size: 0.9375rem;
+  line-height: 1.65;
+  color: var(--foreground-muted);
+}
+
+small, .text-sm {
+  font-size: 0.8125rem;
+}
+
+.text-xs {
+  font-size: 0.75rem;
+}
+
+.text-lg {
+  font-size: 1.125rem;
+}
+
+.text-xl {
+  font-size: 1.25rem;
+}
+
+.text-2xl {
+  font-size: 1.5rem;
+}
+
+/* Smooth Transitions */
+a, button {
+  transition: all 0.2s var(--ease-smooth);
+}
+
+/* Focus States - Modern */
+:focus-visible {
+  outline: 2px solid var(--tf-accent);
+  outline-offset: 2px;
+}
+
+/* Selection */
+::selection {
+  background: var(--tf-primary);
+  color: #ffffff;
+}
+
+/* Scrollbar - Minimal */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--tf-gray-300);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #9CA3AF;
+}
+
+/* ============================================
+   GLASS UTILITIES — Apple Liquid Glass
+   ============================================ */
+
+.glass {
+  background: var(--glass-bg);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
+}
+
+.glass-card {
+  background: var(--glass-bg);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--glass-shadow);
+  transition: box-shadow 0.3s var(--ease-smooth), transform 0.3s var(--ease-smooth);
+}
+.glass-card:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 12px 40px rgba(20, 16, 66, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.75);
+}
+
+.glass-heavy {
+  background: var(--glass-bg-heavy);
+  backdrop-filter: blur(40px) saturate(200%);
+  -webkit-backdrop-filter: blur(40px) saturate(200%);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
+}
+
+.glass-nav {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(32px) saturate(180%);
+  -webkit-backdrop-filter: blur(32px) saturate(180%);
+  border-right: 1px solid var(--glass-border-subtle);
+}
+
+.glass-primary {
+  background: var(--glass-bg-tinted);
+  backdrop-filter: blur(16px) saturate(150%);
+  -webkit-backdrop-filter: blur(16px) saturate(150%);
+  border: 1px solid rgba(20, 16, 66, 0.10);
+}
+
+/* Gradient Text */
+.gradient-text {
+  background: linear-gradient(135deg, var(--tf-primary) 0%, #3730a3 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Glow Shadows */
+.glow {
+  box-shadow:
+    0 0 0 1px rgba(20, 16, 66, 0.08),
+    0 2px 8px rgba(20, 16, 66, 0.06),
+    0 8px 24px rgba(20, 16, 66, 0.08);
+}
+
+.glow-hover {
+  transition: box-shadow 0.3s var(--ease-smooth), transform 0.3s var(--ease-smooth);
+}
+.glow-hover:hover {
+  box-shadow:
+    0 0 0 1px rgba(20, 16, 66, 0.10),
+    0 4px 16px rgba(20, 16, 66, 0.10),
+    0 16px 40px rgba(20, 16, 66, 0.12);
+  transform: translateY(-2px);
+}
+
+/* Elevated Card */
+.card-elevated {
+  background: #FFFFFF;
+  border-radius: 20px;
+  box-shadow:
+    0 1px 2px rgba(20, 16, 66, 0.04),
+    0 4px 16px rgba(20, 16, 66, 0.06),
+    0 16px 40px rgba(20, 16, 66, 0.06);
+}
+
+/* Legacy Button Utilities */
+.btn-primary {
+  background: var(--tf-primary);
+  color: white;
+  font-weight: 500;
+  padding: 10px 22px;
+  border-radius: 10px;
+  box-shadow: 0 1px 3px rgba(20, 16, 66, 0.20), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  transition: all 0.2s var(--ease-smooth);
+}
+.btn-primary:hover {
+  background: var(--tf-primary-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(20, 16, 66, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+
+.btn-secondary {
+  background: rgba(20, 16, 66, 0.05);
+  color: var(--tf-primary);
+  font-weight: 500;
+  padding: 10px 22px;
+  border-radius: 10px;
+  border: 1px solid rgba(20, 16, 66, 0.12);
+  transition: all 0.2s var(--ease-smooth);
+}
+.btn-secondary:hover {
+  background: rgba(20, 16, 66, 0.08);
+  border-color: rgba(20, 16, 66, 0.18);
+}
+
+/* Safe Area for iOS Notch and Home Indicator */
+.safe-area-pb {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+.safe-area-pt {
+  padding-top: env(safe-area-inset-top, 0px);
+}
+
+.safe-area-inset {
+  padding-left: env(safe-area-inset-left, 0px);
+  padding-right: env(safe-area-inset-right, 0px);
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* Mobile Touch Optimizations */
+@media (hover: none) and (pointer: coarse) {
+  /* Larger touch targets on mobile */
+  button, a, [role="button"] {
+    min-height: 44px;
+  }
+  
+  /* Remove hover effects on touch devices */
+  .glow-hover:hover {
+    transform: none;
+    box-shadow: 
+      0 0 0 1px rgba(20, 16, 66, 0.1),
+      0 2px 4px rgba(20, 16, 66, 0.05),
+      0 12px 24px rgba(20, 16, 66, 0.1);
+  }
+  
+  .btn-primary:hover {
+    transform: none;
+  }
+}
+
+/* Hide scrollbar on mobile while keeping scroll functionality */
+@media (max-width: 640px) {
+  .hide-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  
+  .hide-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}
+
+/* Text utilities for responsive truncation */
+.line-clamp-1 {
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.line-clamp-3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* ================================
+   FLUID TYPOGRAPHY UTILITY CLASSES
+   25% LARGER
+   ================================ */
+
+/* Hero/Display sizes - for main headings */
+.text-fluid-hero {
+  font-size: clamp(3.125rem, 2.5rem + 5vw, 7.5rem);
+  line-height: 1;
+  letter-spacing: -0.04em;
+}
+
+.text-fluid-display {
+  font-size: clamp(2.5rem, 1.875rem + 3.75vw, 5.625rem);
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+}
+
+/* Heading sizes */
+.text-fluid-h1 {
+  font-size: clamp(2.1875rem, 1.75rem + 3.125vw, 4.375rem);
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+}
+
+.text-fluid-h2 {
+  font-size: clamp(1.875rem, 1.5rem + 2.5vw, 3.75rem);
+  line-height: 1.15;
+  letter-spacing: -0.025em;
+}
+
+.text-fluid-h3 {
+  font-size: clamp(1.5625rem, 1.25rem + 1.56vw, 2.5rem);
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+}
+
+.text-fluid-h4 {
+  font-size: clamp(1.4rem, 1.19rem + 0.94vw, 1.875rem);
+  line-height: 1.25;
+  letter-spacing: -0.015em;
+}
+
+/* Body/Paragraph sizes - 25% larger */
+.text-fluid-xl {
+  font-size: clamp(1.4rem, 1.25rem + 0.625vw, 1.875rem);
+  line-height: 1.6;
+}
+
+.text-fluid-lg {
+  font-size: clamp(1.25rem, 1.125rem + 0.625vw, 1.5625rem);
+  line-height: 1.65;
+}
+
+.text-fluid-base {
+  font-size: clamp(1.09rem, 1rem + 0.5vw, 1.4rem);
+  line-height: 1.7;
+}
+
+.text-fluid-sm {
+  font-size: clamp(1.015rem, 0.9375rem + 0.375vw, 1.25rem);
+  line-height: 1.6;
+}
+
+.text-fluid-xs {
+  font-size: clamp(0.9375rem, 0.875rem + 0.31vw, 1.09rem);
+  line-height: 1.5;
+}
+
+/* Label/Caption sizes */
+.text-fluid-caption {
+  font-size: clamp(0.859rem, 0.8125rem + 0.25vw, 1.015rem);
+  line-height: 1.4;
+  letter-spacing: 0.01em;
+}
+
+/* Fluid spacing utilities */
+.space-fluid-xs {
+  gap: clamp(0.25rem, 0.2rem + 0.25vw, 0.5rem);
+}
+
+.space-fluid-sm {
+  gap: clamp(0.5rem, 0.4rem + 0.5vw, 1rem);
+}
+
+.space-fluid-md {
+  gap: clamp(1rem, 0.8rem + 1vw, 2rem);
+}
+
+.space-fluid-lg {
+  gap: clamp(1.5rem, 1.2rem + 1.5vw, 3rem);
+}
+
+.space-fluid-xl {
+  gap: clamp(2rem, 1.5rem + 2.5vw, 5rem);
+}
+
+/* Fluid padding utilities */
+.p-fluid-sm {
+  padding: clamp(0.75rem, 0.5rem + 1vw, 1.5rem);
+}
+
+.p-fluid-md {
+  padding: clamp(1rem, 0.75rem + 1.5vw, 2.5rem);
+}
+
+.p-fluid-lg {
+  padding: clamp(1.5rem, 1rem + 2vw, 4rem);
+}
+
+.px-fluid-sm {
+  padding-left: clamp(0.75rem, 0.5rem + 1vw, 1.5rem);
+  padding-right: clamp(0.75rem, 0.5rem + 1vw, 1.5rem);
+}
+
+.px-fluid-md {
+  padding-left: clamp(1rem, 0.75rem + 1.5vw, 2.5rem);
+  padding-right: clamp(1rem, 0.75rem + 1.5vw, 2.5rem);
+}
+
+.py-fluid-sm {
+  padding-top: clamp(0.75rem, 0.5rem + 1vw, 1.5rem);
+  padding-bottom: clamp(0.75rem, 0.5rem + 1vw, 1.5rem);
+}
+
+.py-fluid-md {
+  padding-top: clamp(1rem, 0.75rem + 1.5vw, 2.5rem);
+  padding-bottom: clamp(1rem, 0.75rem + 1.5vw, 2.5rem);
+}
+
+.py-fluid-lg {
+  padding-top: clamp(2rem, 1.5rem + 2.5vw, 5rem);
+  padding-bottom: clamp(2rem, 1.5rem + 2.5vw, 5rem);
+}
+
+/* Section spacing */
+.section-fluid {
+  padding-top: clamp(3rem, 2rem + 4vw, 8rem);
+  padding-bottom: clamp(3rem, 2rem + 4vw, 8rem);
+}
+
+/* Container max-width with fluid padding */
+.container-fluid {
+  width: 100%;
+  max-width: 80rem;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: clamp(1rem, 0.5rem + 2vw, 2rem);
+  padding-right: clamp(1rem, 0.5rem + 2vw, 2rem);
+}
