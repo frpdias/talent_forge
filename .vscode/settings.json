@@ -1,0 +1,24 @@
+{
+  "typescript.tsserver.maxTsServerMemory": 3072,
+  "typescript.disableAutomaticTypeAcquisition": true,
+  "typescript.tsserver.watchOptions": {
+    "watchFile": "priorityPollingInterval",
+    "watchDirectory": "dynamicPriorityPolling",
+    "fallbackPolling": "priorityInterval"
+  },
+  "search.exclude": {
+    "**/node_modules": true,
+    "**/.next": true,
+    "**/dist": true
+  },
+  "files.watcherExclude": {
+    "**/.next/**": true,
+    "**/node_modules/**": true,
+    "**/dist/**": true
+  },
+  "typescript.tsserver.experimental.enableProjectDiagnostics": false,
+  "editor.formatOnSave": false,
+  "typescript.validate.enable": true,
+  "javascript.validate.enable": false,
+  "eslint.enable": false
+}
