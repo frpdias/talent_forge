@@ -1,0 +1,36 @@
+{
+  "name": "talentforge",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "concurrently \"npm run dev:api\" \"npm run dev:web\"",
+    "dev:api": "npm run start:dev -w tf-api",
+    "dev:web": "npm run dev -w tf-web",
+    "build": "npm run build -w tf-api && npm run build -w tf-web",
+    "build:api": "npm run build -w tf-api",
+    "build:api:serverless": "npm run build -w tf-api",
+    "build:web": "npm run build -w tf-web",
+    "build:mcp": "npm run build -w @talentforge/mcp",
+    "mcp:start": "npm run start -w @talentforge/mcp",
+    "mcp:inspect": "npm run inspect -w @talentforge/mcp",
+    "lint": "npm run lint -w tf-api && npm run lint -w tf-web",
+    "test": "npm run test -w tf-api",
+    "db:migrate": "supabase db push",
+    "db:reset": "supabase db reset",
+    "cleanup:deployments": "node scripts/cleanup-vercel-deployments.js"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "dependencies": {
+    "@supabase/ssr": "0.5.2",
+    "@supabase/supabase-js": "2.46.2"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}

@@ -27,6 +27,7 @@ CREATE INDEX IF NOT EXISTS interviews_candidate_id_idx ON public.interviews(cand
 
 ALTER TABLE public.interviews ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Org members can manage interviews" ON public.interviews;
 CREATE POLICY "Org members can manage interviews"
   ON public.interviews FOR ALL
   TO authenticated

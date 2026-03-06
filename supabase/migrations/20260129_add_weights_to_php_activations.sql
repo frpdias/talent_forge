@@ -1,0 +1,11 @@
+-- NÃO USAR ESTE ARQUIVO - A arquitetura canônica usa settings JSONB
+-- Os pesos devem ser armazenados em php_module_activations.settings como:
+-- {
+--   "weights": {
+--     "tfci": 30,
+--     "nr1": 40,
+--     "copc": 30
+--   }
+-- }
+--
+-- Ver implementação correta no código da aplicação

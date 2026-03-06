@@ -1,0 +1,4 @@
+-- Migration revertida: mantém team_members.user_id REFERENCES auth.users(id)
+-- conforme ARQUITETURA_CANONICA.md (Sprint 16).
+-- O filtragem de employees sem user_id é feita no nível da aplicação.
+-- (no-op intencional)

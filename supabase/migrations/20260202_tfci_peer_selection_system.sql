@@ -1,0 +1,3 @@
+UPDATE employees 
+SET user_id = '2259969b-f9c6-4f45-b2cc-68c079368a87'
+WHERE id = '4c270a2b-45b8-48d0-b159-15578e996764';

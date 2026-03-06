@@ -1,0 +1,48 @@
+# ─── Dependências ────────────────────────────────────────
+node_modules/
+.pnp
+.pnp.*
+
+# ─── Build outputs ───────────────────────────────────────
+.next/
+out/
+build/
+/dist/
+apps/api/dist/
+apps/web/.next/
+
+# ─── Logs e cache ────────────────────────────────────────
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+*.log
+build.log
+.turbo/
+.cache/
+.git-work/
+supabase/.temp/
+
+# ─── Variáveis de ambiente (nunca commitar!) ─────────────
+.env
+.env.*
+!.env.example
+.env*.local
+
+# ─── Vercel ──────────────────────────────────────────────
+.vercel
+
+# ─── Supabase scripts locais ─────────────────────────────
+supabase/scripts/
+
+# ─── OS / Editor ─────────────────────────────────────────
+.DS_Store
+Thumbs.db
+._*
+.home/
+
+# ─── Arquivos temporários / rascunhos locais ─────────────
+"# Arquitetura Canônica — TalentForge/"
+*.backup
+*" 2.tsx"
+*" 2.ts"
