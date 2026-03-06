@@ -1,0 +1,15 @@
+import { createParamDecorator, ExecutionContext } from '@nestjs/common';
+
+export const OrgId = createParamDecorator(
+  (data: unknown, ctx: ExecutionContext) => {
+    const request = ctx.switchToHttp().getRequest();
+    return request.orgId;
+  },
+);
+
+export const OrgRole = createParamDecorator(
+  (data: unknown, ctx: ExecutionContext) => {
+    const request = ctx.switchToHttp().getRequest();
+    return request.orgRole;
+  },
+);
