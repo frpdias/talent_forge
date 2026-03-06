@@ -6,6 +6,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const isDev = process.env.NODE_ENV !== 'production';
 
 const nextConfig = {
+  transpilePackages: ['@talentforge/types'],
   images: {
     remotePatterns: [
       {
