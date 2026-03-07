@@ -14,7 +14,7 @@ interface Interview {
   meet_link: string | null;
   notes: string | null;
   status: 'scheduled' | 'completed' | 'cancelled';
-  jobs: { title: string } | null;
+  jobs: { title: string }[] | null;
 }
 
 const TYPE_LABELS: Record<string, string> = {
@@ -96,7 +96,7 @@ export default function CandidateAgendaPage() {
         .order('scheduled_at', { ascending: true });
       if (e2) throw e2;
 
-      const all = (data || []) as Interview[];
+      const all = (data || []) as unknown as Interview[];
       setUpcoming(all.filter(iv => !isPast(iv.scheduled_at) || iv.status === 'scheduled'));
       setPast(all.filter(iv => isPast(iv.scheduled_at) && iv.status !== 'scheduled'));
     } catch (err: any) {
@@ -169,10 +169,10 @@ export default function CandidateAgendaPage() {
                   </span>
                 </div>
 
-                {iv.jobs?.title && (
+                {iv.jobs?.[0]?.title && (
                   <p className="text-xs text-[#10B981] font-medium mb-2 flex items-center gap-1">
                     <ChevronRight className="w-3 h-3" />
-                    {iv.jobs.title}
+                    {iv.jobs[0].title}
                   </p>
                 )}
 

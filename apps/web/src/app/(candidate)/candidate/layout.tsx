@@ -29,7 +29,6 @@ const navItems: NavItem[] = [
   { href: '/candidate', label: 'Início', icon: Home },
   { href: '/candidate/jobs', label: 'Buscar Vagas', icon: Briefcase },
   { href: '/candidate/applications', label: 'Candidaturas', icon: FileText },
-  { href: '/candidate/agenda', label: 'Agenda', icon: Calendar },
   { href: '/candidate/saved', label: 'Salvas', icon: Bookmark },
   { href: '/candidate/profile', label: 'Perfil', icon: User },
 ];
@@ -56,6 +55,9 @@ export default function CandidateLayout({ children }: { children: React.ReactNod
   const [pendingDocApps, setPendingDocApps] = useState<{ application_id: string; job_title: string }[]>([]);
   const [bellOpen, setBellOpen] = useState(false);
   const bellRef = useRef<HTMLDivElement>(null);
+  const [sidebarInterviews, setSidebarInterviews] = useState<any[]>([]);
+  const [agendaModalOpen, setAgendaModalOpen] = useState(false);
+  const [allInterviews, setAllInterviews] = useState<any[]>([]);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -148,6 +150,38 @@ export default function CandidateLayout({ children }: { children: React.ReactNod
       setPendingDocApps(pending.map((a: any) => ({ application_id: a.application_id, job_title: a.job_title || 'Vaga' })));
     };
     loadPendingDocs();
+  }, [supabase]);
+
+  // Buscar entrevistas para o widget da sidebar
+  useEffect(() => {
+    const loadSidebarInterviews = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      // Fallback por email caso user_id não esteja preenchido no candidates
+      const orFilter = user.email
+        ? `user_id.eq.${user.id},email.eq.${user.email}`
+        : `user_id.eq.${user.id}`;
+      const { data: candRow } = await supabase
+        .from('candidates')
+        .select('id')
+        .or(orFilter)
+        .maybeSingle();
+      if (!candRow) return;
+      // Busca TODAS as entrevistas (passadas e futuras), sem filtro de data
+      const { data: interviews } = await supabase
+        .from('interviews')
+        .select('id, title, scheduled_at, duration_minutes, location, meet_link, status, jobs(title)')
+        .eq('candidate_id', candRow.id)
+        .neq('status', 'cancelled')
+        .order('scheduled_at', { ascending: true });
+      const all = interviews || [];
+      setAllInterviews(all);
+      // Widget mostra as 3 mais próximas (futuras preferidas, senão recentes)
+      const now = new Date();
+      const upcoming = all.filter((iv: any) => new Date(iv.scheduled_at) >= now);
+      setSidebarInterviews(upcoming.length > 0 ? upcoming.slice(0, 3) : all.slice(-3).reverse());
+    };
+    loadSidebarInterviews();
   }, [supabase]);
 
   // Fechar dropdown ao clicar fora
@@ -341,21 +375,50 @@ export default function CandidateLayout({ children }: { children: React.ReactNod
 
         <div className="px-3 sm:px-4 mt-4">
           <div className="rounded-2xl border border-[#E5E5DC] bg-[#FAFAF8] p-4">
-            <div className="flex items-center gap-2 text-[#141042]">
-              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-white">
-                <Calendar className="w-4 h-4" />
+            <div className="flex items-center justify-between gap-2 text-[#141042]">
+              <div className="flex items-center gap-2">
+                <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-white">
+                  <Calendar className="w-4 h-4" />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold">Agenda do recrutador</p>
+                  <p className="text-[11px] text-[#999]">
+                    {sidebarInterviews.length > 0
+                      ? `${sidebarInterviews.length} próxima${sidebarInterviews.length > 1 ? 's' : ''}`
+                      : 'Nenhuma agendada'}
+                  </p>
+                </div>
               </div>
-              <div>
-                <p className="text-sm font-semibold">Agenda do recrutador</p>
-                <p className="text-[11px] text-[#999]">Em breve</p>
-              </div>
+              <button
+                type="button"
+                onClick={() => setAgendaModalOpen(true)}
+                className="text-[11px] text-[#10B981] hover:underline whitespace-nowrap cursor-pointer"
+              >
+                Ver todas
+              </button>
             </div>
-            <p className="mt-3 text-xs text-[#666666]">
-              Suas entrevistas aparecerão aqui quando o recrutador agendar.
-            </p>
-            <div className="mt-3 rounded-xl bg-white px-3 py-2">
-              <p className="text-[11px] font-semibold text-[#141042]">Últimas entrevistas</p>
-              <p className="text-[11px] text-[#999]">Sem entrevistas recentes.</p>
+            <div className="mt-3 space-y-2">
+              {sidebarInterviews.length === 0 ? (
+                <div className="rounded-xl bg-white px-3 py-2">
+                  <p className="text-[11px] text-[#999]">Nenhuma entrevista agendada.</p>
+                </div>
+              ) : (
+                sidebarInterviews.map((iv: any) => {
+                  const dt = new Date(iv.scheduled_at);
+                  const dateStr = dt.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' });
+                  const timeStr = dt.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+                  const jobTitle = iv.jobs?.title ?? '';
+                  return (
+                    <div key={iv.id} className="rounded-xl bg-white px-3 py-2">
+                      <p className="text-[11px] font-semibold text-[#141042] truncate">{iv.title || jobTitle || 'Entrevista'}</p>
+                      <p className="text-[11px] text-[#666666]">{dateStr} às {timeStr}</p>
+                      {(iv.meet_link || iv.location) && (
+                        <p className="text-[11px] text-[#999] truncate">{iv.meet_link ? '🔗 Online' : iv.location}</p>
+                      )}
+                    </div>
+                  );
+                })
+              )}
             </div>
           </div>
         </div>
@@ -726,6 +789,81 @@ export default function CandidateLayout({ children }: { children: React.ReactNod
                 alt="Talent Forge"
                 className="h-16 w-auto opacity-70"
               />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal — Todas as Entrevistas */}
+      {agendaModalOpen && (
+        <div className="fixed inset-0 z-200 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/50" onClick={() => setAgendaModalOpen(false)} />
+          <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[80vh] flex flex-col">
+            {/* Header */}
+            <div className="flex items-center justify-between px-5 py-4 border-b border-[#E5E5DC]">
+              <div className="flex items-center gap-2">
+                <Calendar className="w-5 h-5 text-[#141042]" />
+                <h2 className="text-base font-semibold text-[#141042]">Agenda do recrutador</h2>
+              </div>
+              <button
+                type="button"
+                onClick={() => setAgendaModalOpen(false)}
+                className="p-1.5 rounded-lg hover:bg-[#F5F5F0] text-[#666666]"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            {/* Body */}
+            <div className="overflow-y-auto flex-1 px-5 py-4 space-y-3">
+              {allInterviews.length === 0 ? (
+                <div className="text-center py-10">
+                  <Calendar className="w-10 h-10 text-[#E5E5DC] mx-auto mb-3" />
+                  <p className="text-sm text-[#999]">Nenhuma entrevista agendada ainda.</p>
+                  <p className="text-xs text-[#BBB] mt-1">Quando o recrutador agendar, você verá aqui.</p>
+                </div>
+              ) : (
+                allInterviews.map((iv: any) => {
+                  const dt = new Date(iv.scheduled_at);
+                  const isPast = dt < new Date();
+                  const dateStr = dt.toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' });
+                  const timeStr = dt.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+                  const jobTitle = iv.jobs?.title ?? '';
+                  return (
+                    <div key={iv.id} className={`rounded-xl border p-4 ${isPast ? 'border-[#E5E5DC] bg-[#FAFAF8] opacity-70' : 'border-[#141042]/10 bg-white shadow-sm'}`}>
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-semibold text-[#141042] truncate">{iv.title || jobTitle || 'Entrevista'}</p>
+                          {jobTitle && iv.title && (
+                            <p className="text-xs text-[#666666] truncate">{jobTitle}</p>
+                          )}
+                          <p className="text-xs text-[#666666] mt-1 capitalize">{dateStr} às {timeStr}</p>
+                          {iv.duration_minutes && (
+                            <p className="text-xs text-[#999]">Duração: {iv.duration_minutes} min</p>
+                          )}
+                          {iv.meet_link && (
+                            <a
+                              href={iv.meet_link}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1 text-xs text-[#10B981] hover:underline mt-1"
+                            >
+                              🔗 Entrar na reunião
+                            </a>
+                          )}
+                          {!iv.meet_link && iv.location && (
+                            <p className="text-xs text-[#999] mt-1">📍 {iv.location}</p>
+                          )}
+                        </div>
+                        <span className={`shrink-0 text-[10px] font-semibold px-2 py-0.5 rounded-full ${
+                          isPast ? 'bg-[#E5E5DC] text-[#999]' : 'bg-[#10B981]/10 text-[#10B981]'
+                        }`}>
+                          {isPast ? 'Realizada' : 'Agendada'}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
             </div>
           </div>
         </div>
