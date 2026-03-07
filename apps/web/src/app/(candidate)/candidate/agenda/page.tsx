@@ -85,12 +85,13 @@ export default function CandidateAgendaPage() {
       if (!user) throw new Error('Não autenticado');
 
       // Resolve candidate_id via candidates.user_id
-      const { data: cand, error: e1 } = await supabase
+      const { data: candRows, error: e1 } = await supabase
         .from('candidates')
         .select('id')
         .eq('user_id', user.id)
-        .maybeSingle();
+        .limit(1);
       if (e1) throw e1;
+      const cand = candRows?.[0] ?? null;
       if (!cand) { setLoading(false); return; }  // candidato sem registro
 
       // Busca entrevistas
