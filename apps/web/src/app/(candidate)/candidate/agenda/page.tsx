@@ -17,6 +17,12 @@ interface Interview {
   jobs: { title: string }[] | null;
 }
 
+function getVideoUrl(iv: Interview): string | null {
+  if (iv.meet_link) return iv.meet_link;
+  if (iv.type === 'video' && iv.location?.startsWith('http')) return iv.location;
+  return null;
+}
+
 const TYPE_LABELS: Record<string, string> = {
   video: 'Vídeo',
   presencial: 'Presencial',
@@ -197,9 +203,9 @@ export default function CandidateAgendaPage() {
                   )}
                 </div>
 
-                {iv.meet_link && (
+                {getVideoUrl(iv) && (
                   <a
-                    href={iv.meet_link}
+                    href={getVideoUrl(iv)!}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="mt-3 flex items-center justify-center gap-2 w-full py-2 bg-[#141042] text-white text-sm font-medium rounded-lg hover:bg-[#1e1870] transition-colors"

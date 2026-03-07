@@ -352,13 +352,15 @@ export function AgendaModal({ onClose }: AgendaModalProps) {
       const { data: ud } = await supabase.auth.getUser();
       const scheduledAt  = new Date(`${form.date}T${form.time}`).toISOString();
 
+      const isVideo = form.type === 'video';
       const { error } = await supabase.from('interviews').insert([{
         org_id:           currentOrg.id,
         title:            form.title,
         scheduled_at:     scheduledAt,
         duration_minutes: form.duration_minutes,
         type:             form.type,
-        location:         form.location       || null,
+        location:         isVideo ? null : (form.location || null),
+        meet_link:        isVideo ? (form.location || null) : null,
         notes:            form.notes          || null,
         created_by:       ud?.user?.id        || null,
         candidate_id:     form.candidate_id   || null,
