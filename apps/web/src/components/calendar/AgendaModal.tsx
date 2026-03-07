@@ -27,7 +27,23 @@ interface Interview {
   notes: string | null;
   status: 'scheduled' | 'completed' | 'cancelled';
   candidate_id: string | null;
+  job_id: string | null;
+  event_type?: 'interview' | 'meeting';
   candidateName?: string;
+  jobTitle?: string;
+}
+
+interface CandidateOption {
+  id: string;
+  full_name: string;
+  email: string | null;
+}
+
+interface ApplicationOption {
+  id: string;      // application id
+  job_id: string;
+  job_title: string;
+  status: string;
 }
 
 interface AgendaModalProps {
@@ -121,6 +137,7 @@ export function AgendaModal({ onClose }: AgendaModalProps) {
   const [formError,   setFormError]   = useState('');
 
   const [form, setForm] = useState({
+    event_type:       'interview' as 'interview' | 'meeting',
     title:            '',
     date:             toDateStr(new Date()),
     time:             '',
@@ -128,7 +145,15 @@ export function AgendaModal({ onClose }: AgendaModalProps) {
     type:             'video' as 'video' | 'presencial' | 'phone',
     location:         '',
     notes:            '',
+    candidate_id:     '' as string,
+    job_id:           '' as string,
+    application_id:   '' as string,
   });
+
+  const [candidates,           setCandidates]           = useState<CandidateOption[]>([]);
+  const [candidateSearch,      setCandidateSearch]      = useState('');
+  const [candidateApplications, setCandidateApplications] = useState<ApplicationOption[]>([]);
+  const [loadingCandidates,    setLoadingCandidates]    = useState(false);
 
   const grid       = useMemo(() => getMonthGrid(viewDate.getFullYear(), viewDate.getMonth()), [viewDate]);
   const monthLabel = `${MONTHS_PT[viewDate.getMonth()]} ${viewDate.getFullYear()}`;
@@ -137,6 +162,15 @@ export function AgendaModal({ onClose }: AgendaModalProps) {
     () => interviews.filter(iv => isSameDay(new Date(iv.scheduled_at), selectedDay)),
     [interviews, selectedDay],
   );
+
+  const filteredCandidates = useMemo(() => {
+    if (!candidateSearch.trim()) return candidates;
+    const q = candidateSearch.toLowerCase();
+    return candidates.filter(c =>
+      c.full_name.toLowerCase().includes(q) ||
+      (c.email ?? '').toLowerCase().includes(q),
+    );
+  }, [candidates, candidateSearch]);
 
   // Re-check business hours every minute
   useEffect(() => {
@@ -155,7 +189,64 @@ export function AgendaModal({ onClose }: AgendaModalProps) {
     setForm(f => ({ ...f, date: toDateStr(selectedDay) }));
   }, [selectedDay]);
 
+  // Load candidates when form opens
+  useEffect(() => {
+    if (showForm && currentOrg?.id) loadCandidates();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showForm, currentOrg?.id]);
+
+  // Load applications when candidate changes
+  useEffect(() => {
+    if (form.candidate_id) {
+      void loadCandidateApplications(form.candidate_id);
+    } else {
+      setCandidateApplications([]);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [form.candidate_id]);
+
   // ── data ─────────────────────────────────────────────────────────────────
+
+  const loadCandidates = async () => {
+    if (!currentOrg?.id) return;
+    setLoadingCandidates(true);
+    try {
+      // Candidates that have applications for jobs in this org
+      const { data, error } = await supabase
+        .from('candidates')
+        .select('id, full_name, email, applications!inner(job_id, jobs!inner(org_id))')
+        .eq('applications.jobs.org_id', currentOrg.id)
+        .order('full_name', { ascending: true });
+      if (error) throw error;
+      const unique = new Map<string, CandidateOption>();
+      (data || []).forEach((c: any) => {
+        if (!unique.has(c.id)) unique.set(c.id, { id: c.id, full_name: c.full_name, email: c.email });
+      });
+      setCandidates(Array.from(unique.values()));
+    } catch { /* silent */ } finally {
+      setLoadingCandidates(false);
+    }
+  };
+
+  const loadCandidateApplications = async (candidateId: string) => {
+    if (!currentOrg?.id || !candidateId) return;
+    try {
+      const { data, error } = await supabase
+        .from('applications')
+        .select('id, status, jobs!inner(id, title, org_id)')
+        .eq('candidate_id', candidateId)
+        .eq('jobs.org_id', currentOrg.id);
+      if (error) throw error;
+      setCandidateApplications(
+        (data || []).map((a: any) => ({
+          id:        a.id,
+          job_id:    a.jobs.id,
+          job_title: a.jobs.title,
+          status:    a.status,
+        })),
+      );
+    } catch { /* silent */ }
+  };
 
   const checkGcStatus = async () => {
     try {
@@ -172,14 +263,18 @@ export function AgendaModal({ onClose }: AgendaModalProps) {
       const end   = new Date(viewDate.getFullYear(), viewDate.getMonth() + 2, 10);
       const { data, error } = await supabase
         .from('interviews')
-        .select('*, candidates(full_name)')
+        .select('*, candidates(full_name), jobs(title)')
         .eq('org_id', currentOrg.id)
         .gte('scheduled_at', start.toISOString())
         .lte('scheduled_at', end.toISOString())
         .order('scheduled_at', { ascending: true });
       if (error) throw error;
       setInterviews(
-        (data || []).map((r: any) => ({ ...r, candidateName: r.candidates?.full_name ?? null })),
+        (data || []).map((r: any) => ({
+          ...r,
+          candidateName: r.candidates?.full_name ?? null,
+          jobTitle:      r.jobs?.title ?? null,
+        })),
       );
     } catch (e) {
       console.error('loadInterviews', e);
@@ -193,9 +288,19 @@ export function AgendaModal({ onClose }: AgendaModalProps) {
   const openFormAt = (hour?: number) => {
     setForm(f => ({
       ...f,
-      date: toDateStr(selectedDay),
-      time: hour !== undefined ? padHour(hour) : '',
+      event_type:     'interview',
+      date:           toDateStr(selectedDay),
+      time:           hour !== undefined ? padHour(hour) : '',
+      title:          '',
+      candidate_id:   '',
+      job_id:         '',
+      application_id: '',
+      location:       '',
+      notes:          '',
     }));
+    setCandidateSearch('');
+    setCandidates([]);
+    setCandidateApplications([]);
     setFormError('');
     setShowForm(true);
   };
@@ -221,9 +326,13 @@ export function AgendaModal({ onClose }: AgendaModalProps) {
         scheduled_at:     scheduledAt,
         duration_minutes: form.duration_minutes,
         type:             form.type,
-        location:         form.location || null,
-        notes:            form.notes    || null,
-        created_by:       ud?.user?.id  || null,
+        location:         form.location       || null,
+        notes:            form.notes          || null,
+        created_by:       ud?.user?.id        || null,
+        candidate_id:     form.candidate_id   || null,
+        job_id:           form.job_id         || null,
+        application_id:   form.application_id || null,
+        event_type:       form.event_type,
       }]);
       if (error) throw error;
 
@@ -241,7 +350,9 @@ export function AgendaModal({ onClose }: AgendaModalProps) {
       }
 
       setShowForm(false);
-      setForm(f => ({ ...f, title: '', time: '', location: '', notes: '', duration_minutes: 60, type: 'video' }));
+      setForm(f => ({ ...f, title: '', time: '', location: '', notes: '', duration_minutes: 60, type: 'video', candidate_id: '', job_id: '', application_id: '', event_type: 'interview' }));
+      setCandidateSearch('');
+      setCandidateApplications([]);
       await loadInterviews();
     } catch (err: any) {
       setFormError(err.message || 'Erro ao salvar');
@@ -538,7 +649,9 @@ export function AgendaModal({ onClose }: AgendaModalProps) {
           <div className="relative z-10 bg-white rounded-xl shadow-2xl w-full max-w-md border border-[#E5E5DC] overflow-hidden">
 
             <div className="flex items-center justify-between px-6 py-4 border-b border-[#E5E5DC]">
-              <h3 className="font-semibold text-[#141042]">Nova Entrevista</h3>
+              <h3 className="font-semibold text-[#141042]">
+                {form.event_type === 'interview' ? 'Nova Entrevista' : 'Nova Reunião'}
+              </h3>
               <button onClick={() => setShowForm(false)} className="text-[#666666] hover:text-[#141042] transition-colors">
                 <X className="h-5 w-5" />
               </button>
@@ -549,12 +662,115 @@ export function AgendaModal({ onClose }: AgendaModalProps) {
                 <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">{formError}</p>
               )}
 
+              {/* ── toggle entrevista / reunião ── */}
+              <div className="flex rounded-lg border border-[#E5E5DC] overflow-hidden">
+                <button
+                  type="button"
+                  onClick={() => setForm(f => ({ ...f, event_type: 'interview', candidate_id: '', job_id: '', application_id: '' }))}
+                  className={`flex-1 py-2 text-sm font-medium transition-colors ${
+                    form.event_type === 'interview'
+                      ? 'bg-[#141042] text-white'
+                      : 'bg-white text-[#666666] hover:bg-[#FAFAF8]'
+                  }`}
+                >
+                  🎙️ Entrevista
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setForm(f => ({ ...f, event_type: 'meeting', candidate_id: '', job_id: '', application_id: '' }))}
+                  className={`flex-1 py-2 text-sm font-medium transition-colors ${
+                    form.event_type === 'meeting'
+                      ? 'bg-[#141042] text-white'
+                      : 'bg-white text-[#666666] hover:bg-[#FAFAF8]'
+                  }`}
+                >
+                  👥 Reunião
+                </button>
+              </div>
+
+              {/* ── candidato + vaga (somente entrevista) ── */}
+              {form.event_type === 'interview' && (
+                <div className="space-y-3 p-3 bg-[#FAFAF8] rounded-lg border border-[#E5E5DC]">
+                  <div>
+                    <label className="block text-xs font-medium text-[#666666] mb-1">Candidato</label>
+                    <input
+                      type="text"
+                      value={candidateSearch}
+                      onChange={e => {
+                        setCandidateSearch(e.target.value);
+                        if (!e.target.value) setForm(f => ({ ...f, candidate_id: '', job_id: '', application_id: '' }));
+                      }}
+                      placeholder={loadingCandidates ? 'Carregando candidatos…' : 'Buscar por nome ou e-mail…'}
+                      disabled={loadingCandidates}
+                      className="w-full px-3 py-2 border border-[#E5E5DC] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#141042] text-[#141042] bg-white"
+                    />
+                    {/* dropdown de candidatos */}
+                    {candidateSearch.trim() && !form.candidate_id && filteredCandidates.length > 0 && (
+                      <div className="mt-1 border border-[#E5E5DC] rounded-lg bg-white shadow-lg max-h-36 overflow-y-auto">
+                        {filteredCandidates.slice(0, 6).map(c => (
+                          <button
+                            key={c.id}
+                            type="button"
+                            onClick={() => {
+                              setCandidateSearch(c.full_name);
+                              setForm(f => ({ ...f, candidate_id: c.id, job_id: '', application_id: '' }));
+                            }}
+                            className="w-full text-left px-3 py-2 text-sm hover:bg-[#FAFAF8] transition-colors"
+                          >
+                            <span className="font-medium text-[#141042]">{c.full_name}</span>
+                            {c.email && <span className="text-[#999999] ml-2 text-xs">{c.email}</span>}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                    {candidateSearch.trim() && !form.candidate_id && filteredCandidates.length === 0 && !loadingCandidates && (
+                      <p className="mt-1 text-xs text-[#999999] px-1">Nenhum candidato encontrado para esta organização.</p>
+                    )}
+                  </div>
+
+                  {/* vagas do candidato */}
+                  {form.candidate_id && (
+                    <div>
+                      <label className="block text-xs font-medium text-[#666666] mb-1">Vaga *</label>
+                      {candidateApplications.length === 0 ? (
+                        <p className="text-xs text-[#999999]">Nenhuma aplicação encontrada para este candidato.</p>
+                      ) : (
+                        <select
+                          required={form.event_type === 'interview' && !!form.candidate_id}
+                          value={form.application_id}
+                          onChange={e => {
+                            const app = candidateApplications.find(a => a.id === e.target.value);
+                            const newTitle = app
+                              ? `Entrevista — ${candidateSearch} · ${app.job_title}`
+                              : form.title;
+                            setForm(f => ({
+                              ...f,
+                              application_id: e.target.value,
+                              job_id:         app?.job_id ?? '',
+                              title:          !form.title || form.title.startsWith('Entrevista —') ? newTitle : form.title,
+                            }));
+                          }}
+                          className="w-full px-3 py-2 border border-[#E5E5DC] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#141042] text-[#141042] bg-white"
+                        >
+                          <option value="">Selecione a vaga…</option>
+                          {candidateApplications.map(a => (
+                            <option key={a.id} value={a.id}>
+                              {a.job_title}
+                            </option>
+                          ))}
+                        </select>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+
               <div>
                 <label className="block text-xs font-medium text-[#666666] mb-1">Título *</label>
                 <input
                   required value={form.title}
                   onChange={e => setForm({ ...form, title: e.target.value })}
-                  placeholder="Entrevista técnica — João Silva"
+                  placeholder={form.event_type === 'interview' ? 'Entrevista técnica — João Silva' : 'Alinhamento semanal'}
                   className="w-full px-3 py-2 border border-[#E5E5DC] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#141042] text-[#141042]"
                 />
               </div>
