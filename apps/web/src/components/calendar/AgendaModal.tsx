@@ -154,6 +154,7 @@ export function AgendaModal({ onClose }: AgendaModalProps) {
   const [candidateSearch,      setCandidateSearch]      = useState('');
   const [candidateApplications, setCandidateApplications] = useState<ApplicationOption[]>([]);
   const [loadingCandidates,    setLoadingCandidates]    = useState(false);
+  const [candidateFocused,     setCandidateFocused]     = useState(false);
 
   const grid       = useMemo(() => getMonthGrid(viewDate.getFullYear(), viewDate.getMonth()), [viewDate]);
   const monthLabel = `${MONTHS_PT[viewDate.getMonth()]} ${viewDate.getFullYear()}`;
@@ -192,6 +193,7 @@ export function AgendaModal({ onClose }: AgendaModalProps) {
   // Load candidates when form opens
   useEffect(() => {
     if (showForm && currentOrg?.id) loadCandidates();
+    if (!showForm) setCandidateFocused(false);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [showForm, currentOrg?.id]);
 
@@ -211,19 +213,35 @@ export function AgendaModal({ onClose }: AgendaModalProps) {
     if (!currentOrg?.id) return;
     setLoadingCandidates(true);
     try {
-      // Candidates that have applications for jobs in this org
-      const { data, error } = await supabase
+      // 1. Jobs da org
+      const { data: jobs, error: e1 } = await supabase
+        .from('jobs')
+        .select('id')
+        .eq('org_id', currentOrg.id);
+      if (e1) throw e1;
+      const jobIds = (jobs || []).map((j: any) => j.id);
+      if (jobIds.length === 0) { setCandidates([]); return; }
+
+      // 2. Candidatos que aplicaram nessas vagas
+      const { data: apps, error: e2 } = await supabase
+        .from('applications')
+        .select('candidate_id')
+        .in('job_id', jobIds);
+      if (e2) throw e2;
+      const candidateIds = [...new Set((apps || []).map((a: any) => a.candidate_id).filter(Boolean))];
+      if (candidateIds.length === 0) { setCandidates([]); return; }
+
+      // 3. Dados dos candidatos
+      const { data, error: e3 } = await supabase
         .from('candidates')
-        .select('id, full_name, email, applications!inner(job_id, jobs!inner(org_id))')
-        .eq('applications.jobs.org_id', currentOrg.id)
+        .select('id, full_name, email')
+        .in('id', candidateIds)
         .order('full_name', { ascending: true });
-      if (error) throw error;
-      const unique = new Map<string, CandidateOption>();
-      (data || []).forEach((c: any) => {
-        if (!unique.has(c.id)) unique.set(c.id, { id: c.id, full_name: c.full_name, email: c.email });
-      });
-      setCandidates(Array.from(unique.values()));
-    } catch { /* silent */ } finally {
+      if (e3) throw e3;
+      setCandidates(data || []);
+    } catch (err) {
+      console.error('loadCandidates', err);
+    } finally {
       setLoadingCandidates(false);
     }
   };
@@ -231,21 +249,34 @@ export function AgendaModal({ onClose }: AgendaModalProps) {
   const loadCandidateApplications = async (candidateId: string) => {
     if (!currentOrg?.id || !candidateId) return;
     try {
-      const { data, error } = await supabase
+      // 1. Vagas da org (com título)
+      const { data: jobs, error: e1 } = await supabase
+        .from('jobs')
+        .select('id, title')
+        .eq('org_id', currentOrg.id);
+      if (e1) throw e1;
+      const jobIds  = (jobs || []).map((j: any) => j.id);
+      const jobMap  = new Map((jobs || []).map((j: any) => [j.id, j.title]));
+      if (jobIds.length === 0) { setCandidateApplications([]); return; }
+
+      // 2. Aplicações do candidato para essas vagas
+      const { data, error: e2 } = await supabase
         .from('applications')
-        .select('id, status, jobs!inner(id, title, org_id)')
+        .select('id, job_id, status')
         .eq('candidate_id', candidateId)
-        .eq('jobs.org_id', currentOrg.id);
-      if (error) throw error;
+        .in('job_id', jobIds);
+      if (e2) throw e2;
       setCandidateApplications(
         (data || []).map((a: any) => ({
           id:        a.id,
-          job_id:    a.jobs.id,
-          job_title: a.jobs.title,
+          job_id:    a.job_id,
+          job_title: jobMap.get(a.job_id) ?? 'Vaga',
           status:    a.status,
         })),
       );
-    } catch { /* silent */ }
+    } catch (err) {
+      console.error('loadCandidateApplications', err);
+    }
   };
 
   const checkGcStatus = async () => {
@@ -301,6 +332,7 @@ export function AgendaModal({ onClose }: AgendaModalProps) {
     setCandidateSearch('');
     setCandidates([]);
     setCandidateApplications([]);
+    setCandidateFocused(false);
     setFormError('');
     setShowForm(true);
   };
@@ -352,6 +384,7 @@ export function AgendaModal({ onClose }: AgendaModalProps) {
       setShowForm(false);
       setForm(f => ({ ...f, title: '', time: '', location: '', notes: '', duration_minutes: 60, type: 'video', candidate_id: '', job_id: '', application_id: '', event_type: 'interview' }));
       setCandidateSearch('');
+      setCandidateFocused(false);
       setCandidateApplications([]);
       await loadInterviews();
     } catch (err: any) {
@@ -696,6 +729,8 @@ export function AgendaModal({ onClose }: AgendaModalProps) {
                     <input
                       type="text"
                       value={candidateSearch}
+                      onFocus={() => setCandidateFocused(true)}
+                      onBlur={() => setTimeout(() => setCandidateFocused(false), 150)}
                       onChange={e => {
                         setCandidateSearch(e.target.value);
                         if (!e.target.value) setForm(f => ({ ...f, candidate_id: '', job_id: '', application_id: '' }));
@@ -705,14 +740,16 @@ export function AgendaModal({ onClose }: AgendaModalProps) {
                       className="w-full px-3 py-2 border border-[#E5E5DC] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#141042] text-[#141042] bg-white"
                     />
                     {/* dropdown de candidatos */}
-                    {candidateSearch.trim() && !form.candidate_id && filteredCandidates.length > 0 && (
-                      <div className="mt-1 border border-[#E5E5DC] rounded-lg bg-white shadow-lg max-h-36 overflow-y-auto">
-                        {filteredCandidates.slice(0, 6).map(c => (
+                    {(candidateFocused || candidateSearch.trim()) && !form.candidate_id && filteredCandidates.length > 0 && (
+                      <div className="mt-1 border border-[#E5E5DC] rounded-lg bg-white shadow-lg max-h-40 overflow-y-auto z-10 relative">
+                        {filteredCandidates.slice(0, 8).map(c => (
                           <button
                             key={c.id}
                             type="button"
+                            onMouseDown={e => e.preventDefault()} // evita blur antes do click
                             onClick={() => {
                               setCandidateSearch(c.full_name);
+                              setCandidateFocused(false);
                               setForm(f => ({ ...f, candidate_id: c.id, job_id: '', application_id: '' }));
                             }}
                             className="w-full text-left px-3 py-2 text-sm hover:bg-[#FAFAF8] transition-colors"
