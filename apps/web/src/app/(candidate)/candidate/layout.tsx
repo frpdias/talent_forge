@@ -29,6 +29,7 @@ const navItems: NavItem[] = [
   { href: '/candidate', label: 'Início', icon: Home },
   { href: '/candidate/jobs', label: 'Buscar Vagas', icon: Briefcase },
   { href: '/candidate/applications', label: 'Candidaturas', icon: FileText },
+  { href: '/candidate/agenda', label: 'Agenda', icon: Calendar },
   { href: '/candidate/saved', label: 'Salvas', icon: Bookmark },
   { href: '/candidate/profile', label: 'Perfil', icon: User },
 ];
