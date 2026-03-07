@@ -364,7 +364,6 @@ export function AgendaModal({ onClose }: AgendaModalProps) {
         candidate_id:     form.candidate_id   || null,
         job_id:           form.job_id         || null,
         application_id:   form.application_id || null,
-        event_type:       form.event_type,
       }]);
       if (error) throw error;
 
