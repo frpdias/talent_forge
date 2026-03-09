@@ -2,9 +2,11 @@ import {
   BadRequestException,
   Injectable,
   NotFoundException,
+  Logger,
 } from '@nestjs/common';
 import { randomBytes } from 'crypto';
 import { SupabaseService } from '../supabase/supabase.service';
+import { EmailService } from '../email/email.service';
 import {
   CreateCandidateFromInviteDto,
   CreateCandidateAccountFromInviteDto,
@@ -25,7 +27,12 @@ type InviteLinkRecord = {
 
 @Injectable()
 export class InviteLinksService {
-  constructor(private supabaseService: SupabaseService) {}
+  private readonly logger = new Logger(InviteLinksService.name);
+
+  constructor(
+    private supabaseService: SupabaseService,
+    private readonly emailService: EmailService,
+  ) {}
 
   private generateToken(): string {
     return randomBytes(24).toString('base64url');
@@ -57,6 +64,23 @@ export class InviteLinksService {
 
     if (error) {
       throw error;
+    }
+
+    // Envia e-mail de convite ao candidato via Brevo (se e-mail fornecido)
+    if (dto.candidateEmail) {
+      const { data: org } = await supabase
+        .from('organizations')
+        .select('name')
+        .eq('id', orgId)
+        .single();
+
+      await this.emailService.sendCandidateInvite(
+        dto.candidateEmail,
+        org?.name ?? 'TalentForge',
+        token,
+      );
+    } else {
+      this.logger.warn(`Invite link ${data.id} criado sem e-mail — envio omitido`);
     }
 
     return {

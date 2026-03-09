@@ -28,3 +28,17 @@
 - **Decisão:** integrar Google Agenda via OAuth 2.0 usando endpoints em `/auth`.
 - **Motivo:** permitir criação de reuniões com Google Meet e agenda no dashboard do recrutador.
 - **Impacto:** novas colunas em `user_profiles` para tokens e status, e UI no card de Webhooks.
+
+## 2026-03-09 — Servidor de E-mail: Brevo SMTP (substitui Supabase nativo)
+- **Decisão:** todo e-mail transacional é enviado via **Brevo** (`smtp-relay.brevo.com:587`) usando `@nestjs-modules/mailer` + Nodemailer + templates Handlebars.
+- **Motivo:** o Supabase Auth permite apenas **2 e-mails/dia** no plano free. O Brevo elimina esse limite e entrega relatórios de entrega, bounce e estatísticas em tempo real.
+- **Módulo:** `apps/api/src/email/` — `EmailModule` exporta `EmailService` globalmente.
+- **Templates:** 5 templates Handlebars em `email/templates/`: invite-candidate, interview-scheduled, assessment-link, welcome-user, php-nr1-alert.
+- **Pontos de disparo:**
+  - `InviteLinksService.createInviteLink()` → convite ao candidato
+  - `InterviewsService.create()` → confirmação de entrevista ao candidato
+  - `AssessmentsService` (DISC/Color/PI) → link de assessment
+  - Admin create-user → boas-vindas com senha temporária
+  - `NotificationsService.notifyHighRiskNr1()` → alerta crítico NR-1
+- **Env vars:** `BREVO_SMTP_HOST`, `BREVO_SMTP_PORT`, `BREVO_SMTP_USER`, `BREVO_SMTP_PASS`, `BREVO_SENDER_NAME`, `BREVO_SENDER_EMAIL`, `APP_URL`
+- **Impacto:** novo módulo `email/` + `interviews/` no NestJS; `InviteLinksModule` e `InterviewsModule` importam `EmailModule`.

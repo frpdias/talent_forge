@@ -1,6 +1,6 @@
 # Arquitetura Canônica — TalentForge
 
-**Última atualização**: 2026-03-06 | **Score de Conformidade**: ✅ 100% (Sprint 32: @talentforge/types dep fix + AgendaModal grid fix + dynamic route conflict + build errors)
+**Última atualização**: 2026-03-09 | **Score de Conformidade**: ✅ 100% (Sprint 33: EmailModule Brevo + InterviewsModule)
 
 ## 📜 FONTE DA VERDADE — PRINCÍPIO FUNDAMENTAL
 
@@ -68,6 +68,16 @@ PROJETO_TALENT_FORGE/
 │   │   │   ├── color-assessments/   # Assessment de Cores
 │   │   │   ├── pi-assessments/      # Assessment PI
 │   │   │   ├── invite-links/        # Links de convite
+│   │   │   ├── interviews/          # Entrevistas agendadas (+ e-mail de confirmação)
+│   │   │   ├── email/               # Serviço de e-mail transacional (Brevo SMTP)
+│   │   │   │   ├── email.module.ts
+│   │   │   │   ├── email.service.ts
+│   │   │   │   └── templates/       # Templates Handlebars (.hbs)
+│   │   │   │       ├── invite-candidate.hbs
+│   │   │   │       ├── interview-scheduled.hbs
+│   │   │   │       ├── assessment-link.hbs
+│   │   │   │       ├── welcome-user.hbs
+│   │   │   │       └── php-nr1-alert.hbs
 │   │   │   └── common/              # Guards, decorators, utils
 │   │   ├── test/                    # E2E tests
 │   │   └── vercel.json              # Deploy config
@@ -208,7 +218,11 @@ PROJETO_TALENT_FORGE/
 │   │   ├── 20260305_fix_application_documents_rls.sql ✅ GRANT + SECURITY DEFINER upsert_application_document + email fallback
 │   │   ├── 20260305_get_my_behavioral_profiles.sql ✅ get_my_disc_result / get_my_color_result / get_my_pi_result (SECURITY DEFINER)
 │   │   ├── 20260304_candidate_profiles_extra_fields.sql ✅ ADD COLUMN linkedin_url, experience_years em candidate_profiles
-│   │   └── 20260305_candidate_saved_jobs.sql ✅ tabela candidate_saved_jobs + RLS (user_id) + RPC get_my_saved_jobs() SECURITY DEFINER
+│   │   ├── 20260305_candidate_saved_jobs.sql ✅ tabela candidate_saved_jobs + RLS (user_id) + RPC get_my_saved_jobs() SECURITY DEFINER
+│   │   ├── 20260306_interviews_table.sql ✅ tabela interviews + RLS is_org_member(org_id) + índices org_id/scheduled_at/candidate_id
+│   │   ├── 20260306_candidates_resume_upload.sql ✅ colunas resume_url, resume_filename, resume_uploaded_at em candidates
+│   │   ├── 20260306_career_page.sql ✅ página de carreira pública por organização
+│   │   └── 20260306_application_source_tracking.sql ✅ rastreamento de origem das candidaturas
 │   ├── VALIDATE_IMPROVEMENTS.sql  # Script de validação
 │   └── README.md                  # Instruções de migrations
 │
@@ -3193,18 +3207,27 @@ Dashboard dedicado em `/admin/security` com:
 | `/api/v1/auth/health` | ✅ | — |
 
 #### Endpoints Core ATS validados
-| Endpoint | GET | POST | PUT | Notas |
-|----------|-----|------|-----|-------|
-| `/api/v1/organizations` | ✅ | ⏳ | — | 1 org retornada |
-| `/api/v1/organizations/:id` | ✅ | — | ✅ | Inclui campos corporativos (Sprint 15) |
-| `/api/v1/jobs` | ✅ | ⏳ | — | 3 jobs retornados |
-| `/api/v1/candidates` | ✅ | ⏳ | — | 3 candidates retornados |
-| `/api/v1/applications` | ✅ | ✅ | — | **Next.js Route** — Supabase direto, filtro via jobs.org_id (Sprint 26) |
-| `/api/v1/applications/:id/stage` | — | — | ✅ PATCH | Mover fase no pipeline (Sprint 26) |
-| `/api/v1/applications/:id/status` | — | — | ✅ PATCH | Alterar status candidatura (Sprint 26) |
-| `/api/v1/reports/dashboard` | ✅ | — | — | Dashboard stats OK |
-| `/api/v1/reports/pipelines` | ✅ | — | — | 3 jobs com pipelines |
-| `/api/v1/reports/assessments` | ✅ | — | — | Corrigido (usava colunas legadas) |
+| Endpoint | GET | POST | PATCH | DELETE | Notas |
+|----------|-----|------|-------|--------| ------|
+| `/api/v1/organizations` | ✅ | ⏳ | — | — | 1 org retornada |
+| `/api/v1/organizations/:id` | ✅ | — | ✅ | — | Inclui campos corporativos (Sprint 15) |
+| `/api/v1/jobs` | ✅ | ⏳ | — | — | 3 jobs retornados |
+| `/api/v1/candidates` | ✅ | ⏳ | — | — | 3 candidates retornados |
+| `/api/v1/applications` | ✅ | ✅ | — | — | **Next.js Route** — Supabase direto, filtro via jobs.org_id (Sprint 26) |
+| `/api/v1/applications/:id/stage` | — | — | ✅ | — | Mover fase no pipeline (Sprint 26) |
+| `/api/v1/applications/:id/status` | — | — | ✅ | — | Alterar status candidatura (Sprint 26) |
+| `/api/v1/reports/dashboard` | ✅ | — | — | — | Dashboard stats OK |
+| `/api/v1/reports/pipelines` | ✅ | — | — | — | 3 jobs com pipelines |
+| `/api/v1/reports/assessments` | ✅ | — | — | — | Corrigido (usava colunas legadas) |
+| `/interviews` | ✅ | ✅ | ✅ | ✅ | **Sprint 33** — CRUD entrevistas; `POST` dispara e-mail de confirmação via Brevo |
+| `/interviews?candidateId=` | ✅ | — | — | — | Filtra por candidato |
+| `/interviews?jobId=` | ✅ | — | — | — | Filtra por vaga |
+| `/interviews?status=` | ✅ | — | — | — | Filtra por status (scheduled/completed/cancelled) |
+
+#### Endpoints Email validados
+| Endpoint | POST | Notas |
+|----------|------|-------|
+| `/admin/settings/email/test` | ✅ | Envia e-mail de teste via Brevo; requer role admin |
 
 #### Endpoints Assessments validados
 | Endpoint | GET | POST | Notas |
@@ -3397,11 +3420,20 @@ Todos os endpoints da API foram validados localmente com sucesso:
    - Fuso horário (São Paulo, Nova York, Londres, Tóquio)
    - Idioma padrão (pt-BR, en-US, es-ES)
 
-5. **Email (SMTP):**
-   - Servidor SMTP
-   - Porta SMTP (587)
-   - Usuário SMTP
-   - Nota de segurança: senha via env vars
+5. **Email (SMTP — Brevo):**
+   - Servidor SMTP: `smtp-relay.brevo.com` porta `587`
+   - Usuário SMTP: login da conta Brevo
+   - **Senha via env var**: `BREVO_SMTP_PASS` (SMTP Key do painel Brevo)
+   - **Substitui** o e-mail nativo do Supabase (limite 2/dia → ilimitado no plano Brevo)
+   - Endpoint de teste: `POST /admin/settings/email/test`
+   - **Env vars obrigatórias**:
+     - `BREVO_SMTP_HOST=smtp-relay.brevo.com`
+     - `BREVO_SMTP_PORT=587`
+     - `BREVO_SMTP_USER=<login-brevo>`
+     - `BREVO_SMTP_PASS=<smtp-api-key>`
+     - `BREVO_SENDER_NAME=TalentForge`
+     - `BREVO_SENDER_EMAIL=noreply@talentforge.com.br`
+     - `APP_URL=https://web-eight-rho-84.vercel.app`
 
 **Design System:**
 - Container principal: `bg-white`, bordas `border-[#E5E5DC]`

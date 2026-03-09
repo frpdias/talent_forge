@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Entrevista Agendada</title>
+</head>
+<body style="margin:0;padding:0;background:#F4F4F0;font-family:Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#F4F4F0;padding:40px 0;">
+    <tr>
+      <td align="center">
+        <table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.08);">
+          <!-- Header -->
+          <tr>
+            <td style="background:#141042;padding:32px 40px;text-align:center;">
+              <h1 style="color:#ffffff;margin:0;font-size:24px;font-weight:700;">TalentForge</h1>
+              <p style="color:#a5b4fc;margin:8px 0 0;font-size:14px;">Confirmação de Entrevista</p>
+            </td>
+          </tr>
+          <!-- Body -->
+          <tr>
+            <td style="padding:40px;">
+              <h2 style="color:#141042;font-size:20px;margin:0 0 8px;">Sua entrevista foi agendada 📅</h2>
+              <p style="color:#555;font-size:15px;line-height:1.6;margin:0 0 28px;">
+                Olá, <strong>{{candidateName}}</strong>! Confira os detalhes da sua entrevista abaixo.
+              </p>
+              <!-- Details Card -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="background:#F9F9F7;border-radius:8px;border:1px solid #E5E5DC;margin-bottom:28px;">
+                <tr>
+                  <td style="padding:24px;">
+                    <table width="100%" cellpadding="0" cellspacing="0">
+                      <tr>
+                        <td style="padding:8px 0;border-bottom:1px solid #E5E5DC;">
+                          <span style="color:#888;font-size:13px;display:block;">Vaga</span>
+                          <strong style="color:#141042;font-size:15px;">{{jobTitle}}</strong>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="padding:8px 0;border-bottom:1px solid #E5E5DC;">
+                          <span style="color:#888;font-size:13px;display:block;">Empresa</span>
+                          <strong style="color:#141042;font-size:15px;">{{orgName}}</strong>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="padding:8px 0;border-bottom:1px solid #E5E5DC;">
+                          <span style="color:#888;font-size:13px;display:block;">Data e Hora</span>
+                          <strong style="color:#141042;font-size:15px;">{{scheduledFormatted}}</strong>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="padding:8px 0;border-bottom:1px solid #E5E5DC;">
+                          <span style="color:#888;font-size:13px;display:block;">Duração</span>
+                          <strong style="color:#141042;font-size:15px;">{{durationMinutes}} minutos</strong>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="padding:8px 0;border-bottom:1px solid #E5E5DC;">
+                          <span style="color:#888;font-size:13px;display:block;">Formato</span>
+                          <strong style="color:#141042;font-size:15px;">{{typeLabel}}</strong>
+                        </td>
+                      </tr>
+                      {{#if hasLocation}}
+                      <tr>
+                        <td style="padding:8px 0;border-bottom:1px solid #E5E5DC;">
+                          <span style="color:#888;font-size:13px;display:block;">Local</span>
+                          <strong style="color:#141042;font-size:15px;">{{location}}</strong>
+                        </td>
+                      </tr>
+                      {{/if}}
+                      <tr>
+                        <td style="padding:8px 0;">
+                          <span style="color:#888;font-size:13px;display:block;">Recrutador</span>
+                          <strong style="color:#141042;font-size:15px;">{{organizerName}}</strong>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+              {{#if hasMeetLink}}
+              <!-- Meet Link -->
+              <table cellpadding="0" cellspacing="0" style="margin:0 auto 24px;">
+                <tr>
+                  <td style="background:#3B82F6;border-radius:8px;padding:14px 32px;text-align:center;">
+                    <a href="{{meetLink}}" style="color:#ffffff;text-decoration:none;font-size:15px;font-weight:600;">
+                      🎥 Acessar Link da Videoconferência
+                    </a>
+                  </td>
+                </tr>
+              </table>
+              {{/if}}
+              <p style="color:#888;font-size:13px;margin:0;line-height:1.6;">
+                Em caso de dúvidas, entre em contato diretamente com o recrutador <strong>{{organizerName}}</strong>.
+              </p>
+            </td>
+          </tr>
+          <!-- Footer -->
+          <tr>
+            <td style="background:#F9F9F7;padding:20px 40px;border-top:1px solid #E5E5DC;">
+              <p style="color:#aaa;font-size:12px;margin:0;text-align:center;">
+                TalentForge — Plataforma de Recrutamento Inteligente
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>

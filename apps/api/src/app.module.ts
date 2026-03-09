@@ -19,6 +19,12 @@ import { InviteLinksModule } from './invite-links/invite-links.module';
 // PHP Module - Employees
 import { EmployeesModule } from './php/employees/employees.module';
 
+// Email (Brevo SMTP)
+import { EmailModule } from './email/email.module';
+
+// Interviews
+import { InterviewsModule } from './interviews/interviews.module';
+
 // Guards
 import { SupabaseAuthGuard } from './auth/guards/supabase-auth.guard';
 
@@ -41,6 +47,8 @@ import { SupabaseAuthGuard } from './auth/guards/supabase-auth.guard';
     IamModule,
     InviteLinksModule,
     EmployeesModule,
+    EmailModule,
+    InterviewsModule,
   ],
   providers: [
     {

@@ -22,6 +22,11 @@ export class CreateInviteLinkDto {
   @IsInt()
   @Min(1)
   maxUses?: number;
+
+  @ApiPropertyOptional({ description: 'E-mail do candidato para envio automático do convite via Brevo' })
+  @IsOptional()
+  @IsEmail()
+  candidateEmail?: string;
 }
 
 export class CreateCandidateFromInviteDto {
