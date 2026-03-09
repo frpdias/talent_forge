@@ -119,12 +119,12 @@ export default function CopcDashboard() {
   }
 
   return (
-    <div className="p-6 min-h-screen">
-      <div className="max-w-7xl mx-auto">
+    <div className="py-4 md:py-8 px-0 min-h-screen">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
-        <div className="flex justify-between items-center mb-8">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3 justify-between mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-[#141042]">
+            <h1 className="text-2xl md:text-3xl font-bold text-[#141042]">
               COPC Adapted Dashboard
             </h1>
             <p className="text-[#666666] mt-1">
@@ -173,7 +173,7 @@ export default function CopcDashboard() {
         </div>
 
         {/* Category Scores */}
-        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-8">
           {categories.map((cat) => (
             <div
               key={cat.category}
@@ -200,7 +200,7 @@ export default function CopcDashboard() {
           <h3 className="text-sm font-semibold text-[#141042] mb-3">
             📊 Pesos das Categorias COPC
           </h3>
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-3 text-xs">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 text-xs">
             <div>
               <span className="font-medium text-[#666666]">Qualidade:</span>{' '}
               <span className="text-[#666666]">35%</span>
@@ -225,7 +225,7 @@ export default function CopcDashboard() {
         </div>
 
         {/* Recent Metrics Table */}
-        <div className="bg-white rounded-xl border border-[#E5E5DC] shadow-[0_2px_8px_rgba(20,16,66,0.06),0_1px_2px_rgba(20,16,66,0.04)] overflow-hidden">
+        <div className="bg-white rounded-xl border border-[#E5E5DC] shadow-[0_2px_8px_rgba(20,16,66,0.06),0_1px_2px_rgba(20,16,66,0.04)] overflow-x-auto">
           <div className="p-6 border-b border-[#E5E5DC]">
             <h2 className="text-xl font-semibold text-[#141042]">
               Métricas Recentes

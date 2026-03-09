@@ -114,9 +114,9 @@ export default function PhpDashboardPage() {
   const hasScore = score !== null;
 
   return (
-    <div className="max-w-7xl mx-auto py-8 px-4">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-[#1F4ED8]">
+    <div className="max-w-7xl mx-auto py-4 md:py-8 px-0">
+      <div className="mb-6 md:mb-8">
+        <h1 className="text-2xl md:text-3xl font-bold text-[#1F4ED8]">
           Dashboard PHP
         </h1>
         <p className="text-[#666666] mt-2 tracking-wide">
@@ -125,7 +125,7 @@ export default function PhpDashboardPage() {
       </div>
 
       {/* Score PHP Integrado */}
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         {/* Score Total */}
         <div className="lg:col-span-1 bg-linear-to-br from-[#1F4ED8] to-[#1845B8] rounded-xl shadow-[0_2px_8px_rgba(20,16,66,0.12)] p-6 text-white">
           <div className="text-sm font-semibold opacity-90 mb-2">Score PHP Total</div>
@@ -239,7 +239,7 @@ export default function PhpDashboardPage() {
 
       {/* Colaboradores ativos */}
       {activity && (
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
           <div className="bg-white border border-[#E5E5DC] rounded-xl p-4 flex items-center gap-3">
             <div className="p-2 bg-blue-50 rounded-lg">
               <Users className="w-5 h-5 text-[#1F4ED8]" />
@@ -312,7 +312,7 @@ export default function PhpDashboardPage() {
       {/* Próximos Passos */}
       <div className="bg-[#FAFAF8] border border-[#E5E5DC] rounded-xl p-6">
         <h3 className="font-semibold text-[#141042] mb-4">Próximos Passos</h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
           <div className={`bg-white border rounded-lg p-4 ${activity?.tfciCount === 0 ? 'border-[#1F4ED8]/30' : 'border-[#E5E5DC]'}`}>
             <div className="flex items-center gap-2 mb-1">
               {activity?.tfciCount === 0 && <span className="w-2 h-2 rounded-full bg-[#1F4ED8]" />}

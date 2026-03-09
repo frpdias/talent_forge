@@ -177,11 +177,11 @@ export default function Nr1ListPage() {
 
   return (
     <div className="min-h-screen">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-0 sm:px-6 lg:px-8 py-4 md:py-8">
         {/* Header */}
-        <div className="flex justify-between items-center mb-8">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-[#141042]">
+            <h1 className="text-2xl md:text-3xl font-bold text-[#141042]">
               NR-1 Digital — Riscos Psicossociais
             </h1>
             <p className="text-[#666666] mt-1">
@@ -198,7 +198,7 @@ export default function Nr1ListPage() {
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 mb-8">
           <div className="bg-white border border-[#E5E5DC] rounded-xl shadow-[0_2px_8px_rgba(20,16,66,0.06),0_1px_2px_rgba(20,16,66,0.04)] p-6">
             <div className="flex items-center gap-3">
               <BarChart3 className="w-8 h-8 text-[#3B82F6]" />

@@ -268,8 +268,8 @@ export default function TfciCyclesPage() {
     <div className="min-h-screen bg-[#FAFAF8]">
       {/* Header Corporativo */}
       <div className="bg-white border-b border-[#E5E5DC]">
-        <div className="max-w-7xl mx-auto px-6 py-6">
-          <div className="flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-4 py-4 md:py-6">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-3">
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#141042] to-[#2D2A6E] flex items-center justify-center">
                 <Target className="w-6 h-6 text-white" />
@@ -302,9 +302,9 @@ export default function TfciCyclesPage() {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-6 py-8">
+      <div className="max-w-7xl mx-auto px-4 py-4 md:py-8">
         {/* Cards de Estatísticas */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mb-8">
           <div className="bg-white rounded-xl border border-[#E5E5DC] p-5">
             <div className="flex items-center justify-between">
               <div>
@@ -518,7 +518,7 @@ export default function TfciCyclesPage() {
                         )}
                       </div>
 
-                      <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-sm">
+                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4 text-sm">
                         <div>
                           <p className="text-[#999999] mb-1">Período</p>
                           <p className="font-medium text-[#141042] flex items-center gap-1.5">
@@ -618,7 +618,7 @@ export default function TfciCyclesPage() {
             <BarChart3 className="w-4 h-4" />
             As 5 Dimensões Avaliadas no TFCI
           </h3>
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
             {[
               { name: 'Colaboração', desc: 'Trabalho em equipe', color: 'bg-blue-500' },
               { name: 'Comunicação', desc: 'Clareza e escuta', color: 'bg-emerald-500' },

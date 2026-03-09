@@ -277,8 +277,8 @@ export default function CopcAreasPage() {
   }
 
   return (
-    <div className="p-6 min-h-screen">
-      <div className="max-w-7xl mx-auto">
+    <div className="py-4 md:py-8 px-0 min-h-screen">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
           <div>
@@ -361,7 +361,7 @@ export default function CopcAreasPage() {
 
         {/* ─── Overview Cards (all departments) ──────────────────── */}
         {!activeDept && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
             {departments.length === 0 ? (
               <div className="col-span-full text-center py-16 bg-white rounded-xl border border-[#E5E5DC]">
                 <BarChart3 className="w-12 h-12 text-[#999999] mx-auto mb-4" />
@@ -641,7 +641,7 @@ export default function CopcAreasPage() {
                 <Calculator className="w-4 h-4 text-[#666666]" />
                 Como o Score COPC é calculado para {activeDept}
               </h3>
-              <div className="grid grid-cols-1 md:grid-cols-5 gap-4 text-xs">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 text-xs">
                 {Object.entries(CATEGORY_LABELS).map(([key, label]) => (
                   <div key={key} className={`p-3 rounded-lg border ${CATEGORY_COLORS[key]}`}>
                     <p className="font-semibold mb-1">{label}</p>

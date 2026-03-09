@@ -128,7 +128,7 @@ export default function ActionPlansPage() {
 
   if (loading) {
     return (
-      <div className="p-8">
+      <div className="p-4 md:p-8">
         <div className="max-w-7xl mx-auto">
           <div className="animate-pulse space-y-4">
             <div className="h-8 bg-[#E5E5DC] rounded w-1/4"></div>
@@ -145,10 +145,10 @@ export default function ActionPlansPage() {
   }
 
   return (
-    <div className="p-8">
+    <div className="p-4 md:p-8">
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3">
           <div>
             <h1 className="text-2xl font-bold text-[#141042]">Planos de Ação</h1>
             <p className="text-[#666666] mt-1">
@@ -166,7 +166,7 @@ export default function ActionPlansPage() {
 
         {/* Stats Cards */}
         {stats && (
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
             <div className="bg-white rounded-xl p-4 border border-[#E5E5DC] shadow-[0_2px_8px_rgba(20,16,66,0.06),0_1px_2px_rgba(20,16,66,0.04)]">
               <div className="text-sm text-[#666666] font-medium">Total</div>
               <div className="text-2xl font-bold text-[#141042]">{stats.total}</div>
@@ -221,7 +221,7 @@ export default function ActionPlansPage() {
         </div>
 
         {/* Plans List */}
-        <div className="bg-white rounded-xl border border-[#E5E5DC] shadow-[0_2px_8px_rgba(20,16,66,0.06),0_1px_2px_rgba(20,16,66,0.04)] overflow-hidden">
+        <div className="bg-white rounded-xl border border-[#E5E5DC] shadow-[0_2px_8px_rgba(20,16,66,0.06),0_1px_2px_rgba(20,16,66,0.04)] overflow-x-auto">
           {filteredPlans.length === 0 ? (
             <div className="p-12 text-center">
               <div className="text-[#999999] mb-2">

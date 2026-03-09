@@ -255,7 +255,7 @@ export default function TfciResultsPage() {
       <div className="p-6">
         <div className="animate-pulse space-y-4">
           <div className="h-8 bg-gray-200 rounded w-1/4"></div>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {[1, 2, 3, 4].map(i => (
               <div key={i} className="h-32 bg-gray-200 rounded"></div>
             ))}
@@ -267,9 +267,9 @@ export default function TfciResultsPage() {
   }
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="px-0 py-4 md:py-6 space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center gap-3 justify-between">
         <div className="flex items-center gap-4">
           <button
             onClick={() => router.push('/php/tfci/cycles')}
@@ -292,7 +292,7 @@ export default function TfciResultsPage() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
           <div className="flex items-center gap-3">
             <div className="p-3 bg-blue-100 rounded-lg">

@@ -212,16 +212,16 @@ export default function AiChatPage() {
   ];
 
   return (
-    <div className="container mx-auto py-6 space-y-6">
+    <div className="container mx-auto py-4 md:py-8 px-0 space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center gap-3">
         <div>
           <h1 className="text-3xl font-bold text-[#141042]">🤖 AI Assistant</h1>
           <p className="text-[#666666]">
             Converse com IA sobre seus dados de People Analytics
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 sm:ml-auto">
           {aiStatus?.openai_configured ? (
             <Badge variant="default" className="bg-green-600">
               ✓ OpenAI Conectado
@@ -235,7 +235,7 @@ export default function AiChatPage() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="flex overflow-x-auto gap-1 w-full">
           <TabsTrigger value="chat">💬 Chat</TabsTrigger>
           <TabsTrigger value="reports">📊 Relatórios</TabsTrigger>
           <TabsTrigger value="predictions">🔮 Predições</TabsTrigger>
@@ -247,11 +247,11 @@ export default function AiChatPage() {
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
             {/* Chat Area */}
             <div className="lg:col-span-3">
-              <Card className="h-[600px] flex flex-col">
+              <Card className="h-[450px] sm:h-[550px] lg:h-[600px] flex flex-col">
                 <CardHeader className="flex-none border-b">
-                  <div className="flex items-center justify-between">
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-3">
                     <CardTitle>Conversa</CardTitle>
-                    <Button variant="outline" size="sm" onClick={newConversation}>
+                    <Button variant="outline" size="sm" onClick={newConversation} className="sm:ml-auto">
                       Nova Conversa
                     </Button>
                   </div>
