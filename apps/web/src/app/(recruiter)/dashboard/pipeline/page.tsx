@@ -462,12 +462,12 @@ export default function PipelinePage() {
 
         {/* Stats Bar */}
         <div className="px-6 pb-4">
-          <div className="grid grid-cols-5 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
             <div className="bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl p-4 text-white">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-white/80 text-xs font-medium uppercase tracking-wider">Total</p>
-                  <p className="text-3xl font-bold mt-1 text-white">{totalCandidates}</p>
+                  <p className="text-2xl md:text-3xl font-bold mt-1 text-white">{totalCandidates}</p>
                 </div>
                 <div className="bg-white/20 rounded-lg p-2">
                   <Users className="h-6 w-6 text-white" />
@@ -478,7 +478,7 @@ export default function PipelinePage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-white/80 text-xs font-medium uppercase tracking-wider">Em Avaliação</p>
-                  <p className="text-3xl font-bold mt-1 text-white">{inProcessCount}</p>
+                  <p className="text-2xl md:text-3xl font-bold mt-1 text-white">{inProcessCount}</p>
                 </div>
                 <div className="bg-white/20 rounded-lg p-2">
                   <Clock className="h-6 w-6 text-white" />
@@ -489,7 +489,7 @@ export default function PipelinePage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-white/80 text-xs font-medium uppercase tracking-wider">Em Documentação</p>
-                  <p className="text-3xl font-bold mt-1 text-white">{inDocumentationCount}</p>
+                  <p className="text-2xl md:text-3xl font-bold mt-1 text-white">{inDocumentationCount}</p>
                 </div>
                 <div className="bg-white/20 rounded-lg p-2">
                   <ArrowRight className="h-6 w-6 text-white" />
@@ -500,7 +500,7 @@ export default function PipelinePage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-white/80 text-xs font-medium uppercase tracking-wider">Contratados</p>
-                  <p className="text-3xl font-bold mt-1 text-white">{hiredCount}</p>
+                  <p className="text-2xl md:text-3xl font-bold mt-1 text-white">{hiredCount}</p>
                 </div>
                 <div className="bg-white/20 rounded-lg p-2">
                   <CheckCircle2 className="h-6 w-6 text-white" />
@@ -511,7 +511,7 @@ export default function PipelinePage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-white text-xs font-medium uppercase tracking-wider">Conversão</p>
-                  <p className="text-3xl font-bold mt-1 text-white">{conversionRate}%</p>
+                  <p className="text-2xl md:text-3xl font-bold mt-1 text-white">{conversionRate}%</p>
                 </div>
                 <div className="bg-white/20 rounded-lg p-2">
                   <TrendingUp className="h-6 w-6 text-white" />
