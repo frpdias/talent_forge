@@ -3425,8 +3425,12 @@ Todos os endpoints da API foram validados localmente com sucesso:
    - Usuário SMTP: login da conta Brevo
    - **Senha via env var**: `BREVO_SMTP_PASS` (SMTP Key do painel Brevo)
    - **Substitui** o e-mail nativo do Supabase (limite 2/dia → ilimitado no plano Brevo)
+   - **TODOS os e-mails saem pelo Brevo** — tanto NestJS quanto Supabase Auth:
+     - NestJS `EmailService`: convites, entrevistas, assessments, welcome, NR-1
+     - Supabase Auth: reset de senha, confirmação de cadastro, magic link, troca de e-mail
+   - Templates Supabase Auth versionados em `supabase/email-templates/`
    - Endpoint de teste: `POST /admin/settings/email/test`
-   - **Env vars obrigatórias**:
+   - **Env vars obrigatórias** (Vercel + Supabase SMTP Settings):
      - `BREVO_SMTP_HOST=smtp-relay.brevo.com`
      - `BREVO_SMTP_PORT=587`
      - `BREVO_SMTP_USER=<login-brevo>`
