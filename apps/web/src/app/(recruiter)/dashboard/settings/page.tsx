@@ -125,16 +125,65 @@ export default function SettingsPage() {
     }
   }
 
+  async function compressImage(file: File, maxWidth: number, maxSizeBytes: number): Promise<Blob> {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      const url = URL.createObjectURL(file);
+      img.onload = () => {
+        URL.revokeObjectURL(url);
+        const canvas = document.createElement('canvas');
+        let { width, height } = img;
+        if (width > maxWidth) {
+          height = Math.round((height * maxWidth) / width);
+          width = maxWidth;
+        }
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d')!;
+        ctx.drawImage(img, 0, 0, width, height);
+        // Tenta qualidade 0.85 → se ainda grande, reduz até caber
+        let quality = 0.85;
+        const tryBlob = (q: number) => {
+          canvas.toBlob((blob) => {
+            if (!blob) { reject(new Error('Falha ao comprimir imagem')); return; }
+            if (blob.size <= maxSizeBytes || q <= 0.3) { resolve(blob); return; }
+            tryBlob(q - 0.1);
+          }, 'image/jpeg', q);
+        };
+        tryBlob(quality);
+      };
+      img.onerror = () => reject(new Error('Falha ao ler imagem'));
+      img.src = url;
+    });
+  }
+
   async function handleUploadAsset(file: File, type: 'logo' | 'banner') {
     if (!orgId) { alert('Organização não carregada ainda.'); return; }
-    const ext = file.name.split('.').pop();
-    const path = `${orgId}/${type}.${ext}`;
+
+    // Validação de tipo
+    if (!file.type.startsWith('image/')) {
+      alert('Apenas imagens são permitidas (JPEG, PNG, WebP).');
+      return;
+    }
+
+    const MAX_BYTES = 4 * 1024 * 1024; // 4MB (margem de segurança abaixo do limite 5MB do bucket)
+    const maxWidth = type === 'logo' ? 800 : 1920;
+
     try {
       setUploadingAsset(type);
+
+      // Comprime se necessário
+      let uploadBlob: Blob = file;
+      if (file.size > MAX_BYTES || file.type !== 'image/jpeg') {
+        uploadBlob = await compressImage(file, maxWidth, MAX_BYTES);
+      }
+
+      const path = `${orgId}/${type}.jpeg`;
       const { error: upError } = await supabase.storage
         .from('org-assets')
-        .upload(path, file, { upsert: true, contentType: file.type });
+        .upload(path, uploadBlob, { upsert: true, contentType: 'image/jpeg' });
       if (upError) throw upError;
+
       const { data: { publicUrl } } = supabase.storage.from('org-assets').getPublicUrl(path);
       if (type === 'logo') {
         setCareerPage((prev) => ({ ...prev, career_page_logo_url: publicUrl }));
