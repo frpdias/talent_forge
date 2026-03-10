@@ -104,7 +104,9 @@ function CandidateJobsContent() {
       }
     };
     autoApply();
-  }, [autoApplyJobId, autoApplyDone, loading, appliedJobIds]); = useMemo(() => {
+  }, [autoApplyJobId, autoApplyDone, loading, appliedJobIds]);
+
+  const filteredJobs = useMemo(() => {
     if (!query) return jobs;
     const normalized = query.toLowerCase();
     return jobs.filter((job) =>
