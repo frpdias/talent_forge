@@ -1,6 +1,6 @@
 # Arquitetura Canônica — TalentForge
 
-**Última atualização**: 2026-03-09 | **Score de Conformidade**: ✅ 100% (Sprint 33: EmailModule Brevo + InterviewsModule)
+**Última atualização**: 2026-03-10 | **Score de Conformidade**: ✅ 100% (Sprint 34: Career Page v2 + Fluxo de Candidatura + Build Fixes)
 
 ## 📜 FONTE DA VERDADE — PRINCÍPIO FUNDAMENTAL
 
@@ -222,7 +222,8 @@ PROJETO_TALENT_FORGE/
 │   │   ├── 20260306_interviews_table.sql ✅ tabela interviews + RLS is_org_member(org_id) + índices org_id/scheduled_at/candidate_id
 │   │   ├── 20260306_candidates_resume_upload.sql ✅ colunas resume_url, resume_filename, resume_uploaded_at em candidates
 │   │   ├── 20260306_career_page.sql ✅ página de carreira pública por organização
-│   │   └── 20260306_application_source_tracking.sql ✅ rastreamento de origem das candidaturas
+│   │   ├── 20260306_application_source_tracking.sql ✅ rastreamento de origem das candidaturas
+│   │   └── 20260307_career_page_v2.sql ✅ career page v2 — banner, about, cores secundárias, links sociais, bucket org-assets
 │   ├── VALIDATE_IMPROVEMENTS.sql  # Script de validação
 │   └── README.md                  # Instruções de migrations
 │
@@ -6473,7 +6474,113 @@ Error: You cannot use different slug names for the same dynamic path ('id' !== '
 
 ---
 
-**FIM DO DOCUMENTO** — Versão 5.0 (Sprint 32: @talentforge/types + AgendaModal + dynamic route fix + build errors)
+## Sprint 33 — EmailModule Brevo + InterviewsModule (2026-03-09)
+
+**Objetivo:** Infraestrutura de e-mail transacional via Brevo SMTP + endpoints REST de entrevistas com envio de confirmação.
+
+### 33.1 — EmailModule (Brevo SMTP)
+
+**Localização:** `apps/api/src/email/`
+
+| Arquivo | Descrição |
+|---------|-----------|
+| `email.module.ts` | Registra `MailerModule` (Brevo SMTP: `smtp-relay.brevo.com:587`) |
+| `email.service.ts` | `sendInviteCandidate`, `sendInterviewScheduled`, `sendAssessmentLink`, `sendWelcomeUser`, `sendNr1Alert` |
+| `templates/*.hbs` | Templates Handlebars para cada tipo de e-mail |
+
+**Variáveis de ambiente obrigatórias (`apps/api/.env`):**
+```
+BREVO_SMTP_HOST=smtp-relay.brevo.com
+BREVO_SMTP_PORT=587
+BREVO_SMTP_USER=<login Brevo>
+BREVO_SMTP_PASS=<chave API Brevo>
+MAIL_FROM=noreply@talentforge.com.br
+```
+
+### 33.2 — InterviewsModule
+
+- Endpoints CRUD completo: `POST`, `GET`, `PATCH`, `DELETE /api/v1/interviews`
+- `POST /api/v1/interviews` dispara `emailService.sendInterviewScheduled()` via Brevo
+- Lê `interviews` table (migration `20260306_interviews_table.sql`) com RLS `is_org_member(org_id)`
+- Supabase auth: JWT verificado via `createClient(url, key, { auth: { persistSession: false } })`
+
+### Commits
+- `70b8cc9` — feat(api): EmailModule Brevo + InterviewsModule + templates Handlebars
+
+---
+
+## Sprint 34 — Career Page v2 + Fluxo de Candidatura + Build Fixes (2026-03-10)
+
+**Objetivo:** Redesign completo da career page pública, fluxo de candidatura end-to-end validado (auth redirect + auto-apply) e correção de erros de build no Vercel.
+
+### 34.1 — Career Page v2 (migration + campos)
+
+**Migration:** `supabase/migrations/20260307_career_page_v2.sql`
+
+- 7 novas colunas em `organizations`: `career_page_banner_url`, `career_page_about`, `career_page_secondary_color`, `career_page_whatsapp_url`, `career_page_instagram_url`, `career_page_linkedin_url`, `career_page_show_contact`
+- View `v_public_jobs` recriada incluindo todos os novos campos
+- RPC `get_public_jobs_by_org` atualizado (RETURNS SETOF v_public_jobs)
+- Bucket Storage `org-assets` criado com 4 policies (public read + member upload/update/delete)
+
+### 34.2 — Redesign Visual da Career Page
+
+**Arquivo:** `apps/web/src/app/(public)/jobs/[orgSlug]/page.tsx`
+
+- **Hero**: `primaryColor` como background + banner como overlay de imagem, `object-cover`
+- **Logo card**: borda animada com `conic-gradient` rotativo (`@keyframes rotateBorder` 4s linear infinite) em `style` inline — imune a Tailwind purge
+- **Badge de vagas**: posicionado no mesmo `flex justify-between` do logo
+- **Cards de vaga enriquecidos**: preview de 150 chars (`line-clamp-2`) + pills de benefits/requirements + timestamp "Publicada há Xd"
+- **Modal de detalhe**: `fixed inset-0 flex items-end sm:items-center justify-center` → inner `sm:rounded-2xl sm:max-w-2xl max-h-[92vh]` (bottom-sheet mobile / dialog desktop)
+- **Modal body**: `description_html` via `dangerouslySetInnerHTML`, fallback para `description`; requirements com bullets; benefits com `CheckCircle`
+- **Modal footer sticky**: gradiente `bg-gradient-to-t from-white` + botão candidatar com fundo `primaryColor`
+
+### 34.3 — Fluxo de Candidatura end-to-end
+
+**Problema**: 4 bugs no fluxo de candidatura identificados e corrigidos
+
+| # | Arquivo | Bug | Correção |
+|---|---------|-----|----------|
+| 1 | `jobs/[orgSlug]/page.tsx` | `handleApply` redirecionava para `/register` | → `/login?redirect=/jobs/<slug>/<jobId>` |
+| 2 | `(public)/login/page.tsx` | `?redirect` param não era lido após login | Adiciona `const redirectTo = searchParams.get('redirect')` + `router.push(redirectTo \|\| '/candidate')` |
+| 3 | `(public)/register/page.tsx` | `redirectParam` usado mas não declarado | Adiciona `const redirectParam = searchParams.get('redirect')` no topo de `RegisterContent` |
+| 4 | `(candidate)/candidate/jobs/page.tsx` | `?apply=jobId` param não processado | Wrapped em `<Suspense>` + `useSearchParams().get('apply')` + `useEffect` auto-apply + banner de retorno |
+
+**Guard de tipo de usuário** adicionado em `handleApply`:
+```typescript
+if (user?.user_metadata?.user_type !== 'candidate') {
+  alert('Apenas candidatos podem se candidatar.');
+  return;
+}
+```
+
+### 34.4 — Propagação de `?redirect` em Login/Register
+
+**Cadeia completa de redirect:**
+1. Career page → `/login?redirect=<encoded-path>`
+2. `login/page.tsx` → lê `?redirect`, propaga para link "Criar conta": `/register?type=candidate&redirect=<encoded>`
+3. `register/page.tsx` → lê `?redirect`, propaga para links "Fazer login" e "Ir para Login"
+4. Após login bem-sucedido (candidato) → `router.push(redirectTo)` leva de volta ao jobId
+5. `/candidate/jobs?apply=<jobId>` → auto-apply via `useEffect` + banner de confirmação
+
+### 34.5 — Build Fixes Vercel
+
+**Erro 1** (commit `70b8cc9`):
+- `candidate/jobs/page.tsx:107` — linha de fechamento de `useEffect` fundida com declaração `const filteredJobs = useMemo` (`}, [deps]); = useMemo(() => {`)
+- Causada por `multi_replace_string_in_file` que colapsou duas linhas em uma
+- Fix: `replace_string_in_file` separando as duas declarações
+
+**Erro 2** (commit `47fca90`):
+- `register/page.tsx:258` — `Cannot find name 'redirectParam'` (Type error)
+- Variável `redirectParam` usada na linha 258 mas nunca declarada no scope `RegisterContent`
+- Fix: adicionada `const redirectParam = searchParams.get('redirect');` junto às demais leituras de `searchParams`
+
+### Commits
+- `70b8cc9` — fix(candidate/jobs): corrigir sintaxe useEffect+useMemo fundidos + apply flow
+- `47fca90` — fix(register): declarar redirectParam ausente em RegisterContent
+
+---
+
+**FIM DO DOCUMENTO** — Versão 5.2 (Sprint 34: Career Page v2 + Fluxo Candidatura + Build Fixes)
 - **Seção 5**: Boas Práticas de Implantação (ciclo de avaliação, comunicação, anonimato)
 - **Seção 6**: FAQ para Auditoria Interna (MTE, fiscalização, jurídico)
 - **Seção 7**: Checklist Pré-Auditoria (documentos, evidências, conformidade)
@@ -6490,6 +6597,23 @@ Error: You cannot use different slug names for the same dynamic path ('id' !== '
 ---
 
 ## 📝 Histórico de Versões
+
+### v5.2 (2026-03-10)
+- ✅ **Score de Conformidade**: 100% mantido (Sprint 34)
+- ✅ **Career Page v2 migration**: `20260307_career_page_v2.sql` — 7 novas colunas em `organizations` (banner, about, secondary color, WhatsApp/Instagram/LinkedIn, show_contact) + view `v_public_jobs` atualizada + bucket `org-assets` com policies
+- ✅ **Career Page redesign**: hero com banner overlay + logo card com borda `conic-gradient` animada + cards enriquecidos (description preview, pills, timestamp) + modal centrado (bottom-sheet mobile)
+- ✅ **Fluxo de candidatura end-to-end**: 4 bugs corrigidos em `jobs/[orgSlug]`, `login`, `register` e `candidate/jobs`
+- ✅ **Redirect chain**: `?redirect` propagado de career page → login → register → auto-apply em `/candidate/jobs?apply=<jobId>`
+- ✅ **Guard `user_type`**: apenas candidatos podem se candidatar (alerta para recrutadores/admins)
+- ✅ **Build fix `register/page.tsx`**: `redirectParam` declarado em `RegisterContent` (commit `47fca90`)
+- ✅ **Build fix `candidate/jobs/page.tsx`**: separadas linhas `useEffect` + `useMemo` fundidas (commit `70b8cc9`)
+- ✅ **Rotas públicas documentadas**: `/jobs/[orgSlug]` e `/jobs/[orgSlug]/[jobId]` adicionadas à Seção 5.1
+
+### v5.1 (2026-03-09)
+- ✅ **Score de Conformidade**: 100% mantido (Sprint 33)
+- ✅ **EmailModule Brevo**: `apps/api/src/email/` — `MailerModule` com SMTP Brevo (`smtp-relay.brevo.com:587`), 5 métodos de envio, 5 templates Handlebars
+- ✅ **InterviewsModule**: endpoints CRUD + `POST` dispara `sendInterviewScheduled` via Brevo automaticamente
+- ✅ **Variáveis documentadas**: `BREVO_SMTP_HOST/PORT/USER/PASS` + `MAIL_FROM` em `apps/api/.env`
 
 ### v5.0 (2026-03-06)
 - ✅ **Score de Conformidade**: 100% mantido (Sprint 32)
