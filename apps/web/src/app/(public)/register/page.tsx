@@ -20,6 +20,7 @@ function RegisterContent() {
   const searchParams = useSearchParams();
   const typeParam = searchParams.get('type') as 'recruiter' | 'candidate' | null;
   const inviteToken = searchParams.get('invite');
+  const redirectParam = searchParams.get('redirect');
   const apiBase = API_BASE_URL;
 
   const [userType, setUserType] = useState<'recruiter' | 'candidate'>(
