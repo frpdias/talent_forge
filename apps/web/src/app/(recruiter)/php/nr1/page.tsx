@@ -32,6 +32,9 @@ interface Nr1Assessment {
   communication_change_risk: number;
   conflict_harassment_risk: number;
   recovery_boundaries_risk: number;
+  action_plan?: string | null;
+  action_plan_status?: string | null;
+  [key: string]: unknown;
 }
 
 export default function Nr1ListPage() {
