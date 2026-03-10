@@ -255,7 +255,7 @@ function RegisterContent() {
             <h2 className="text-2xl sm:text-3xl font-semibold text-[#141042] mb-2">Criar conta</h2>
             <p className="text-sm sm:text-base text-[#333333]">
               Já tem uma conta?{' '}
-              <Link href="/login" className="text-[#141042] font-medium hover:underline">
+              <Link href={redirectParam ? `/login?redirect=${encodeURIComponent(redirectParam)}` : '/login'} className="text-[#141042] font-medium hover:underline">
                 Fazer login
               </Link>
             </p>

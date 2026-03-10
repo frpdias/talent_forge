@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { Search, MapPin, Briefcase, Clock, Bookmark, BookmarkCheck } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 
@@ -23,6 +24,17 @@ interface Job {
 }
 
 export default function CandidateJobsPage() {
+  return (
+    <Suspense fallback={null}>
+      <CandidateJobsContent />
+    </Suspense>
+  );
+}
+
+function CandidateJobsContent() {
+  const searchParams = useSearchParams();
+  const autoApplyJobId = searchParams.get('apply');
+
   const [jobs, setJobs] = useState<Job[]>([]);
   const [query, setQuery] = useState('');
   const [loading, setLoading] = useState(true);
@@ -30,6 +42,7 @@ export default function CandidateJobsPage() {
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
   const [applyingJobId, setApplyingJobId] = useState<string | null>(null);
   const [appliedJobIds, setAppliedJobIds] = useState<Set<string>>(new Set());
+  const [autoApplyDone, setAutoApplyDone] = useState(false);
   const [savedJobIds, setSavedJobIds] = useState<Set<string>>(new Set());
   const [savingJobId, setSavingJobId] = useState<string | null>(null);
 
@@ -72,7 +85,26 @@ export default function CandidateJobsPage() {
     loadJobs();
   }, []);
 
-  const filteredJobs = useMemo(() => {
+  // Auto-aplicar quando redireccionado da career page com ?apply=jobId
+  useEffect(() => {
+    if (!autoApplyJobId || autoApplyDone || loading || appliedJobIds.has(autoApplyJobId)) return;
+    const autoApply = async () => {
+      setAutoApplyDone(true);
+      setApplyingJobId(autoApplyJobId);
+      try {
+        const supabase = createClient();
+        const { error: applyError } = await supabase.rpc('apply_to_job', { p_job_id: autoApplyJobId });
+        if (!applyError) {
+          setAppliedJobIds((prev) => new Set([...Array.from(prev), autoApplyJobId]));
+        } else {
+          setError(applyError.message);
+        }
+      } finally {
+        setApplyingJobId(null);
+      }
+    };
+    autoApply();
+  }, [autoApplyJobId, autoApplyDone, loading, appliedJobIds]); = useMemo(() => {
     if (!query) return jobs;
     const normalized = query.toLowerCase();
     return jobs.filter((job) =>
@@ -116,6 +148,24 @@ export default function CandidateJobsPage() {
           Lista de vagas abertas disponíveis no Talent Forge.
         </p>
       </header>
+
+      {/* Banner de candidatura automática via redirect */}
+      {autoApplyJobId && autoApplyDone && (
+        <div className={`rounded-xl px-4 py-3 flex items-center gap-2.5 text-sm font-medium border ${
+          appliedJobIds.has(autoApplyJobId)
+            ? 'bg-green-50 text-green-700 border-green-200'
+            : error
+              ? 'bg-red-50 text-red-700 border-red-200'
+              : 'bg-blue-50 text-blue-700 border-blue-200'
+        }`}>
+          {appliedJobIds.has(autoApplyJobId)
+            ? <>✅ Candidatura enviada com sucesso!
+            </>
+            : error
+              ? <>⚠️ Erro ao enviar candidatura: {error}</>
+              : <>⏳ Enviando candidatura...</>}
+        </div>
+      )}
 
       <div className="relative">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#999]" />
