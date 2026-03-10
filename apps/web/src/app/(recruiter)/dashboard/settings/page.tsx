@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { DashboardHeader } from '@/components/DashboardHeader';
-import { Building2, Save, User, Bell, Lock, Globe, ExternalLink, Upload, Instagram, Linkedin, MessageCircle } from 'lucide-react';
+import { Building2, Save, User, Bell, Lock, Globe, ExternalLink, Upload, Instagram, Linkedin, MessageCircle, Trash2 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { useOrgStore } from '@/lib/store';
 import { WebhookManager } from '@/components';
@@ -41,6 +41,7 @@ export default function SettingsPage() {
   const [orgSlug, setOrgSlug] = useState('');
   const [orgId, setOrgId] = useState<string | null>(null);
   const [uploadingAsset, setUploadingAsset] = useState<'logo' | 'banner' | null>(null);
+  const [deletingAsset, setDeletingAsset] = useState<'logo' | 'banner' | null>(null);
   const { currentOrg } = useOrgStore();
 
   const supabase = createClient();
@@ -122,6 +123,33 @@ export default function SettingsPage() {
       alert(error.message || 'Erro ao salvar');
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function handleDeleteAsset(type: 'logo' | 'banner') {
+    if (!orgId) return;
+    if (!confirm(`Remover ${type === 'logo' ? 'a logo' : 'o banner'} da empresa?`)) return;
+    try {
+      setDeletingAsset(type);
+      const path = `${orgId}/${type}.jpeg`;
+      // Remove do Storage (ignora erro se arquivo não existir)
+      await supabase.storage.from('org-assets').remove([path]);
+      // Limpa a URL no estado e salva no banco
+      if (type === 'logo') {
+        setCareerPage((prev) => ({ ...prev, career_page_logo_url: '' }));
+      } else {
+        setCareerPage((prev) => ({ ...prev, career_page_banner_url: '' }));
+      }
+      // Persiste a remoção no banco imediatamente
+      await supabase.from('organizations').update(
+        type === 'logo'
+          ? { career_page_logo_url: null }
+          : { career_page_banner_url: null }
+      ).eq('id', orgId);
+    } catch (err: any) {
+      alert(err.message || 'Erro ao remover imagem');
+    } finally {
+      setDeletingAsset(null);
     }
   }
 
@@ -396,7 +424,18 @@ export default function SettingsPage() {
               <Label htmlFor="cp-logo">Logo da empresa</Label>
               <div className="flex items-center gap-3">
                 {careerPage.career_page_logo_url && (
-                  <img src={careerPage.career_page_logo_url} alt="Logo" className="h-10 w-10 object-contain rounded border border-[#E5E5DC]" />
+                  <div className="relative group shrink-0">
+                    <img src={careerPage.career_page_logo_url} alt="Logo" className="h-10 w-10 object-contain rounded border border-[#E5E5DC]" />
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteAsset('logo')}
+                      disabled={deletingAsset !== null}
+                      className="absolute -top-2 -right-2 w-5 h-5 bg-[#EF4444] text-white rounded-full items-center justify-center hidden group-hover:flex transition-all"
+                      title="Remover logo"
+                    >
+                      <Trash2 className="w-2.5 h-2.5" />
+                    </button>
+                  </div>
                 )}
                 <label className="flex items-center gap-2 cursor-pointer px-3 py-2 border border-[#E5E5DC] rounded-lg text-sm hover:bg-[#F5F5F0] transition-colors">
                   <Upload className="w-4 h-4" />
@@ -420,7 +459,19 @@ export default function SettingsPage() {
               <Label>Banner da empresa</Label>
               <div className="space-y-2">
                 {careerPage.career_page_banner_url && (
-                  <img src={careerPage.career_page_banner_url} alt="Banner" className="w-full h-24 object-cover rounded-lg border border-[#E5E5DC]" />
+                  <div className="relative group">
+                    <img src={careerPage.career_page_banner_url} alt="Banner" className="w-full h-24 object-cover rounded-lg border border-[#E5E5DC]" />
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteAsset('banner')}
+                      disabled={deletingAsset !== null}
+                      className="absolute top-2 right-2 flex items-center gap-1.5 px-2.5 py-1.5 bg-[#EF4444] text-white rounded-lg text-xs font-medium opacity-0 group-hover:opacity-100 transition-opacity hover:bg-[#DC2626]"
+                      title="Remover banner"
+                    >
+                      <Trash2 className="w-3 h-3" />
+                      {deletingAsset === 'banner' ? 'Removendo...' : 'Remover banner'}
+                    </button>
+                  </div>
                 )}
                 <div className="flex items-center gap-3">
                   <label className="flex items-center gap-2 cursor-pointer px-3 py-2 border border-[#E5E5DC] rounded-lg text-sm hover:bg-[#F5F5F0] transition-colors">
