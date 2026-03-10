@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { MapPin, Clock, Briefcase, ArrowRight, Building2, Search } from 'lucide-react';
+import { MapPin, Clock, Briefcase, ArrowRight, Building2, Search, Instagram, Linkedin, MessageCircle, Globe } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 
 interface PublicJob {
@@ -19,9 +19,17 @@ interface PublicJob {
   org_name: string;
   org_slug: string;
   org_industry: string | null;
+  org_logo_url: string | null;
   career_page_headline: string | null;
   career_page_logo_url: string | null;
   career_page_color: string | null;
+  career_page_secondary_color: string | null;
+  career_page_banner_url: string | null;
+  career_page_about: string | null;
+  career_page_whatsapp_url: string | null;
+  career_page_instagram_url: string | null;
+  career_page_linkedin_url: string | null;
+  career_page_show_contact: boolean;
 }
 
 const EMPLOYMENT_TYPE_LABEL: Record<string, string> = {
@@ -38,7 +46,12 @@ export default function CareerPage() {
   const supabase = createClient();
 
   const [jobs, setJobs] = useState<PublicJob[]>([]);
-  const [org, setOrg] = useState<Pick<PublicJob, 'org_name' | 'career_page_headline' | 'career_page_logo_url' | 'career_page_color' | 'org_industry'> | null>(null);
+  const [org, setOrg] = useState<Pick<PublicJob,
+    'org_name' | 'career_page_headline' | 'career_page_logo_url' | 'career_page_color' |
+    'career_page_secondary_color' | 'career_page_banner_url' | 'career_page_about' |
+    'career_page_whatsapp_url' | 'career_page_instagram_url' | 'career_page_linkedin_url' |
+    'career_page_show_contact' | 'org_industry'
+  > | null>(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
   const [search, setSearch] = useState('');
@@ -63,6 +76,13 @@ export default function CareerPage() {
         career_page_headline: first.career_page_headline,
         career_page_logo_url: first.career_page_logo_url,
         career_page_color: first.career_page_color,
+        career_page_secondary_color: first.career_page_secondary_color,
+        career_page_banner_url: first.career_page_banner_url,
+        career_page_about: first.career_page_about,
+        career_page_whatsapp_url: first.career_page_whatsapp_url,
+        career_page_instagram_url: first.career_page_instagram_url,
+        career_page_linkedin_url: first.career_page_linkedin_url,
+        career_page_show_contact: first.career_page_show_contact,
         org_industry: first.org_industry,
       });
     } catch {
@@ -73,6 +93,8 @@ export default function CareerPage() {
   };
 
   const primaryColor = org?.career_page_color || '#141042';
+  const secondaryColor = org?.career_page_secondary_color || '#10B981';
+  const logoUrl = org?.career_page_logo_url || null;
 
   const filtered = jobs.filter(j =>
     !search.trim() ||
@@ -105,10 +127,10 @@ export default function CareerPage() {
       {/* Hero */}
       <div style={{ background: primaryColor }} className="text-white">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 py-16 sm:py-20">
-          {org?.career_page_logo_url && (
+          {logoUrl && (
             <img
-              src={org.career_page_logo_url}
-              alt={org.org_name}
+              src={logoUrl}
+              alt={org?.org_name}
               className="h-12 mb-6 object-contain"
             />
           )}
@@ -124,8 +146,35 @@ export default function CareerPage() {
         </div>
       </div>
 
+      {/* Banner */}
+      {org?.career_page_banner_url && (
+        <div className="w-full max-h-64 overflow-hidden">
+          <img
+            src={org.career_page_banner_url}
+            alt={`Banner ${org.org_name}`}
+            className="w-full h-64 object-cover"
+          />
+        </div>
+      )}
+
+      {/* About */}
+      {org?.career_page_about && (
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 py-10">
+          <div className="bg-white border border-[#E5E5DC] rounded-xl p-8">
+            <h2 className="text-xl font-bold mb-4" style={{ color: primaryColor }}>
+              Sobre a {org.org_name}
+            </h2>
+            <p className="text-[#444444] leading-relaxed whitespace-pre-wrap">
+              {org.career_page_about}
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Search + Jobs */}
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 py-10">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 py-10"
+        style={org?.career_page_about ? { paddingTop: '0' } : undefined}
+      >
         {/* Search */}
         <div className="relative mb-8">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#999999]" />
@@ -178,7 +227,7 @@ export default function CareerPage() {
                       )}
                     </div>
                   </div>
-                  <ArrowRight className="w-5 h-5 text-[#999999] group-hover:text-[#141042] flex-shrink-0 mt-1 transition-colors" />
+                  <ArrowRight className="w-5 h-5 text-[#999999] group-hover:text-[#141042] shrink-0 mt-1 transition-colors" />
                 </div>
               </button>
             ))}
@@ -187,8 +236,41 @@ export default function CareerPage() {
       </div>
 
       {/* Footer */}
-      <div className="border-t border-[#E5E5DC] mt-16 py-8 text-center text-xs text-[#999999]">
-        Powered by <span className="font-semibold text-[#141042]">TALENT</span><span className="font-bold text-[#F97316]">FORGE</span>
+      <div className="border-t border-[#E5E5DC] mt-16 py-8 px-4">
+        <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+          {/* Social links */}
+          {org?.career_page_show_contact && (
+            <div className="flex items-center gap-4">
+              {org.career_page_whatsapp_url && (
+                <a href={org.career_page_whatsapp_url} target="_blank" rel="noopener noreferrer"
+                  className="text-[#25D366] hover:opacity-80 transition-opacity"
+                  aria-label="WhatsApp"
+                >
+                  <MessageCircle className="w-5 h-5" />
+                </a>
+              )}
+              {org.career_page_instagram_url && (
+                <a href={org.career_page_instagram_url} target="_blank" rel="noopener noreferrer"
+                  className="text-[#E1306C] hover:opacity-80 transition-opacity"
+                  aria-label="Instagram"
+                >
+                  <Instagram className="w-5 h-5" />
+                </a>
+              )}
+              {org.career_page_linkedin_url && (
+                <a href={org.career_page_linkedin_url} target="_blank" rel="noopener noreferrer"
+                  className="text-[#0077B5] hover:opacity-80 transition-opacity"
+                  aria-label="LinkedIn"
+                >
+                  <Linkedin className="w-5 h-5" />
+                </a>
+              )}
+            </div>
+          )}
+          <p className="text-xs text-[#999999]">
+            Powered by <span className="font-semibold text-[#141042]">TALENT</span><span className="font-bold text-[#F97316]">FORGE</span>
+          </p>
+        </div>
       </div>
     </div>
   );
