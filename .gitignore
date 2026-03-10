@@ -44,5 +44,5 @@ Thumbs.db
 # ─── Arquivos temporários / rascunhos locais ─────────────
 "# Arquitetura Canônica — TalentForge/"
 *.backup
-*" 2.tsx"
-*" 2.ts"
+* 2.tsx
+* 2.ts
