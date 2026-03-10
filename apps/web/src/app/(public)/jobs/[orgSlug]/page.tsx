@@ -189,12 +189,12 @@ export default function CareerPage() {
                 animation: 'rotateBorder 3s linear infinite',
               }} />
               {/* Card interno */}
-              <div className="relative z-10 rounded-[14px] px-5 py-3 flex items-center justify-center backdrop-blur-md"
+              <div className="relative z-10 rounded-[14px] w-48 h-28 overflow-hidden backdrop-blur-md"
                 style={{ background: 'rgba(255,255,255,0.12)' }}>
                 <img
                   src={logoUrl}
                   alt={org?.org_name}
-                  className="h-12 object-contain"
+                  className="w-full h-full object-contain p-4"
                 />
               </div>
             </div>
@@ -207,9 +207,9 @@ export default function CareerPage() {
                 background: `conic-gradient(from 0deg, transparent 0%, ${secondaryColor} 20%, transparent 40%, ${secondaryColor}99 60%, transparent 80%)`,
                 animation: 'rotateBorder 3s linear infinite',
               }} />
-              <div className="relative z-10 rounded-[14px] w-16 h-16 flex items-center justify-center backdrop-blur-md"
+              <div className="relative z-10 rounded-[14px] w-24 h-24 flex items-center justify-center backdrop-blur-md"
                 style={{ background: 'rgba(255,255,255,0.12)' }}>
-                <Building2 className="w-8 h-8 text-white" />
+                <Building2 className="w-12 h-12 text-white" />
               </div>
             </div>
           )}
