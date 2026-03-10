@@ -177,7 +177,7 @@ export default function CareerPage() {
               <img
                 src={logoUrl}
                 alt={org?.org_name}
-                className="h-14 object-contain brightness-0 invert"
+                className="h-14 object-contain drop-shadow-lg"
               />
             </div>
           ) : (
