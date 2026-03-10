@@ -178,6 +178,16 @@ export default function CareerPage() {
         `}</style>
 
         <div className="relative max-w-5xl mx-auto px-6 py-20 sm:py-28">
+
+          {/* Badge de vagas — canto superior direito */}
+          <div className="absolute top-6 right-6 sm:top-8 sm:right-8">
+            <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold backdrop-blur-sm border border-white/20"
+              style={{ background: `${secondaryColor}33`, color: 'white' }}>
+              <span className="w-2 h-2 rounded-full animate-pulse" style={{ background: secondaryColor }} />
+              {filtered.length} {filtered.length === 1 ? 'vaga aberta' : 'vagas abertas'}
+            </span>
+          </div>
+
           {/* Logo com animated gradient border */}
           {logoUrl ? (
             <div className="mb-8 relative inline-flex rounded-2xl overflow-hidden p-0.5">
@@ -216,7 +226,13 @@ export default function CareerPage() {
 
           {/* Texto principal */}
           <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white mb-4 leading-tight tracking-tight">
-            {org?.career_page_headline || `Trabalhe na ${org?.org_name}`}
+            {org?.career_page_headline || (
+              <>
+                Sua próxima oportunidade<br className="hidden sm:block" />
+                <span className="text-white/80"> profissional está aqui na </span>
+                <span style={{ color: secondaryColor }}>{org?.org_name}</span>
+              </>
+            )}
           </h1>
 
           {org?.org_industry && (
@@ -224,15 +240,6 @@ export default function CareerPage() {
               {org.org_industry}
             </p>
           )}
-
-          {/* Badge de vagas */}
-          <div className="flex items-center gap-3 flex-wrap">
-            <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold backdrop-blur-sm border border-white/20"
-              style={{ background: `${secondaryColor}33`, color: 'white' }}>
-              <span className="w-2 h-2 rounded-full animate-pulse" style={{ background: secondaryColor }} />
-              {filtered.length} {filtered.length === 1 ? 'vaga aberta' : 'vagas abertas'}
-            </span>
-          </div>
         </div>
       </div>
 
