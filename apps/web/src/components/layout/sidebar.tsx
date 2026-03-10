@@ -20,6 +20,7 @@ import {
   Building,
   UserCog,
   Activity,
+  Globe,
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -119,6 +120,19 @@ export function Sidebar() {
                 </Link>
               );
             })}
+
+            {/* Minha Página de Carreiras */}
+            {currentOrg?.slug && (
+              <a
+                href={`/jobs/${currentOrg.slug}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 text-white/65 hover:bg-white/10 hover:text-white"
+              >
+                <Globe className="h-4 w-4" />
+                Minha Página
+              </a>
+            )}
           </div>
         </div>
 
