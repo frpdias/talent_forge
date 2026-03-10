@@ -170,19 +170,47 @@ export default function CareerPage() {
         <div className="absolute bottom-0 left-0 w-64 h-64 rounded-full opacity-5"
           style={{ background: secondaryColor, transform: 'translate(-30%, 30%)' }} />
 
+        <style>{`
+          @keyframes rotateBorder {
+            from { transform: translate(-50%, -50%) rotate(0deg); }
+            to   { transform: translate(-50%, -50%) rotate(360deg); }
+          }
+        `}</style>
+
         <div className="relative max-w-5xl mx-auto px-6 py-20 sm:py-28">
-          {/* Logo */}
+          {/* Logo com animated gradient border */}
           {logoUrl ? (
-            <div className="mb-8">
-              <img
-                src={logoUrl}
-                alt={org?.org_name}
-                className="h-14 object-contain drop-shadow-lg"
-              />
+            <div className="mb-8 relative inline-flex rounded-2xl overflow-hidden p-0.5">}
+              <div style={{
+                position: 'absolute',
+                top: '50%', left: '50%',
+                width: '250%', height: '250%',
+                background: `conic-gradient(from 0deg, transparent 0%, ${secondaryColor} 20%, transparent 40%, ${secondaryColor}99 60%, transparent 80%)`,
+                animation: 'rotateBorder 3s linear infinite',
+              }} />
+              {/* Card interno */}
+              <div className="relative z-10 rounded-[14px] px-5 py-3 flex items-center justify-center backdrop-blur-md"
+                style={{ background: 'rgba(255,255,255,0.12)' }}>
+                <img
+                  src={logoUrl}
+                  alt={org?.org_name}
+                  className="h-12 object-contain"
+                />
+              </div>
             </div>
           ) : (
-            <div className="mb-8 inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-white/15 backdrop-blur-sm">
-              <Building2 className="w-8 h-8 text-white" />
+            <div className="mb-8 relative inline-flex rounded-2xl overflow-hidden p-0.5">
+              <div style={{
+                position: 'absolute',
+                top: '50%', left: '50%',
+                width: '250%', height: '250%',
+                background: `conic-gradient(from 0deg, transparent 0%, ${secondaryColor} 20%, transparent 40%, ${secondaryColor}99 60%, transparent 80%)`,
+                animation: 'rotateBorder 3s linear infinite',
+              }} />
+              <div className="relative z-10 rounded-[14px] w-16 h-16 flex items-center justify-center backdrop-blur-md"
+                style={{ background: 'rgba(255,255,255,0.12)' }}>
+                <Building2 className="w-8 h-8 text-white" />
+              </div>
             </div>
           )}
 
