@@ -1,6 +1,6 @@
 # Arquitetura Canônica — TalentForge
 
-**Última atualização**: 2026-03-10 | **Score de Conformidade**: ✅ 100% (Sprint 36: Jobs Page v2 melhorias + org_type + admin/companies refactor)
+**Última atualização**: 2026-03-10 | **Score de Conformidade**: ✅ 100% (Sprint 37: Career Page redesign v3 — banner real, logo flutuante, sticky nav, cards animados)
 
 ## 📜 FONTE DA VERDADE — PRINCÍPIO FUNDAMENTAL
 
@@ -6601,7 +6601,112 @@ if (user?.user_metadata?.user_type !== 'candidate') {
 
 ---
 
-**FIM DO DOCUMENTO** — Versão 5.2 (Sprint 34: Career Page v2 + Fluxo Candidatura + Build Fixes)
+## Sprint 36 — org_type + Admin/Companies + Image Uploads (2026-03-10)
+
+**Objetivo:** Diferenciar organização-empresa de organização-recrutadora, melhorar gestão de imagens na career page e corrigir bugs de CDN.
+
+### 36.1 — Coluna `org_type` em `organizations`
+
+**Migrations:** `20260310_organizations_org_type.sql` + `20260310_fix_org_type_enum.sql`
+
+```sql
+ALTER TABLE organizations
+  ADD COLUMN IF NOT EXISTS org_type TEXT NOT NULL DEFAULT 'company'
+  CHECK (org_type IN ('company', 'recruiter'));
+CREATE INDEX IF NOT EXISTS idx_organizations_org_type ON organizations (org_type);
+```
+
+- `'company'` → empresa-cliente avaliada pelo módulo PHP
+- `'recruiter'` → agência de recrutamento / headhunter
+
+### 36.2 — Admin/Companies com dois blocos
+
+**Arquivo:** `apps/web/src/app/(admin)/admin/companies/page.tsx`
+
+- Bloco **Empresas** lista `org_type = 'company'`
+- Bloco **Recrutadoras / Headhunters** lista `org_type = 'recruiter'`
+- Campo `org_type` exposto no formulário de criação/edição
+
+### 36.3 — Imagens: Compressão + CDN cache-bust + Botões de excluir
+
+**Arquivo:** `apps/web/src/app/(recruiter)/dashboard/settings/page.tsx`
+
+| Feature | Implementação |
+|---------|--------------|
+| Compressão browser | `compressImage(file)` via Canvas API — `1200px max`, `quality 0.85`, `image/jpeg` |
+| Cache-bust | Nome do arquivo: `${type}_${Date.now()}.jpeg` — novo nome a cada upload |
+| Excluir logo/banner | 2 stages: `idle → confirming → excluindo`; `extractStoragePath(url)` extrai path do bucket |
+| Sem `window.confirm()` | Confirmação inline com botão "Confirmar exclusão" + "Cancelar" |
+
+### Commits Sprint 36
+- `ea5a9d5` — feat(admin/companies): separar recrutadoras e empresas + coluna org_type
+- `c70fa7c` — fix(db): adicionar valor recruiter ao enum org_type
+- `d0893f5` — fix(settings): comprimir imagens no browser antes do upload
+- `5ef1f2c` — fix(settings): CDN cache-bust por timestamp no nome do arquivo
+- `a7ee953`, `ba8b89f` — feat/fix(settings): botões excluir logo/banner com confirmação inline
+
+---
+
+## Sprint 37 — Career Page Redesign v3 (2026-03-10)
+
+**Objetivo:** Redesign completo da career page pública inspirado nas melhores páginas de vagas do mundo — banner real do usuário como hero, logo sem fundo, sticky nav glassmorphism e cards animados.
+
+### 37.1 — Estrutura Visual
+
+**Arquivo:** `apps/web/src/app/(public)/jobs/[orgSlug]/page.tsx` (commit `b43b0b7`)
+
+#### Hero
+- **Com banner**: `<img>` `absolute inset-0 w-full h-full object-cover` + overlay `linear-gradient(160deg, ${primary}D9 0%, ${primary}88 55%, transparent 100%)` — banner visível, color-tinted
+- **Sem banner**: gradiente rico `135deg` + 2 orbs decorativos com `blur-3xl`/`blur-2xl`
+- **Logo flutuante**: `<img>` direto, `filter: drop-shadow(0 4px 16px rgba(0,0,0,0.3))` — zero container branco
+- **Curva SVG**: `<svg viewBox="0 0 1440 48">` com `path "M0,48 C480,0 960,0 1440,48"` fill `#F7F7F5` separando hero de conteúdo
+
+#### Sticky Nav
+```tsx
+// useRef<HTMLDivElement> no heroRef + useEffect scroll passivo
+const onScroll = () => {
+  const heroH = heroRef.current?.offsetHeight || 400;
+  setNavVisible(window.scrollY > heroH - 80);
+};
+// CSS: transform: navVisible ? 'translateY(0)' : 'translateY(-100%)'
+// background: rgba(255,255,255,0.93) + backdropFilter: blur(16px)
+```
+
+### 37.2 — Helpers e Badges
+
+```tsx
+// TypeBadge — substitui EmploymentBadge
+const TYPE_STYLE = {
+  full_time:  'bg-violet-50 text-violet-700',
+  part_time:  'bg-emerald-50 text-emerald-700',
+  contract:   'bg-orange-50 text-orange-700',
+  internship: 'bg-rose-50 text-rose-700',
+};
+
+// daysAgo()
+function daysAgo(date: string) {
+  const d = Math.floor((Date.now() - new Date(date).getTime()) / 86400000);
+  if (d === 0) return 'Hoje';
+  if (d === 1) return 'Ontem';
+  return `${d}d atrás`;
+}
+```
+
+### 37.3 — Cards de Vaga Animados
+
+- **Barra top**: `h-[2px] w-0 group-hover:w-full transition-all duration-500` com `linear-gradient(90deg, primary, secondary)`
+- **Ícone**: `Briefcase` em quadrado `rounded-xl` com `${primary}0D` background
+- **Badge "Nova"**: `<Sparkles className="w-2.5 h-2.5" />` para vagas < 7 dias
+- **CTA hover**: `<ArrowUpRight>` com `opacity-0 group-hover:opacity-100 -translate-x-2 group-hover:translate-x-0 transition-all duration-200`
+- **Modal header**: `radial-gradient(circle, secondary 1px, transparent 1px)` `backgroundSize: 24px 24px` `opacity-[0.04]`
+
+### Commits Sprint 37
+- `5628fdf` — refactor(jobs): remover card borda animada conic-gradient da logo
+- `b43b0b7` — feat(jobs): redesign completo da career page com banner real, logo flutuante e cards animados
+
+---
+
+**FIM DO DOCUMENTO** — Versão 5.4 (Sprint 37: Career Page redesign v3 — banner real, logo flutuante, sticky nav, cards animados)
 - **Seção 5**: Boas Práticas de Implantação (ciclo de avaliação, comunicação, anonimato)
 - **Seção 6**: FAQ para Auditoria Interna (MTE, fiscalização, jurídico)
 - **Seção 7**: Checklist Pré-Auditoria (documentos, evidências, conformidade)
@@ -6618,6 +6723,27 @@ if (user?.user_metadata?.user_type !== 'candidate') {
 ---
 
 ## 📝 Histórico de Versões
+
+### v5.4 (2026-03-10)
+- ✅ **Score de Conformidade**: 100% mantido (Sprint 37)
+- ✅ **Career Page redesign v3** (`apps/web/src/app/(public)/jobs/[orgSlug]/page.tsx`, commit `b43b0b7`):
+  - **Hero**: banner real do usuário como `<img>` `object-cover` + overlay `linear-gradient(160deg, primaryD9 0%, primary88 55%, transparent)` preservando visibilidade; sem banner → gradiente rico + orbs `blur-3xl`
+  - **Logo flutuante**: `<img>` direto com `filter: drop-shadow(0 4px 16px rgba(0,0,0,0.3))` — zero container, zero fundo branco
+  - **Sticky nav**: `position: fixed`, surge após scroll além do hero (`translateY(-100%)` → `translateY(0)`) com `backdrop-blur(16px)` glassmorphism; usa `useRef<HTMLDivElement>` + `useEffect` scroll passivo
+  - **SVG curve**: `<svg viewBox="0 0 1440 48">` com `path d="M0,48 C480,0 960,0 1440,48..."` fill `#F7F7F5` separando hero de conteúdo
+  - **TypeBadge**: substitui `EmploymentBadge`; paleta semântica violet/emerald/orange/rose por tipo de contrato
+  - **`daysAgo()`**: helper — Hoje / Ontem / Nd atrás
+  - **Cards animados**: barra `h-[2px]` `w-0 → w-full` no hover com gradiente `primary → secondary`; ícone `Briefcase` em quadrado `rounded-xl`; badge "Nova" com `<Sparkles>`; CTA com `<ArrowUpRight>` desliza com `opacity-0 → opacity-100 -translate-x-2 → translate-x-0`
+  - **Modal header**: `radial-gradient` dots pattern `opacity-[0.04]` como textura
+
+### v5.3 (2026-03-10)
+- ✅ **Score de Conformidade**: 100% mantido (Sprint 36)
+- ✅ **`org_type` em `organizations`**: coluna `TEXT NOT NULL DEFAULT 'company' CHECK (org_type IN ('company','recruiter'))` + índice `idx_organizations_org_type`; migration `20260310_organizations_org_type.sql` + fix `20260310_fix_org_type_enum.sql` (commits `ea5a9d5`, `c70fa7c`)
+- ✅ **Admin/companies refactor** (`/admin/companies`): UI reescrita com dois blocos separados — **Empresas clientes** (`org_type='company'`) e **Recrutadoras/Headhunters** (`org_type='recruiter'`); API routes atualizadas (commits `ea5a9d5`)
+- ✅ **Compressão de imagem no browser**: `compressImage()` via Canvas API antes do upload para Supabase Storage — limita a 1200px/0.85 quality, elimina erro 413 (commit `d0893f5`)
+- ✅ **CDN cache-bust por timestamp**: nomes de arquivo gerados como `${type}_${Date.now()}.jpeg` — evita loop de cache ao trocar logo/banner (commit `5ef1f2c`)
+- ✅ **Botões excluir logo/banner**: confirmação inline sem `window.confirm()` — dois stages (`idle → confirming → excluindo`) com `extractStoragePath()` para remoção do bucket (commits `a7ee953`, `ba8b89f`)
+- ✅ **Remoção borda animada logo**: card com `conic-gradient` rotativo removido da career page (commit `5628fdf`)
 
 ### v5.2 (2026-03-10)
 - ✅ **Score de Conformidade**: 100% mantido (Sprint 34)
@@ -7252,5 +7378,7 @@ O `ReportsService.getDashboard()` usa `applications.source` com fallback para `c
 | Sprint 32 | 2026-03-06 | Campaigns NR-1, COPC dinâmico, NR-1 Invitations v2, Peer Selection TFCI | ✅ |
 | Sprint 33 | 2026-03-09 | EmailModule Brevo SMTP, InterviewsModule, 5 templates HBS | ✅ |
 | Sprint 34 | 2026-03-10 | Career Page v2, fluxo de candidatura, redirect login, auto-apply | ✅ |
-| **Sprint 35** | **2026-03-10** | **Publisher Engine NestJS, NR-1 PDF, Jobs Page v2, Source Analytics, limpeza 112 arquivos** | ✅ |
+| Sprint 35 | 2026-03-10 | Publisher Engine NestJS, NR-1 PDF, Jobs Page v2, Source Analytics, limpeza 112 arquivos | ✅ |
+| Sprint 36 | 2026-03-10 | `org_type` em `organizations`, admin/companies refactor (2 blocos), compressão upload imagens, CDN cache-bust timestamp, botões excluir logo/banner | ✅ |
+| **Sprint 37** | **2026-03-10** | **Career Page redesign v3 — banner real como BG, logo flutuante `drop-shadow`, sticky nav glassmorphism, SVG curve, cards animados (`w-0→w-full`), TypeBadge, `daysAgo()`, Sparkles, ArrowUpRight** | ✅ |
 ```
