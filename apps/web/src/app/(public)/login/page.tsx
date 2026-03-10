@@ -15,8 +15,9 @@ export default function LoginPage() {
 }
 
 function LoginContent() {
-  useSearchParams(); // kept for potential redirect use; currently not needed for logic
-  
+  const searchParams = useSearchParams();
+  const redirectTo = searchParams.get('redirect');
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -96,8 +97,10 @@ function LoginContent() {
         console.log('📌 Recruiter detected - redirecting to /dashboard');
         window.location.href = '/dashboard';
       } else {
-        console.log('📌 Candidate detected - redirecting to /candidate');
-        window.location.href = '/candidate';
+        // Candidate: usar redirect param se presente, senão ir para /candidate
+        const destination = redirectTo || '/candidate';
+        console.log('📌 Candidate detected - redirecting to', destination);
+        window.location.href = destination;
       }
     } catch (err: any) {
       setError(err.message || 'Erro ao fazer login. Verifique suas credenciais.');
@@ -184,7 +187,9 @@ function LoginContent() {
             <h2 className="text-2xl font-semibold text-foreground mb-2">Entrar</h2>
             <p className="text-sm text-foreground-muted">
               Não tem uma conta?{' '}
-              <Link href="/register" className="text-tf-accent font-medium hover:underline">
+              <Link
+                href={redirectTo ? `/register?type=candidate&redirect=${encodeURIComponent(redirectTo)}` : '/register'}
+                className="text-tf-accent font-medium hover:underline">
                 Criar conta
               </Link>
             </p>
