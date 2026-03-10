@@ -177,52 +177,52 @@ export default function CareerPage() {
           }
         `}</style>
 
-        <div className="relative max-w-5xl mx-auto px-6 py-20 sm:py-28">
+        <div className="relative max-w-5xl mx-auto px-6 py-12 sm:py-16">
 
-          {/* Badge de vagas — canto superior direito */}
-          <div className="absolute top-6 right-6 sm:top-8 sm:right-8">
+          {/* Linha: logo à esquerda + badge à direita */}
+          <div className="flex items-center justify-between mb-8">
+            {/* Logo com animated gradient border */}
+            {logoUrl ? (
+              <div className="relative inline-flex rounded-2xl overflow-hidden p-0.5">
+                <div style={{
+                  position: 'absolute',
+                  top: '50%', left: '50%',
+                  width: '250%', height: '250%',
+                  background: `conic-gradient(from 0deg, transparent 0%, ${secondaryColor} 20%, transparent 40%, ${secondaryColor}99 60%, transparent 80%)`,
+                  animation: 'rotateBorder 3s linear infinite',
+                }} />
+                <div className="relative z-10 rounded-[14px] w-48 h-28 overflow-hidden backdrop-blur-md"
+                  style={{ background: 'rgba(255,255,255,0.12)' }}>
+                  <img
+                    src={logoUrl}
+                    alt={org?.org_name}
+                    className="w-full h-full object-contain p-4"
+                  />
+                </div>
+              </div>
+            ) : (
+              <div className="relative inline-flex rounded-2xl overflow-hidden p-0.5">
+                <div style={{
+                  position: 'absolute',
+                  top: '50%', left: '50%',
+                  width: '250%', height: '250%',
+                  background: `conic-gradient(from 0deg, transparent 0%, ${secondaryColor} 20%, transparent 40%, ${secondaryColor}99 60%, transparent 80%)`,
+                  animation: 'rotateBorder 3s linear infinite',
+                }} />
+                <div className="relative z-10 rounded-[14px] w-24 h-24 flex items-center justify-center backdrop-blur-md"
+                  style={{ background: 'rgba(255,255,255,0.12)' }}>
+                  <Building2 className="w-12 h-12 text-white" />
+                </div>
+              </div>
+            )}
+
+            {/* Badge de vagas */}
             <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold backdrop-blur-sm border border-white/20"
               style={{ background: `${secondaryColor}33`, color: 'white' }}>
               <span className="w-2 h-2 rounded-full animate-pulse" style={{ background: secondaryColor }} />
               {filtered.length} {filtered.length === 1 ? 'vaga aberta' : 'vagas abertas'}
             </span>
           </div>
-
-          {/* Logo com animated gradient border */}
-          {logoUrl ? (
-            <div className="mb-8 relative inline-flex rounded-2xl overflow-hidden p-0.5">
-              <div style={{
-                position: 'absolute',
-                top: '50%', left: '50%',
-                width: '250%', height: '250%',
-                background: `conic-gradient(from 0deg, transparent 0%, ${secondaryColor} 20%, transparent 40%, ${secondaryColor}99 60%, transparent 80%)`,
-                animation: 'rotateBorder 3s linear infinite',
-              }} />
-              {/* Card interno */}
-              <div className="relative z-10 rounded-[14px] w-48 h-28 overflow-hidden backdrop-blur-md"
-                style={{ background: 'rgba(255,255,255,0.12)' }}>
-                <img
-                  src={logoUrl}
-                  alt={org?.org_name}
-                  className="w-full h-full object-contain p-4"
-                />
-              </div>
-            </div>
-          ) : (
-            <div className="mb-8 relative inline-flex rounded-2xl overflow-hidden p-0.5">
-              <div style={{
-                position: 'absolute',
-                top: '50%', left: '50%',
-                width: '250%', height: '250%',
-                background: `conic-gradient(from 0deg, transparent 0%, ${secondaryColor} 20%, transparent 40%, ${secondaryColor}99 60%, transparent 80%)`,
-                animation: 'rotateBorder 3s linear infinite',
-              }} />
-              <div className="relative z-10 rounded-[14px] w-24 h-24 flex items-center justify-center backdrop-blur-md"
-                style={{ background: 'rgba(255,255,255,0.12)' }}>
-                <Building2 className="w-12 h-12 text-white" />
-              </div>
-            </div>
-          )}
 
           {/* Texto principal */}
           <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white mb-4 leading-tight tracking-tight">
@@ -236,7 +236,7 @@ export default function CareerPage() {
           </h1>
 
           {org?.org_industry && (
-            <p className="text-white/60 mb-8 uppercase tracking-widest font-medium text-sm">
+            <p className="text-white/60 uppercase tracking-widest font-medium text-sm">
               {org.org_industry}
             </p>
           )}
