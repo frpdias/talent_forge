@@ -180,7 +180,7 @@ export default function CareerPage() {
         <div className="relative max-w-5xl mx-auto px-6 py-20 sm:py-28">
           {/* Logo com animated gradient border */}
           {logoUrl ? (
-            <div className="mb-8 relative inline-flex rounded-2xl overflow-hidden p-0.5">}
+            <div className="mb-8 relative inline-flex rounded-2xl overflow-hidden p-0.5">
               <div style={{
                 position: 'absolute',
                 top: '50%', left: '50%',
