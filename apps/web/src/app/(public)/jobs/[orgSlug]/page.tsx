@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { MapPin, Clock, Briefcase, ArrowRight, Building2, Search, Instagram, Linkedin, MessageCircle, ChevronRight } from 'lucide-react';
+import { MapPin, Clock, Briefcase, ArrowRight, Building2, Search, Instagram, Linkedin, MessageCircle, ChevronRight, X, CheckCircle } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 
 interface PublicJob {
@@ -65,6 +65,9 @@ export default function CareerPage() {
   const supabase = createClient();
 
   const [jobs, setJobs] = useState<PublicJob[]>([]);
+  const [selectedJob, setSelectedJob] = useState<PublicJob | null>(null);
+  const [applying, setApplying] = useState(false);
+  const [applied, setApplied] = useState(false);
   const [org, setOrg] = useState<Pick<PublicJob,
     'org_name' | 'career_page_headline' | 'career_page_logo_url' | 'org_logo_url' | 'career_page_color' |
     'career_page_secondary_color' | 'career_page_banner_url' | 'career_page_about' |
@@ -109,6 +112,21 @@ export default function CareerPage() {
       setNotFound(true);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleApply = async () => {
+    if (!selectedJob) return;
+    setApplying(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        router.push(`/register?redirect=/jobs/${orgSlug}/${selectedJob.id}`);
+        return;
+      }
+      router.push(`/candidate/jobs?apply=${selectedJob.id}`);
+    } finally {
+      setApplying(false);
     }
   };
 
@@ -303,7 +321,7 @@ export default function CareerPage() {
             {filtered.map((job) => (
               <button
                 key={job.id}
-                onClick={() => router.push(`/jobs/${orgSlug}/${job.id}`)}
+                onClick={() => { setSelectedJob(job); setApplied(false); }}
                 className="w-full text-left bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200 group overflow-hidden"
               >
                 {/* Linha de destaque top com cor da marca */}
@@ -355,6 +373,136 @@ export default function CareerPage() {
           </div>
         )}
       </div>
+
+      {/* ── MODAL SLIDE-OVER ──────────────────────────────────────── */}
+      {selectedJob && (
+        <>
+          {/* Backdrop */}
+          <div
+            className="fixed inset-0 bg-black/50 z-40 backdrop-blur-sm"
+            onClick={() => setSelectedJob(null)}
+          />
+
+          {/* Painel lateral */}
+          <div className="fixed right-0 top-0 h-full w-full sm:w-160 bg-white z-50 shadow-2xl flex flex-col">
+
+            {/* Header do painel */}
+            <div className="flex items-start justify-between p-6 border-b border-gray-100"
+              style={{ background: primaryColor }}>
+              <div className="flex-1 min-w-0 pr-4">
+                <p className="text-xs font-semibold uppercase tracking-widest mb-2" style={{ color: `${secondaryColor}` }}>
+                  {selectedJob.org_name}
+                </p>
+                <h2 className="text-xl sm:text-2xl font-bold text-white leading-tight">
+                  {selectedJob.title}
+                </h2>
+                <div className="flex flex-wrap items-center gap-2 mt-3">
+                  {selectedJob.employment_type && (
+                    <EmploymentBadge type={selectedJob.employment_type} />
+                  )}
+                  {selectedJob.location && (
+                    <span className="flex items-center gap-1.5 text-sm text-white/70">
+                      <MapPin className="w-3.5 h-3.5" />
+                      {selectedJob.location}
+                    </span>
+                  )}
+                  {selectedJob.application_deadline && (
+                    <span className="flex items-center gap-1.5 text-sm text-white/60">
+                      <Clock className="w-3.5 h-3.5" />
+                      Até {new Date(selectedJob.application_deadline).toLocaleDateString('pt-BR')}
+                    </span>
+                  )}
+                </div>
+              </div>
+              <button
+                onClick={() => setSelectedJob(null)}
+                className="w-9 h-9 rounded-xl flex items-center justify-center bg-white/10 hover:bg-white/20 text-white transition-colors shrink-0"
+                aria-label="Fechar"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Conteúdo rolável */}
+            <div className="flex-1 overflow-y-auto p-6 space-y-8">
+
+              {/* Descrição */}
+              {(selectedJob.description_html || selectedJob.description) && (
+                <section>
+                  <h3 className="text-xs font-semibold uppercase tracking-widest mb-4" style={{ color: secondaryColor }}>
+                    Sobre a vaga
+                  </h3>
+                  {selectedJob.description_html ? (
+                    <div
+                      className="prose prose-sm max-w-none text-gray-600 leading-relaxed"
+                      dangerouslySetInnerHTML={{ __html: selectedJob.description_html }}
+                    />
+                  ) : (
+                    <p className="text-gray-600 leading-relaxed whitespace-pre-wrap">
+                      {selectedJob.description}
+                    </p>
+                  )}
+                </section>
+              )}
+
+              {/* Requisitos */}
+              {selectedJob.requirements && (
+                <section>
+                  <h3 className="text-xs font-semibold uppercase tracking-widest mb-4" style={{ color: secondaryColor }}>
+                    Requisitos
+                  </h3>
+                  <div className="space-y-2">
+                    {selectedJob.requirements.split('\n').filter(Boolean).map((req, i) => (
+                      <div key={i} className="flex items-start gap-2.5">
+                        <div className="w-1.5 h-1.5 rounded-full mt-2 shrink-0" style={{ background: primaryColor }} />
+                        <p className="text-sm text-gray-600 leading-relaxed">{req.replace(/^[-•*]\s*/, '')}</p>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              )}
+
+              {/* Benefícios */}
+              {selectedJob.benefits && (
+                <section>
+                  <h3 className="text-xs font-semibold uppercase tracking-widest mb-4" style={{ color: secondaryColor }}>
+                    Benefícios
+                  </h3>
+                  <div className="space-y-2">
+                    {selectedJob.benefits.split('\n').filter(Boolean).map((ben, i) => (
+                      <div key={i} className="flex items-start gap-2.5">
+                        <CheckCircle className="w-4 h-4 mt-0.5 shrink-0" style={{ color: secondaryColor }} />
+                        <p className="text-sm text-gray-600 leading-relaxed">{ben.replace(/^[-•*]\s*/, '')}</p>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              )}
+
+            </div>
+
+            {/* Rodapé fixo com CTA */}
+            <div className="p-4 border-t border-gray-100 bg-gray-50">
+              {applied ? (
+                <div className="flex items-center justify-center gap-2 py-3 text-sm font-semibold text-green-700">
+                  <CheckCircle className="w-5 h-5" />
+                  Candidatura enviada com sucesso!
+                </div>
+              ) : (
+                <button
+                  onClick={handleApply}
+                  disabled={applying}
+                  className="w-full py-3.5 rounded-xl font-semibold text-white text-sm transition-all hover:opacity-90 active:scale-[0.98] disabled:opacity-60"
+                  style={{ background: `linear-gradient(135deg, ${primaryColor}, ${secondaryColor})` }}
+                >
+                  {applying ? 'Redirecionando...' : 'Candidatar-se a esta vaga'}
+                </button>
+              )}
+            </div>
+
+          </div>
+        </>
+      )}
 
       {/* ── FOOTER ───────────────────────────────────────────────── */}
       <footer className="mt-8 border-t border-gray-100 bg-white">
