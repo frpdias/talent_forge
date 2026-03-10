@@ -24,6 +24,7 @@ import {
   CalendarDays,
   Menu,
   X,
+  Globe,
 } from 'lucide-react';
 import { NotificationCenter } from '@/components/notifications/NotificationCenter';
 import { AgendaModal } from '@/components/calendar/AgendaModal';
@@ -261,6 +262,28 @@ export default function RecruiterLayout({ children }: { children: React.ReactNod
             </Link>
           );
         })}
+
+        {/* Minha Página de Carreiras */}
+        {currentOrg?.slug ? (
+          <a
+            href={`/jobs/${currentOrg.slug}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 text-white/60 hover:bg-white/10 hover:text-white"
+          >
+            <Globe className="w-4 h-4 shrink-0" />
+            <span>Minha Página</span>
+          </a>
+        ) : (
+          <Link
+            href="/dashboard/settings"
+            className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 text-white/35 hover:bg-white/10 hover:text-white/60"
+            title="Configure sua página em Configurações"
+          >
+            <Globe className="w-4 h-4 shrink-0" />
+            <span>Minha Página</span>
+          </Link>
+        )}
 
         {/* Seção: Avaliação */}
         <div className="pt-4 mt-4 border-t border-white/10">
