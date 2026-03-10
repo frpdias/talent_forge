@@ -66,7 +66,7 @@ export default function CareerPage() {
 
   const [jobs, setJobs] = useState<PublicJob[]>([]);
   const [org, setOrg] = useState<Pick<PublicJob,
-    'org_name' | 'career_page_headline' | 'career_page_logo_url' | 'career_page_color' |
+    'org_name' | 'career_page_headline' | 'career_page_logo_url' | 'org_logo_url' | 'career_page_color' |
     'career_page_secondary_color' | 'career_page_banner_url' | 'career_page_about' |
     'career_page_whatsapp_url' | 'career_page_instagram_url' | 'career_page_linkedin_url' |
     'career_page_show_contact' | 'org_industry'
@@ -94,6 +94,7 @@ export default function CareerPage() {
         org_name: first.org_name,
         career_page_headline: first.career_page_headline,
         career_page_logo_url: first.career_page_logo_url,
+        org_logo_url: first.org_logo_url,
         career_page_color: first.career_page_color,
         career_page_secondary_color: first.career_page_secondary_color,
         career_page_banner_url: first.career_page_banner_url,
@@ -113,7 +114,7 @@ export default function CareerPage() {
 
   const primaryColor = org?.career_page_color || '#141042';
   const secondaryColor = org?.career_page_secondary_color || '#10B981';
-  const logoUrl = org?.career_page_logo_url || null;
+  const logoUrl = org?.career_page_logo_url || org?.org_logo_url || null;
 
   const filtered = jobs.filter(j =>
     !search.trim() ||
