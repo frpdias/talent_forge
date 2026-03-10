@@ -38,43 +38,54 @@ export default function InvitePage() {
     setError(null);
   }, [currentOrg?.id]);
 
+  // Sempre busca dados do recrutador logado e da org, independente do store
   useEffect(() => {
-    async function ensureOrg() {
-      if (currentOrg?.id) return;
+    let ignore = false;
+    async function loadRecruiterData() {
       const { data: sessionData } = await supabase.auth.getSession();
-      if (!sessionData?.session?.access_token) return;
+      if (!sessionData?.session) return;
+      const userId = sessionData.session.user.id;
 
-      const { data: membership } = await supabase
-        .from('org_members')
-        .select('org_id, organizations(*)')
-        .eq('user_id', sessionData.session.user.id)
-        .limit(1)
-        .maybeSingle();
-
-      if (membership?.organizations) {
-        const org = membership.organizations as { name?: string; org_type?: string; slug?: string; role?: string };
-        setOrgName(org.name || null);
-        setCurrentOrg({
-          id: membership.org_id,
-          name: org.name || '',
-          orgType: org.org_type || '',
-          slug: org.slug || '',
-          role: org.role || '',
-        });
-      }
-
+      // Busca nome do recrutador
       const { data: profile } = await supabase
         .from('user_profiles')
         .select('full_name')
-        .eq('id', sessionData.session.user.id)
+        .eq('id', userId)
         .maybeSingle();
-      if (profile?.full_name) {
+      if (!ignore && profile?.full_name) {
         setRecruiterName(profile.full_name);
+      }
+
+      // Se org ainda não está no store, busca e preenche
+      if (!currentOrg?.id) {
+        const { data: membership } = await supabase
+          .from('org_members')
+          .select('org_id, organizations(*)')
+          .eq('user_id', userId)
+          .limit(1)
+          .maybeSingle();
+
+        if (!ignore && membership?.organizations) {
+          const org = membership.organizations as { name?: string; org_type?: string; slug?: string; role?: string };
+          setOrgName(org.name || null);
+          setCurrentOrg({
+            id: membership.org_id,
+            name: org.name || '',
+            orgType: org.org_type || '',
+            slug: org.slug || '',
+            role: org.role || '',
+          });
+        }
+      } else if (!ignore) {
+        // Org já está no store — sincroniza orgName
+        setOrgName(currentOrg.name || null);
       }
     }
 
-    ensureOrg();
-  }, [currentOrg?.id, setCurrentOrg, supabase]);
+    loadRecruiterData();
+    return () => { ignore = true; };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [supabase]);
 
   useEffect(() => {
     if (!inviteLink) return;
