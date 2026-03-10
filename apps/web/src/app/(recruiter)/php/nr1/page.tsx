@@ -9,6 +9,7 @@ import { Nr1CompliancePDF } from '@/components/reports/Nr1CompliancePDF';
 
 interface Nr1Assessment {
   id: string;
+  org_id: string;
   assessment_date: string;
   overall_risk_level: 'low' | 'medium' | 'high';
   overall_risk?: string;
