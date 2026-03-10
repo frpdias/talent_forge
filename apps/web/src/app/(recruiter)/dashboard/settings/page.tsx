@@ -126,14 +126,27 @@ export default function SettingsPage() {
     }
   }
 
+  /** Extrai o path do Storage a partir da URL pública (ex: "orgId/logo_123.jpeg") */
+  function extractStoragePath(url: string): string | null {
+    const match = url.match(/org-assets\/(.+?)(?:\?|$)/);
+    return match ? decodeURIComponent(match[1]) : null;
+  }
+
   async function handleDeleteAsset(type: 'logo' | 'banner') {
     if (!orgId) return;
     if (!confirm(`Remover ${type === 'logo' ? 'a logo' : 'o banner'} da empresa?`)) return;
     try {
       setDeletingAsset(type);
-      const path = `${orgId}/${type}.jpeg`;
-      // Remove do Storage (ignora erro se arquivo não existir)
-      await supabase.storage.from('org-assets').remove([path]);
+      const currentUrl = type === 'logo' ? careerPage.career_page_logo_url : careerPage.career_page_banner_url;
+      // Remove pelo path exato extraído da URL (garante remover o arquivo com timestamp)
+      const pathsToRemove: string[] = [];
+      if (currentUrl) {
+        const extracted = extractStoragePath(currentUrl);
+        if (extracted) pathsToRemove.push(extracted);
+      }
+      // Fallback: tenta também o nome legado sem timestamp
+      pathsToRemove.push(`${orgId}/${type}.jpeg`);
+      await supabase.storage.from('org-assets').remove(pathsToRemove);
       // Limpa a URL no estado e salva no banco
       if (type === 'logo') {
         setCareerPage((prev) => ({ ...prev, career_page_logo_url: '' }));
@@ -206,10 +219,20 @@ export default function SettingsPage() {
         uploadBlob = await compressImage(file, maxWidth, MAX_BYTES);
       }
 
-      const path = `${orgId}/${type}.jpeg`;
+      // Remove o arquivo anterior (garante que o CDN não sirvam a versão cacheada)
+      const currentUrl = type === 'logo' ? careerPage.career_page_logo_url : careerPage.career_page_banner_url;
+      if (currentUrl) {
+        const oldPath = extractStoragePath(currentUrl);
+        if (oldPath) await supabase.storage.from('org-assets').remove([oldPath]);
+        // Fallback: remove também o nome legado
+        await supabase.storage.from('org-assets').remove([`${orgId}/${type}.jpeg`]);
+      }
+
+      // Nome com timestamp garante URL única → bust de cache CDN
+      const path = `${orgId}/${type}_${Date.now()}.jpeg`;
       const { error: upError } = await supabase.storage
         .from('org-assets')
-        .upload(path, uploadBlob, { upsert: true, contentType: 'image/jpeg' });
+        .upload(path, uploadBlob, { upsert: false, contentType: 'image/jpeg' });
       if (upError) throw upError;
 
       const { data: { publicUrl } } = supabase.storage.from('org-assets').getPublicUrl(path);
