@@ -23,7 +23,7 @@ COMMENT ON COLUMN organizations.career_page_linkedin_url    IS 'Link LinkedIn da
 COMMENT ON COLUMN organizations.career_page_show_contact    IS 'Exibir links de contato/redes na career page';
 
 -- ── 2. Recriar view v_public_jobs com novos campos ─────────────────
-DROP VIEW IF EXISTS v_public_jobs;
+DROP VIEW IF EXISTS v_public_jobs CASCADE;
 
 CREATE VIEW v_public_jobs AS
 SELECT
