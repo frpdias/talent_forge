@@ -1,6 +1,6 @@
 # Arquitetura Canônica — TalentForge
 
-**Última atualização**: 2026-03-10 | **Score de Conformidade**: ✅ 100% (Sprint 35: Publisher Engine + NR-1 PDF + Jobs Page v2 + Limpeza)
+**Última atualização**: 2026-03-10 | **Score de Conformidade**: ✅ 100% (Sprint 36: Jobs Page v2 melhorias + org_type + admin/companies refactor)
 
 ## 📜 FONTE DA VERDADE — PRINCÍPIO FUNDAMENTAL
 
@@ -1333,15 +1333,17 @@ organizations (
   state TEXT,                   -- Estado (UF)
   zip_code TEXT,                -- CEP
   country TEXT DEFAULT 'BR',    -- País (ISO 3166-1 alpha-2)
-  logo_url TEXT                 -- URL do logo (Supabase Storage ou CDN)
+  logo_url TEXT,                -- URL do logo (Supabase Storage ou CDN)
+  org_type TEXT NOT NULL DEFAULT 'company'  -- 'company' | 'recruiter'
 )
 ```
 - **Propósito:** Entidade root do sistema multi-tenant. Todas as outras tabelas se relacionam direta ou indiretamente com esta.
 - **Dependências:** Nenhuma (tabela independente)
 - **Dependentes:** org_members, jobs, assessments (através de jobs), php_module_activations
-- **Índices:** PRIMARY KEY (id), UNIQUE (slug), INDEX (status)
+- **Índices:** PRIMARY KEY (id), UNIQUE (slug), INDEX (status), INDEX (org_type)
 - **RLS:** ✅ ATIVADO com 5 policies (ver seção de segurança)
 - **Migration Campos Corporativos:** `20260204_organization_corporate_fields.sql`
+- **Migration org_type:** `20260310_organizations_org_type.sql` — separa empresas-clientes (`company`) de agências/headhunters (`recruiter`). Admin UI em `/admin/companies` exibe dois blocos separados.
 
 ##### 2. **org_members** - Membros de Organizações
 ```sql
