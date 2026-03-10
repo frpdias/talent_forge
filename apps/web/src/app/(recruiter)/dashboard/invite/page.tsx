@@ -107,7 +107,7 @@ export default function InvitePage() {
       'Atenciosamente,',
       `${name}`,
       `Recrutador | ${org} || Talent Forge |`,
-      'Conheca nossas solucoes acessando: www.farteck.app.br',
+      'Conheca nossas solucoes acessando: www.fartech.app.br',
     ].join('\n');
     setInviteBody(defaultBody);
   }, [inviteLink, recruiterName, orgName, currentOrg?.name]);
