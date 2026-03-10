@@ -41,12 +41,12 @@ function RegisterContent() {
   }, [inviteToken]);
 
   useEffect(() => {
-    if (!inviteToken || !apiBase) return;
+    if (!inviteToken) return;
     let ignore = false;
 
     async function loadInvite() {
       try {
-        const res = await fetch(`${apiBase}/api/v1/invite-links/${inviteToken}`);
+        const res = await fetch(`/api/v1/invite-links/${inviteToken}`);
         const data = await res.json();
         if (!res.ok || !data?.valid) {
           throw new Error(data?.reason || 'Convite invalido');
@@ -91,12 +91,8 @@ function RegisterContent() {
     setError('');
     try {
       if (inviteToken) {
-        if (!apiBase) {
-          throw new Error('API URL nao configurada.');
-        }
-
         const res = await fetch(
-          `${apiBase}/api/v1/invite-links/${inviteToken}/register`,
+          `/api/v1/invite-links/${inviteToken}/register`,
           {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { createClient } from '@/lib/supabase/client';
+import { createBrowserClient } from '@supabase/ssr';
 import { useOrgStore } from '@/lib/store';
 import { API_BASE_URL } from '@/lib/api-config';
 import { DashboardHeader } from '@/components/DashboardHeader';
@@ -19,7 +19,11 @@ export default function InvitePage() {
   const apiBase = API_BASE_URL;
 
   const supabase = useMemo(
-    () => createClient(),
+    () =>
+      createBrowserClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      ),
     [],
   );
 
@@ -102,6 +106,10 @@ export default function InvitePage() {
   }, [inviteLink, recruiterName, orgName, currentOrg?.name]);
 
   async function handleCreateInvite() {
+    if (!apiBase) {
+      setError('API URL nao configurada.');
+      return;
+    }
     if (!currentOrg?.id) {
       setError('Selecione uma organizacao para gerar o convite.');
       return;
@@ -118,7 +126,7 @@ export default function InvitePage() {
         throw new Error('Sessao expirada. Faça login novamente.');
       }
 
-      const res = await fetch(`/api/v1/invite-links`, {
+      const res = await fetch(`${apiBase}/api/v1/invite-links`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
