@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { MapPin, Clock, Briefcase, ArrowRight, Building2, Search, Instagram, Linkedin, MessageCircle, ChevronRight, X, CheckCircle } from 'lucide-react';
+import { MapPin, Clock, Briefcase, ArrowRight, Building2, Search, Instagram, Linkedin, MessageCircle, ChevronRight, X, CheckCircle, Share2, DollarSign, Copy, Check } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 
 interface PublicJob {
@@ -15,6 +15,7 @@ interface PublicJob {
   benefits: string | null;
   requirements: string | null;
   application_deadline: string | null;
+  salary_range: string | null;
   created_at: string;
   org_name: string;
   org_slug: string;
@@ -77,6 +78,8 @@ export default function CareerPage() {
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
   const [search, setSearch] = useState('');
+  const [filterType, setFilterType] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     loadJobs();
@@ -134,11 +137,28 @@ export default function CareerPage() {
   const secondaryColor = org?.career_page_secondary_color || '#10B981';
   const logoUrl = org?.career_page_logo_url || org?.org_logo_url || null;
 
-  const filtered = jobs.filter(j =>
-    !search.trim() ||
-    j.title.toLowerCase().includes(search.toLowerCase()) ||
-    (j.location || '').toLowerCase().includes(search.toLowerCase())
-  );
+  const filteredTypes = Array.from(new Set(jobs.map(j => j.employment_type).filter(Boolean))) as string[];
+
+  const filtered = jobs.filter(j => {
+    const matchSearch = !search.trim() ||
+      j.title.toLowerCase().includes(search.toLowerCase()) ||
+      (j.location || '').toLowerCase().includes(search.toLowerCase());
+    const matchType = !filterType || j.employment_type === filterType;
+    return matchSearch && matchType;
+  });
+
+  const isNew = (createdAt: string) =>
+    Math.floor((Date.now() - new Date(createdAt).getTime()) / 86400000) < 7;
+
+  const handleShare = async (job: PublicJob) => {
+    const url = `${window.location.origin}/jobs/${orgSlug}?vaga=${job.id}`;
+    if (navigator.share) {
+      try { await navigator.share({ title: job.title, text: `Vaga: ${job.title} — ${job.org_name}`, url }); return; } catch {}
+    }
+    await navigator.clipboard.writeText(url);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
 
   if (loading) {
     return (
@@ -307,6 +327,37 @@ export default function CareerPage() {
           </div>
         </div>
 
+        {/* Filtros por tipo de contrato */}
+        {filteredTypes.length > 1 && (
+          <div className="flex flex-wrap items-center gap-2 mb-6">
+            <button
+              onClick={() => setFilterType(null)}
+              className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all ${
+                filterType === null
+                  ? 'text-white shadow-sm'
+                  : 'bg-white text-gray-500 border border-gray-200 hover:border-gray-300'
+              }`}
+              style={filterType === null ? { background: primaryColor } : {}}
+            >
+              Todos ({jobs.length})
+            </button>
+            {filteredTypes.map(type => (
+              <button
+                key={type}
+                onClick={() => setFilterType(filterType === type ? null : type)}
+                className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all ${
+                  filterType === type
+                    ? 'text-white shadow-sm'
+                    : 'bg-white text-gray-500 border border-gray-200 hover:border-gray-300'
+                }`}
+                style={filterType === type ? { background: primaryColor } : {}}
+              >
+                {EMPLOYMENT_TYPE_LABEL[type] || type} ({jobs.filter(j => j.employment_type === type).length})
+              </button>
+            ))}
+          </div>
+        )}
+
         {/* Lista de vagas */}
         {filtered.length === 0 ? (
           <div className="text-center py-20 bg-white rounded-2xl border border-gray-100">
@@ -330,11 +381,19 @@ export default function CareerPage() {
 
                 <div className="px-6 py-5 flex items-center justify-between gap-4">
                   <div className="flex-1 min-w-0">
-                    {/* Título */}
-                    <h3 className="text-lg font-semibold text-gray-900 mb-2.5 group-hover:text-(--primary) transition-colors"
-                      style={{ '--primary': primaryColor } as React.CSSProperties}>
-                      {job.title}
-                    </h3>
+                    {/* Título + badge Nova */}
+                    <div className="flex items-center gap-2 mb-2.5">
+                      <h3 className="text-lg font-semibold text-gray-900 group-hover:text-(--primary) transition-colors"
+                        style={{ '--primary': primaryColor } as React.CSSProperties}>
+                        {job.title}
+                      </h3>
+                      {isNew(job.created_at) && (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide text-white animate-pulse"
+                          style={{ background: secondaryColor }}>
+                          Nova
+                        </span>
+                      )}
+                    </div>
 
                     {/* Metadados */}
                     <div className="flex flex-wrap items-center gap-2.5">
@@ -351,6 +410,12 @@ export default function CareerPage() {
                         <span className="flex items-center gap-1.5 text-sm text-gray-400">
                           <Clock className="w-3.5 h-3.5" />
                           Até {new Date(job.application_deadline).toLocaleDateString('pt-BR')}
+                        </span>
+                      )}
+                      {job.salary_range && (
+                        <span className="flex items-center gap-1.5 text-sm font-medium" style={{ color: primaryColor }}>
+                          <DollarSign className="w-3.5 h-3.5" />
+                          {job.salary_range}
                         </span>
                       )}
                     </div>
@@ -445,17 +510,51 @@ export default function CareerPage() {
                   )}
                 </div>
               </div>
-              <button
-                onClick={() => setSelectedJob(null)}
-                className="w-9 h-9 rounded-xl flex items-center justify-center bg-white/10 hover:bg-white/20 text-white transition-colors shrink-0"
-                aria-label="Fechar"
-              >
-                <X className="w-5 h-5" />
-              </button>
+              <div className="flex items-center gap-2 shrink-0">
+                <button
+                  onClick={() => handleShare(selectedJob)}
+                  className="w-9 h-9 rounded-xl flex items-center justify-center bg-white/10 hover:bg-white/20 text-white transition-colors"
+                  aria-label="Compartilhar vaga"
+                  title="Compartilhar vaga"
+                >
+                  {copied ? <Check className="w-4 h-4" /> : <Share2 className="w-4 h-4" />}
+                </button>
+                <button
+                  onClick={() => setSelectedJob(null)}
+                  className="w-9 h-9 rounded-xl flex items-center justify-center bg-white/10 hover:bg-white/20 text-white transition-colors"
+                  aria-label="Fechar"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
             </div>
 
             {/* Conteúdo rolável */}
             <div className="flex-1 overflow-y-auto p-6 space-y-8">
+
+              {/* Salário e localização */}
+              {(selectedJob.salary_range || selectedJob.location) && (
+                <div className="flex flex-wrap gap-3">
+                  {selectedJob.salary_range && (
+                    <div className="flex items-center gap-2 px-4 py-3 rounded-xl bg-gray-50 border border-gray-100">
+                      <DollarSign className="w-4 h-4 shrink-0" style={{ color: primaryColor }} />
+                      <div>
+                        <p className="text-[10px] font-semibold uppercase tracking-widest text-gray-400 mb-0.5">Remuneração</p>
+                        <p className="text-sm font-semibold text-gray-800">{selectedJob.salary_range}</p>
+                      </div>
+                    </div>
+                  )}
+                  {selectedJob.location && (
+                    <div className="flex items-center gap-2 px-4 py-3 rounded-xl bg-gray-50 border border-gray-100">
+                      <MapPin className="w-4 h-4 shrink-0" style={{ color: primaryColor }} />
+                      <div>
+                        <p className="text-[10px] font-semibold uppercase tracking-widest text-gray-400 mb-0.5">Localização</p>
+                        <p className="text-sm font-semibold text-gray-800">{selectedJob.location}</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* Descrição */}
               {(selectedJob.description_html || selectedJob.description) && (
@@ -534,6 +633,46 @@ export default function CareerPage() {
           </div>
           </div>
         </>
+      )}
+
+      {/* ── FALE CONOSCO ─────────────────────────────────────────── */}
+      {org?.career_page_show_contact && (
+        org?.career_page_whatsapp_url || org?.career_page_instagram_url || org?.career_page_linkedin_url
+      ) && (
+        <div className="max-w-5xl mx-auto px-6 pb-12">
+          <div className="rounded-2xl p-8 text-center border border-white/20"
+            style={{ background: `linear-gradient(135deg, ${primaryColor}08, ${secondaryColor}10)`, borderColor: `${secondaryColor}20` }}>
+            <p className="text-xs font-semibold uppercase tracking-widest mb-2" style={{ color: secondaryColor }}>Conecte-se</p>
+            <h2 className="text-xl font-bold mb-1" style={{ color: primaryColor }}>Fale com a gente</h2>
+            <p className="text-sm text-gray-500 mb-6">Tem dúvidas? Entre em contato pelos nossos canais.</p>
+            <div className="flex items-center justify-center gap-3">
+              {org.career_page_whatsapp_url && (
+                <a href={org.career_page_whatsapp_url} target="_blank" rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-white transition-all hover:opacity-90 hover:-translate-y-0.5 shadow-sm"
+                  style={{ background: '#25D366' }}>
+                  <MessageCircle className="w-4 h-4" />
+                  WhatsApp
+                </a>
+              )}
+              {org.career_page_instagram_url && (
+                <a href={org.career_page_instagram_url} target="_blank" rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-white transition-all hover:opacity-90 hover:-translate-y-0.5 shadow-sm"
+                  style={{ background: 'linear-gradient(135deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%)' }}>
+                  <Instagram className="w-4 h-4" />
+                  Instagram
+                </a>
+              )}
+              {org.career_page_linkedin_url && (
+                <a href={org.career_page_linkedin_url} target="_blank" rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-white transition-all hover:opacity-90 hover:-translate-y-0.5 shadow-sm"
+                  style={{ background: '#0077B5' }}>
+                  <Linkedin className="w-4 h-4" />
+                  LinkedIn
+                </a>
+              )}
+            </div>
+          </div>
+        </div>
       )}
 
       {/* ── FOOTER ───────────────────────────────────────────────── */}
