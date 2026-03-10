@@ -354,6 +354,36 @@ export default function CareerPage() {
                         </span>
                       )}
                     </div>
+
+                    {/* Resumo da descrição */}
+                    {job.description && (
+                      <p className="mt-2.5 text-sm text-gray-400 line-clamp-2 leading-relaxed">
+                        {(job.description_html
+                          ? job.description_html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim()
+                          : job.description
+                        ).substring(0, 150)}
+                      </p>
+                    )}
+
+                    {/* Tags extras */}
+                    <div className="flex items-center gap-2 mt-2.5">
+                      {job.benefits && (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-green-50 text-green-700">
+                          <CheckCircle className="w-3 h-3" />
+                          Benefícios
+                        </span>
+                      )}
+                      {job.requirements && (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-blue-50 text-blue-600">
+                          Requisitos listados
+                        </span>
+                      )}
+                      <span className="text-xs text-gray-300 ml-auto">
+                        {Math.floor((Date.now() - new Date(job.created_at).getTime()) / 86400000) === 0
+                          ? 'Publicada hoje'
+                          : `Publicada há ${Math.floor((Date.now() - new Date(job.created_at).getTime()) / 86400000)}d`}
+                      </span>
+                    </div>
                   </div>
 
                   {/* CTA */}
@@ -383,8 +413,9 @@ export default function CareerPage() {
             onClick={() => setSelectedJob(null)}
           />
 
-          {/* Painel lateral */}
-          <div className="fixed right-0 top-0 h-full w-full sm:w-160 bg-white z-50 shadow-2xl flex flex-col">
+          {/* Modal centralizado */}
+          <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-6">
+          <div className="bg-white w-full sm:rounded-2xl shadow-2xl sm:max-w-2xl max-h-[92vh] sm:max-h-[88vh] flex flex-col overflow-hidden">
 
             {/* Header do painel */}
             <div className="flex items-start justify-between p-6 border-b border-gray-100"
@@ -500,6 +531,7 @@ export default function CareerPage() {
               )}
             </div>
 
+          </div>
           </div>
         </>
       )}
