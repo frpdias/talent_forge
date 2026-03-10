@@ -87,6 +87,7 @@ export async function POST(request: Request) {
       state,
       industry,
       size,
+      org_type,
     } = body;
 
     // Validações
@@ -102,7 +103,7 @@ export async function POST(request: Request) {
       .from('organizations')
       .insert({
         name,
-        org_type: 'company',
+        org_type: org_type || 'company',
         cnpj,
         email,
         phone: phone || null,

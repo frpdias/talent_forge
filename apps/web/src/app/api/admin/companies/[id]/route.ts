@@ -62,6 +62,7 @@ export async function PATCH(
       state,
       industry,
       size,
+      org_type,
     } = body;
 
     // Atualizar empresa (agora em organizations)
@@ -78,6 +79,7 @@ export async function PATCH(
         state: state || null,
         industry: industry || null,
         size: size || 'small',
+        org_type: org_type || 'company',
       })
       .eq('id', id)
       .select()

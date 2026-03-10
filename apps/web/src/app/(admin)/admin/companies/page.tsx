@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Building, Plus, Search, Edit2, Trash2, Save, X, Building2, Mail, Phone, Globe, MapPin, Users, Calendar, CheckCircle, AlertCircle } from 'lucide-react';
+import { Building, Plus, Search, Edit2, Trash2, Save, X, Building2, Mail, Phone, Globe, MapPin, Users, CheckCircle, AlertCircle, Briefcase } from 'lucide-react';
 import OrganizationDashboard from '@/components/admin/OrganizationDashboard';
 
 interface Company {
@@ -16,6 +16,7 @@ interface Company {
   state?: string | null;
   industry?: string | null;
   size?: string | null;
+  org_type: 'company' | 'recruiter';
   created_at: string;
 }
 
@@ -31,6 +32,7 @@ interface FormData {
   state: string;
   industry: string;
   size: string;
+  org_type: 'company' | 'recruiter';
 }
 
 export default function CompaniesPage() {
@@ -54,6 +56,7 @@ export default function CompaniesPage() {
     state: '',
     industry: '',
     size: 'small',
+    org_type: 'company',
   };
 
   const [formData, setFormData] = useState<FormData>(emptyForm);
@@ -90,7 +93,6 @@ export default function CompaniesPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),
       });
-
       const data = await response.json();
 
       if (!response.ok) {
@@ -128,6 +130,7 @@ export default function CompaniesPage() {
       state: company.state || '',
       industry: company.industry || '',
       size: company.size || 'small',
+      org_type: company.org_type || 'company',
     });
     setEditingId(company.id);
     setShowForm(true);
@@ -196,6 +199,9 @@ export default function CompaniesPage() {
       (company.email || '').toLowerCase().includes(term)
     );
   });
+
+  const recruiterOrgs = filteredCompanies.filter(c => c.org_type === 'recruiter');
+  const clientOrgs = filteredCompanies.filter(c => c.org_type !== 'recruiter');
 
   return (
     <div className="space-y-6 sm:space-y-8 pb-20 lg:pb-0">
@@ -404,6 +410,45 @@ export default function CompaniesPage() {
               </div>
             </div>
 
+            {/* Tipo de organização */}
+            <div>
+              <label className="block text-sm font-semibold text-[#141042] mb-3">
+                Tipo de organização *
+              </label>
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  onClick={() => setFormData({ ...formData, org_type: 'company' })}
+                  className={`flex items-center gap-3 px-4 py-3 rounded-xl border-2 transition-all text-left ${
+                    formData.org_type === 'company'
+                      ? 'border-[#141042] bg-[#141042]/5'
+                      : 'border-[#E5E5DC] hover:border-[#141042]/30'
+                  }`}
+                >
+                  <Building2 className="w-5 h-5 shrink-0 text-[#141042]" />
+                  <div>
+                    <p className="text-sm font-semibold text-[#141042]">Empresa</p>
+                    <p className="text-xs text-[#666666]">Empresa contratante</p>
+                  </div>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setFormData({ ...formData, org_type: 'recruiter' })}
+                  className={`flex items-center gap-3 px-4 py-3 rounded-xl border-2 transition-all text-left ${
+                    formData.org_type === 'recruiter'
+                      ? 'border-[#3B82F6] bg-[#3B82F6]/5'
+                      : 'border-[#E5E5DC] hover:border-[#3B82F6]/30'
+                  }`}
+                >
+                  <Briefcase className="w-5 h-5 shrink-0 text-[#3B82F6]" />
+                  <div>
+                    <p className="text-sm font-semibold text-[#141042]">Recrutadora</p>
+                    <p className="text-xs text-[#666666]">Agência / headhunter</p>
+                  </div>
+                </button>
+              </div>
+            </div>
+
             {/* Informações Adicionais */}
             <div className="grid sm:grid-cols-2 gap-4">
               <div>
@@ -474,138 +519,189 @@ export default function CompaniesPage() {
         </div>
       )}
 
-      {/* Lista de Empresas */}
+      {/* Listas separadas por tipo */}
       {!showForm && (
-        <div className="bg-white border border-[#E5E5DC] rounded-xl sm:rounded-2xl overflow-hidden">
+        <>
           {loading ? (
-            <div className="p-8 text-center text-[#666666]">
+            <div className="bg-white border border-[#E5E5DC] rounded-xl p-8 text-center text-[#666666]">
               <div className="w-8 h-8 border-2 border-[#141042]/30 border-t-[#141042] rounded-full animate-spin mx-auto mb-2" />
               Carregando empresas...
             </div>
           ) : filteredCompanies.length === 0 ? (
-            <div className="p-8 text-center text-[#666666]">
+            <div className="bg-white border border-[#E5E5DC] rounded-xl p-8 text-center text-[#666666]">
               {searchTerm ? (
-                <p>Nenhuma empresa encontrada com "{searchTerm}"</p>
+                <p>Nenhuma empresa encontrada com &ldquo;{searchTerm}&rdquo;</p>
               ) : (
-                <p>Nenhuma empresa cadastrada ainda.</p>
+                <p>Nenhuma organização cadastrada ainda.</p>
               )}
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-[#FAFAF8] border-b border-[#E5E5DC]">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-[#666666] uppercase tracking-wider">
-                      Empresa
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-[#666666] uppercase tracking-wider">
-                      CNPJ
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-[#666666] uppercase tracking-wider">
-                      Contato
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-[#666666] uppercase tracking-wider">
-                      Porte
-                    </th>
-                    <th className="px-6 py-3 text-right text-xs font-semibold text-[#666666] uppercase tracking-wider">
-                      Ações
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-[#E5E5DC]">
-                  {filteredCompanies.map((company) => (
-                    <React.Fragment key={company.id}>
-                      <tr className="hover:bg-[#FAFAF8] transition-colors">
-                        <td className="px-6 py-4">
-                          <div>
-                            <button
-                              onClick={() => setExpandedCompanyId(expandedCompanyId === company.id ? null : company.id)}
-                              className="font-semibold text-[#141042] hover:text-[#3B82F6] transition-colors text-left"
-                            >
-                              {company.name}
-                            </button>
-                            {company.industry && (
-                              <div className="text-sm text-[#666666]">{company.industry}</div>
-                            )}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 text-sm text-[#666666]">
-                          {company.cnpj || '—'}
-                        </td>
-                        <td className="px-6 py-4">
-                          <div className="text-sm">
-                            <div className="text-[#666666]">{company.email || '—'}</div>
-                            {company.phone && (
-                              <div className="text-[#999]">{company.phone}</div>
-                            )}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4">
-                          <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
-                            company.size === 'small' ? 'bg-[#3B82F6]/10 text-[#3B82F6]' :
-                            company.size === 'medium' ? 'bg-[#10B981]/10 text-[#10B981]' :
-                            company.size === 'large' ? 'bg-[#F59E0B]/10 text-[#F59E0B]' :
-                            company.size === 'enterprise' ? 'bg-[#8B5CF6]/10 text-[#8B5CF6]' :
-                            'bg-[#E5E5DC] text-[#666666]'
-                          }`}>
-                            {company.size === 'small' && 'Pequena'}
-                            {company.size === 'medium' && 'Média'}
-                            {company.size === 'large' && 'Grande'}
-                            {company.size === 'enterprise' && 'Enterprise'}
-                            {!company.size && '—'}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4">
-                          <div className="flex items-center justify-end space-x-2">
-                            <button
-                              onClick={() => handleEdit(company)}
-                              className="p-2 text-[#3B82F6] hover:bg-[#3B82F6]/10 rounded-lg transition-colors"
-                              title="Editar"
-                            >
-                              <Edit2 className="w-4 h-4" />
-                            </button>
-                            <button
-                              onClick={() => handleDelete(company.id)}
-                              className="p-2 text-[#EF4444] hover:bg-[#EF4444]/10 rounded-lg transition-colors"
-                              title="Excluir"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                      {expandedCompanyId === company.id && (
-                        <tr>
-                          <td colSpan={5} className="p-0">
-                            <OrganizationDashboard
-                              companyId={company.id}
-                              companyName={company.name}
-                              isExpanded={true}
-                              onToggle={() => setExpandedCompanyId(null)}
-                            />
-                          </td>
-                        </tr>
-                      )}
-                    </React.Fragment>
-                  ))}
-                </tbody>
-              </table>
+            <div className="space-y-8">
+
+              {/* ── BLOCO: Recrutadoras / Agências ───────────────── */}
+              <div>
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="flex items-center gap-2 px-3 py-1.5 bg-[#3B82F6]/10 rounded-lg">
+                    <Briefcase className="w-4 h-4 text-[#3B82F6]" />
+                    <span className="text-sm font-semibold text-[#3B82F6]">Recrutadoras / Agências</span>
+                    <span className="text-xs font-bold text-[#3B82F6] bg-[#3B82F6]/20 rounded-full px-2 py-0.5">{recruiterOrgs.length}</span>
+                  </div>
+                </div>
+                <div className="bg-white border border-[#E5E5DC] rounded-xl sm:rounded-2xl overflow-hidden">
+                  {recruiterOrgs.length === 0 ? (
+                    <div className="p-8 text-center text-[#999] text-sm">
+                      Nenhuma recrutadora cadastrada.
+                    </div>
+                  ) : (
+                    <div className="overflow-x-auto">
+                      <table className="w-full">
+                        <thead className="bg-[#3B82F6]/5 border-b border-[#E5E5DC]">
+                          <tr>
+                            <th className="px-6 py-3 text-left text-xs font-semibold text-[#666666] uppercase tracking-wider">Nome</th>
+                            <th className="px-6 py-3 text-left text-xs font-semibold text-[#666666] uppercase tracking-wider">CNPJ</th>
+                            <th className="px-6 py-3 text-left text-xs font-semibold text-[#666666] uppercase tracking-wider">Contato</th>
+                            <th className="px-6 py-3 text-left text-xs font-semibold text-[#666666] uppercase tracking-wider">Porte</th>
+                            <th className="px-6 py-3 text-right text-xs font-semibold text-[#666666] uppercase tracking-wider">Ações</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-[#E5E5DC]">
+                          {recruiterOrgs.map((company) => (
+                            <React.Fragment key={company.id}>
+                              <tr className="hover:bg-[#FAFAF8] transition-colors">
+                                <td className="px-6 py-4">
+                                  <button
+                                    onClick={() => setExpandedCompanyId(expandedCompanyId === company.id ? null : company.id)}
+                                    className="font-semibold text-[#141042] hover:text-[#3B82F6] transition-colors text-left"
+                                  >
+                                    {company.name}
+                                  </button>
+                                  {company.industry && <div className="text-sm text-[#666666]">{company.industry}</div>}
+                                </td>
+                                <td className="px-6 py-4 text-sm text-[#666666]">{company.cnpj || '—'}</td>
+                                <td className="px-6 py-4">
+                                  <div className="text-sm text-[#666666]">{company.email || '—'}</div>
+                                  {company.phone && <div className="text-xs text-[#999]">{company.phone}</div>}
+                                </td>
+                                <td className="px-6 py-4">
+                                  <SizeBadge size={company.size} />
+                                </td>
+                                <td className="px-6 py-4">
+                                  <div className="flex items-center justify-end space-x-2">
+                                    <button onClick={() => handleEdit(company)} className="p-2 text-[#3B82F6] hover:bg-[#3B82F6]/10 rounded-lg transition-colors" title="Editar">
+                                      <Edit2 className="w-4 h-4" />
+                                    </button>
+                                    <button onClick={() => handleDelete(company.id)} className="p-2 text-[#EF4444] hover:bg-[#EF4444]/10 rounded-lg transition-colors" title="Excluir">
+                                      <Trash2 className="w-4 h-4" />
+                                    </button>
+                                  </div>
+                                </td>
+                              </tr>
+                              {expandedCompanyId === company.id && (
+                                <tr>
+                                  <td colSpan={5} className="p-0">
+                                    <OrganizationDashboard companyId={company.id} companyName={company.name} isExpanded onToggle={() => setExpandedCompanyId(null)} />
+                                  </td>
+                                </tr>
+                              )}
+                            </React.Fragment>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* ── BLOCO: Empresas Clientes ─────────────────────── */}
+              <div>
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="flex items-center gap-2 px-3 py-1.5 bg-[#141042]/10 rounded-lg">
+                    <Building2 className="w-4 h-4 text-[#141042]" />
+                    <span className="text-sm font-semibold text-[#141042]">Empresas</span>
+                    <span className="text-xs font-bold text-[#141042] bg-[#141042]/20 rounded-full px-2 py-0.5">{clientOrgs.length}</span>
+                  </div>
+                </div>
+                <div className="bg-white border border-[#E5E5DC] rounded-xl sm:rounded-2xl overflow-hidden">
+                  {clientOrgs.length === 0 ? (
+                    <div className="p-8 text-center text-[#999] text-sm">
+                      Nenhuma empresa cadastrada.
+                    </div>
+                  ) : (
+                    <div className="overflow-x-auto">
+                      <table className="w-full">
+                        <thead className="bg-[#FAFAF8] border-b border-[#E5E5DC]">
+                          <tr>
+                            <th className="px-6 py-3 text-left text-xs font-semibold text-[#666666] uppercase tracking-wider">Empresa</th>
+                            <th className="px-6 py-3 text-left text-xs font-semibold text-[#666666] uppercase tracking-wider">CNPJ</th>
+                            <th className="px-6 py-3 text-left text-xs font-semibold text-[#666666] uppercase tracking-wider">Contato</th>
+                            <th className="px-6 py-3 text-left text-xs font-semibold text-[#666666] uppercase tracking-wider">Porte</th>
+                            <th className="px-6 py-3 text-right text-xs font-semibold text-[#666666] uppercase tracking-wider">Ações</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-[#E5E5DC]">
+                          {clientOrgs.map((company) => (
+                            <React.Fragment key={company.id}>
+                              <tr className="hover:bg-[#FAFAF8] transition-colors">
+                                <td className="px-6 py-4">
+                                  <button
+                                    onClick={() => setExpandedCompanyId(expandedCompanyId === company.id ? null : company.id)}
+                                    className="font-semibold text-[#141042] hover:text-[#3B82F6] transition-colors text-left"
+                                  >
+                                    {company.name}
+                                  </button>
+                                  {company.industry && <div className="text-sm text-[#666666]">{company.industry}</div>}
+                                </td>
+                                <td className="px-6 py-4 text-sm text-[#666666]">{company.cnpj || '—'}</td>
+                                <td className="px-6 py-4">
+                                  <div className="text-sm text-[#666666]">{company.email || '—'}</div>
+                                  {company.phone && <div className="text-xs text-[#999]">{company.phone}</div>}
+                                </td>
+                                <td className="px-6 py-4">
+                                  <SizeBadge size={company.size} />
+                                </td>
+                                <td className="px-6 py-4">
+                                  <div className="flex items-center justify-end space-x-2">
+                                    <button onClick={() => handleEdit(company)} className="p-2 text-[#3B82F6] hover:bg-[#3B82F6]/10 rounded-lg transition-colors" title="Editar">
+                                      <Edit2 className="w-4 h-4" />
+                                    </button>
+                                    <button onClick={() => handleDelete(company.id)} className="p-2 text-[#EF4444] hover:bg-[#EF4444]/10 rounded-lg transition-colors" title="Excluir">
+                                      <Trash2 className="w-4 h-4" />
+                                    </button>
+                                  </div>
+                                </td>
+                              </tr>
+                              {expandedCompanyId === company.id && (
+                                <tr>
+                                  <td colSpan={5} className="p-0">
+                                    <OrganizationDashboard companyId={company.id} companyName={company.name} isExpanded onToggle={() => setExpandedCompanyId(null)} />
+                                  </td>
+                                </tr>
+                              )}
+                            </React.Fragment>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+              </div>
+
             </div>
           )}
-        </div>
+        </>
       )}
-
-      {/* Nota sobre evolução futura */}
-      <div className="bg-[#3B82F6]/10 border border-[#3B82F6] rounded-lg p-4">
-        <h4 className="font-semibold text-[#141042] mb-2 flex items-center">
-          <AlertCircle className="w-4 h-4 mr-2 text-[#3B82F6]" />
-          Evolução Futura
-        </h4>
-        <p className="text-sm text-[#666666]">
-          Este cadastro de empresas será expandido no futuro para incluir: gestão de vagas por empresa, 
-          histórico de contratações, relatórios customizados, integração com LinkedIn, e muito mais.
-        </p>
-      </div>
     </div>
   );
+}
+
+function SizeBadge({ size }: { size?: string | null }) {
+  const map: Record<string, { label: string; cls: string }> = {
+    small:      { label: 'Pequena',   cls: 'bg-[#3B82F6]/10 text-[#3B82F6]' },
+    medium:     { label: 'Média',     cls: 'bg-[#10B981]/10 text-[#10B981]' },
+    large:      { label: 'Grande',    cls: 'bg-[#F59E0B]/10 text-[#F59E0B]' },
+    enterprise: { label: 'Enterprise',cls: 'bg-[#8B5CF6]/10 text-[#8B5CF6]' },
+  };
+  const entry = size ? map[size] : null;
+  if (!entry) return <span className="text-[#999] text-sm">—</span>;
+  return <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${entry.cls}`}>{entry.label}</span>;
 }
