@@ -42,6 +42,7 @@ export default function SettingsPage() {
   const [orgId, setOrgId] = useState<string | null>(null);
   const [uploadingAsset, setUploadingAsset] = useState<'logo' | 'banner' | null>(null);
   const [deletingAsset, setDeletingAsset] = useState<'logo' | 'banner' | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<'logo' | 'banner' | null>(null);
   const { currentOrg } = useOrgStore();
 
   const supabase = createClient();
@@ -134,7 +135,7 @@ export default function SettingsPage() {
 
   async function handleDeleteAsset(type: 'logo' | 'banner') {
     if (!orgId) return;
-    if (!confirm(`Remover ${type === 'logo' ? 'a logo' : 'o banner'} da empresa?`)) return;
+    setConfirmDelete(null);
     try {
       setDeletingAsset(type);
       const currentUrl = type === 'logo' ? careerPage.career_page_logo_url : careerPage.career_page_banner_url;
@@ -449,15 +450,29 @@ export default function SettingsPage() {
                 {careerPage.career_page_logo_url && (
                   <div className="relative group shrink-0">
                     <img src={careerPage.career_page_logo_url} alt="Logo" className="h-10 w-10 object-contain rounded border border-[#E5E5DC]" />
-                    <button
-                      type="button"
-                      onClick={() => handleDeleteAsset('logo')}
-                      disabled={deletingAsset !== null}
-                      className="absolute -top-2 -right-2 w-5 h-5 bg-[#EF4444] text-white rounded-full items-center justify-center hidden group-hover:flex transition-all"
-                      title="Remover logo"
-                    >
-                      <Trash2 className="w-2.5 h-2.5" />
-                    </button>
+                    {confirmDelete === 'logo' ? (
+                      <div className="absolute -top-1 left-11 z-10 flex items-center gap-1 bg-white border border-[#E5E5DC] rounded-lg shadow-md px-2 py-1 whitespace-nowrap">
+                        <span className="text-xs text-[#666] mr-1">Remover?</span>
+                        <button type="button" onClick={() => handleDeleteAsset('logo')} disabled={deletingAsset !== null}
+                          className="text-xs px-2 py-0.5 bg-[#EF4444] text-white rounded font-medium hover:bg-[#DC2626]">
+                          {deletingAsset === 'logo' ? '...' : 'Sim'}
+                        </button>
+                        <button type="button" onClick={() => setConfirmDelete(null)}
+                          className="text-xs px-2 py-0.5 border border-[#E5E5DC] rounded hover:bg-[#F5F5F0]">
+                          Não
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => setConfirmDelete('logo')}
+                        disabled={deletingAsset !== null}
+                        className="absolute -top-2 -right-2 w-5 h-5 bg-[#EF4444] text-white rounded-full items-center justify-center hidden group-hover:flex transition-all"
+                        title="Remover logo"
+                      >
+                        <Trash2 className="w-2.5 h-2.5" />
+                      </button>
+                    )}
                   </div>
                 )}
                 <label className="flex items-center gap-2 cursor-pointer px-3 py-2 border border-[#E5E5DC] rounded-lg text-sm hover:bg-[#F5F5F0] transition-colors">
@@ -484,16 +499,30 @@ export default function SettingsPage() {
                 {careerPage.career_page_banner_url && (
                   <div className="relative group">
                     <img src={careerPage.career_page_banner_url} alt="Banner" className="w-full h-24 object-cover rounded-lg border border-[#E5E5DC]" />
-                    <button
-                      type="button"
-                      onClick={() => handleDeleteAsset('banner')}
-                      disabled={deletingAsset !== null}
-                      className="absolute top-2 right-2 flex items-center gap-1.5 px-2.5 py-1.5 bg-[#EF4444] text-white rounded-lg text-xs font-medium opacity-0 group-hover:opacity-100 transition-opacity hover:bg-[#DC2626]"
-                      title="Remover banner"
-                    >
-                      <Trash2 className="w-3 h-3" />
-                      {deletingAsset === 'banner' ? 'Removendo...' : 'Remover banner'}
-                    </button>
+                    {confirmDelete === 'banner' ? (
+                      <div className="absolute top-2 right-2 flex items-center gap-1.5 bg-white border border-[#E5E5DC] rounded-lg shadow-md px-2.5 py-1.5">
+                        <span className="text-xs text-[#666]">Remover banner?</span>
+                        <button type="button" onClick={() => handleDeleteAsset('banner')} disabled={deletingAsset !== null}
+                          className="text-xs px-2.5 py-1 bg-[#EF4444] text-white rounded-md font-medium hover:bg-[#DC2626]">
+                          {deletingAsset === 'banner' ? 'Removendo...' : 'Sim'}
+                        </button>
+                        <button type="button" onClick={() => setConfirmDelete(null)}
+                          className="text-xs px-2.5 py-1 border border-[#E5E5DC] rounded-md hover:bg-[#F5F5F0]">
+                          Não
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => setConfirmDelete('banner')}
+                        disabled={deletingAsset !== null}
+                        className="absolute top-2 right-2 flex items-center gap-1.5 px-2.5 py-1.5 bg-[#EF4444] text-white rounded-lg text-xs font-medium opacity-0 group-hover:opacity-100 transition-opacity hover:bg-[#DC2626]"
+                        title="Remover banner"
+                      >
+                        <Trash2 className="w-3 h-3" />
+                        Remover banner
+                      </button>
+                    )}
                   </div>
                 )}
                 <div className="flex items-center gap-3">
