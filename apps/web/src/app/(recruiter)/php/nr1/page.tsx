@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Plus, AlertTriangle, CheckCircle, Users, BarChart3, Clock, Send } from 'lucide-react';
 import { useOrgStore } from '@/lib/store';
 import { getAuthToken } from '@/lib/supabase/client';
+import { Nr1CompliancePDF } from '@/components/reports/Nr1CompliancePDF';
 
 interface Nr1Assessment {
   id: string;
@@ -188,13 +189,16 @@ export default function Nr1ListPage() {
               Campanhas de avaliação baseadas nas respostas dos colaboradores
             </p>
           </div>
-          <button
-            onClick={() => router.push('/php/nr1/new')}
-            className="flex items-center gap-2 px-4 py-2 bg-[#141042] text-white rounded-lg hover:bg-[#1a1656] transition"
-          >
-            <Plus className="w-5 h-5" />
-            Nova Campanha
-          </button>
+          <div className="flex items-center gap-2">
+            <Nr1CompliancePDF assessments={assessments} />
+            <button
+              onClick={() => router.push('/php/nr1/new')}
+              className="flex items-center gap-2 px-4 py-2 bg-[#141042] text-white rounded-lg hover:bg-[#1a1656] transition"
+            >
+              <Plus className="w-5 h-5" />
+              Nova Campanha
+            </button>
+          </div>
         </div>
 
         {/* Stats Cards */}

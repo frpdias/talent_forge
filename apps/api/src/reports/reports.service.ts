@@ -339,19 +339,48 @@ export class ReportsService {
       .order('created_at', { ascending: false })
       .limit(5);
 
+    // applications.source (Sprint D) — mais granular que candidates.source
+    const { data: appSources } = await supabase
+      .from('applications')
+      .select('source, jobs!inner(org_id)')
+      .eq('jobs.org_id', orgId)
+      .not('source', 'is', null);
+
+    // Fallback: candidates.source para apps sem source
     const { data: candidateSources } = await supabase
       .from('candidates')
       .select('source')
-      .eq('owner_org_id', orgId);
+      .eq('owner_org_id', orgId)
+      .not('source', 'is', null);
 
-    const sourceCounts = (candidateSources || []).reduce<Record<string, number>>(
-      (acc, item: any) => {
-        const name = (item?.source || 'Não informado').trim();
-        acc[name] = (acc[name] || 0) + 1;
-        return acc;
-      },
-      {},
-    );
+    // Mescla: prioriza applications.source (mais recente); usa candidates.source como complemento
+    const sourceCounts: Record<string, number> = {};
+    const SOURCE_LABELS: Record<string, string> = {
+      career_page: 'Career Page',
+      direct: 'Direto',
+      linkedin: 'LinkedIn',
+      gupy: 'Gupy',
+      referral: 'Indicação',
+      other: 'Outros',
+      linkedin_ads: 'LinkedIn Ads',
+      indeed: 'Indeed',
+      site: 'Site',
+    };
+
+    for (const item of (appSources || []) as any[]) {
+      const raw = (item?.source || '').trim();
+      const name = SOURCE_LABELS[raw] || raw || 'Não informado';
+      sourceCounts[name] = (sourceCounts[name] || 0) + 1;
+    }
+
+    // Adiciona candidates.source para candidatos sem candidatura rastreada
+    if (Object.keys(sourceCounts).length === 0) {
+      for (const item of (candidateSources || []) as any[]) {
+        const raw = (item?.source || '').trim();
+        const name = SOURCE_LABELS[raw] || raw || 'Não informado';
+        sourceCounts[name] = (sourceCounts[name] || 0) + 1;
+      }
+    }
 
     const sources = Object.entries(sourceCounts)
       .map(([name, value]) => ({ name, value }))

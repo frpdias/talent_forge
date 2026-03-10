@@ -10,5 +10,9 @@
       "Bash(npm install next@15.3.9 -w tf-web)",
       "Bash(npm run build:web)"
     ]
-  }
+  },
+  "enabledMcpjsonServers": [
+    "talentforge"
+  ],
+  "enableAllProjectMcpServers": true
 }

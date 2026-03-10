@@ -1,6 +1,6 @@
 # Arquitetura Canônica — TalentForge
 
-**Última atualização**: 2026-03-10 | **Score de Conformidade**: ✅ 100% (Sprint 34: Career Page v2 + Fluxo de Candidatura + Build Fixes)
+**Última atualização**: 2026-03-10 | **Score de Conformidade**: ✅ 100% (Sprint 35: Publisher Engine + NR-1 PDF + Jobs Page v2 + Limpeza)
 
 ## 📜 FONTE DA VERDADE — PRINCÍPIO FUNDAMENTAL
 
@@ -78,6 +78,15 @@ PROJETO_TALENT_FORGE/
 │   │   │   │       ├── assessment-link.hbs
 │   │   │   │       ├── welcome-user.hbs
 │   │   │   │       └── php-nr1-alert.hbs
+│   │   │   ├── publisher/           # ✨ Job Publisher Engine (Sprint 35)
+│   │   │   │   ├── publisher.module.ts
+│   │   │   │   ├── publisher.service.ts    # Orquestra publish/unpublish com retry + audit log
+│   │   │   │   ├── publisher.controller.ts # GET/POST /jobs/:id/channels, /organizations/:id/channels
+│   │   │   │   ├── types.ts                # JobCanonical, ChannelAdapter, PublishResult
+│   │   │   │   └── adapters/
+│   │   │   │       ├── gupy.adapter.ts     # Gupy REST API v2 (OAuth2 client_credentials)
+│   │   │   │       ├── vagas.adapter.ts    # Vagas.com Business REST API (ApiKey)
+│   │   │   │       └── linkedin.adapter.ts # LinkedIn Job Posting API (OAuth2 + ATS parceria)
 │   │   │   └── common/              # Guards, decorators, utils
 │   │   ├── test/                    # E2E tests
 │   │   └── vercel.json              # Deploy config
@@ -166,6 +175,14 @@ PROJETO_TALENT_FORGE/
 │       │   │       ├── JobDetailsModal.tsx   # Detalhes/ações da vaga (modal overlay)
 │       │   │       ├── EditJobDrawer.tsx     # Edição inline (drawer lateral direito)
 │       │   │       └── PublishDrawer.tsx     # Gerenciar publicações (drawer lateral direito)
+│       │   ├── publisher/           # ✨ Componentes Publisher Engine (Sprint 35)
+│       │   │   ├── ChannelSelector.tsx      # Seletor de canais para publicar vaga
+│       │   │   ├── PublicationStatus.tsx    # Badge/lista/inline badges de status por canal
+│       │   │   └── PublicationTimeline.tsx  # Timeline de histórico de publicações
+│       │   └── reports/             # Componentes de relatórios
+│       │       ├── FullReportPDF.tsx        # PDF de relatório geral (jsPDF + autotable)
+│       │       ├── ReportExport.tsx         # Botão + lógica de export CSV/PDF
+│       │       └── Nr1CompliancePDF.tsx     # ✨ PDF de compliance NR-1 (Sprint 35)
 │       │   ├── lib/                # Utilities
 │       │   │   ├── supabase/       # Supabase clients
 │       │   │   ├── utils.ts        # Helper functions
@@ -222,8 +239,10 @@ PROJETO_TALENT_FORGE/
 │   │   ├── 20260306_interviews_table.sql ✅ tabela interviews + RLS is_org_member(org_id) + índices org_id/scheduled_at/candidate_id
 │   │   ├── 20260306_candidates_resume_upload.sql ✅ colunas resume_url, resume_filename, resume_uploaded_at em candidates
 │   │   ├── 20260306_career_page.sql ✅ página de carreira pública por organização
-│   │   ├── 20260306_application_source_tracking.sql ✅ rastreamento de origem das candidaturas
-│   │   └── 20260307_career_page_v2.sql ✅ career page v2 — banner, about, cores secundárias, links sociais, bucket org-assets
+│   │   ├── 20260306_application_source_tracking.sql ✅ rastreamento de origem das candidaturas (source, utm_source, utm_medium, utm_campaign)
+│   │   ├── 20260307_career_page_v2.sql ✅ career page v2 — banner, about, cores secundárias, links sociais, bucket org-assets
+│   │   ├── 20260309_fix_career_page_visibility.sql ✅ habilitação career page FARTECH + vagas is_public = TRUE
+│   │   └── 20260302_job_publication_engine.sql ✅ job_publication_channels + job_publications + job_publication_logs + RLS + triggers
 │   ├── VALIDATE_IMPROVEMENTS.sql  # Script de validação
 │   └── README.md                  # Instruções de migrations
 │
@@ -6987,4 +7006,249 @@ Adicionar em `~/.config/claude/claude_desktop_config.json`:
     }
   }
 }
+```
+
+---
+
+## 14) Job Publisher Engine — Multi-Canal (Sprint 35, 2026-03-10)
+
+### Visão Geral
+O Publisher Engine permite publicar vagas do TalentForge em plataformas externas (Gupy, Vagas.com, LinkedIn, Indeed) de forma centralizada, com rastreamento de status, retry automático e audit log completo.
+
+### Arquitetura
+
+```
+[NestJS] PublisherController
+    └── PublisherService (orquestra, faz upsert em job_publications)
+            ├── GupyAdapter     → Gupy REST API v2 (OAuth2 client_credentials)
+            ├── VagasAdapter    → Vagas.com Business REST API (ApiKey)
+            └── LinkedInAdapter → LinkedIn Job Posting API (OAuth2 + ATS parceria pendente)
+```
+
+### Modelo Canônico — JobCanonical
+```typescript
+interface JobCanonical {
+  id: string;
+  title: string;
+  description: string;
+  description_html?: string;
+  location: string;
+  employment_type: string;  // 'clt' | 'pj' | 'internship' | 'freelancer' | 'temporary'
+  requirements?: string;
+  benefits?: string;
+  salary_min?: number;
+  salary_max?: number;
+  application_deadline?: string;
+  external_apply_url?: string;
+  org_id: string;
+  org_name: string;
+  org_slug: string;
+}
+```
+
+### Interface ChannelAdapter
+```typescript
+interface ChannelAdapter {
+  channelCode: ChannelCode;
+  publish(job: JobCanonical, credentials: ChannelCredentials): Promise<PublishResult>;
+  unpublish(externalId: string, credentials: ChannelCredentials): Promise<PublishResult>;
+  update(externalId: string, job: JobCanonical, credentials: ChannelCredentials): Promise<PublishResult>;
+}
+```
+
+### Endpoints REST
+
+| Método | Rota | Descrição |
+|--------|------|-----------|
+| `GET` | `/api/v1/jobs/:id/channels` | Status de publicação da vaga por canal |
+| `POST` | `/api/v1/jobs/:id/publish` | Publicar vaga nos canais selecionados |
+| `DELETE` | `/api/v1/jobs/:id/publish/:channelId` | Despublicar vaga de um canal |
+| `GET` | `/api/v1/organizations/:id/channels` | Canais configurados pela org |
+| `POST` | `/api/v1/organizations/:id/channels` | Configurar/atualizar credenciais de canal |
+
+### Schema de Banco
+
+#### `job_publication_channels`
+| Coluna | Tipo | Descrição |
+|--------|------|-----------|
+| `id` | UUID PK | |
+| `org_id` | UUID FK organizations | |
+| `channel_code` | TEXT CHECK | `'gupy' \| 'vagas' \| 'linkedin' \| 'indeed' \| 'catho' \| 'infojobs' \| 'custom'` |
+| `display_name` | TEXT | Nome exibido |
+| `is_active` | BOOLEAN | Canal habilitado pela org |
+| `credentials` | JSONB | API keys/tokens (NUNCA expor em logs) |
+| `config` | JSONB | Configurações específicas do canal |
+| `last_sync_at` | TIMESTAMPTZ | Último sync |
+
+#### `job_publications`
+| Coluna | Tipo | Descrição |
+|--------|------|-----------|
+| `id` | UUID PK | |
+| `job_id` | UUID FK jobs | |
+| `channel_id` | UUID FK job_publication_channels | |
+| `external_id` | TEXT | ID da vaga na plataforma externa |
+| `external_url` | TEXT | URL pública da vaga no canal |
+| `status` | TEXT CHECK | `pending \| publishing \| published \| failed \| expired \| unpublished` |
+| `payload_sent` | JSONB | Payload enviado (auditoria) |
+| `response_received` | JSONB | Resposta do canal (auditoria) |
+| `error_message` | TEXT | Mensagem de erro se falhou |
+| `retry_count` | INTEGER | Número de tentativas |
+| `published_at` | TIMESTAMPTZ | Quando foi publicado com sucesso |
+
+#### `job_publication_logs`
+Log de auditoria: cada tentativa (create, publish, update, unpublish, expire, retry, webhook) gera um registro com `request_payload`, `response_payload`, `duration_ms`.
+
+### Regras Canônicas do Publisher
+1. **Credenciais NUNCA são expostas** em respostas de API ou logs — ficam somente em `job_publication_channels.credentials` (JSONB, apenas lidos pelo service role internamente)
+2. **Toda tentativa gera log** em `job_publication_logs` — incluindo falhas
+3. **Status intermediário `publishing`** deve ser definido antes da chamada ao adapter
+4. **Adapters são stateless** — recebem `JobCanonical` + `ChannelCredentials`, retornam `PublishResult`
+5. **LinkedIn requer parceria ATS** — adapter preparado, aguarda aprovação do programa LinkedIn Partner
+6. **RLS** nas três tabelas — acesso somente por membros autenticados da org
+
+### Status dos Adapters
+| Canal | Status | Método Auth | Observação |
+|-------|--------|-------------|------------|
+| Gupy | ✅ Pronto | OAuth2 client_credentials | Requer conta Enterprise Gupy |
+| Vagas.com | ✅ Pronto | API Key | Requer conta Business Vagas.com |
+| LinkedIn | ⚠️ Parceria pendente | OAuth2 Bearer | Adapter pronto, aguarda LinkedIn Partner Program |
+| Indeed | 🔲 Roadmap | XML Feed / GraphQL | A implementar (fase 3) |
+| Catho / InfoJobs | 🔲 Roadmap | A verificar | A implementar (fase 4, se API disponível) |
+
+---
+
+## 15) PDF de Compliance NR-1 (Sprint 35, 2026-03-10)
+
+### Componente: `Nr1CompliancePDF`
+**Localização**: `apps/web/src/components/reports/Nr1CompliancePDF.tsx`
+**Dependências**: `jsPDF` + `jspdf-autotable` (já instalados no projeto)
+
+### Seções do PDF Gerado
+1. **Cabeçalho institucional** — logo TalentForge, data de emissão, fundo `#141042`
+2. **Dados da empresa** — razão social, CNPJ, período, versão NR-1
+3. **Status de conformidade** — banner verde (conforme) ou vermelho (requer ação)
+4. **Resumo estatístico** — total, alto/médio/baixo risco, planos gerados
+5. **Dimensões críticas** — tabela das dimensões com média ≥ 2.5
+6. **Avaliações detalhadas** — tabela com todas as campanhas/avaliações do período
+7. **Mapa de risco por dimensão** — todas as 10 dimensões com média + barra visual
+8. **Recomendações** — lista gerada automaticamente pelo NestJS
+9. **Declaração legal** — referência à NR-1 (Portaria MTE) e Lei 14.831/2024
+10. **Rodapé paginado** — "Página X de Y" em todas as páginas
+
+### Uso
+```tsx
+// Botão na página NR-1 (apps/web/src/app/(recruiter)/php/nr1/page.tsx)
+<Nr1CompliancePDF
+  assessments={assessments}
+  complianceReport={complianceReport}  // opcional
+  orgName="Fartech Ltda"
+  cnpj="00.000.000/0001-00"
+/>
+```
+
+### Nomenclatura do arquivo gerado
+`NR1_Compliance_{OrgName}_{YYYY-MM-DD}.pdf`
+
+---
+
+## 16) Jobs Page v2 — Gestão de Vagas Aprimorada (Sprint 35, 2026-03-10)
+
+### Melhorias implementadas (inspiradas na Solides)
+
+#### KPI Bar
+5 cards no topo calculados em tempo real:
+- **Total** — total de vagas da org
+- **Ativas** — status `open`
+- **Rascunhos** — status `on_hold`
+- **Fechadas** — status `closed`
+- **Candidaturas** — soma total de candidatos em todas as vagas
+
+#### Filtros Expandidos
+| Filtro | Tipo | Implementação |
+|--------|------|---------------|
+| Busca | Text | title + department + location |
+| Status | Select | all / on_hold / open / closed |
+| Ordenação | Select | data (desc) / candidaturas (desc) / título (A-Z) |
+| Departamento | Select | Gerado dinamicamente das vagas da org |
+| Tipo de contrato | Select | CLT / PJ / Estágio / Freelancer / Temporário |
+| Modalidade | Select | Remoto / Híbrido / Presencial |
+
+#### Toggle de Visualização
+- **Cards** (padrão): cards enriquecidos com mini-funil
+- **Tabela**: view compacta com todas as colunas + seleção em lote
+
+#### Cards Enriquecidos
+- **Urgência de deadline**: badge vermelho quando prazo ≤ 7 dias (`AlertTriangle`)
+- **Prazo expirado**: badge cinza quando deadline já passou
+- **Mini-funil**: pills com contagem de candidatos por etapa do pipeline (até 4 + overflow)
+- **Dias aberta**: "Aberta há N dias"
+- **Sênioridade**: badge Júnior / Pleno / Sênior
+- **Métricas**: candidatos + hire rate + tempo médio lado a lado
+
+#### Ações Rápidas por Card
+- **Copiar link**: copia URL `{origin}/empresas/{orgSlug}/{jobId}` da career page
+- **Duplicar vaga**: cria cópia como rascunho (`status: 'on_hold'`) instantaneamente
+- **Ver detalhes**: abre JobDetailsModal
+
+#### Bulk Actions (seleção em lote)
+- Checkbox em cada card e na tabela
+- "Selecionar todos" na view tabela
+- Barra de ações deslizante quando há seleção: **Arquivar** (status → `closed`)
+
+### Regras Canônicas da Jobs Page
+1. **JobDetailsModal** é o único ponto de edição de vaga — não criar edição inline fora do modal
+2. **Mini-funil** usa `pipeline_stages.name` — nunca usar `application.status` para labels de etapa
+3. **Copiar link** usa `org.slug` — sempre buscar da tabela `organizations`
+4. **Duplicar** cria com `status: 'on_hold'` — nunca duplicar para `open` diretamente
+5. **Bulk archive** usa `status: 'closed'` — não deletar vagas (soft-archive)
+
+---
+
+## 17) Source Analytics — applications.source (Sprint D, 2026-03-10)
+
+### Schema
+Colunas adicionadas em `applications` (migration `20260306_application_source_tracking.sql`):
+```sql
+source        TEXT    -- 'career_page' | 'direct' | 'linkedin' | 'gupy' | 'referral' | 'other'
+utm_source    TEXT    -- ex: 'linkedin', 'google', 'newsletter'
+utm_medium    TEXT    -- ex: 'cpc', 'organic', 'email'
+utm_campaign  TEXT    -- ex: 'dev-senior-jan26'
+```
+
+### Prioridade de dados no ReportsService
+```
+1. applications.source (mais granular — rastreia a candidatura)
+2. candidates.source (fallback — rastreia o candidato)
+```
+
+O `ReportsService.getDashboard()` usa `applications.source` com fallback para `candidates.source` quando não há dados de `applications`.
+
+### Labels Canônicos de Source
+| Valor no banco | Label exibido |
+|----------------|---------------|
+| `career_page` | Career Page |
+| `direct` | Direto |
+| `linkedin` | LinkedIn |
+| `linkedin_ads` | LinkedIn Ads |
+| `gupy` | Gupy |
+| `referral` | Indicação |
+| `indeed` | Indeed |
+| `site` | Site |
+| `other` | Outros |
+
+---
+
+## 18) Histórico de Sprints
+
+| Sprint | Data | Escopo | Status |
+|--------|------|--------|--------|
+| Sprint 1–15 | 2024-12 a 2026-02 | Schema inicial, auth, DISC, pipeline, admin console, empresas | ✅ |
+| Sprint 16 | 2026-02-26 | MCP Server v1.0 — 10 tools AI | ✅ |
+| Sprint 25 | 2026-02 | ESLint, Playwright E2E (7), Jest (8), Error Boundaries | ✅ |
+| Sprint 30 | 2026-03-01 | Google OAuth, CV Upload, email templates versionados | ✅ |
+| Sprint 31 | 2026-03-02 | Google Calendar, Jobs route migration, types fix | ✅ |
+| Sprint 32 | 2026-03-06 | Campaigns NR-1, COPC dinâmico, NR-1 Invitations v2, Peer Selection TFCI | ✅ |
+| Sprint 33 | 2026-03-09 | EmailModule Brevo SMTP, InterviewsModule, 5 templates HBS | ✅ |
+| Sprint 34 | 2026-03-10 | Career Page v2, fluxo de candidatura, redirect login, auto-apply | ✅ |
+| **Sprint 35** | **2026-03-10** | **Publisher Engine NestJS, NR-1 PDF, Jobs Page v2, Source Analytics, limpeza 112 arquivos** | ✅ |
 ```

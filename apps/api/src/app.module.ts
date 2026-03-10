@@ -25,6 +25,9 @@ import { EmailModule } from './email/email.module';
 // Interviews
 import { InterviewsModule } from './interviews/interviews.module';
 
+// Job Publisher Engine
+import { PublisherModule } from './publisher/publisher.module';
+
 // Guards
 import { SupabaseAuthGuard } from './auth/guards/supabase-auth.guard';
 
@@ -49,6 +52,7 @@ import { SupabaseAuthGuard } from './auth/guards/supabase-auth.guard';
     EmployeesModule,
     EmailModule,
     InterviewsModule,
+    PublisherModule,
   ],
   providers: [
     {
