@@ -122,7 +122,7 @@ export function Sidebar() {
             })}
 
             {/* Minha Página de Carreiras */}
-            {currentOrg?.slug && (
+            {currentOrg?.slug ? (
               <a
                 href={`/jobs/${currentOrg.slug}`}
                 target="_blank"
@@ -132,6 +132,15 @@ export function Sidebar() {
                 <Globe className="h-4 w-4" />
                 Minha Página
               </a>
+            ) : (
+              <Link
+                href="/dashboard/settings"
+                className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 text-white/40 hover:bg-white/10 hover:text-white/70"
+                title="Configure um slug em Configurações para ativar sua página pública"
+              >
+                <Globe className="h-4 w-4" />
+                Minha Página
+              </Link>
             )}
           </div>
         </div>
