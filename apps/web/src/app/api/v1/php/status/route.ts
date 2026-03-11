@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { getAuthUser, validateOrgMembership } from '@/lib/api/auth';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
@@ -10,7 +11,10 @@ const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
  */
 export async function GET(request: NextRequest) {
   try {
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    const user = await getAuthUser(request);
+    if (!user) {
+      return NextResponse.json({ error: 'Não autenticado' }, { status: 401 });
+    }
 
     // Pegar org_id dos headers (enviado pelo middleware/guard)
     const orgId = request.headers.get('x-org-id');
@@ -20,6 +24,12 @@ export async function GET(request: NextRequest) {
         { error: 'Organização não encontrada' },
         { status: 400 }
       );
+    }
+
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+    if (!(await validateOrgMembership(supabase, user.id, orgId))) {
+      return NextResponse.json({ error: 'Sem permissão para esta organização' }, { status: 403 });
     }
 
     // Buscar status do módulo PHP
