@@ -130,6 +130,9 @@ export default function CareerPage() {
   const [navVisible, setNavVisible] = useState(false);
   type Testimonial = { id: string; author_name: string; author_role: string; text: string; avatar_color: string; rating: number; };
   const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
+  type Tip = { id: string; title: string; summary: string; content: string; };
+  const [tips, setTips] = useState<Tip[]>([]);
+  const [activeTip, setActiveTip] = useState<Tip | null>(null);
   const heroRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => { loadJobs(); }, [orgSlug]);
@@ -176,6 +179,15 @@ export default function CareerPage() {
           .eq('is_active', true)
           .order('display_order', { ascending: true });
         if (tData && tData.length > 0) setTestimonials(tData);
+
+        // Buscar dicas para candidatos
+        const { data: tipData } = await supabase
+          .from('org_career_tips')
+          .select('id, title, summary, content')
+          .eq('org_id', first.org_id)
+          .eq('is_active', true)
+          .order('display_order', { ascending: true });
+        if (tipData && tipData.length > 0) setTips(tipData);
       }
     } catch {
       setNotFound(true);
@@ -742,29 +754,25 @@ export default function CareerPage() {
                 Dicas para se destacar
               </h2>
               <div className="space-y-3">
-                {[
-                  {
-                    icon: FileText,
-                    title: 'Personalize seu currículo',
-                    desc: 'Destaque experiências relevantes para a vaga e use as palavras-chave do anúncio.',
-                  },
-                  {
-                    icon: Search,
-                    title: 'Pesquise a empresa',
-                    desc: 'Conheça nossos produtos, valores e missão antes de ir para a entrevista.',
-                  },
-                  {
-                    icon: Lightbulb,
-                    title: 'Seja direto e objetivo',
-                    desc: 'Respostas claras com exemplos concretos da sua trajetória fazem toda a diferença.',
-                  },
-                  {
-                    icon: CheckCircle,
-                    title: 'Demonstre interesse real',
-                    desc: 'Faça perguntas sobre o time, os projetos e possibilidades de crescimento.',
-                  },
+                {tips.length > 0 ? tips.map((tip) => (
+                  <button key={tip.id} onClick={() => setActiveTip(tip)}
+                    className="w-full flex gap-4 bg-white rounded-xl border border-gray-100 shadow-sm p-4 hover:shadow-md transition-all text-left cursor-pointer group">
+                    <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0" style={{ background: `${secondary}15` }}>
+                      <Lightbulb className="w-4 h-4" style={{ color: secondary }} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-sm mb-0.5" style={{ color: primary }}>{tip.title}</p>
+                      <p className="text-gray-400 text-xs leading-relaxed line-clamp-2">{tip.summary}</p>
+                    </div>
+                    <ArrowUpRight className="w-4 h-4 text-gray-300 group-hover:text-gray-500 transition-colors shrink-0 mt-0.5" />
+                  </button>
+                )) : [
+                  { icon: FileText, title: 'Personalize seu currículo', desc: 'Destaque experiências relevantes para a vaga e use as palavras-chave do anúncio.' },
+                  { icon: Search, title: 'Pesquise a empresa', desc: 'Conheça nossos produtos, valores e missão antes de ir para a entrevista.' },
+                  { icon: Lightbulb, title: 'Seja direto e objetivo', desc: 'Respostas claras com exemplos concretos da sua trajetória fazem toda a diferença.' },
+                  { icon: CheckCircle, title: 'Demonstre interesse real', desc: 'Faça perguntas sobre o time, os projetos e possibilidades de crescimento.' },
                 ].map(({ icon: Icon, title, desc }) => (
-                  <div key={title} className="flex gap-4 bg-white rounded-xl border border-gray-100 shadow-sm p-4 hover:shadow-md transition-shadow">
+                  <div key={title} className="flex gap-4 bg-white rounded-xl border border-gray-100 shadow-sm p-4">
                     <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0" style={{ background: `${secondary}15` }}>
                       <Icon className="w-4 h-4" style={{ color: secondary }} />
                     </div>
@@ -780,6 +788,34 @@ export default function CareerPage() {
           </div>
         </div>
       </div>
+
+      {/* FOOTER */}
+
+      {/* MODAL DICA */}
+      {activeTip && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          style={{ background: 'rgba(20,16,66,0.5)', backdropFilter: 'blur(4px)' }}
+          onClick={() => setActiveTip(null)}>
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[85vh] overflow-y-auto"
+            onClick={e => e.stopPropagation()}>
+            <div className="flex items-start justify-between gap-4 p-6 border-b border-gray-100">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: `${secondary}15` }}>
+                  <Lightbulb className="w-5 h-5" style={{ color: secondary }} />
+                </div>
+                <h3 className="font-extrabold text-lg leading-tight" style={{ color: primary }}>{activeTip.title}</h3>
+              </div>
+              <button onClick={() => setActiveTip(null)}
+                className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-all shrink-0">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <div className="p-6">
+              <p className="text-gray-600 text-sm leading-relaxed whitespace-pre-wrap">{activeTip.content}</p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* FOOTER */}
       <footer className="border-t border-gray-100 bg-white">

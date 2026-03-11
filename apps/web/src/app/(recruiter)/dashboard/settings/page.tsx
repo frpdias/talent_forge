@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { DashboardHeader } from '@/components/DashboardHeader';
-import { Building2, Save, User, Bell, Lock, Globe, ExternalLink, Upload, Instagram, Linkedin, MessageCircle, Trash2, Plus, Star, Pencil, GripVertical } from 'lucide-react';
+import { Building2, Save, User, Bell, Lock, Globe, ExternalLink, Upload, Instagram, Linkedin, MessageCircle, Trash2, Plus, Star, Pencil, GripVertical, Lightbulb } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { useOrgStore } from '@/lib/store';
 import { WebhookManager } from '@/components';
@@ -52,6 +52,14 @@ export default function SettingsPage() {
   const [showTestimonialForm, setShowTestimonialForm] = useState(false);
   const [savingTestimonial, setSavingTestimonial] = useState(false);
   const emptyTestimonial = (): Testimonial => ({ author_name: '', author_role: '', text: '', avatar_color: AVATAR_COLORS[testimonials.length % AVATAR_COLORS.length], rating: 5, display_order: testimonials.length });
+
+  // Dicas para candidatos
+  type Tip = { id?: string; title: string; summary: string; content: string; display_order: number; };
+  const [tips, setTips] = useState<Tip[]>([]);
+  const [editingTip, setEditingTip] = useState<Tip | null>(null);
+  const [showTipForm, setShowTipForm] = useState(false);
+  const [savingTip, setSavingTip] = useState(false);
+  const emptyTip = (): Tip => ({ title: '', summary: '', content: '', display_order: tips.length });
 
   const { currentOrg } = useOrgStore();
 
@@ -117,6 +125,14 @@ export default function SettingsPage() {
             .eq('org_id', membership.org_id)
             .order('display_order', { ascending: true });
           if (tData) setTestimonials(tData);
+
+          // Carregar dicas para candidatos
+          const { data: tipData } = await supabase
+            .from('org_career_tips')
+            .select('*')
+            .eq('org_id', membership.org_id)
+            .order('display_order', { ascending: true });
+          if (tipData) setTips(tipData);
         }
       }
     } catch (error) {
@@ -168,6 +184,48 @@ export default function SettingsPage() {
     if (!confirm('Remover este depoimento?')) return;
     const { error } = await supabase.from('org_testimonials').delete().eq('id', id);
     if (!error) setTestimonials(prev => prev.filter(t => t.id !== id));
+  }
+
+  async function handleSaveTip() {
+    if (!editingTip || !orgId) return;
+    if (!editingTip.title.trim() || !editingTip.content.trim()) {
+      alert('Título e conteúdo são obrigatórios.');
+      return;
+    }
+    try {
+      setSavingTip(true);
+      if (editingTip.id) {
+        const { error } = await supabase.from('org_career_tips').update({
+          title: editingTip.title,
+          summary: editingTip.summary,
+          content: editingTip.content,
+        }).eq('id', editingTip.id);
+        if (error) throw error;
+        setTips(prev => prev.map(t => t.id === editingTip.id ? editingTip : t));
+      } else {
+        const { data, error } = await supabase.from('org_career_tips').insert({
+          org_id: orgId,
+          title: editingTip.title,
+          summary: editingTip.summary,
+          content: editingTip.content,
+          display_order: editingTip.display_order,
+        }).select().single();
+        if (error) throw error;
+        setTips(prev => [...prev, data]);
+      }
+      setShowTipForm(false);
+      setEditingTip(null);
+    } catch (err: any) {
+      alert(err.message || 'Erro ao salvar dica');
+    } finally {
+      setSavingTip(false);
+    }
+  }
+
+  async function handleDeleteTip(id: string) {
+    if (!confirm('Remover esta dica?')) return;
+    const { error } = await supabase.from('org_career_tips').delete().eq('id', id);
+    if (!error) setTips(prev => prev.filter(t => t.id !== id));
   }
 
   async function handleSaveCareerPage() {
@@ -854,6 +912,87 @@ export default function SettingsPage() {
                 className="w-full border-dashed">
                 <Plus className="h-4 w-4 mr-2" />
                 Adicionar depoimento
+              </Button>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Dicas para Candidatos */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Lightbulb className="h-5 w-5" />
+              Dicas para Candidatos na Página de Carreiras
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {tips.length === 0 && !showTipForm && (
+              <p className="text-sm text-[#999999]">Nenhuma dica cadastrada. Adicione dicas personalizadas que os candidatos verão ao acessar sua página de carreiras.</p>
+            )}
+
+            {/* Lista */}
+            <div className="space-y-3">
+              {tips.map((t) => (
+                <div key={t.id} className="flex items-start gap-3 p-4 rounded-xl border border-[#E5E5DC] bg-[#FAFAF8]">
+                  <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0" style={{ background: '#6366f115' }}>
+                    <Lightbulb className="w-4 h-4 text-[#6366f1]" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-sm text-[#141042]">{t.title}</p>
+                    {t.summary && <p className="text-xs text-[#999999] mt-0.5 line-clamp-1">{t.summary}</p>}
+                    {t.content && <p className="text-xs text-[#666666] mt-1 line-clamp-2">{t.content}</p>}
+                  </div>
+                  <div className="flex gap-1 shrink-0">
+                    <button onClick={() => { setEditingTip(t); setShowTipForm(true); }}
+                      className="p-1.5 rounded-lg hover:bg-white border border-transparent hover:border-[#E5E5DC] text-[#666666] hover:text-[#141042] transition-all">
+                      <Pencil className="w-4 h-4" />
+                    </button>
+                    <button onClick={() => handleDeleteTip(t.id!)}
+                      className="p-1.5 rounded-lg hover:bg-red-50 border border-transparent hover:border-red-200 text-[#666666] hover:text-red-600 transition-all">
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Formulário inline */}
+            {showTipForm && editingTip && (
+              <div className="border border-[#E5E5DC] rounded-xl p-5 space-y-3 bg-white">
+                <p className="font-semibold text-sm text-[#141042]">{editingTip.id ? 'Editar dica' : 'Nova dica'}</p>
+                <div>
+                  <Label>Título *</Label>
+                  <Input value={editingTip.title}
+                    onChange={e => setEditingTip({ ...editingTip, title: e.target.value })}
+                    placeholder="Ex: Prepare seu currículo com atenção" />
+                </div>
+                <div>
+                  <Label>Resumo <span className="text-[#999999] font-normal">(frase curta exibida no card)</span></Label>
+                  <Input value={editingTip.summary}
+                    onChange={e => setEditingTip({ ...editingTip, summary: e.target.value })}
+                    placeholder="Ex: Destaque o que mais importa para a vaga" />
+                </div>
+                <div>
+                  <Label>Conteúdo completo * <span className="text-[#999999] font-normal">(exibido quando o candidato clica na dica)</span></Label>
+                  <Textarea rows={5} value={editingTip.content}
+                    onChange={e => setEditingTip({ ...editingTip, content: e.target.value })}
+                    placeholder="Explique em detalhes esta dica para os candidatos..." />
+                </div>
+                <div className="flex gap-2 justify-end">
+                  <Button variant="outline" onClick={() => { setShowTipForm(false); setEditingTip(null); }}>Cancelar</Button>
+                  <Button onClick={handleSaveTip} disabled={savingTip}>
+                    {savingTip ? <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent mr-2" /> : <Save className="h-4 w-4 mr-2" />}
+                    Salvar
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {!showTipForm && (
+              <Button variant="outline" onClick={() => { setEditingTip(emptyTip()); setShowTipForm(true); }}
+                className="w-full border-dashed">
+                <Plus className="h-4 w-4 mr-2" />
+                Adicionar dica
               </Button>
             )}
           </CardContent>
