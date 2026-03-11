@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { DashboardHeader } from '@/components/DashboardHeader';
-import { Building2, Save, User, Bell, Lock, Globe, ExternalLink, Upload, Instagram, Linkedin, MessageCircle, Trash2 } from 'lucide-react';
+import { Building2, Save, User, Bell, Lock, Globe, ExternalLink, Upload, Instagram, Linkedin, MessageCircle, Trash2, Plus, Star, Pencil, GripVertical } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { useOrgStore } from '@/lib/store';
 import { WebhookManager } from '@/components';
@@ -43,6 +43,16 @@ export default function SettingsPage() {
   const [uploadingAsset, setUploadingAsset] = useState<'logo' | 'banner' | null>(null);
   const [deletingAsset, setDeletingAsset] = useState<'logo' | 'banner' | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<'logo' | 'banner' | null>(null);
+
+  // Depoimentos
+  type Testimonial = { id?: string; author_name: string; author_role: string; text: string; avatar_color: string; rating: number; display_order: number; };
+  const AVATAR_COLORS = ['#6366f1','#0ea5e9','#10b981','#f59e0b','#ec4899','#8b5cf6','#ef4444','#14b8a6'];
+  const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
+  const [editingTestimonial, setEditingTestimonial] = useState<Testimonial | null>(null);
+  const [showTestimonialForm, setShowTestimonialForm] = useState(false);
+  const [savingTestimonial, setSavingTestimonial] = useState(false);
+  const emptyTestimonial = (): Testimonial => ({ author_name: '', author_role: '', text: '', avatar_color: AVATAR_COLORS[testimonials.length % AVATAR_COLORS.length], rating: 5, display_order: testimonials.length });
+
   const { currentOrg } = useOrgStore();
 
   const supabase = createClient();
@@ -99,11 +109,65 @@ export default function SettingsPage() {
           });
           setOrgSlug(org.slug || '');
           setOrgId(membership.org_id);
+
+          // Carregar depoimentos
+          const { data: tData } = await supabase
+            .from('org_testimonials')
+            .select('*')
+            .eq('org_id', membership.org_id)
+            .order('display_order', { ascending: true });
+          if (tData) setTestimonials(tData);
         }
       }
     } catch (error) {
       console.error('Error loading data:', error);
     }
+  }
+
+  async function handleSaveTestimonial() {
+    if (!editingTestimonial || !orgId) return;
+    if (!editingTestimonial.author_name.trim() || !editingTestimonial.text.trim()) {
+      alert('Nome e depoimento são obrigatórios.');
+      return;
+    }
+    try {
+      setSavingTestimonial(true);
+      if (editingTestimonial.id) {
+        const { error } = await supabase.from('org_testimonials').update({
+          author_name: editingTestimonial.author_name,
+          author_role: editingTestimonial.author_role,
+          text: editingTestimonial.text,
+          avatar_color: editingTestimonial.avatar_color,
+          rating: editingTestimonial.rating,
+        }).eq('id', editingTestimonial.id);
+        if (error) throw error;
+        setTestimonials(prev => prev.map(t => t.id === editingTestimonial.id ? editingTestimonial : t));
+      } else {
+        const { data, error } = await supabase.from('org_testimonials').insert({
+          org_id: orgId,
+          author_name: editingTestimonial.author_name,
+          author_role: editingTestimonial.author_role,
+          text: editingTestimonial.text,
+          avatar_color: editingTestimonial.avatar_color,
+          rating: editingTestimonial.rating,
+          display_order: editingTestimonial.display_order,
+        }).select().single();
+        if (error) throw error;
+        setTestimonials(prev => [...prev, data]);
+      }
+      setShowTestimonialForm(false);
+      setEditingTestimonial(null);
+    } catch (err: any) {
+      alert(err.message || 'Erro ao salvar depoimento');
+    } finally {
+      setSavingTestimonial(false);
+    }
+  }
+
+  async function handleDeleteTestimonial(id: string) {
+    if (!confirm('Remover este depoimento?')) return;
+    const { error } = await supabase.from('org_testimonials').delete().eq('id', id);
+    if (!error) setTestimonials(prev => prev.filter(t => t.id !== id));
   }
 
   async function handleSaveCareerPage() {
@@ -639,6 +703,118 @@ export default function SettingsPage() {
                 Salvar Página de Carreiras
               </Button>
             </div>
+          </CardContent>
+        </Card>
+
+        {/* Depoimentos */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Star className="h-5 w-5" />
+              Depoimentos na Página de Carreiras
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {testimonials.length === 0 && !showTestimonialForm && (
+              <p className="text-sm text-[#999999]">Nenhum depoimento cadastrado. Adicione para exibir na página de carreiras.</p>
+            )}
+
+            {/* Lista */}
+            <div className="space-y-3">
+              {testimonials.map((t) => (
+                <div key={t.id} className="flex items-start gap-3 p-4 rounded-xl border border-[#E5E5DC] bg-[#FAFAF8]">
+                  <div className="w-10 h-10 rounded-full flex items-center justify-center shrink-0 text-white font-bold text-sm"
+                    style={{ background: t.avatar_color }}>
+                    {t.author_name.split(' ').map(n => n[0]).join('').slice(0,2).toUpperCase()}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-sm text-[#141042]">{t.author_name}</p>
+                    {t.author_role && <p className="text-xs text-[#999999]">{t.author_role}</p>}
+                    <p className="text-sm text-[#666666] mt-1 line-clamp-2">&ldquo;{t.text}&rdquo;</p>
+                    <div className="flex gap-0.5 mt-1">
+                      {[1,2,3,4,5].map(i => (
+                        <Star key={i} className={`w-3 h-3 ${i <= t.rating ? 'fill-amber-400 text-amber-400' : 'text-gray-200'}`} />
+                      ))}
+                    </div>
+                  </div>
+                  <div className="flex gap-1 shrink-0">
+                    <button onClick={() => { setEditingTestimonial(t); setShowTestimonialForm(true); }}
+                      className="p-1.5 rounded-lg hover:bg-white border border-transparent hover:border-[#E5E5DC] text-[#666666] hover:text-[#141042] transition-all">
+                      <Pencil className="w-4 h-4" />
+                    </button>
+                    <button onClick={() => handleDeleteTestimonial(t.id!)}
+                      className="p-1.5 rounded-lg hover:bg-red-50 border border-transparent hover:border-red-200 text-[#666666] hover:text-red-600 transition-all">
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Formulário inline */}
+            {showTestimonialForm && editingTestimonial && (
+              <div className="border border-[#E5E5DC] rounded-xl p-5 space-y-3 bg-white">
+                <p className="font-semibold text-sm text-[#141042]">{editingTestimonial.id ? 'Editar depoimento' : 'Novo depoimento'}</p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <Label>Nome *</Label>
+                    <Input value={editingTestimonial.author_name}
+                      onChange={e => setEditingTestimonial({ ...editingTestimonial, author_name: e.target.value })}
+                      placeholder="Ex: Ana Carolina" />
+                  </div>
+                  <div>
+                    <Label>Cargo / Título</Label>
+                    <Input value={editingTestimonial.author_role}
+                      onChange={e => setEditingTestimonial({ ...editingTestimonial, author_role: e.target.value })}
+                      placeholder="Ex: Desenvolvedora de Software" />
+                  </div>
+                </div>
+                <div>
+                  <Label>Depoimento *</Label>
+                  <Textarea rows={3} value={editingTestimonial.text}
+                    onChange={e => setEditingTestimonial({ ...editingTestimonial, text: e.target.value })}
+                    placeholder="O que essa pessoa diz sobre trabalhar na empresa..." />
+                </div>
+                <div className="flex items-center gap-4">
+                  <div>
+                    <Label>Estrelas</Label>
+                    <div className="flex gap-1 mt-1">
+                      {[1,2,3,4,5].map(i => (
+                        <button key={i} type="button" onClick={() => setEditingTestimonial({ ...editingTestimonial, rating: i })}>
+                          <Star className={`w-5 h-5 cursor-pointer transition-colors ${i <= editingTestimonial.rating ? 'fill-amber-400 text-amber-400' : 'text-gray-300 hover:text-amber-300'}`} />
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <Label>Cor do avatar</Label>
+                    <div className="flex gap-1.5 mt-1">
+                      {AVATAR_COLORS.map(c => (
+                        <button key={c} type="button"
+                          onClick={() => setEditingTestimonial({ ...editingTestimonial, avatar_color: c })}
+                          className={`w-6 h-6 rounded-full transition-all ${editingTestimonial.avatar_color === c ? 'ring-2 ring-offset-1 ring-[#141042] scale-110' : 'hover:scale-110'}`}
+                          style={{ background: c }} />
+                      ))}
+                    </div>
+                  </div>
+                </div>
+                <div className="flex gap-2 justify-end">
+                  <Button variant="outline" onClick={() => { setShowTestimonialForm(false); setEditingTestimonial(null); }}>Cancelar</Button>
+                  <Button onClick={handleSaveTestimonial} disabled={savingTestimonial}>
+                    {savingTestimonial ? <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent mr-2" /> : <Save className="h-4 w-4 mr-2" />}
+                    Salvar
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {!showTestimonialForm && (
+              <Button variant="outline" onClick={() => { setEditingTestimonial(emptyTestimonial()); setShowTestimonialForm(true); }}
+                className="w-full border-dashed">
+                <Plus className="h-4 w-4 mr-2" />
+                Adicionar depoimento
+              </Button>
+            )}
           </CardContent>
         </Card>
 

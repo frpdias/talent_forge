@@ -11,6 +11,7 @@ import { createClient } from '@/lib/supabase/client';
 
 interface PublicJob {
   id: string;
+  org_id: string;
   title: string;
   description: string;
   description_html: string | null;
@@ -127,6 +128,8 @@ export default function CareerPage() {
   const [filterModality, setFilterModality] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [navVisible, setNavVisible] = useState(false);
+  type Testimonial = { id: string; author_name: string; author_role: string; text: string; avatar_color: string; rating: number; };
+  const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
   const heroRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => { loadJobs(); }, [orgSlug]);
@@ -163,6 +166,17 @@ export default function CareerPage() {
         career_page_show_contact: first.career_page_show_contact,
         org_industry: first.org_industry,
       });
+
+      // Buscar depoimentos da org
+      if (first.org_id) {
+        const { data: tData } = await supabase
+          .from('org_testimonials')
+          .select('id, author_name, author_role, text, avatar_color, rating')
+          .eq('org_id', first.org_id)
+          .eq('is_active', true)
+          .order('display_order', { ascending: true });
+        if (tData && tData.length > 0) setTestimonials(tData);
+      }
     } catch {
       setNotFound(true);
     } finally {
@@ -608,54 +622,32 @@ export default function CareerPage() {
       </div>
 
       {/* DEPOIMENTOS */}
+      {(testimonials.length > 0) && (
       <div className="bg-gray-50 py-14 px-6">
         <div className="max-w-7xl mx-auto">
           <h2 className="text-2xl sm:text-3xl font-extrabold text-center mb-10" style={{ color: primary }}>
             O que dizem sobre nossa empresa
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[
-              {
-                name: 'Ana Carolina',
-                role: 'Desenvolvedora de Software',
-                avatar: 'AC',
-                text: 'O processo seletivo foi transparente e ágil. Desde o primeiro contato fui bem recebida e me senti valorizada como profissional. Hoje faço parte de um time incrível!',
-                color: '#6366f1',
-              },
-              {
-                name: 'Ricardo Mendes',
-                role: 'Analista de Marketing',
-                avatar: 'RM',
-                text: 'Fui contratado em menos de duas semanas. A equipe de RH foi extremamente atenciosa e todo o processo foi claro e objetivo. Recomendo muito!',
-                color: '#0ea5e9',
-              },
-              {
-                name: 'Fernanda Lima',
-                role: 'Gerente de Projetos',
-                avatar: 'FL',
-                text: 'A empresa valoriza as pessoas desde o primeiro dia. O onboarding foi bem estruturado e senti que estava sendo esperada e preparada para crescer aqui.',
-                color: '#10b981',
-              },
-            ].map((t) => (
-              <div key={t.name}
+            {testimonials.map((t) => (
+              <div key={t.id}
                 className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 flex flex-col gap-4 hover:shadow-md transition-shadow">
                 <div className="flex items-center gap-3">
                   <div className="w-12 h-12 rounded-full flex items-center justify-center shrink-0 text-white font-bold text-sm"
-                    style={{ background: t.color }}>
-                    {t.avatar}
+                    style={{ background: t.avatar_color }}>
+                    {t.author_name.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase()}
                   </div>
                   <div>
-                    <p className="font-bold text-sm" style={{ color: primary }}>{t.name}</p>
-                    <p className="text-xs text-gray-400">{t.role}</p>
+                    <p className="font-bold text-sm" style={{ color: primary }}>{t.author_name}</p>
+                    {t.author_role && <p className="text-xs text-gray-400">{t.author_role}</p>}
                   </div>
                 </div>
                 <p className="text-sm text-gray-600 leading-relaxed">
                   &ldquo;{t.text}&rdquo;
                 </p>
-                {/* Stars */}
                 <div className="flex items-center gap-0.5 mt-auto">
                   {[1,2,3,4,5].map(i => (
-                    <svg key={i} viewBox="0 0 20 20" className="w-4 h-4 fill-amber-400">
+                    <svg key={i} viewBox="0 0 20 20" className={`w-4 h-4 ${i <= t.rating ? 'fill-amber-400' : 'fill-gray-200'}`}>
                       <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
                     </svg>
                   ))}
@@ -665,6 +657,7 @@ export default function CareerPage() {
           </div>
         </div>
       </div>
+      )}
 
       {/* FALE CONOSCO */}
       {org?.career_page_show_contact && (
