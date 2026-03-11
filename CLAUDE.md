@@ -63,3 +63,12 @@ Tabelas: `php_integrated_scores`, `tfci_cycles`, `tfci_assessments`, `nr1_risk_a
 - Se servidor não responde: `rm -rf apps/web/.next` e reiniciar
 - Primeira compilação Turbopack demora 60-120s (normal)
 - Detalhes completos: `docs/ARQUITETURA_CANONICA.md` seção "Troubleshooting"
+
+## ⚠️ Localização do Projeto (CRÍTICO)
+- **Path correto**: `~/dev/talent_forge` (`/Users/fernandodias/dev/talent_forge`)
+- **NUNCA usar**: `~/Desktop/PROJETO_TALENT_FORGE` — está no iCloud Drive e corrompe o `.git`
+- **Causa raiz do problema de git**: Desktop sincronizado pelo iCloud cria arquivos duplicados (`HEAD 2`, `config 2`) e faz `git commit/status/read-tree` travarem indefinidamente
+- **Config do git local já aplicada** (não reverter):
+  - `commit.template = ""` → sobrescreve template do Sourcetree que causava hang
+  - `core.editor = true` → editor não-interativo (nunca abre prompt de editor)
+  - `commit.gpgsign = false` → sem assinatura GPG
