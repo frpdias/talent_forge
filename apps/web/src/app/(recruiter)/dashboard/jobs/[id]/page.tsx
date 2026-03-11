@@ -198,28 +198,28 @@ export default function JobDetailPage() {
         title={job.title}
         subtitle={job.location}
         actions={
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <Button variant="outline" onClick={() => setShowAddCandidate(true)}>
-              <UserPlus className="h-4 w-4 mr-2" />
-              Adicionar Candidato
+              <UserPlus className="h-4 w-4 sm:mr-2" />
+              <span className="hidden sm:inline">Adicionar Candidato</span>
             </Button>
             <Link href={`/dashboard/jobs/${id}/edit`}>
               <Button variant="outline">
-                <Edit className="h-4 w-4 mr-2" />
-                Editar
+                <Edit className="h-4 w-4 sm:mr-2" />
+                <span className="hidden sm:inline">Editar</span>
               </Button>
             </Link>
             <Link href="/jobs">
               <Button variant="ghost">
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Voltar
+                <ArrowLeft className="h-4 w-4 sm:mr-2" />
+                <span className="hidden sm:inline">Voltar</span>
               </Button>
             </Link>
           </div>
         }
       />
 
-      <div className="p-6">
+      <div className="p-3 sm:p-6">
         {/* Job Info */}
         <Card className="mb-6">
           <CardContent className="p-4">

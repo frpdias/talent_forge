@@ -183,7 +183,7 @@ export function KanbanBoard({ columns: initialColumns, onMoveCard }: KanbanBoard
       onDragOver={handleDragOver}
       onDragEnd={handleDragEnd}
     >
-      <div className="flex gap-4 overflow-x-auto pb-4 min-h-[calc(100vh-200px)]">
+      <div className="flex gap-3 overflow-x-auto pb-4 min-h-[360px] lg:min-h-[calc(100vh-300px)] -mx-1 px-1">
         {columns.map((column) => (
           <KanbanColumn key={column.id} column={column}>
             <SortableContext
