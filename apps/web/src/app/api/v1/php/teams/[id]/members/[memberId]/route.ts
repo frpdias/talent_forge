@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { validateOrgMembership } from '@/lib/api/auth';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
@@ -32,6 +33,10 @@ export async function DELETE(request: NextRequest, { params }: Params) {
 
     const { id: teamId, memberId } = await params;
     const supabase = getSupabase();
+
+    if (!(await validateOrgMembership(supabase, user.id, orgId))) {
+      return NextResponse.json({ error: 'Sem permissão para esta organização' }, { status: 403 });
+    }
 
     const { error } = await supabase
       .from('team_members')
@@ -81,6 +86,10 @@ export async function PATCH(request: NextRequest, { params }: Params) {
     }
 
     const supabase = getSupabase();
+
+    if (!(await validateOrgMembership(supabase, user.id, orgId))) {
+      return NextResponse.json({ error: 'Sem permissão para esta organização' }, { status: 403 });
+    }
 
     const { data, error } = await supabase
       .from('team_members')
