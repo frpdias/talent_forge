@@ -275,7 +275,7 @@ export default function CareerPage() {
         <div className="max-w-7xl mx-auto px-6 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
             {logoUrl
-              ? <img src={logoUrl} alt={org?.org_name} className="h-8 object-contain" />
+              ? <img src={logoUrl} alt={org?.org_name} className="h-12 object-contain" />
               : <span className="font-bold text-gray-900">{org?.org_name}</span>
             }
           </div>
@@ -321,7 +321,7 @@ export default function CareerPage() {
               <img
                 src={logoUrl}
                 alt={org?.org_name}
-                className="h-14 max-w-[220px] object-contain"
+                className="h-[84px] max-w-[330px] object-contain"
                 style={{ filter: 'drop-shadow(0 4px 16px rgba(0,0,0,0.3))' }}
               />
             ) : (
@@ -377,7 +377,7 @@ export default function CareerPage() {
             <div className="flex items-start gap-5">
               {logoUrl && (
                 <img src={logoUrl} alt={org.org_name}
-                  className="h-14 max-h-14 max-w-[100px] object-contain shrink-0 hidden sm:block" />
+                  className="h-[84px] max-h-[84px] max-w-[150px] object-contain shrink-0 hidden sm:block" />
               )}
               <div>
                 <p className="text-xs font-extrabold uppercase tracking-widest mb-1" style={{ color: secondary }}>
@@ -821,7 +821,7 @@ export default function CareerPage() {
         <div className="max-w-7xl mx-auto px-6 py-8 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             {logoUrl
-              ? <img src={logoUrl} alt={org?.org_name} className="h-7 object-contain opacity-50" />
+              ? <img src={logoUrl} alt={org?.org_name} className="h-[42px] object-contain opacity-50" />
               : <span className="text-sm font-semibold text-gray-400">{org?.org_name}</span>
             }
           </div>
