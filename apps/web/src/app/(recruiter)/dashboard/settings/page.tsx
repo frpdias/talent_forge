@@ -435,13 +435,16 @@ export default function SettingsPage() {
             )}
 
             <div>
-              <Label htmlFor="cp-headline">Título da página (hero)</Label>
+              <Label htmlFor="cp-headline">Chamada principal (linha 1 do hero)</Label>
               <Input
                 id="cp-headline"
                 value={careerPage.career_page_headline}
                 onChange={(e) => setCareerPage({ ...careerPage, career_page_headline: e.target.value })}
-                placeholder="Ex: Venha trabalhar conosco!"
+                placeholder="Faça parte do time"
               />
+              <p className="text-xs text-gray-400 mt-1">
+                A linha 2 exibe automaticamente o nome da empresa na cor de destaque.
+              </p>
             </div>
 
             <div>

@@ -25,6 +25,7 @@ export class JobsService {
         salary_max: dto.salaryMax,
         employment_type: dto.employmentType,
         seniority: dto.seniority,
+        work_modality: dto.workModality,
         status: dto.status || 'open',
         created_by: userId,
       })
@@ -137,6 +138,7 @@ export class JobsService {
     if (dto.employmentType !== undefined)
       updateData.employment_type = dto.employmentType;
     if (dto.seniority !== undefined) updateData.seniority = dto.seniority;
+    if (dto.workModality !== undefined) updateData.work_modality = dto.workModality;
     if (dto.status !== undefined) updateData.status = dto.status;
 
     const { data, error } = await supabase

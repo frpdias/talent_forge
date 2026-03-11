@@ -28,6 +28,7 @@ export default function NewJobPage() {
     minSalary: '',
     maxSalary: '',
     isRemote: false,
+    workModality: 'presencial' as 'presencial' | 'hibrido' | 'remoto',
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -53,6 +54,7 @@ export default function NewJobPage() {
         seniorityLevel: form.seniorityLevel as SeniorityLevel,
         minSalary: form.minSalary ? Number(form.minSalary) : undefined,
         maxSalary: form.maxSalary ? Number(form.maxSalary) : undefined,
+        workModality: form.workModality,
       };
 
       await jobsApi.create(data, session.access_token, currentOrg.id);
@@ -167,19 +169,17 @@ export default function NewJobPage() {
                     ]}
                   />
 
-                  <div className="flex items-center gap-2 pt-6">
-                    <input
-                      type="checkbox"
-                      id="isRemote"
-                      name="isRemote"
-                      checked={form.isRemote}
-                      onChange={handleChange}
-                      className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                    />
-                    <label htmlFor="isRemote" className="text-sm text-gray-700">
-                      Permite trabalho remoto
-                    </label>
-                  </div>
+                  <Select
+                    label="Modalidade"
+                    name="workModality"
+                    value={form.workModality}
+                    onChange={handleChange}
+                    options={[
+                      { value: 'presencial', label: 'Presencial' },
+                      { value: 'hibrido', label: 'Híbrido' },
+                      { value: 'remoto', label: 'Remoto' },
+                    ]}
+                  />
                 </div>
               </div>
 

@@ -20,6 +20,8 @@ interface PublicJob {
   requirements: string | null;
   application_deadline: string | null;
   salary_range: string | null;
+  work_modality: string | null;
+  seniority: string | null;
   created_at: string;
   org_name: string;
   org_slug: string;
@@ -60,6 +62,41 @@ function TypeBadge({ type }: { type: string }) {
   );
 }
 
+const MODALITY_STYLE: Record<string, string> = {
+  presencial: 'bg-blue-50 text-blue-700',
+  hibrido: 'bg-amber-50 text-amber-700',
+  remoto: 'bg-emerald-50 text-emerald-700',
+};
+
+const MODALITY_LABEL: Record<string, string> = {
+  presencial: 'Presencial',
+  hibrido: 'Híbrido',
+  remoto: 'Remoto',
+};
+
+function ModalityBadge({ modality }: { modality: string }) {
+  const style = MODALITY_STYLE[modality] || 'bg-gray-100 text-gray-600';
+  return (
+    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold tracking-wide ${style}`}>
+      {MODALITY_LABEL[modality] || modality}
+    </span>
+  );
+}
+
+const SENIORITY_LABEL: Record<string, string> = {
+  intern: 'Estágio', junior: 'Júnior', mid: 'Pleno',
+  senior: 'Sênior', lead: 'Lead', manager: 'Gerente',
+  director: 'Diretor', executive: 'Executivo',
+};
+
+function SeniorityBadge({ seniority }: { seniority: string }) {
+  return (
+    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold tracking-wide bg-gray-100 text-gray-700">
+      {SENIORITY_LABEL[seniority] || seniority}
+    </span>
+  );
+}
+
 function daysAgo(date: string) {
   const d = Math.floor((Date.now() - new Date(date).getTime()) / 86400000);
   if (d === 0) return 'Hoje';
@@ -87,6 +124,7 @@ export default function CareerPage() {
   const [notFound, setNotFound] = useState(false);
   const [search, setSearch] = useState('');
   const [filterType, setFilterType] = useState<string | null>(null);
+  const [filterModality, setFilterModality] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [navVisible, setNavVisible] = useState(false);
   const heroRef = useRef<HTMLDivElement>(null);
@@ -160,12 +198,14 @@ export default function CareerPage() {
   const bannerUrl = org?.career_page_banner_url || null;
 
   const availableTypes = Array.from(new Set(jobs.map(j => j.employment_type).filter(Boolean))) as string[];
+  const availableModalities = Array.from(new Set(jobs.map(j => j.work_modality).filter(Boolean))) as string[];
   const filtered = jobs.filter(j => {
     const matchSearch = !search.trim() ||
       j.title.toLowerCase().includes(search.toLowerCase()) ||
       (j.location || '').toLowerCase().includes(search.toLowerCase());
     const matchType = !filterType || j.employment_type === filterType;
-    return matchSearch && matchType;
+    const matchModality = !filterModality || j.work_modality === filterModality;
+    return matchSearch && matchType && matchModality;
   });
 
   if (loading) return (
@@ -206,7 +246,7 @@ export default function CareerPage() {
           borderBottom: '1px solid rgba(0,0,0,0.06)',
         }}
       >
-        <div className="max-w-5xl mx-auto px-6 py-3 flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-6 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
             {logoUrl
               ? <img src={logoUrl} alt={org?.org_name} className="h-8 object-contain" />
@@ -246,7 +286,7 @@ export default function CareerPage() {
           </>
         )}
 
-        <div className="relative max-w-5xl mx-auto px-6 pt-10 pb-14 flex flex-row items-start justify-between gap-8 h-full"
+        <div className="relative max-w-7xl mx-auto px-6 pt-10 pb-14 flex flex-row items-start justify-between gap-8 h-full"
           style={{ minHeight: 'inherit' }}>
 
           {/* Logo flutuante sem fundo — lado esquerdo */}
@@ -275,9 +315,9 @@ export default function CareerPage() {
               </p>
             )}
             <h1 className="text-3xl sm:text-4xl lg:text-[2.75rem] font-extrabold text-white leading-[1.1] tracking-tight mb-5">
-              {org?.career_page_headline || (
-                <>Faça parte do time<br /><span style={{ color: secondary }}>{org?.org_name}</span></>
-              )}
+              {org?.career_page_headline || 'Faça parte do time'}
+              <br />
+              <span style={{ color: secondary }}>{org?.org_name}</span>
             </h1>
             <div className="flex items-center gap-3 flex-wrap justify-end">
               <span
@@ -306,7 +346,7 @@ export default function CareerPage() {
 
       {/* SOBRE A EMPRESA */}
       {org?.career_page_about && (
-        <div className="max-w-5xl mx-auto px-6 pt-10 pb-2">
+        <div className="max-w-7xl mx-auto px-6 pt-10 pb-2">
           <div className="bg-white rounded-2xl p-8 shadow-sm border border-gray-100">
             <div className="flex items-start gap-5">
               {logoUrl && (
@@ -329,7 +369,7 @@ export default function CareerPage() {
       )}
 
       {/* VAGAS */}
-      <div id="vagas" className="max-w-5xl mx-auto px-6 py-12">
+      <div id="vagas" className="max-w-7xl mx-auto px-6 py-12">
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-5 mb-8">
           <div>
             <p className="text-xs font-extrabold uppercase tracking-widest mb-1" style={{ color: secondary }}>
@@ -352,12 +392,12 @@ export default function CareerPage() {
           </div>
         </div>
 
-        {availableTypes.length > 1 && (
+        {(availableTypes.length > 1 || availableModalities.length > 0) && (
           <div className="flex flex-wrap gap-2 mb-6">
             <button
-              onClick={() => setFilterType(null)}
+              onClick={() => { setFilterType(null); setFilterModality(null); }}
               className="px-4 py-1.5 rounded-full text-xs font-bold transition-all"
-              style={filterType === null
+              style={filterType === null && filterModality === null
                 ? { background: primary, color: 'white', boxShadow: `0 2px 10px ${primary}40` }
                 : { background: 'white', color: '#6b7280', border: '1px solid #e5e7eb' }}
             >
@@ -375,9 +415,30 @@ export default function CareerPage() {
                 {TYPE_LABEL[type] || type} ({jobs.filter(j => j.employment_type === type).length})
               </button>
             ))}
+            {availableModalities.map(mod => (
+              <button
+                key={mod}
+                onClick={() => setFilterModality(filterModality === mod ? null : mod)}
+                className="px-4 py-1.5 rounded-full text-xs font-bold transition-all"
+                style={filterModality === mod
+                  ? { background: secondary, color: 'white', boxShadow: `0 2px 10px ${secondary}40` }
+                  : { background: 'white', color: '#6b7280', border: '1px solid #e5e7eb' }}
+              >
+                {MODALITY_LABEL[mod] || mod} ({jobs.filter(j => j.work_modality === mod).length})
+              </button>
+            ))}
           </div>
         )}
 
+        {filtered.length > 0 && (
+          <p className="text-xs text-gray-400 mb-4">
+            Mostrando{' '}
+            <span className="font-semibold text-gray-600">{filtered.length}</span>
+            {' '}de{' '}
+            <span className="font-semibold text-gray-600">{jobs.length}</span>{' '}
+            {jobs.length === 1 ? 'vaga' : 'vagas'}
+          </p>
+        )}
         {filtered.length === 0 ? (
           <div className="text-center py-20 bg-white rounded-2xl border border-gray-100">
             <Briefcase className="w-10 h-10 text-gray-200 mx-auto mb-4" />
@@ -385,14 +446,15 @@ export default function CareerPage() {
             <p className="text-sm text-gray-400">Tente outro termo ou remova os filtros.</p>
           </div>
         ) : (
-          <div className="space-y-3">
-            {filtered.map((job) => {
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {filtered.map((job, index) => {
               const isNew = Math.floor((Date.now() - new Date(job.created_at).getTime()) / 86400000) < 7;
+              const isLastOdd = filtered.length % 2 !== 0 && index === filtered.length - 1;
               return (
                 <button
                   key={job.id}
                   onClick={() => { setSelectedJob(job); setApplied(false); }}
-                  className="group w-full text-left bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200 overflow-hidden"
+                  className={`group w-full text-left bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200 overflow-hidden${isLastOdd ? ' sm:col-span-2' : ''}`}
                 >
                   <div
                     className="h-[2px] w-0 group-hover:w-full transition-all duration-500"
@@ -418,6 +480,8 @@ export default function CareerPage() {
                       </div>
                       <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
                         {job.employment_type && <TypeBadge type={job.employment_type} />}
+                        {job.work_modality && <ModalityBadge modality={job.work_modality} />}
+                        {job.seniority && <SeniorityBadge seniority={job.seniority} />}
                         {job.location && (
                           <span className="flex items-center gap-1 text-xs text-gray-500">
                             <MapPin className="w-3.5 h-3.5" />{job.location}
@@ -446,7 +510,7 @@ export default function CareerPage() {
                     <div className="shrink-0 flex flex-col items-end gap-2">
                       <span className="text-[11px] font-medium text-gray-300">{daysAgo(job.created_at)}</span>
                       <span
-                        className="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold text-white opacity-0 group-hover:opacity-100 -translate-x-2 group-hover:translate-x-0 transition-all duration-200"
+                        className="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold text-white transition-all duration-200"
                         style={{ background: primary }}
                       >
                         Ver vaga
@@ -461,11 +525,58 @@ export default function CareerPage() {
         )}
       </div>
 
+      {/* BANCO DE TALENTOS */}
+      <div className="max-w-7xl mx-auto px-6 pb-6">
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm px-8 py-8 flex flex-col sm:flex-row items-center justify-between gap-6">
+          <div>
+            <p className="text-xs font-extrabold uppercase tracking-widest mb-1" style={{ color: secondary }}>
+              Banco de Talentos
+            </p>
+            <h3 className="text-xl font-extrabold mb-1" style={{ color: primary }}>
+              Não encontrou a vaga ideal?
+            </h3>
+            <p className="text-gray-500 text-sm leading-relaxed">
+              Cadastre seu currículo e fique no nosso radar para futuras oportunidades.
+            </p>
+          </div>
+          <div className="flex gap-3 shrink-0 flex-wrap justify-center">
+            {org?.career_page_whatsapp_url ? (
+              <a
+                href={org.career_page_whatsapp_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold text-white transition-all hover:scale-105 active:scale-95 shadow-md"
+                style={{ background: '#25D366', boxShadow: '0 4px 16px rgba(37,211,102,0.25)' }}
+              >
+                <MessageCircle className="w-4 h-4" /> Enviar currículo
+              </a>
+            ) : org?.career_page_linkedin_url ? (
+              <a
+                href={org.career_page_linkedin_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold text-white transition-all hover:scale-105 active:scale-95 shadow-md"
+                style={{ background: '#0077B5', boxShadow: '0 4px 16px rgba(0,119,181,0.25)' }}
+              >
+                <Linkedin className="w-4 h-4" /> Conectar no LinkedIn
+              </a>
+            ) : (
+              <span
+                className="inline-flex items-center px-5 py-2.5 rounded-xl text-sm font-semibold border"
+                style={{ color: primary, borderColor: `${primary}30`, background: `${primary}08` }}
+              >
+                Em breve
+              </span>
+            )}
+          </div>
+        </div>
+      </div>
+
       {/* FALE CONOSCO */}
       {org?.career_page_show_contact && (
         org?.career_page_whatsapp_url || org?.career_page_instagram_url || org?.career_page_linkedin_url
       ) && (
-        <div className="max-w-5xl mx-auto px-6 pb-12">
+        <div className="max-w-7xl mx-auto px-6 pb-12">
           <div className="rounded-2xl overflow-hidden relative"
             style={{ background: `linear-gradient(135deg, ${primary} 0%, ${primary}ee 55%, ${secondary}66 100%)` }}>
             <div className="absolute -top-10 -right-10 w-48 h-48 rounded-full opacity-10 blur-2xl"
@@ -506,7 +617,7 @@ export default function CareerPage() {
 
       {/* FOOTER */}
       <footer className="border-t border-gray-100 bg-white">
-        <div className="max-w-5xl mx-auto px-6 py-8 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="max-w-7xl mx-auto px-6 py-8 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             {logoUrl
               ? <img src={logoUrl} alt={org?.org_name} className="h-7 object-contain opacity-50" />
@@ -585,6 +696,8 @@ export default function CareerPage() {
                   </h2>
                   <div className="flex flex-wrap items-center gap-2">
                     {selectedJob.employment_type && <TypeBadge type={selectedJob.employment_type} />}
+                    {selectedJob.work_modality && <ModalityBadge modality={selectedJob.work_modality} />}
+                    {selectedJob.seniority && <SeniorityBadge seniority={selectedJob.seniority} />}
                     {selectedJob.location && (
                       <span className="flex items-center gap-1 text-xs text-white/70">
                         <MapPin className="w-3 h-3" />{selectedJob.location}
