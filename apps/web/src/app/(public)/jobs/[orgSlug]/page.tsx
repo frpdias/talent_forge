@@ -796,7 +796,7 @@ export default function CareerPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4"
           style={{ background: 'rgba(20,16,66,0.5)', backdropFilter: 'blur(4px)' }}
           onClick={() => setActiveTip(null)}>
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[85vh] overflow-y-auto"
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[92vh] overflow-y-auto"
             onClick={e => e.stopPropagation()}>
             <div className="flex items-start justify-between gap-4 p-6 border-b border-gray-100">
               <div className="flex items-center gap-3">
@@ -862,7 +862,7 @@ export default function CareerPage() {
         <>
           <div className="fixed inset-0 bg-black/50 z-40 backdrop-blur-sm" onClick={() => setSelectedJob(null)} />
           <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-6">
-            <div className="bg-white w-full sm:rounded-2xl shadow-2xl sm:max-w-2xl max-h-[92vh] sm:max-h-[88vh] flex flex-col overflow-hidden">
+            <div className="bg-white w-full sm:rounded-2xl shadow-2xl sm:max-w-3xl max-h-[95vh] sm:max-h-[92vh] flex flex-col overflow-hidden">
 
               <div className="relative px-6 pt-6 pb-5 shrink-0" style={{ background: primary }}>
                 <div
