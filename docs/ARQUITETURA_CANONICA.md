@@ -1,6 +1,6 @@
 # Arquitetura Canônica — TalentForge
 
-**Última atualização**: 2026-03-11 | **Score de Conformidade**: ✅ 100% (Sprint 38: Career Page v4 — work_modality, badges, grid 2-col, banco de talentos + PHP mobile fixes)
+**Última atualização**: 2026-03-11 | **Score de Conformidade**: ✅ 100% (Sprint 39: Depoimentos editáveis na career page — tabela `org_testimonials` + CRUD no settings + career page dinâmica)
 
 ## 📜 FONTE DA VERDADE — PRINCÍPIO FUNDAMENTAL
 
@@ -6750,7 +6750,53 @@ Entre cards e footer; fallback: WhatsApp → LinkedIn → botão desabilitado
 
 ---
 
-**FIM DO DOCUMENTO** — Versão 5.5 (Sprint 38: Career Page v4 — work_modality, PHP mobile fixes)
+## Sprint 39 — Depoimentos Editáveis na Career Page (2026-03-11)
+
+### 39.1 — Migration `20260311_org_testimonials.sql`
+Nova tabela `org_testimonials`:
+
+| Coluna | Tipo | Descrição |
+|--------|------|-----------|
+| `id` | UUID PK | |
+| `org_id` | UUID FK organizations | Multi-tenant |
+| `author_name` | TEXT NOT NULL | Nome do autor |
+| `author_role` | TEXT | Cargo/título |
+| `text` | TEXT NOT NULL | Texto do depoimento |
+| `avatar_color` | TEXT | Cor hex do avatar (iniciações) |
+| `rating` | SMALLINT 1-5 | Número de estrelas |
+| `display_order` | INTEGER | Ordem de exibição |
+| `is_active` | BOOLEAN | Visibilidade pública |
+
+**RLS:**
+- `public_read_active_testimonials`: SELECT público (anon) apenas onde `is_active = true`
+- `org_members_manage_testimonials`: ALL para membros autenticados da org via `is_org_member(org_id)`
+
+### 39.2 — Settings Page — Card de Depoimentos
+**Arquivo**: `apps/web/src/app/(recruiter)/dashboard/settings/page.tsx`
+
+- Novo card "Depoimentos na Página de Carreiras" com:
+  - Lista de depoimentos cadastrados (avatar com iniciais + cor, nome, cargo, trecho, estrelas)
+  - Botões Editar (`<Pencil>`) e Excluir (`<Trash2>`) por item
+  - Formulário inline ao adicionar/editar: nome, cargo, texto, seletor de estrelas clicável, paleta de 8 cores de avatar
+  - `handleSaveTestimonial()`: insert ou update via Supabase; `handleDeleteTestimonial()`: delete com confirm
+  - Estado: `testimonials[]`, `editingTestimonial`, `showTestimonialForm`, `savingTestimonial`
+
+### 39.3 — Career Page Dinâmica
+**Arquivo**: `apps/web/src/app/(public)/jobs/[orgSlug]/page.tsx`
+
+- `org_id` adicionado à interface `PublicJob` (já estava na view, faltava no tipo TS)
+- `const [testimonials, setTestimonials] = useState<Testimonial[]>([])`
+- Após `loadJobs()`, busca `org_testimonials` filtrando `org_id + is_active=true + order display_order`
+- Seção só renderiza quando `testimonials.length > 0` (sem depoimentos = sem seção)
+
+### Commits Sprint 39
+- `3619238` — feat(career-page): adiciona ícones SVG das redes sociais na seção #vagas
+- `0ba627c` — feat(career-page): adiciona seção de depoimentos no final da página
+- `b653426` — feat(testimonials): tabela org_testimonials + CRUD no settings + career page dinâmica
+
+---
+
+**FIM DO DOCUMENTO** — Versão 5.6 (Sprint 39: Depoimentos editáveis na career page)
 - **Seção 5**: Boas Práticas de Implantação (ciclo de avaliação, comunicação, anonimato)
 - **Seção 6**: FAQ para Auditoria Interna (MTE, fiscalização, jurídico)
 - **Seção 7**: Checklist Pré-Auditoria (documentos, evidências, conformidade)
@@ -6767,6 +6813,14 @@ Entre cards e footer; fallback: WhatsApp → LinkedIn → botão desabilitado
 ---
 
 ## 📝 Histórico de Versões
+
+### v5.6 (2026-03-11)
+- ✅ **Score de Conformidade**: 100% mantido (Sprint 39)
+- ✅ **Migration `20260311_org_testimonials.sql`**: tabela `org_testimonials` — campos `author_name`, `author_role`, `text`, `avatar_color`, `rating` (1-5), `display_order`, `is_active`; RLS público (leitura `is_active=true`) + escrita via `is_org_member(org_id)`
+- ✅ **Settings page — Depoimentos**: novo card com lista, formulário inline, seletor de estrelas clicável, paleta de 8 cores de avatar; CRUD completo via Supabase
+- ✅ **Career page dinâmica**: `org_id` adicionado à interface `PublicJob`; fetch de `org_testimonials` após `loadJobs()`; seção só renderiza se há depoimentos cadastrados
+- ✅ **Ícones SVG oficiais das redes sociais**: WhatsApp, Instagram e LinkedIn com SVG inline e cores de marca na seção `#vagas`
+- ✅ **Commits**: `3619238` + `0ba627c` + `b653426` → `origin/main`
 
 ### v5.5 (2026-03-11)
 - ✅ **Score de Conformidade**: 100% mantido (Sprint 38)
@@ -7441,4 +7495,5 @@ O `ReportsService.getDashboard()` usa `applications.source` com fallback para `c
 | Sprint 36 | 2026-03-10 | `org_type` em `organizations`, admin/companies refactor (2 blocos), compressão upload imagens, CDN cache-bust timestamp, botões excluir logo/banner | ✅ |
 | Sprint 37 | 2026-03-10 | Career Page redesign v3 — banner real como BG, logo flutuante `drop-shadow`, sticky nav glassmorphism, SVG curve, cards animados (`w-0→w-full`), TypeBadge, `daysAgo()`, Sparkles, ArrowUpRight | ✅ |
 | **Sprint 38** | **2026-03-11** | **Career Page v4 — `work_modality` + `salary_range` em `jobs`, `ModalityBadge`, `SeniorityBadge`, grid 2-col com `isLastOdd`, seção Banco de Talentos, headline editável 2 linhas, `max-w-7xl`; PHP mobile fixes: `grid-cols-*` responsivos no TFCI/ActionPlans + card view mobile em Employees** | ✅ |
+| **Sprint 39** | **2026-03-11** | **Depoimentos editáveis — tabela `org_testimonials` com RLS, CRUD no settings (formulário inline, estrelas clicáveis, paleta de cores), career page busca do DB e renderiza condicionalmente; ícones SVG reais das redes sociais na seção #vagas** | ✅ |
 ```
