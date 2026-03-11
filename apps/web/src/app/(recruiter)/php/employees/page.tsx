@@ -169,8 +169,50 @@ export default function EmployeesPage() {
         </div>
       </div>
 
-      {/* Table */}
-      <div className="bg-white rounded-xl border border-[#E5E5DC] shadow-[0_2px_8px_rgba(20,16,66,0.06),0_1px_2px_rgba(20,16,66,0.04)] overflow-x-auto">
+      {/* Mobile Card List */}
+      <div className="md:hidden space-y-3">
+        {loading ? (
+          <div className="p-8 text-center">
+            <div className="inline-block w-8 h-8 border-4 border-[#141042] border-t-transparent rounded-full animate-spin" />
+          </div>
+        ) : filteredEmployees.length === 0 ? (
+          <div className="p-8 text-center">
+            <p className="text-[#666666]">Nenhum funcionário encontrado</p>
+          </div>
+        ) : filteredEmployees.map((employee) => (
+          <div key={employee.id} className="bg-white rounded-xl border border-[#E5E5DC] p-4 shadow-sm">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center shrink-0">
+                  <span className="text-[#1F4ED8] font-semibold text-sm">
+                    {employee.full_name.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase()}
+                  </span>
+                </div>
+                <div>
+                  <p className="font-semibold text-[#141042]">{employee.full_name}</p>
+                  <p className="text-sm text-[#666666]">{employee.position || '-'}</p>
+                </div>
+              </div>
+              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                employee.status === 'active'
+                  ? 'bg-green-100 text-green-800'
+                  : employee.status === 'inactive'
+                  ? 'bg-yellow-100 text-yellow-800'
+                  : 'bg-red-100 text-red-800'
+              }`}>
+                {employee.status === 'active' ? 'Ativo' : employee.status === 'inactive' ? 'Inativo' : 'Desligado'}
+              </span>
+            </div>
+            <div className="mt-3 flex items-center justify-between text-sm text-[#666666]">
+              <span>{employee.department || '—'}</span>
+              <button className="text-[#1F4ED8] hover:text-[#1845B8] font-medium">Ver detalhes</button>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Table (desktop) */}
+      <div className="hidden md:block bg-white rounded-xl border border-[#E5E5DC] shadow-[0_2px_8px_rgba(20,16,66,0.06),0_1px_2px_rgba(20,16,66,0.04)] overflow-x-auto">
         {loading ? (
           <div className="p-8 text-center">
             <div className="inline-block w-8 h-8 border-4 border-[#141042] border-t-transparent rounded-full animate-spin" />

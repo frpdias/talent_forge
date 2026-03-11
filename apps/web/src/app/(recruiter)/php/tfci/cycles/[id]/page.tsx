@@ -237,7 +237,7 @@ export default function CycleDetailPage() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-5 gap-4">
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
                   {dimensions.map((dim) => (
                     <div key={dim.key} className="text-center">
                       <div className="text-xs text-gray-600 mb-1">{dim.label}</div>

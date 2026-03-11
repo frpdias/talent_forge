@@ -132,7 +132,7 @@ export default function ActionPlansPage() {
         <div className="max-w-7xl mx-auto">
           <div className="animate-pulse space-y-4">
             <div className="h-8 bg-[#E5E5DC] rounded w-1/4"></div>
-            <div className="grid grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
               {[1, 2, 3, 4].map(i => (
                 <div key={i} className="h-24 bg-[#E5E5DC] rounded"></div>
               ))}
