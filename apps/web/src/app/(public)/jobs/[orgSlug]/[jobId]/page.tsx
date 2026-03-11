@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { MapPin, Clock, Briefcase, ArrowLeft, Calendar, CheckCircle } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
+import DOMPurify from 'dompurify';
 
 interface PublicJob {
   id: string;
@@ -150,7 +151,7 @@ export default function JobDetailPage() {
             {job.description_html ? (
               <div
                 className="prose max-w-none text-[#141042] mb-8"
-                dangerouslySetInnerHTML={{ __html: job.description_html }}
+                dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(job.description_html) }}
               />
             ) : job.description ? (
               <div className="bg-white border border-[#E5E5DC] rounded-xl p-6 mb-8">

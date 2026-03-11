@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { UserPlus, Mail, User, Lock, Building2, Phone, Calendar, Save, AlertCircle, CheckCircle } from 'lucide-react';
+import { createClient } from '@/lib/supabase/client';
 
 type UserType = 'admin' | 'recruiter' | 'candidate';
 
@@ -35,9 +36,14 @@ export default function CreateUserPage() {
     setMessage(null);
 
     try {
+      const supabase = createClient();
+      const { data: { session } } = await supabase.auth.getSession();
       const response = await fetch('/api/admin/create-user', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session?.access_token ?? ''}`,
+        },
         body: JSON.stringify(formData),
       });
 
