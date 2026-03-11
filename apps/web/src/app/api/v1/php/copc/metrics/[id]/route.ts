@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { validateOrgMembership } from '@/lib/api/auth';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
@@ -42,6 +43,10 @@ export async function GET(
       return NextResponse.json({ error: 'Métrica não encontrada' }, { status: 404 });
     }
 
+    if (!(await validateOrgMembership(supabase, user.id, data.org_id))) {
+      return NextResponse.json({ error: 'Sem permissão para esta organização' }, { status: 403 });
+    }
+
     return NextResponse.json(data);
   } catch (error: any) {
     return NextResponse.json({ error: error.message || 'Erro interno' }, { status: 500 });
@@ -65,6 +70,20 @@ export async function PUT(
 
     const body = await request.json();
     const supabase = getSupabase();
+
+    const { data: existing } = await supabase
+      .from('copc_metrics')
+      .select('org_id')
+      .eq('id', id)
+      .single();
+
+    if (!existing) {
+      return NextResponse.json({ error: 'Métrica não encontrada' }, { status: 404 });
+    }
+
+    if (!(await validateOrgMembership(supabase, user.id, existing.org_id))) {
+      return NextResponse.json({ error: 'Sem permissão para esta organização' }, { status: 403 });
+    }
 
     const { data, error } = await supabase
       .from('copc_metrics')
@@ -99,6 +118,21 @@ export async function DELETE(
     }
 
     const supabase = getSupabase();
+
+    const { data: existing } = await supabase
+      .from('copc_metrics')
+      .select('org_id')
+      .eq('id', id)
+      .single();
+
+    if (!existing) {
+      return NextResponse.json({ error: 'Métrica não encontrada' }, { status: 404 });
+    }
+
+    if (!(await validateOrgMembership(supabase, user.id, existing.org_id))) {
+      return NextResponse.json({ error: 'Sem permissão para esta organização' }, { status: 403 });
+    }
+
     const { error } = await supabase
       .from('copc_metrics')
       .delete()

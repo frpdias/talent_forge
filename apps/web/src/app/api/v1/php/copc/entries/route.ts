@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { validateOrgMembership } from '@/lib/api/auth';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
@@ -31,6 +32,10 @@ export async function GET(request: NextRequest) {
     if (!orgId) return NextResponse.json({ error: 'org_id obrigatório' }, { status: 400 });
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+    if (!(await validateOrgMembership(supabase, user.id, orgId))) {
+      return NextResponse.json({ error: 'Sem permissão para esta organização' }, { status: 403 });
+    }
 
     let query = supabase
       .from('copc_metric_entries')
@@ -83,6 +88,10 @@ export async function POST(request: NextRequest) {
     }
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+    if (!(await validateOrgMembership(supabase, user.id, orgId))) {
+      return NextResponse.json({ error: 'Sem permissão para esta organização' }, { status: 403 });
+    }
 
     // Validar catalog_metric_ids
     const catalogIds = [...new Set(entries.map(e => e.catalog_metric_id))];

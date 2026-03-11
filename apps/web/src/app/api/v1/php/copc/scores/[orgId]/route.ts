@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { validateOrgMembership } from '@/lib/api/auth';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
@@ -32,6 +33,10 @@ export async function GET(
     const endDate = searchParams.get('end_date');
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+    if (!(await validateOrgMembership(supabase, user.id, orgId))) {
+      return NextResponse.json({ error: 'Sem permissão para esta organização' }, { status: 403 });
+    }
 
     let query = supabase
       .from('v_copc_dynamic_scores')
