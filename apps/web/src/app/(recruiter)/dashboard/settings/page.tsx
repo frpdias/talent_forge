@@ -289,7 +289,7 @@ export default function SettingsPage() {
     }
   }
 
-  async function compressImage(file: File, maxWidth: number, maxSizeBytes: number): Promise<Blob> {
+  async function compressImage(file: File, maxWidth: number, maxSizeBytes: number, mimeType: 'image/jpeg' | 'image/png' = 'image/jpeg'): Promise<Blob> {
     return new Promise((resolve, reject) => {
       const img = new Image();
       const url = URL.createObjectURL(file);
@@ -304,15 +304,17 @@ export default function SettingsPage() {
         canvas.width = width;
         canvas.height = height;
         const ctx = canvas.getContext('2d')!;
+        // Para PNG: preserva canal alpha (não preenche fundo)
+        // Para JPEG: canvas já tem fundo preto por padrão, ok para banners
         ctx.drawImage(img, 0, 0, width, height);
-        // Tenta qualidade 0.85 → se ainda grande, reduz até caber
+        // PNG é lossless — usa qualidade máxima; JPEG reduz até caber
         let quality = 0.85;
         const tryBlob = (q: number) => {
           canvas.toBlob((blob) => {
             if (!blob) { reject(new Error('Falha ao comprimir imagem')); return; }
             if (blob.size <= maxSizeBytes || q <= 0.3) { resolve(blob); return; }
             tryBlob(q - 0.1);
-          }, 'image/jpeg', q);
+          }, mimeType, mimeType === 'image/png' ? undefined : q);
         };
         tryBlob(quality);
       };
@@ -333,13 +335,20 @@ export default function SettingsPage() {
     const MAX_BYTES = 4 * 1024 * 1024; // 4MB (margem de segurança abaixo do limite 5MB do bucket)
     const maxWidth = type === 'logo' ? 800 : 1920;
 
+    // Para logos: preservar PNG para manter transparência; banners sempre JPEG
+    const isPng = file.type === 'image/png';
+    const uploadMime: 'image/jpeg' | 'image/png' = (type === 'logo' && isPng) ? 'image/png' : 'image/jpeg';
+    const ext = uploadMime === 'image/png' ? 'png' : 'jpeg';
+
     try {
       setUploadingAsset(type);
 
-      // Comprime se necessário
+      // Comprime se necessário (PNG: apenas redimensiona; JPEG: reduz qualidade)
       let uploadBlob: Blob = file;
-      if (file.size > MAX_BYTES || file.type !== 'image/jpeg') {
-        uploadBlob = await compressImage(file, maxWidth, MAX_BYTES);
+      if (file.size > MAX_BYTES || (uploadMime === 'image/jpeg' && file.type !== 'image/jpeg')) {
+        uploadBlob = await compressImage(file, maxWidth, MAX_BYTES, uploadMime);
+      } else if (uploadMime === 'image/png' && file.size > MAX_BYTES) {
+        uploadBlob = await compressImage(file, maxWidth, MAX_BYTES, 'image/png');
       }
 
       // Remove o arquivo anterior (garante que o CDN não sirvam a versão cacheada)
@@ -348,14 +357,14 @@ export default function SettingsPage() {
         const oldPath = extractStoragePath(currentUrl);
         if (oldPath) await supabase.storage.from('org-assets').remove([oldPath]);
         // Fallback: remove também o nome legado
-        await supabase.storage.from('org-assets').remove([`${orgId}/${type}.jpeg`]);
+        await supabase.storage.from('org-assets').remove([`${orgId}/${type}.jpeg`, `${orgId}/${type}.png`]);
       }
 
       // Nome com timestamp garante URL única → bust de cache CDN
-      const path = `${orgId}/${type}_${Date.now()}.jpeg`;
+      const path = `${orgId}/${type}_${Date.now()}.${ext}`;
       const { error: upError } = await supabase.storage
         .from('org-assets')
-        .upload(path, uploadBlob, { upsert: false, contentType: 'image/jpeg' });
+        .upload(path, uploadBlob, { upsert: false, contentType: uploadMime });
       if (upError) throw upError;
 
       const { data: { publicUrl } } = supabase.storage.from('org-assets').getPublicUrl(path);
