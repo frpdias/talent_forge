@@ -664,42 +664,48 @@ export default function CareerPage() {
         <div className="max-w-7xl mx-auto">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start">
 
-            {/* — Coluna EMPRESA — */}
+            {/* — Coluna PROCESSO SELETIVO — */}
             <div>
               <p className="text-xs font-bold uppercase tracking-[0.2em] mb-2" style={{ color: secondary }}>
-                Sobre a empresa
+                Como funciona
               </p>
-              <h2 className="text-2xl font-extrabold mb-4" style={{ color: primary }}>
-                Conheça a {org?.org_name}
+              <h2 className="text-2xl font-extrabold mb-2" style={{ color: primary }}>
+                Nosso processo seletivo
               </h2>
-              {org?.career_page_about ? (
-                <p className="text-gray-500 text-sm leading-relaxed mb-6">{org.career_page_about}</p>
-              ) : (
-                <p className="text-gray-400 text-sm leading-relaxed mb-6">
-                  Somos uma empresa comprometida com crescimento, inovação e pessoas. Aqui você encontra desafios reais, ambiente colaborativo e oportunidade de construir uma carreira sólida.
-                </p>
-              )}
+              <p className="text-gray-400 text-sm mb-8">Transparência em cada etapa — do cadastro à proposta.</p>
 
-              {/* Destaques rápidos */}
-              <div className="grid grid-cols-3 gap-4 mb-8">
-                {[
-                  { icon: Users, label: 'Time colaborativo' },
-                  { icon: Star, label: 'Cultura de crescimento' },
-                  { icon: Sparkles, label: 'Projetos desafiadores' },
-                ].map(({ icon: Icon, label }) => (
-                  <div key={label} className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 flex flex-col items-center text-center gap-2">
-                    <Icon className="w-5 h-5" style={{ color: secondary }} />
-                    <span className="text-xs font-medium text-gray-600 leading-tight">{label}</span>
-                  </div>
-                ))}
+              {/* Steps */}
+              <div className="relative">
+                {/* linha vertical */}
+                <div className="absolute left-[18px] top-6 bottom-6 w-px bg-gray-200" />
+                <div className="space-y-5">
+                  {[
+                    { step: '01', title: 'Candidatura', desc: 'Você se inscreve pela vaga e preenche o cadastro com seus dados e experiências.' },
+                    { step: '02', title: 'Triagem de currículo', desc: 'Nossa equipe analisa o perfil e entra em contato em até 5 dias úteis.' },
+                    { step: '03', title: 'Entrevista inicial', desc: 'Conversa com RH para entender sua trajetória, expectativas e fit cultural.' },
+                    { step: '04', title: 'Entrevista técnica', desc: 'Bate-papo com o time da área sobre habilidades e cenários práticos.' },
+                    { step: '05', title: 'Proposta e integração', desc: 'Apresentação da oferta, datas e tudo que você precisa saber para começar.' },
+                  ].map(({ step, title, desc }, i, arr) => (
+                    <div key={step} className="flex gap-4 items-start relative">
+                      <div className="w-9 h-9 rounded-full flex items-center justify-center shrink-0 z-10 text-white text-xs font-bold"
+                        style={{ background: primary }}>
+                        {step}
+                      </div>
+                      <div className={`bg-white rounded-xl border border-gray-100 shadow-sm p-4 flex-1 ${i < arr.length - 1 ? 'mb-1' : ''}`}>
+                        <p className="font-semibold text-sm mb-0.5" style={{ color: primary }}>{title}</p>
+                        <p className="text-gray-400 text-xs leading-relaxed">{desc}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
 
               {/* Links sociais */}
               {org?.career_page_show_contact && (
                 org?.career_page_whatsapp_url || org?.career_page_instagram_url || org?.career_page_linkedin_url
               ) && (
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-3">Fale conosco</p>
+                <div className="mt-8">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-3">Dúvidas? Fale conosco</p>
                   <div className="flex gap-3 flex-wrap">
                     {org.career_page_whatsapp_url && (
                       <a href={org.career_page_whatsapp_url} target="_blank" rel="noopener noreferrer"
