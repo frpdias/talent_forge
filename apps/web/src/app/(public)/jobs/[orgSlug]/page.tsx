@@ -5,7 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import {
   MapPin, Clock, Briefcase, Building2, Search, Instagram, Linkedin,
   MessageCircle, X, CheckCircle, Share2, DollarSign, Check, ArrowUpRight,
-  ChevronDown, Sparkles,
+  ChevronDown, Sparkles, FileText, Users, Star, Lightbulb,
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 
@@ -659,43 +659,121 @@ export default function CareerPage() {
       </div>
       )}
 
-      {/* FALE CONOSCO */}
-      {org?.career_page_show_contact && (
-        org?.career_page_whatsapp_url || org?.career_page_instagram_url || org?.career_page_linkedin_url
-      ) && (
-        <div className="bg-gray-50 py-14 px-6">
-          <div className="max-w-7xl mx-auto text-center">
-            <p className="text-xs font-bold uppercase tracking-[0.2em] mb-2" style={{ color: secondary }}>
-              Conecte-se
-            </p>
-            <h2 className="text-2xl font-extrabold mb-1" style={{ color: primary }}>Fale com recrutamento</h2>
-            <p className="text-gray-400 text-sm mb-8">Tem dúvidas sobre as vagas? Entre em contato.</p>
-            <div className="flex items-center justify-center gap-3 flex-wrap">
-              {org.career_page_whatsapp_url && (
-                <a href={org.career_page_whatsapp_url} target="_blank" rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all hover:scale-105 active:scale-95 border bg-white"
-                  style={{ color: '#16a34a', borderColor: '#bbf7d0' }}>
-                  <MessageCircle className="w-4 h-4" />WhatsApp
-                </a>
+      {/* DIVULGAÇÃO + DICAS */}
+      <div className="bg-gray-50 py-16 px-6">
+        <div className="max-w-7xl mx-auto">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start">
+
+            {/* — Coluna EMPRESA — */}
+            <div>
+              <p className="text-xs font-bold uppercase tracking-[0.2em] mb-2" style={{ color: secondary }}>
+                Sobre a empresa
+              </p>
+              <h2 className="text-2xl font-extrabold mb-4" style={{ color: primary }}>
+                Conheça a {org?.org_name}
+              </h2>
+              {org?.career_page_about ? (
+                <p className="text-gray-500 text-sm leading-relaxed mb-6">{org.career_page_about}</p>
+              ) : (
+                <p className="text-gray-400 text-sm leading-relaxed mb-6">
+                  Somos uma empresa comprometida com crescimento, inovação e pessoas. Aqui você encontra desafios reais, ambiente colaborativo e oportunidade de construir uma carreira sólida.
+                </p>
               )}
-              {org.career_page_instagram_url && (
-                <a href={org.career_page_instagram_url} target="_blank" rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all hover:scale-105 active:scale-95 border bg-white"
-                  style={{ color: '#be185d', borderColor: '#fbcfe8' }}>
-                  <Instagram className="w-4 h-4" />Instagram
-                </a>
-              )}
-              {org.career_page_linkedin_url && (
-                <a href={org.career_page_linkedin_url} target="_blank" rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all hover:scale-105 active:scale-95 border bg-white"
-                  style={{ color: '#0369a1', borderColor: '#bae6fd' }}>
-                  <Linkedin className="w-4 h-4" />LinkedIn
-                </a>
+
+              {/* Destaques rápidos */}
+              <div className="grid grid-cols-3 gap-4 mb-8">
+                {[
+                  { icon: Users, label: 'Time colaborativo' },
+                  { icon: Star, label: 'Cultura de crescimento' },
+                  { icon: Sparkles, label: 'Projetos desafiadores' },
+                ].map(({ icon: Icon, label }) => (
+                  <div key={label} className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 flex flex-col items-center text-center gap-2">
+                    <Icon className="w-5 h-5" style={{ color: secondary }} />
+                    <span className="text-xs font-medium text-gray-600 leading-tight">{label}</span>
+                  </div>
+                ))}
+              </div>
+
+              {/* Links sociais */}
+              {org?.career_page_show_contact && (
+                org?.career_page_whatsapp_url || org?.career_page_instagram_url || org?.career_page_linkedin_url
+              ) && (
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-3">Fale conosco</p>
+                  <div className="flex gap-3 flex-wrap">
+                    {org.career_page_whatsapp_url && (
+                      <a href={org.career_page_whatsapp_url} target="_blank" rel="noopener noreferrer"
+                        className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all hover:scale-105 active:scale-95 border bg-white"
+                        style={{ color: '#16a34a', borderColor: '#bbf7d0' }}>
+                        <MessageCircle className="w-4 h-4" />WhatsApp
+                      </a>
+                    )}
+                    {org.career_page_instagram_url && (
+                      <a href={org.career_page_instagram_url} target="_blank" rel="noopener noreferrer"
+                        className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all hover:scale-105 active:scale-95 border bg-white"
+                        style={{ color: '#be185d', borderColor: '#fbcfe8' }}>
+                        <Instagram className="w-4 h-4" />Instagram
+                      </a>
+                    )}
+                    {org.career_page_linkedin_url && (
+                      <a href={org.career_page_linkedin_url} target="_blank" rel="noopener noreferrer"
+                        className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all hover:scale-105 active:scale-95 border bg-white"
+                        style={{ color: '#0369a1', borderColor: '#bae6fd' }}>
+                        <Linkedin className="w-4 h-4" />LinkedIn
+                      </a>
+                    )}
+                  </div>
+                </div>
               )}
             </div>
+
+            {/* — Coluna DICAS — */}
+            <div>
+              <p className="text-xs font-bold uppercase tracking-[0.2em] mb-2" style={{ color: secondary }}>
+                Prepare-se
+              </p>
+              <h2 className="text-2xl font-extrabold mb-6" style={{ color: primary }}>
+                Dicas para se destacar
+              </h2>
+              <div className="space-y-3">
+                {[
+                  {
+                    icon: FileText,
+                    title: 'Personalize seu currículo',
+                    desc: 'Destaque experiências relevantes para a vaga e use as palavras-chave do anúncio.',
+                  },
+                  {
+                    icon: Search,
+                    title: 'Pesquise a empresa',
+                    desc: 'Conheça nossos produtos, valores e missão antes de ir para a entrevista.',
+                  },
+                  {
+                    icon: Lightbulb,
+                    title: 'Seja direto e objetivo',
+                    desc: 'Respostas claras com exemplos concretos da sua trajetória fazem toda a diferença.',
+                  },
+                  {
+                    icon: CheckCircle,
+                    title: 'Demonstre interesse real',
+                    desc: 'Faça perguntas sobre o time, os projetos e possibilidades de crescimento.',
+                  },
+                ].map(({ icon: Icon, title, desc }) => (
+                  <div key={title} className="flex gap-4 bg-white rounded-xl border border-gray-100 shadow-sm p-4 hover:shadow-md transition-shadow">
+                    <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0" style={{ background: `${secondary}15` }}>
+                      <Icon className="w-4 h-4" style={{ color: secondary }} />
+                    </div>
+                    <div>
+                      <p className="font-semibold text-sm mb-0.5" style={{ color: primary }}>{title}</p>
+                      <p className="text-gray-400 text-xs leading-relaxed">{desc}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
           </div>
         </div>
-      )}
+      </div>
 
       {/* FOOTER */}
       <footer className="border-t border-gray-100 bg-white">
