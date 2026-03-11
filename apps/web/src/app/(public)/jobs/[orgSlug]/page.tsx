@@ -220,7 +220,7 @@ export default function CareerPage() {
       </nav>
 
       {/* HERO */}
-      <div ref={heroRef} className="relative overflow-hidden" style={{ minHeight: bannerUrl ? '520px' : '440px' }}>
+      <div ref={heroRef} className="relative overflow-hidden" style={{ minHeight: bannerUrl ? '320px' : '280px' }}>
 
         {bannerUrl ? (
           <>
@@ -246,11 +246,11 @@ export default function CareerPage() {
           </>
         )}
 
-        <div className="relative max-w-5xl mx-auto px-6 pt-12 pb-20 flex flex-col justify-between h-full"
+        <div className="relative max-w-5xl mx-auto px-6 pt-10 pb-14 flex flex-row items-start justify-between gap-8 h-full"
           style={{ minHeight: 'inherit' }}>
 
-          {/* Logo flutuante sem fundo */}
-          <div className="mb-10">
+          {/* Logo flutuante sem fundo — lado esquerdo */}
+          <div className="shrink-0 pt-1">
             {logoUrl ? (
               <img
                 src={logoUrl}
@@ -267,18 +267,19 @@ export default function CareerPage() {
             )}
           </div>
 
-          <div>
+          {/* Texto — lado direito */}
+          <div className="text-right">
             {org?.org_industry && (
-              <p className="text-xs font-extrabold uppercase tracking-[0.25em] mb-4" style={{ color: secondary }}>
+              <p className="text-xs font-extrabold uppercase tracking-[0.25em] mb-3" style={{ color: secondary }}>
                 {org.org_industry}
               </p>
             )}
-            <h1 className="text-4xl sm:text-5xl lg:text-[3.5rem] font-extrabold text-white leading-[1.1] tracking-tight mb-6 max-w-2xl">
+            <h1 className="text-3xl sm:text-4xl lg:text-[2.75rem] font-extrabold text-white leading-[1.1] tracking-tight mb-5">
               {org?.career_page_headline || (
                 <>Faça parte do time<br /><span style={{ color: secondary }}>{org?.org_name}</span></>
               )}
             </h1>
-            <div className="flex items-center gap-4 flex-wrap">
+            <div className="flex items-center gap-3 flex-wrap justify-end">
               <span
                 className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-bold"
                 style={{ background: `${secondary}22`, color: 'white', border: `1.5px solid ${secondary}55` }}
