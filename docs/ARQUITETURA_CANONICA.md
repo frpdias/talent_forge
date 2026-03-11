@@ -1,6 +1,6 @@
 # Arquitetura Canônica — TalentForge
 
-**Última atualização**: 2026-03-10 | **Score de Conformidade**: ✅ 100% (Sprint 37: Career Page redesign v3 — banner real, logo flutuante, sticky nav, cards animados)
+**Última atualização**: 2026-03-11 | **Score de Conformidade**: ✅ 100% (Sprint 38: Career Page v4 — work_modality, badges, grid 2-col, banco de talentos + PHP mobile fixes)
 
 ## 📜 FONTE DA VERDADE — PRINCÍPIO FUNDAMENTAL
 
@@ -242,6 +242,7 @@ PROJETO_TALENT_FORGE/
 │   │   ├── 20260306_application_source_tracking.sql ✅ rastreamento de origem das candidaturas (source, utm_source, utm_medium, utm_campaign)
 │   │   ├── 20260307_career_page_v2.sql ✅ career page v2 — banner, about, cores secundárias, links sociais, bucket org-assets
 │   │   ├── 20260309_fix_career_page_visibility.sql ✅ habilitação career page FARTECH + vagas is_public = TRUE
+│   │   ├── 20260311_career_page_v3_work_modality.sql ✅ colunas work_modality + salary_range em jobs; view v_public_jobs e RPC get_public_jobs_by_org recriados
 │   │   └── 20260302_job_publication_engine.sql ✅ job_publication_channels + job_publications + job_publication_logs + RLS + triggers
 │   ├── VALIDATE_IMPROVEMENTS.sql  # Script de validação
 │   └── README.md                  # Instruções de migrations
@@ -6706,7 +6707,50 @@ function daysAgo(date: string) {
 
 ---
 
-**FIM DO DOCUMENTO** — Versão 5.4 (Sprint 37: Career Page redesign v3 — banner real, logo flutuante, sticky nav, cards animados)
+## Sprint 38 — Career Page v4 + work_modality + PHP Mobile Fixes (2026-03-11)
+
+### 38.1 — Migration `20260311_career_page_v3_work_modality.sql`
+- **`work_modality TEXT CHECK('presencial'|'hibrido'|'remoto')`** e **`salary_range TEXT`** adicionados à tabela `jobs`
+- `v_public_jobs` recriada incluindo `work_modality`, `salary_range` e `seniority::TEXT`
+- RPC `get_public_jobs_by_org(p_slug TEXT)` recriado — `RETURNS SETOF v_public_jobs`
+
+### 38.2 — work_modality full stack
+- **`packages/types/src/dto.ts`**: `workModality?: 'presencial' | 'hibrido' | 'remoto'` em `CreateJobDto` e `UpdateJobDto`
+- **`apps/api/src/jobs/jobs.service.ts`**: `work_modality: dto.workModality` no insert; update condicional
+- **`apps/web/src/app/(recruiter)/jobs/new/page.tsx`**: `isRemote` checkbox substituído por `Select` com 3 opções; `workModality` no estado e payload
+
+### 38.3 — Career Page v4 (`/jobs/[orgSlug]/page.tsx`)
+
+#### Novos componentes inline
+- **`ModalityBadge`**: presencial=azul (`bg-blue-100 text-blue-700`), híbrido=âmbar (`bg-amber-100 text-amber-700`), remoto=verde (`bg-green-100 text-green-700`)
+- **`SeniorityBadge`**: badge neutro `bg-gray-100 text-gray-600` com seniority como texto
+
+#### Layout e UX
+- Grid de vagas: `grid-cols-1 sm:grid-cols-2 gap-4` (era lista 1 coluna)
+- Último card ímpar: `sm:col-span-2` via `isLastOdd = filteredJobs.length % 2 !== 0`
+- Contador: "Mostrando X de Y vagas" abaixo dos filtros
+- "Ver vaga" sempre visível (removido `opacity-0 group-hover:opacity-100`)
+- Hero sempre 2 linhas: linha 1 = `career_page_headline || 'Faça parte do time'`, linha 2 = `org_name` na cor secundária
+- Todos containers: `max-w-7xl` (era `max-w-5xl`)
+
+#### Seção Banco de Talentos
+Entre cards e footer; fallback: WhatsApp → LinkedIn → botão desabilitado
+
+### 38.4 — PHP Mobile Fixes
+
+| Arquivo | Problema | Correção |
+|---------|----------|----------|
+| `php/tfci/cycles/[id]/page.tsx` | `grid-cols-5` sem breakpoints nas dimensões de avaliação | `grid-cols-2 sm:grid-cols-3 md:grid-cols-5` |
+| `php/action-plans/page.tsx` | skeleton `grid-cols-4` quebrado no mobile | `grid-cols-2 sm:grid-cols-4` |
+| `php/employees/page.tsx` | tabela 6 colunas inutilizável no mobile | `hidden md:block` na tabela + card view `md:hidden` com nome/cargo/departamento/status |
+
+### Commits Sprint 38
+- `64927c6` — feat(career-page): melhorias visuais e campo work_modality
+- `7bcf684` — fix(php): corrige grids e tabela sem responsividade mobile
+
+---
+
+**FIM DO DOCUMENTO** — Versão 5.5 (Sprint 38: Career Page v4 — work_modality, PHP mobile fixes)
 - **Seção 5**: Boas Práticas de Implantação (ciclo de avaliação, comunicação, anonimato)
 - **Seção 6**: FAQ para Auditoria Interna (MTE, fiscalização, jurídico)
 - **Seção 7**: Checklist Pré-Auditoria (documentos, evidências, conformidade)
@@ -6723,6 +6767,21 @@ function daysAgo(date: string) {
 ---
 
 ## 📝 Histórico de Versões
+
+### v5.5 (2026-03-11)
+- ✅ **Score de Conformidade**: 100% mantido (Sprint 38)
+- ✅ **Migration `20260311_career_page_v3_work_modality.sql`**: `work_modality TEXT CHECK('presencial'|'hibrido'|'remoto')` + `salary_range TEXT` em `jobs`; `v_public_jobs` e RPC `get_public_jobs_by_org` recriados incluindo novos campos + `seniority::TEXT`
+- ✅ **`work_modality` full stack**: `CreateJobDto`/`UpdateJobDto` em `packages/types`; `jobs.service.ts` (NestJS) mapeia `work_modality` em insert e update; `jobs/new/page.tsx` substitui `isRemote` por `Select` de modalidade
+- ✅ **Career Page — `ModalityBadge`**: Presencial=azul, Híbrido=âmbar, Remoto=verde (componente inline na `jobs/[orgSlug]/page.tsx`)
+- ✅ **Career Page — `SeniorityBadge`**: badge neutro cinza exibido abaixo da modalidade
+- ✅ **Career Page — grid 2-col**: `grid-cols-1 sm:grid-cols-2 gap-4`; último card ímpar recebe `sm:col-span-2` (`isLastOdd`)
+- ✅ **Career Page — contador**: `Mostrando X de Y vagas`
+- ✅ **Career Page — hero headline editável**: sempre 2 linhas — `career_page_headline` (default 'Faça parte do time') + `org_name` na cor secundária; settings label/placeholder atualizados
+- ✅ **Career Page — Banco de Talentos**: seção entre cards e footer; link prioriza WhatsApp → LinkedIn → desabilitado; `max-w-7xl` em todos os containers (era `max-w-5xl`)
+- ✅ **PHP mobile — TFCI `[id]`**: `grid-cols-5` → `grid-cols-2 sm:grid-cols-3 md:grid-cols-5` nas dimensões de avaliação
+- ✅ **PHP mobile — Action Plans**: skeleton `grid-cols-4` → `grid-cols-2 sm:grid-cols-4`
+- ✅ **PHP mobile — Employees**: tabela 6-col escondida no mobile (`hidden md:block`); card view adicionada (`md:hidden`) com nome, cargo, departamento, status e link
+- ✅ **Commits**: `64927c6` (career-page) + `7bcf684` (php mobile) → pusados para `origin/main`
 
 ### v5.4 (2026-03-10)
 - ✅ **Score de Conformidade**: 100% mantido (Sprint 37)
@@ -7380,5 +7439,6 @@ O `ReportsService.getDashboard()` usa `applications.source` com fallback para `c
 | Sprint 34 | 2026-03-10 | Career Page v2, fluxo de candidatura, redirect login, auto-apply | ✅ |
 | Sprint 35 | 2026-03-10 | Publisher Engine NestJS, NR-1 PDF, Jobs Page v2, Source Analytics, limpeza 112 arquivos | ✅ |
 | Sprint 36 | 2026-03-10 | `org_type` em `organizations`, admin/companies refactor (2 blocos), compressão upload imagens, CDN cache-bust timestamp, botões excluir logo/banner | ✅ |
-| **Sprint 37** | **2026-03-10** | **Career Page redesign v3 — banner real como BG, logo flutuante `drop-shadow`, sticky nav glassmorphism, SVG curve, cards animados (`w-0→w-full`), TypeBadge, `daysAgo()`, Sparkles, ArrowUpRight** | ✅ |
+| Sprint 37 | 2026-03-10 | Career Page redesign v3 — banner real como BG, logo flutuante `drop-shadow`, sticky nav glassmorphism, SVG curve, cards animados (`w-0→w-full`), TypeBadge, `daysAgo()`, Sparkles, ArrowUpRight | ✅ |
+| **Sprint 38** | **2026-03-11** | **Career Page v4 — `work_modality` + `salary_range` em `jobs`, `ModalityBadge`, `SeniorityBadge`, grid 2-col com `isLastOdd`, seção Banco de Talentos, headline editável 2 linhas, `max-w-7xl`; PHP mobile fixes: `grid-cols-*` responsivos no TFCI/ActionPlans + card view mobile em Employees** | ✅ |
 ```
