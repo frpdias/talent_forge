@@ -664,39 +664,34 @@ export default function CareerPage() {
         org?.career_page_whatsapp_url || org?.career_page_instagram_url || org?.career_page_linkedin_url
       ) && (
         <div className="max-w-7xl mx-auto px-6 pb-12">
-          <div className="rounded-2xl overflow-hidden relative"
-            style={{ background: `linear-gradient(135deg, ${primary} 0%, ${primary}ee 55%, ${secondary}66 100%)` }}>
-            <div className="absolute -top-10 -right-10 w-48 h-48 rounded-full opacity-10 blur-2xl"
-              style={{ background: secondary }} />
-            <div className="relative px-8 py-10 text-center">
-              <p className="text-xs font-extrabold uppercase tracking-[0.2em] mb-2" style={{ color: secondary }}>
-                Conecte-se
-              </p>
-              <h2 className="text-2xl font-extrabold text-white mb-1">Fale com recrutamento</h2>
-              <p className="text-white/60 text-sm mb-8">Tem dúvidas sobre as vagas? Entre em contato.</p>
-              <div className="flex items-center justify-center gap-3 flex-wrap">
-                {org.career_page_whatsapp_url && (
-                  <a href={org.career_page_whatsapp_url} target="_blank" rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold text-white transition-all hover:scale-105 active:scale-95 shadow-lg"
-                    style={{ background: '#25D366', boxShadow: '0 4px 16px rgba(37,211,102,0.35)' }}>
-                    <MessageCircle className="w-4 h-4" />WhatsApp
-                  </a>
-                )}
-                {org.career_page_instagram_url && (
-                  <a href={org.career_page_instagram_url} target="_blank" rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold text-white transition-all hover:scale-105 active:scale-95 shadow-lg"
-                    style={{ background: 'linear-gradient(135deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888)', boxShadow: '0 4px 16px rgba(220,39,67,0.3)' }}>
-                    <Instagram className="w-4 h-4" />Instagram
-                  </a>
-                )}
-                {org.career_page_linkedin_url && (
-                  <a href={org.career_page_linkedin_url} target="_blank" rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold text-white transition-all hover:scale-105 active:scale-95 shadow-lg"
-                    style={{ background: '#0077B5', boxShadow: '0 4px 16px rgba(0,119,181,0.35)' }}>
-                    <Linkedin className="w-4 h-4" />LinkedIn
-                  </a>
-                )}
-              </div>
+          <div className="rounded-2xl bg-white border border-gray-100 shadow-sm px-8 py-10 text-center">
+            <p className="text-xs font-bold uppercase tracking-[0.2em] mb-2" style={{ color: secondary }}>
+              Conecte-se
+            </p>
+            <h2 className="text-2xl font-extrabold mb-1" style={{ color: primary }}>Fale com recrutamento</h2>
+            <p className="text-gray-400 text-sm mb-8">Tem dúvidas sobre as vagas? Entre em contato.</p>
+            <div className="flex items-center justify-center gap-3 flex-wrap">
+              {org.career_page_whatsapp_url && (
+                <a href={org.career_page_whatsapp_url} target="_blank" rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all hover:scale-105 active:scale-95 border"
+                  style={{ color: '#16a34a', borderColor: '#bbf7d0', background: '#f0fdf4' }}>
+                  <MessageCircle className="w-4 h-4" />WhatsApp
+                </a>
+              )}
+              {org.career_page_instagram_url && (
+                <a href={org.career_page_instagram_url} target="_blank" rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all hover:scale-105 active:scale-95 border"
+                  style={{ color: '#be185d', borderColor: '#fbcfe8', background: '#fdf2f8' }}>
+                  <Instagram className="w-4 h-4" />Instagram
+                </a>
+              )}
+              {org.career_page_linkedin_url && (
+                <a href={org.career_page_linkedin_url} target="_blank" rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all hover:scale-105 active:scale-95 border"
+                  style={{ color: '#0369a1', borderColor: '#bae6fd', background: '#f0f9ff' }}>
+                  <Linkedin className="w-4 h-4" />LinkedIn
+                </a>
+              )}
             </div>
           </div>
         </div>
