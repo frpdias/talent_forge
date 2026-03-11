@@ -1,19 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { getAuthUser, validateOrgMembership } from '@/lib/api/auth';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
 function getSupabase() {
   return createClient(supabaseUrl, supabaseServiceKey);
-}
-
-async function getAuthUser(request: NextRequest) {
-  const authHeader = request.headers.get('authorization');
-  if (!authHeader) return null;
-  const supabase = getSupabase();
-  const { data: { user } } = await supabase.auth.getUser(authHeader.replace('Bearer ', ''));
-  return user;
 }
 
 /**
@@ -38,6 +31,11 @@ export async function GET(request: NextRequest) {
     }
 
     const supabase = getSupabase();
+
+    if (!(await validateOrgMembership(supabase, user.id, orgId))) {
+      return NextResponse.json({ error: 'Sem permissão para esta organização' }, { status: 403 });
+    }
+
     let query = supabase
       .from('employees')
       .select('id, full_name, cpf, email, phone, position, department, hire_date, status, manager_id, user_id, created_at')
@@ -126,8 +124,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'x-org-id é obrigatório' }, { status: 400 });
     }
 
-    const body = await request.json();
     const supabase = getSupabase();
+
+    if (!(await validateOrgMembership(supabase, user.id, orgId))) {
+      return NextResponse.json({ error: 'Sem permissão para esta organização' }, { status: 403 });
+    }
+
+    const body = await request.json();
 
     // Resolve user_id via auth se email fornecido (e user_id ainda não definido no body)
     let authUserId: string | null = body.user_id || null;

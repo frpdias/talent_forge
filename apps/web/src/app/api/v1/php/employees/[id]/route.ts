@@ -1,19 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { getAuthUser, validateOrgMembership } from '@/lib/api/auth';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
 function getSupabase() {
   return createClient(supabaseUrl, supabaseServiceKey);
-}
-
-async function getAuthUser(request: NextRequest) {
-  const authHeader = request.headers.get('authorization');
-  if (!authHeader) return null;
-  const supabase = getSupabase();
-  const { data: { user } } = await supabase.auth.getUser(authHeader.replace('Bearer ', ''));
-  return user;
 }
 
 /**
@@ -43,6 +36,10 @@ export async function GET(
       return NextResponse.json({ error: 'Funcionário não encontrado' }, { status: 404 });
     }
 
+    if (!(await validateOrgMembership(supabase, user.id, data.organization_id))) {
+      return NextResponse.json({ error: 'Sem permissão para esta organização' }, { status: 403 });
+    }
+
     return NextResponse.json(data);
   } catch (err) {
     console.error('Erro interno:', err);
@@ -67,6 +64,21 @@ export async function PATCH(
     const { id } = await params;
     const body = await request.json();
     const supabase = getSupabase();
+
+    // Valida que o employee existe e que o user pertence à org dele
+    const { data: existing } = await supabase
+      .from('employees')
+      .select('organization_id')
+      .eq('id', id)
+      .single();
+
+    if (!existing) {
+      return NextResponse.json({ error: 'Funcionário não encontrado' }, { status: 404 });
+    }
+
+    if (!(await validateOrgMembership(supabase, user.id, existing.organization_id))) {
+      return NextResponse.json({ error: 'Sem permissão para esta organização' }, { status: 403 });
+    }
 
     // Campos permitidos
     const updateData: Record<string, unknown> = {};
@@ -116,6 +128,20 @@ export async function DELETE(
 
     const { id } = await params;
     const supabase = getSupabase();
+
+    const { data: existing } = await supabase
+      .from('employees')
+      .select('organization_id')
+      .eq('id', id)
+      .single();
+
+    if (!existing) {
+      return NextResponse.json({ error: 'Funcionário não encontrado' }, { status: 404 });
+    }
+
+    if (!(await validateOrgMembership(supabase, user.id, existing.organization_id))) {
+      return NextResponse.json({ error: 'Sem permissão para esta organização' }, { status: 403 });
+    }
 
     const { error } = await supabase
       .from('employees')
