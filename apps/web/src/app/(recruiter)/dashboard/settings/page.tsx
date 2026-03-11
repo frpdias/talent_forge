@@ -651,23 +651,64 @@ export default function SettingsPage() {
                 <MessageCircle className="w-4 h-4" /> Links de contato e redes sociais
               </p>
               <div className="space-y-3">
+                {/* WhatsApp — só número */}
                 <div className="flex items-center gap-3">
                   <MessageCircle className="w-4 h-4 text-[#25D366] shrink-0" />
-                  <Input value={careerPage.career_page_whatsapp_url}
-                    onChange={(e) => setCareerPage({ ...careerPage, career_page_whatsapp_url: e.target.value })}
-                    placeholder="https://wa.me/5511..." />
+                  <div className="flex flex-1 rounded-lg border border-[#E5E5DC] overflow-hidden focus-within:ring-2 focus-within:ring-[#141042] bg-white">
+                    <span className="px-3 py-2 bg-[#FAFAF8] text-[#999999] text-sm border-r border-[#E5E5DC] whitespace-nowrap select-none">
+                      wa.me/
+                    </span>
+                    <input
+                      type="tel"
+                      className="flex-1 px-3 py-2 text-sm outline-none bg-white placeholder:text-[#CCCCCC]"
+                      placeholder="5511999999999"
+                      value={careerPage.career_page_whatsapp_url.replace('https://wa.me/', '')}
+                      onChange={(e) => {
+                        const digits = e.target.value.replace(/\D/g, '');
+                        setCareerPage({ ...careerPage, career_page_whatsapp_url: digits ? `https://wa.me/${digits}` : '' });
+                      }}
+                    />
+                  </div>
                 </div>
+
+                {/* Instagram — só @username */}
                 <div className="flex items-center gap-3">
                   <Instagram className="w-4 h-4 text-[#E1306C] shrink-0" />
-                  <Input value={careerPage.career_page_instagram_url}
-                    onChange={(e) => setCareerPage({ ...careerPage, career_page_instagram_url: e.target.value })}
-                    placeholder="https://instagram.com/empresa" />
+                  <div className="flex flex-1 rounded-lg border border-[#E5E5DC] overflow-hidden focus-within:ring-2 focus-within:ring-[#141042] bg-white">
+                    <span className="px-3 py-2 bg-[#FAFAF8] text-[#999999] text-sm border-r border-[#E5E5DC] whitespace-nowrap select-none">
+                      instagram.com/
+                    </span>
+                    <input
+                      type="text"
+                      className="flex-1 px-3 py-2 text-sm outline-none bg-white placeholder:text-[#CCCCCC]"
+                      placeholder="nomedarede"
+                      value={careerPage.career_page_instagram_url.replace('https://instagram.com/', '').replace(/^@/, '')}
+                      onChange={(e) => {
+                        const handle = e.target.value.replace(/^@/, '').replace(/\s/g, '');
+                        setCareerPage({ ...careerPage, career_page_instagram_url: handle ? `https://instagram.com/${handle}` : '' });
+                      }}
+                    />
+                  </div>
                 </div>
+
+                {/* LinkedIn — só slug da empresa */}
                 <div className="flex items-center gap-3">
                   <Linkedin className="w-4 h-4 text-[#0077B5] shrink-0" />
-                  <Input value={careerPage.career_page_linkedin_url}
-                    onChange={(e) => setCareerPage({ ...careerPage, career_page_linkedin_url: e.target.value })}
-                    placeholder="https://linkedin.com/company/empresa" />
+                  <div className="flex flex-1 rounded-lg border border-[#E5E5DC] overflow-hidden focus-within:ring-2 focus-within:ring-[#141042] bg-white">
+                    <span className="px-3 py-2 bg-[#FAFAF8] text-[#999999] text-sm border-r border-[#E5E5DC] whitespace-nowrap select-none">
+                      linkedin.com/company/
+                    </span>
+                    <input
+                      type="text"
+                      className="flex-1 px-3 py-2 text-sm outline-none bg-white placeholder:text-[#CCCCCC]"
+                      placeholder="nome-da-empresa"
+                      value={careerPage.career_page_linkedin_url.replace('https://linkedin.com/company/', '').replace(/\/$/, '')}
+                      onChange={(e) => {
+                        const slug = e.target.value.replace(/\s/g, '-').replace(/[^a-zA-Z0-9\-_]/g, '').replace(/\/+$/, '');
+                        setCareerPage({ ...careerPage, career_page_linkedin_url: slug ? `https://linkedin.com/company/${slug}` : '' });
+                      }}
+                    />
+                  </div>
                 </div>
               </div>
               <div className="flex items-center justify-between mt-3 p-3 bg-[#FAFAF8] rounded-lg border border-[#E5E5DC]">
