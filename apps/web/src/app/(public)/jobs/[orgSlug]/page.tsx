@@ -377,8 +377,7 @@ export default function CareerPage() {
             <div className="flex items-start gap-5">
               {logoUrl && (
                 <img src={logoUrl} alt={org.org_name}
-                  className="h-12 w-12 object-contain rounded-xl shrink-0 hidden sm:block"
-                  style={{ background: `${primary}08`, padding: '6px' }} />
+                  className="h-14 max-h-14 max-w-[100px] object-contain shrink-0 hidden sm:block" />
               )}
               <div>
                 <p className="text-xs font-extrabold uppercase tracking-widest mb-1" style={{ color: secondary }}>
