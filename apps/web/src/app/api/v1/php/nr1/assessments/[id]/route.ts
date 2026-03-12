@@ -1,20 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
-
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
-
-function getSupabase() {
-  return createClient(supabaseUrl, supabaseServiceKey);
-}
-
-async function getAuthUser(request: NextRequest) {
-  const authHeader = request.headers.get('authorization');
-  if (!authHeader) return null;
-  const supabase = getSupabase();
-  const { data: { user } } = await supabase.auth.getUser(authHeader.replace('Bearer ', ''));
-  return user;
-}
+import { getAuthUser, getServiceSupabase, validateOrgMembership } from '@/lib/api/auth';
 
 /**
  * GET /api/v1/php/nr1/assessments/:id
@@ -31,7 +16,7 @@ export async function GET(
       return NextResponse.json({ error: 'Não autenticado' }, { status: 401 });
     }
 
-    const supabase = getSupabase();
+    const supabase = getServiceSupabase();
     const { data, error } = await supabase
       .from('nr1_risk_assessments')
       .select('*')
@@ -42,9 +27,13 @@ export async function GET(
       return NextResponse.json({ error: 'Avaliação não encontrada' }, { status: 404 });
     }
 
+    if (!(await validateOrgMembership(supabase, user.id, data.org_id))) {
+      return NextResponse.json({ error: 'Sem permissão para esta organização' }, { status: 403 });
+    }
+
     return NextResponse.json(data);
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message || 'Erro interno' }, { status: 500 });
+  } catch {
+    return NextResponse.json({ error: 'Erro interno' }, { status: 500 });
   }
 }
 
@@ -63,12 +52,59 @@ export async function PUT(
       return NextResponse.json({ error: 'Não autenticado' }, { status: 401 });
     }
 
+    const supabase = getServiceSupabase();
+
+    // Fetch record first to validate org membership
+    const { data: existing, error: fetchError } = await supabase
+      .from('nr1_risk_assessments')
+      .select('org_id')
+      .eq('id', id)
+      .single();
+
+    if (fetchError || !existing) {
+      return NextResponse.json({ error: 'Avaliação não encontrada' }, { status: 404 });
+    }
+
+    if (!(await validateOrgMembership(supabase, user.id, existing.org_id))) {
+      return NextResponse.json({ error: 'Sem permissão para esta organização' }, { status: 403 });
+    }
+
     const body = await request.json();
-    const supabase = getSupabase();
+    const {
+      team_id,
+      user_id,
+      assessment_date,
+      workload_pace_risk,
+      goal_pressure_risk,
+      role_clarity_risk,
+      autonomy_control_risk,
+      leadership_support_risk,
+      peer_collaboration_risk,
+      recognition_justice_risk,
+      communication_change_risk,
+      conflict_harassment_risk,
+      recovery_boundaries_risk,
+      notes,
+    } = body;
 
     const { data, error } = await supabase
       .from('nr1_risk_assessments')
-      .update(body)
+      .update({
+        team_id,
+        user_id,
+        assessment_date,
+        workload_pace_risk,
+        goal_pressure_risk,
+        role_clarity_risk,
+        autonomy_control_risk,
+        leadership_support_risk,
+        peer_collaboration_risk,
+        recognition_justice_risk,
+        communication_change_risk,
+        conflict_harassment_risk,
+        recovery_boundaries_risk,
+        notes,
+      })
       .eq('id', id)
       .select()
       .single();
@@ -78,8 +114,8 @@ export async function PUT(
     }
 
     return NextResponse.json(data);
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message || 'Erro interno' }, { status: 500 });
+  } catch {
+    return NextResponse.json({ error: 'Erro interno' }, { status: 500 });
   }
 }
 
@@ -98,7 +134,23 @@ export async function DELETE(
       return NextResponse.json({ error: 'Não autenticado' }, { status: 401 });
     }
 
-    const supabase = getSupabase();
+    const supabase = getServiceSupabase();
+
+    // Fetch record first to validate org membership
+    const { data: existing, error: fetchError } = await supabase
+      .from('nr1_risk_assessments')
+      .select('org_id')
+      .eq('id', id)
+      .single();
+
+    if (fetchError || !existing) {
+      return NextResponse.json({ error: 'Avaliação não encontrada' }, { status: 404 });
+    }
+
+    if (!(await validateOrgMembership(supabase, user.id, existing.org_id))) {
+      return NextResponse.json({ error: 'Sem permissão para esta organização' }, { status: 403 });
+    }
+
     const { error } = await supabase
       .from('nr1_risk_assessments')
       .delete()
@@ -109,7 +161,7 @@ export async function DELETE(
     }
 
     return NextResponse.json({ success: true });
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message || 'Erro interno' }, { status: 500 });
+  } catch {
+    return NextResponse.json({ error: 'Erro interno' }, { status: 500 });
   }
 }

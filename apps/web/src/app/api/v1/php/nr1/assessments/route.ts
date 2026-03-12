@@ -1,20 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
-
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
-
-function getSupabase() {
-  return createClient(supabaseUrl, supabaseServiceKey);
-}
-
-async function getAuthUser(request: NextRequest) {
-  const authHeader = request.headers.get('authorization');
-  if (!authHeader) return null;
-  const supabase = getSupabase();
-  const { data: { user } } = await supabase.auth.getUser(authHeader.replace('Bearer ', ''));
-  return user;
-}
+import { getAuthUser, getServiceSupabase, validateOrgMembership } from '@/lib/api/auth';
 
 /**
  * GET /api/v1/php/nr1/assessments
@@ -35,7 +20,12 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'org_id é obrigatório' }, { status: 400 });
     }
 
-    const supabase = getSupabase();
+    const supabase = getServiceSupabase();
+
+    if (!(await validateOrgMembership(supabase, user.id, orgId))) {
+      return NextResponse.json({ error: 'Sem permissão para esta organização' }, { status: 403 });
+    }
+
     const { data, error } = await supabase
       .from('nr1_risk_assessments')
       .select('*')
@@ -49,8 +39,8 @@ export async function GET(request: NextRequest) {
     }
 
     return NextResponse.json(data || []);
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message || 'Erro interno' }, { status: 500 });
+  } catch {
+    return NextResponse.json({ error: 'Erro interno' }, { status: 500 });
   }
 }
 
@@ -70,15 +60,50 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'x-org-id é obrigatório' }, { status: 400 });
     }
 
+    const supabase = getServiceSupabase();
+
+    if (!(await validateOrgMembership(supabase, user.id, orgId))) {
+      return NextResponse.json({ error: 'Sem permissão para esta organização' }, { status: 403 });
+    }
+
     const body = await request.json();
-    const supabase = getSupabase();
+
+    const {
+      team_id,
+      user_id,
+      assessment_date,
+      workload_pace_risk,
+      goal_pressure_risk,
+      role_clarity_risk,
+      autonomy_control_risk,
+      leadership_support_risk,
+      peer_collaboration_risk,
+      recognition_justice_risk,
+      communication_change_risk,
+      conflict_harassment_risk,
+      recovery_boundaries_risk,
+      notes,
+    } = body;
 
     const { data, error } = await supabase
       .from('nr1_risk_assessments')
       .insert({
         org_id: orgId,
         assessed_by: user.id,
-        ...body,
+        team_id,
+        user_id,
+        assessment_date,
+        workload_pace_risk,
+        goal_pressure_risk,
+        role_clarity_risk,
+        autonomy_control_risk,
+        leadership_support_risk,
+        peer_collaboration_risk,
+        recognition_justice_risk,
+        communication_change_risk,
+        conflict_harassment_risk,
+        recovery_boundaries_risk,
+        notes,
       })
       .select()
       .single();
@@ -89,7 +114,7 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json(data, { status: 201 });
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message || 'Erro interno' }, { status: 500 });
+  } catch {
+    return NextResponse.json({ error: 'Erro interno' }, { status: 500 });
   }
 }

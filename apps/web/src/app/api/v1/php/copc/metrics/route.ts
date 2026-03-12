@@ -65,10 +65,10 @@ export async function GET(request: NextRequest) {
     }
 
     return NextResponse.json(metrics || []);
-  } catch (error: any) {
-    console.error('Erro no GET /api/v1/php/copc/metrics:', error);
+  } catch (err) {
+    console.error('Erro no GET /api/v1/php/copc/metrics:', err);
     return NextResponse.json(
-      { error: error.message || 'Erro interno' },
+      { error: 'Erro interno' },
       { status: 500 }
     );
   }
@@ -116,13 +116,47 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json();
 
+    const {
+      team_id,
+      user_id,
+      metric_date,
+      quality_score,
+      rework_rate,
+      process_adherence_rate,
+      average_handle_time,
+      first_call_resolution_rate,
+      delivery_consistency,
+      customer_satisfaction_score,
+      nps_score,
+      absenteeism_rate,
+      engagement_score,
+      operational_stress_level,
+      notes,
+      source,
+    } = body;
+
     // Criar métrica COPC
     const { data: metric, error } = await supabase
       .from('copc_metrics')
       .insert({
         org_id: orgId,
-        ...body,
         created_by: user.id,
+        team_id,
+        user_id,
+        metric_date,
+        quality_score,
+        rework_rate,
+        process_adherence_rate,
+        average_handle_time,
+        first_call_resolution_rate,
+        delivery_consistency,
+        customer_satisfaction_score,
+        nps_score,
+        absenteeism_rate,
+        engagement_score,
+        operational_stress_level,
+        notes,
+        source,
       })
       .select()
       .single();
@@ -136,10 +170,10 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json(metric, { status: 201 });
-  } catch (error: any) {
-    console.error('Erro no POST /api/v1/php/copc/metrics:', error);
+  } catch (err) {
+    console.error('Erro no POST /api/v1/php/copc/metrics:', err);
     return NextResponse.json(
-      { error: error.message || 'Erro interno' },
+      { error: 'Erro interno' },
       { status: 500 }
     );
   }

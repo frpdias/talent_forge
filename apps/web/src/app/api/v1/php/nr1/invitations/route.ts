@@ -1,20 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
-
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
-
-function getSupabase() {
-  return createClient(supabaseUrl, supabaseServiceKey);
-}
-
-async function getAuthUser(request: NextRequest) {
-  const authHeader = request.headers.get('authorization');
-  if (!authHeader) return null;
-  const supabase = getSupabase();
-  const { data: { user } } = await supabase.auth.getUser(authHeader.replace('Bearer ', ''));
-  return user;
-}
+import { getAuthUser, getServiceSupabase, validateOrgMembership } from '@/lib/api/auth';
 
 /**
  * GET /api/v1/php/nr1/invitations
@@ -33,7 +18,11 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'org_id é obrigatório' }, { status: 400 });
     }
 
-    const supabase = getSupabase();
+    const supabase = getServiceSupabase();
+
+    if (!(await validateOrgMembership(supabase, user.id, orgId))) {
+      return NextResponse.json({ error: 'Sem permissão para esta organização' }, { status: 403 });
+    }
     const { data, error } = await supabase
       .from('v_nr1_invitations_summary')
       .select('*')
@@ -80,8 +69,8 @@ export async function GET(request: NextRequest) {
     }));
 
     return NextResponse.json({ invitations });
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message || 'Erro interno' }, { status: 500 });
+  } catch {
+    return NextResponse.json({ error: 'Erro interno' }, { status: 500 });
   }
 }
 
@@ -109,7 +98,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'employee_ids é obrigatório (array de UUIDs)' }, { status: 400 });
     }
 
-    const supabase = getSupabase();
+    const supabase = getServiceSupabase();
 
     // Verificar colaboradores existem na org
     const { data: employees, error: empError } = await supabase
@@ -198,8 +187,8 @@ export async function POST(request: NextRequest) {
       errors: errors.length,
       details: errors.length > 0 ? errors : undefined,
     }, { status: 201 });
-  } catch (error: any) {
-    console.error('Erro ao criar convites:', error);
-    return NextResponse.json({ error: error.message || 'Erro interno' }, { status: 500 });
+  } catch (err) {
+    console.error('Erro ao criar convites:', err);
+    return NextResponse.json({ error: 'Erro interno' }, { status: 500 });
   }
 }

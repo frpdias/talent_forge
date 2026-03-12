@@ -47,7 +47,8 @@ export async function GET(request: NextRequest) {
     }
 
     if (search) {
-      query = query.or(`full_name.ilike.%${search}%,cpf.ilike.%${search}%,position.ilike.%${search}%`);
+      const safeSearch = search.replace(/[%_\\]/g, '\\$&');
+      query = query.or(`full_name.ilike.%${safeSearch}%,cpf.ilike.%${safeSearch}%,position.ilike.%${safeSearch}%`);
     }
 
     const { data, error } = await query;
@@ -58,8 +59,8 @@ export async function GET(request: NextRequest) {
     }
 
     return NextResponse.json(data || []);
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message || 'Erro interno' }, { status: 500 });
+  } catch {
+    return NextResponse.json({ error: 'Erro interno' }, { status: 500 });
   }
 }
 
@@ -138,12 +139,38 @@ export async function POST(request: NextRequest) {
       authUserId = await resolveAuthUserId(supabase, body.email);
     }
 
+    const {
+      full_name,
+      cpf,
+      email,
+      phone,
+      birth_date,
+      hire_date,
+      termination_date,
+      manager_id,
+      position,
+      department,
+      status,
+      metadata,
+    } = body;
+
     const { data, error } = await supabase
       .from('employees')
       .insert({
         organization_id: orgId,
-        ...body,
-        user_id: authUserId, // garante que user_id fica preenchido quando há email
+        user_id: authUserId,
+        full_name,
+        cpf,
+        email,
+        phone,
+        birth_date,
+        hire_date,
+        termination_date,
+        manager_id,
+        position,
+        department,
+        status,
+        metadata,
       })
       .select()
       .single();
@@ -154,7 +181,7 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json(data, { status: 201 });
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message || 'Erro interno' }, { status: 500 });
+  } catch {
+    return NextResponse.json({ error: 'Erro interno' }, { status: 500 });
   }
 }

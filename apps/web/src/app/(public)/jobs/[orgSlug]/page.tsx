@@ -8,6 +8,7 @@ import {
   ChevronDown, Sparkles, FileText, Users, Star, Lightbulb,
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
+import DOMPurify from 'dompurify';
 
 interface PublicJob {
   id: string;
@@ -946,7 +947,7 @@ export default function CareerPage() {
                       {selectedJob.description_html ? (
                         <div
                           className="prose prose-sm max-w-none text-gray-600 leading-relaxed"
-                          dangerouslySetInnerHTML={{ __html: selectedJob.description_html }}
+                          dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(selectedJob.description_html) }}
                         />
                       ) : (
                         <p className="text-gray-600 leading-relaxed whitespace-pre-wrap text-sm">
