@@ -483,18 +483,25 @@ export default function CandidateDashboard() {
                 onChange={handleAvatarUpload}
                 disabled={uploadingAvatar}
               />
-              <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-white/20 border-2 border-white/40 overflow-hidden flex items-center justify-center">
+              <div className="w-28 h-28 sm:w-32 sm:h-32 rounded-full border-2 border-dashed border-white/50 bg-white overflow-hidden flex flex-col items-center justify-center gap-1">
                 {avatarUrl ? (
-                  <Image src={avatarUrl} alt="Foto de perfil" width={80} height={80} className="w-full h-full object-cover" />
+                  <Image src={avatarUrl} alt="Foto de perfil" width={128} height={128} className="w-full h-full object-cover" />
                 ) : (
-                  <User className="w-8 h-8 text-white/60" />
+                  <>
+                    <Camera className="w-8 h-8 text-gray-400" />
+                    <span className="text-gray-400 text-xs font-medium">Enviar foto</span>
+                  </>
                 )}
               </div>
-              <div className="absolute inset-0 rounded-full bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+              {/* Hover overlay */}
+              <div className="absolute inset-0 rounded-full bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-1">
                 {uploadingAvatar ? (
-                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
                 ) : (
-                  <Camera className="w-5 h-5 text-white" />
+                  <>
+                    <Camera className="w-7 h-7 text-white" />
+                    <span className="text-white text-xs font-medium">Alterar</span>
+                  </>
                 )}
               </div>
             </label>
