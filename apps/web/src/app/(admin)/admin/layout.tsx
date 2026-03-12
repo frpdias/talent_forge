@@ -245,7 +245,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       {/* Mobile Bottom Navigation */}
       <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-[#E5E5DC] z-40 lg:hidden safe-area-pb">
         <div className="flex items-center justify-around py-2">
-          {navItems.slice(0, 5).map((item) => {
+          {navGroups.flatMap((g) => g.items).slice(0, 5).map((item) => {
             const isActive = pathname === item.href || (item.href !== '/admin' && pathname.startsWith(item.href));
             return (
               <Link
