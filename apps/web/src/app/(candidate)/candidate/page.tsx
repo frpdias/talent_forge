@@ -1,6 +1,7 @@
 'use client';
 
-import { Briefcase, FileText, Clock, MapPin, Building2, ArrowUpRight, Brain, Sparkles, User, TrendingUp } from 'lucide-react';
+import { Briefcase, FileText, Clock, MapPin, Building2, ArrowUpRight, Brain, Sparkles, User, TrendingUp, Camera } from 'lucide-react';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
 import dynamic from 'next/dynamic';
@@ -94,6 +95,8 @@ export default function CandidateDashboard() {
   const [realApplications, setRealApplications] = useState<RealApplication[]>([]);
   const [completionItems, setCompletionItems] = useState<{ label: string; done: boolean }[]>([]);
   const [dashLoading, setDashLoading] = useState(true);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
 
   const discProfileSummary: Record<string, string> = {
     D: 'Foco em resultados, decisão rápida e assertividade.',
@@ -394,6 +397,16 @@ export default function CandidateDashboard() {
         setRealJobs(jobs.slice(0, 3));
         setRealApplications(apps);
 
+        // Busca avatar separado (coluna adicionada na migration 20260312)
+        try {
+          const { data: avatarData } = await supabase
+            .from('candidate_profiles')
+            .select('avatar_url')
+            .eq('user_id', user.id)
+            .maybeSingle();
+          if ((avatarData as any)?.avatar_url) setAvatarUrl((avatarData as any).avatar_url);
+        } catch { /* coluna pode ainda não existir */ }
+
         setCompletionItems([
           { label: 'Cargo atual preenchido',  done: !!profile?.current_title },
           { label: 'Currículo enviado',        done: !!profile?.resume_url },
@@ -408,13 +421,67 @@ export default function CandidateDashboard() {
 
   useEffect(() => { loadDashboard(); }, [loadDashboard]);
 
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingAvatar(true);
+    try {
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const ext = file.name.split('.').pop();
+      const path = `${user.id}/avatar.${ext}`;
+      const { error: upErr } = await supabase.storage
+        .from('candidate-avatars')
+        .upload(path, file, { upsert: true });
+      if (upErr) throw upErr;
+      const { data: urlData } = supabase.storage
+        .from('candidate-avatars')
+        .getPublicUrl(path);
+      const publicUrl = `${urlData.publicUrl}?t=${Date.now()}`;
+      await supabase
+        .from('candidate_profiles')
+        .upsert({ user_id: user.id, avatar_url: publicUrl }, { onConflict: 'user_id' });
+      setAvatarUrl(publicUrl);
+    } catch (err) {
+      console.error('Erro ao enviar foto:', err);
+    } finally {
+      setUploadingAvatar(false);
+    }
+  };
+
   return (
     <div className="space-y-4 sm:space-y-6 lg:space-y-8 pb-16 lg:pb-0">
       {/* Welcome + Testes Banner */}
       <div className="bg-linear-to-r from-[#141042] to-[#3B82F6] rounded-xl sm:rounded-2xl p-4 sm:p-6 lg:p-8 relative overflow-hidden">
         <div className="absolute right-0 top-0 w-32 sm:w-64 h-32 sm:h-64 bg-white/10 rounded-full blur-3xl" />
         <div className="relative flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-          <div className="flex-1">
+          <div className="flex items-center gap-4 flex-1">
+            {/* Avatar upload */}
+            <label className="relative cursor-pointer flex-shrink-0 group">
+              <input
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                className="sr-only"
+                onChange={handleAvatarUpload}
+                disabled={uploadingAvatar}
+              />
+              <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-white/20 border-2 border-white/40 overflow-hidden flex items-center justify-center">
+                {avatarUrl ? (
+                  <Image src={avatarUrl} alt="Foto de perfil" width={80} height={80} className="w-full h-full object-cover" />
+                ) : (
+                  <User className="w-8 h-8 text-white/60" />
+                )}
+              </div>
+              <div className="absolute inset-0 rounded-full bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                {uploadingAvatar ? (
+                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  <Camera className="w-5 h-5 text-white" />
+                )}
+              </div>
+            </label>
+            <div>
             <h2 className="text-lg sm:text-xl lg:text-2xl font-semibold text-white! mb-1">
               Olá, {displayName}!
             </h2>
@@ -426,6 +493,7 @@ export default function CandidateDashboard() {
             <div className="flex items-center gap-2 text-white/70! text-xs">
               <Brain className="w-4 h-4" />
               <span>Complete seu perfil comportamental e destaque-se para recrutadores</span>
+            </div>
             </div>
           </div>
           <div className="flex flex-wrap gap-3 items-center lg:justify-end">
