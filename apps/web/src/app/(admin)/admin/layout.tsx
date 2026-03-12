@@ -3,12 +3,12 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { 
-  LayoutDashboard, 
-  Users, 
-  Building2, 
-  Settings, 
-  Shield, 
+import {
+  LayoutDashboard,
+  Users,
+  Building2,
+  Settings,
+  Shield,
   LogOut,
   Menu,
   X,
@@ -19,8 +19,8 @@ import {
   AlertTriangle,
   Lock,
   Loader2,
-  UserPlus,
-  Building
+  Building,
+  Database,
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import Image from 'next/image';
@@ -38,7 +38,6 @@ const navGroups = [
       { href: '/admin/tenants', label: 'Tenants', icon: Building2 },
       { href: '/admin/companies', label: 'Empresas', icon: Building },
       { href: '/admin/users', label: 'Usuários', icon: Users },
-      { href: '/admin/create-user', label: 'Criar Usuário', icon: UserPlus },
     ],
   },
   {
@@ -54,9 +53,18 @@ const navGroups = [
     label: 'Sistema',
     items: [
       { href: '/admin/api-keys', label: 'API Keys', icon: Key },
+      { href: '/admin/database-schema', label: 'Schema DB', icon: Database },
       { href: '/admin/settings', label: 'Configurações', icon: Settings },
     ],
   },
+];
+
+const mobileNavItems = [
+  { href: '/admin', label: 'Dashboard', icon: LayoutDashboard },
+  { href: '/admin/companies', label: 'Empresas', icon: Building },
+  { href: '/admin/users', label: 'Usuários', icon: Users },
+  { href: '/admin/security', label: 'Segurança', icon: Shield },
+  { href: '/admin/settings', label: 'Config.', icon: Settings },
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -245,7 +253,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       {/* Mobile Bottom Navigation */}
       <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-[#E5E5DC] z-40 lg:hidden safe-area-pb">
         <div className="flex items-center justify-around py-2">
-          {navGroups.flatMap((g) => g.items).slice(0, 5).map((item) => {
+          {mobileNavItems.map((item) => {
             const isActive = pathname === item.href || (item.href !== '/admin' && pathname.startsWith(item.href));
             return (
               <Link

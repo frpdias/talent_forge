@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Users, Search, UserCheck, Briefcase, Mail, Calendar, Loader2, Shield } from 'lucide-react';
+import Link from 'next/link';
+import { Users, Search, UserCheck, Briefcase, Mail, Calendar, Loader2, Shield, UserPlus } from 'lucide-react';
 
 interface User {
   id: string;
@@ -72,9 +73,18 @@ export default function UsersPage() {
   return (
     <div className="space-y-6 pb-20 lg:pb-0">
       {/* Header */}
-      <div>
-        <h2 className="text-xl sm:text-2xl font-semibold text-[#141042]">Usuários</h2>
-        <p className="text-sm text-[#666666]">Gerenciar todos os usuários da plataforma</p>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h2 className="text-xl sm:text-2xl font-semibold text-[#141042]">Usuários</h2>
+          <p className="text-sm text-[#666666]">Gerenciar todos os usuários da plataforma</p>
+        </div>
+        <Link
+          href="/admin/create-user"
+          className="flex items-center gap-2 px-4 py-2 bg-[#141042] text-white text-sm font-medium rounded-xl hover:bg-[#1a1660] transition-colors shrink-0"
+        >
+          <UserPlus className="w-4 h-4" />
+          Criar Usuário
+        </Link>
       </div>
 
       {/* Stats */}
