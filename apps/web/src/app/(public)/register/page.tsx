@@ -165,7 +165,7 @@ function RegisterContent() {
     await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${window.location.origin}/auth/callback?type=${userType}`,
+        redirectTo: `${window.location.origin}/api/auth/callback`,
       },
     });
   };
