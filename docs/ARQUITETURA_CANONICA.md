@@ -1,6 +1,6 @@
 # Arquitetura Canônica — TalentForge
 
-**Última atualização**: 2026-03-12 | **Score de Conformidade**: ✅ 100% (Sprint 40: Dicas de carreira) | **Sprints planejados**: Sprint 41 (AI Assistant) + Sprint 42 (Gate Recrutamento)
+**Última atualização**: 2026-03-12 | **Score de Conformidade**: ✅ 100% (Sprint 42: Notificações + Team + CSP) | **Sprints planejados**: Sprint 41 (AI Assistant) + Sprint 43 (Gate Recrutamento)
 
 ## 📜 FONTE DA VERDADE — PRINCÍPIO FUNDAMENTAL
 
@@ -1307,7 +1307,7 @@ O TalentForge é organizado em **módulos funcionais ativáveis por organizaçã
 
 | Módulo | Rota Frontend | Tabela de Ativação | Status |
 |---|---|---|---|
-| **Recrutamento** | `/dashboard/*` | `recruitment_module_activations` | 🔲 Gate a implementar (Sprint 42) |
+| **Recrutamento** | `/dashboard/*` | `recruitment_module_activations` | 🔲 Gate a implementar (Sprint 43) |
 | **PHP** (People Health Performance) | `/php/*` | `php_module_activations` | ✅ Implementado (Sprint 6) |
 | **AI Assistant** | `/php/ai-chat` | — (sub-feature do PHP) | 🔲 Planejado (Sprint 41) |
 
@@ -7094,7 +7094,7 @@ Em `apps/web/src/app/(recruiter)/php/ai-chat/page.tsx`:
 
 ---
 
-## Sprint 42 — Gate de Ativação do Módulo de Recrutamento (PLANEJADO)
+## Sprint 43 — Gate de Ativação do Módulo de Recrutamento (PLANEJADO)
 
 ### Contexto
 
@@ -7292,6 +7292,17 @@ Adicionar card "Módulo de Recrutamento" seguindo o mesmo padrão visual do card
 ---
 
 ## 📝 Histórico de Versões
+
+### v5.8 (2026-03-12)
+- ✅ **Score de Conformidade**: 100% mantido (Sprint 42)
+- ✅ **Google OAuth fix**: handler server-side PKCE em `/api/auth/callback/route.ts`; `redirectTo` corrigido no login e register; callback page simplificada para spinner
+- ✅ **Migration `20260312_notifications_triggers.sql`**: 3 triggers (`notify_new_application`, `notify_application_hired`, `notify_assessment_completed`); habilita Realtime + `REPLICA IDENTITY FULL` na tabela `notifications` de forma idempotente
+- ✅ **NotificationCenter fix**: canal realtime filtrado por `user_id=eq.${user.id}`; nome de canal único `notifications:${user.id}`; client Supabase via `useRef`; `init()` useEffect unificado
+- ✅ **Team page (`/dashboard/team`)**: 3 dialogs (convidar, editar função, remover); APIs `POST /api/v1/team/invite`, `PATCH/DELETE /api/v1/team/members/[memberId]`; `resolvedOrgId` resolve org localmente quando store é nulo
+- ✅ **`<Toaster>` global**: componente `sonner` adicionado ao `layout.tsx` — toasts `success/error` agora visíveis em toda a aplicação
+- ✅ **CSP fix (`next.config.mjs`)**: `style-src` + `https://fonts.googleapis.com`; `font-src` + `https://fonts.gstatic.com`; `script-src` + `connect-src` + `https://vercel.live`
+- ✅ **`.env.example` unificado**: criado na raiz com todas as variáveis do monorepo documentadas; `VERCEL_OIDC_TOKEN` explicitamente proibido
+- ✅ **Commits**: `4d2f45f` → `80b2f89` → `7866ab2` → `dc76c11` → `e18fb03` → `ec67c44` → `ff116e7` → `266d366` → `origin/main`
 
 ### v5.7 (2026-03-11)
 - ✅ **Score de Conformidade**: 100% mantido (Sprint 40)
