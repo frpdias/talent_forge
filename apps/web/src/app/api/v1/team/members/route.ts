@@ -70,6 +70,7 @@ export async function GET(request: NextRequest) {
       full_name: profileMap[m.user_id]?.full_name || '',
       email: profileMap[m.user_id]?.email || '',
       user_type: profileMap[m.user_id]?.user_type || m.role,
+      role: m.role,
       created_at: m.created_at,
     }));
 

@@ -21,7 +21,7 @@ import {
 } from '@/components/ui/dialog';
 import { DashboardHeader } from '@/components/DashboardHeader';
 import { Users, UserPlus, Mail, Trash2, Shield, AlertCircle } from 'lucide-react';
-import { getAuthToken } from '@/lib/supabase/client';
+import { getAuthToken, createClient } from '@/lib/supabase/client';
 import { useOrgStore } from '@/lib/store';
 import { toast } from 'sonner';
 
@@ -30,6 +30,7 @@ interface TeamMember {
   full_name: string;
   email: string;
   user_type: string;
+  role: string; // role em org_members
   created_at: string;
 }
 
@@ -49,6 +50,8 @@ const roleColors: Record<string, string> = {
 
 export default function TeamPage() {
   const { currentOrg } = useOrgStore();
+  // orgId resolvido localmente para não depender do timing do store global
+  const [resolvedOrgId, setResolvedOrgId] = useState<string | null>(null);
 
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   const [loading, setLoading] = useState(true);
@@ -71,17 +74,39 @@ export default function TeamPage() {
   const [removeDialogOpen, setRemoveDialogOpen] = useState(false);
   const [removing, setRemoving] = useState(false);
 
+  // Resolve orgId: prioriza store, fallback para busca direta
   useEffect(() => {
-    loadTeamMembers();
+    if (currentOrg?.id) {
+      setResolvedOrgId(currentOrg.id);
+      return;
+    }
+    (async () => {
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const { data } = await supabase
+        .from('org_members')
+        .select('org_id')
+        .eq('user_id', user.id)
+        .neq('status', 'inactive')
+        .limit(1)
+        .maybeSingle();
+      if (data?.org_id) setResolvedOrgId(data.org_id);
+    })();
   }, [currentOrg?.id]);
+
+  useEffect(() => {
+    if (resolvedOrgId) loadTeamMembers();
+  }, [resolvedOrgId]);
 
   async function getHeaders() {
     const token = await getAuthToken();
-    if (!token || !currentOrg?.id) return null;
+    const orgId = resolvedOrgId ?? currentOrg?.id;
+    if (!token || !orgId) return null;
     return {
       'Content-Type': 'application/json',
       Authorization: `Bearer ${token}`,
-      'x-org-id': currentOrg.id,
+      'x-org-id': orgId,
     };
   }
 
@@ -144,7 +169,7 @@ export default function TeamPage() {
 
   function openEditDialog(member: TeamMember) {
     setEditMember(member);
-    setEditRole(member.user_type);
+    setEditRole(member.role || member.user_type);
     setEditDialogOpen(true);
   }
 
@@ -439,9 +464,9 @@ export default function TeamPage() {
                           {member.full_name || 'Sem nome'}
                         </h4>
                         <span
-                          className={`px-2 py-0.5 rounded-full text-xs font-medium ${roleColors[member.user_type] ?? roleColors.viewer}`}
+                          className={`px-2 py-0.5 rounded-full text-xs font-medium ${roleColors[member.role] ?? roleColors[member.user_type] ?? roleColors.viewer}`}
                         >
-                          {roleLabels[member.user_type] ?? member.user_type}
+                          {roleLabels[member.role] ?? roleLabels[member.user_type] ?? member.role}
                         </span>
                       </div>
                       <p className="text-sm text-[#666666]">{member.email}</p>
