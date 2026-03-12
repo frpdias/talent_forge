@@ -1,6 +1,6 @@
 # Arquitetura Canônica — TalentForge
 
-**Última atualização**: 2026-03-11 | **Score de Conformidade**: ✅ 100% (Sprint 39: Depoimentos editáveis na career page — tabela `org_testimonials` + CRUD no settings + career page dinâmica)
+**Última atualização**: 2026-03-12 | **Score de Conformidade**: ✅ 100% (Sprint 40: Dicas de carreira) | **Sprints planejados**: Sprint 41 (AI Assistant) + Sprint 42 (Gate Recrutamento)
 
 ## 📜 FONTE DA VERDADE — PRINCÍPIO FUNDAMENTAL
 
@@ -243,6 +243,8 @@ PROJETO_TALENT_FORGE/
 │   │   ├── 20260307_career_page_v2.sql ✅ career page v2 — banner, about, cores secundárias, links sociais, bucket org-assets
 │   │   ├── 20260309_fix_career_page_visibility.sql ✅ habilitação career page FARTECH + vagas is_public = TRUE
 │   │   ├── 20260311_career_page_v3_work_modality.sql ✅ colunas work_modality + salary_range em jobs; view v_public_jobs e RPC get_public_jobs_by_org recriados
+│   │   ├── 20260311_org_testimonials.sql ✅ tabela org_testimonials (depoimentos editáveis) + RLS público + escrita via is_org_member
+│   │   ├── 20260311_org_career_tips.sql ✅ tabela org_career_tips (dicas de carreira editáveis) + RLS público + escrita via is_org_member
 │   │   └── 20260302_job_publication_engine.sql ✅ job_publication_channels + job_publications + job_publication_logs + RLS + triggers
 │   ├── VALIDATE_IMPROVEMENTS.sql  # Script de validação
 │   └── README.md                  # Instruções de migrations
@@ -1294,6 +1296,87 @@ npm install
    - API: https://talent-forge-api.vercel.app *(projeto: `prj_MIy6Yi0FABRBuevuXw60wuW7jI9x`)*
    - Vercel team: `fernando-dias-projects-e4b4044b` / orgId: `team_lwke1raX8NIzKHkR5z2CPFR5`
    - Env var web: `NEXT_PUBLIC_API_BASE_URL=https://talent-forge-api.vercel.app`
+
+---
+
+## 1.5) Sistema de Módulos — Definição Canônica
+
+O TalentForge é organizado em **módulos funcionais ativáveis por organização**. Cada organização pode ter um conjunto diferente de módulos ativos, controlado por tabelas de ativação no banco de dados. O admin global (Fartech) gerencia quais módulos cada org tem acesso.
+
+### Módulos existentes
+
+| Módulo | Rota Frontend | Tabela de Ativação | Status |
+|---|---|---|---|
+| **Recrutamento** | `/dashboard/*` | `recruitment_module_activations` | 🔲 Gate a implementar (Sprint 42) |
+| **PHP** (People Health Performance) | `/php/*` | `php_module_activations` | ✅ Implementado (Sprint 6) |
+| **AI Assistant** | `/php/ai-chat` | — (sub-feature do PHP) | 🔲 Planejado (Sprint 41) |
+
+### Padrão de ativação de módulo
+
+Todo módulo segue este padrão:
+
+#### 1. Tabela de ativação
+```sql
+<modulo>_module_activations (
+  id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  org_id       UUID REFERENCES organizations(id) UNIQUE NOT NULL,
+  is_active    BOOLEAN DEFAULT FALSE,
+  activated_at TIMESTAMPTZ,
+  deactivated_at TIMESTAMPTZ,
+  activated_by UUID REFERENCES auth.users(id),
+  settings     JSONB DEFAULT '{}',
+  created_at   TIMESTAMPTZ DEFAULT NOW(),
+  updated_at   TIMESTAMPTZ DEFAULT NOW()
+)
+```
+- **RLS:** Leitura para membros da org; escrita apenas via service role (admin global)
+
+#### 2. API de status
+```
+GET /api/v1/<modulo>/status   → { is_active, activated_at, settings }
+```
+- Requer `Authorization: Bearer <JWT>` + `x-org-id`
+- Usa `validateOrgMembership` de `lib/api/auth.ts`
+
+#### 3. Guard frontend (layout do módulo)
+- O `layout.tsx` do módulo chama `/api/v1/<modulo>/status` no mount
+- Se `is_active === false` → redireciona para página de módulo inativo
+- Exibe `ModuleStatusBadge` na sidebar com estado visual (ativo/inativo)
+
+#### 4. Guard backend (NestJS — para rotas da API NestJS)
+```typescript
+@Injectable()
+export class <Modulo>ModuleGuard implements CanActivate {
+  async canActivate(context: ExecutionContext): Promise<boolean> {
+    const orgId = context.switchToHttp().getRequest().headers['x-org-id'];
+    const { data } = await supabase
+      .from('<modulo>_module_activations')
+      .select('is_active')
+      .eq('org_id', orgId)
+      .single();
+    if (!data?.is_active) throw new ForbiddenException('Module not activated');
+    return true;
+  }
+}
+```
+
+#### 5. Ativação via Admin Panel
+- Rota: `/admin/companies` → card da empresa → toggle de módulo
+- Endpoints:
+  ```
+  POST   /api/admin/companies/:id/<modulo>-module   // Ativar
+  DELETE /api/admin/companies/:id/<modulo>-module   // Desativar
+  ```
+
+### Fluxo de visibilidade no menu
+
+O layout `(recruiter)/dashboard/layout.tsx` controla a sidebar do Dashboard. Cada grupo de itens de navegação (`recruitmentItems`, `assessmentItems`) deve ser exibido **condicionalmente** com base no status de ativação do módulo correspondente à org atual.
+
+```
+org ativa o módulo → tabela de ativação → API status → layout consulta → sidebar exibe itens
+```
+
+---
 
 ## 2) Padrões essenciais (não desviar)
 - **Multi-tenant**: `organizations` + `org_members`.
@@ -6796,6 +6879,402 @@ Nova tabela `org_testimonials`:
 
 ---
 
+## Sprint 40 — Dicas de Carreira na Career Page (2026-03-11)
+
+**Objetivo:** Permitir que headhunters/recrutadores cadastrem dicas de carreira visíveis na página pública de vagas da organização.
+
+### 40.1 — Migration `20260311_org_career_tips.sql`
+
+Nova tabela `org_career_tips`:
+
+| Coluna | Tipo | Descrição |
+|--------|------|-----------|
+| `id` | UUID PK | |
+| `org_id` | UUID FK organizations | Multi-tenant |
+| `title` | TEXT NOT NULL | Título da dica |
+| `summary` | TEXT NOT NULL DEFAULT '' | Resumo curto (exibido no card) |
+| `content` | TEXT NOT NULL DEFAULT '' | Conteúdo expandido |
+| `display_order` | INTEGER DEFAULT 0 | Ordem de exibição |
+| `is_active` | BOOLEAN DEFAULT true | Visibilidade pública |
+| `created_at` | TIMESTAMPTZ | |
+| `updated_at` | TIMESTAMPTZ | Trigger `trg_career_tips_updated_at` |
+
+**Índices:**
+- `idx_org_career_tips_org_id` ON `(org_id)`
+- `idx_org_career_tips_order` ON `(org_id, display_order)`
+
+**RLS:**
+- `public_read_active_tips`: SELECT público (anon + authenticated) onde `is_active = true`
+- `org_members_manage_tips`: ALL para membros da org via `is_org_member(org_id)` + WITH CHECK
+
+**GRANTs:**
+- `SELECT` para `anon, authenticated`
+- `INSERT, UPDATE, DELETE` para `authenticated`
+
+### 40.2 — Settings Page — Card de Dicas de Carreira
+
+**Arquivo:** `apps/web/src/app/(recruiter)/dashboard/settings/page.tsx`
+
+- Novo card "Dicas de Carreira" com ícone `Lightbulb`
+- Lista de dicas cadastradas (título + trecho do summary)
+- Botões Editar (`<Pencil>`) e Excluir (`<Trash2>`) por item
+- Formulário inline ao adicionar/editar: `title`, `summary`, `content`
+- `handleSaveTip()`: INSERT ou UPDATE via Supabase direto (sem API intermediária)
+- `handleDeleteTip()`: DELETE direto via Supabase
+- Estado: `tips[]`, `editingTip`, `showTipForm`, `savingTip`
+
+```typescript
+interface Tip {
+  id?: string;
+  org_id?: string;
+  title: string;
+  summary: string;
+  content: string;
+  display_order: number;
+  is_active?: boolean;
+}
+```
+
+### 40.3 — Career Page Dinâmica
+
+**Arquivo:** `apps/web/src/app/(public)/jobs/[orgSlug]/page.tsx`
+
+- `const [tips, setTips] = useState<Tip[]>([])`
+- Após `loadJobs()`, fetch de `org_career_tips` filtrando `org_id + is_active=true` ordenado por `display_order`
+- Seção renderizada condicionalmente: só aparece quando `tips.length > 0`
+- Cada card exibe: `title` (bold) + `summary` (texto curto) com ícone `Lightbulb`
+
+### Commits Sprint 40
+- (migration `20260311_org_career_tips.sql` + CRUD settings + renderização career page)
+
+---
+
+## Sprint 41 — AI Assistant PHP Module (PLANEJADO)
+
+### Diagnóstico do problema atual
+
+A página `/php/ai-chat` está **totalmente implementada no frontend** mas **completamente não-funcional** porque todos os 7 endpoints de backend estão ausentes. A página também possui um bug secundário na obtenção do `orgId`.
+
+**Arquivo**: `apps/web/src/app/(recruiter)/php/ai-chat/page.tsx`
+
+#### Endpoints chamados pelo frontend (nenhum existe):
+| Endpoint | Método | Chamado em |
+|---|---|---|
+| `/api/php/ai/health` | GET | `checkAIHealth()` |
+| `/api/php/ai/usage` | GET | `loadUsageData()` |
+| `/api/php/ai/chat` | POST | `sendMessage()` |
+| `/api/php/ai/report` | POST | `generateReport()` |
+| `/api/php/ai/predict-turnover` | POST | `predictTurnover()` |
+| `/api/php/ai/forecast-performance` | POST | `forecastPerformance()` |
+| `/api/php/ai/smart-recommendations` | POST | `getSmartRecommendations()` |
+
+#### Bug secundário — `orgId` sempre `undefined`:
+```typescript
+// ❌ ATUAL — user_metadata.org_id não existe neste projeto
+const orgId = session?.user?.user_metadata?.org_id;
+
+// ✅ CORRETO — buscar via org_members (igual a todos os outros módulos)
+const { data: orgMember } = await supabase
+  .from('org_members')
+  .select('org_id')
+  .eq('user_id', session.user.id)
+  .eq('status', 'active')
+  .single();
+const orgId = orgMember?.org_id;
+```
+
+---
+
+### Plano de implementação
+
+#### 1. Criar rotas de API
+
+Diretório: `apps/web/src/app/api/php/ai/`
+
+> ⚠️ **Atenção**: O frontend chama `/api/php/ai/*` (sem o prefixo `/v1/`). Confirmar se deve usar `/api/v1/php/ai/*` e atualizar o frontend, ou criar em `/api/php/ai/`.
+
+**`health/route.ts`** — GET
+- Verifica se a chave da API do provedor AI está configurada
+- Retorna `{ healthy: boolean, provider: string, message?: string }`
+- Requer auth + `validateOrgMembership`
+
+**`usage/route.ts`** — GET
+- Retorna estatísticas de uso por org (tokens consumidos, custo estimado, requests)
+- Busca da tabela `php_ai_usage` (a criar)
+- Query param: `?period=7d|30d|all`
+
+**`chat/route.ts`** — POST
+- Body: `{ message: string, context?: 'general'|'hr'|'performance'|'retention', conversationHistory?: Message[] }`
+- Envia prompt ao provedor AI com contexto dos dados PHP da org
+- Registra uso na tabela `php_ai_usage`
+- Retorna `{ response: string, tokensUsed: number }`
+
+**`report/route.ts`** — POST
+- Body: `{ type: 'summary'|'detailed'|'executive'|'comparison', period?: string }`
+- Gera relatório estruturado combinando scores TFCI + NR-1 + COPC
+- Retorna `{ report: string, generatedAt: string }`
+
+**`predict-turnover/route.ts`** — POST
+- Body: `{ employeeId?: string }` (se ausente, analisa toda a org)
+- Usa dados de PHP scores para predizer risco de turnover
+- Retorna `{ predictions: Array<{ employeeId, risk: 'low'|'medium'|'high', factors: string[] }> }`
+
+**`forecast-performance/route.ts`** — POST
+- Body: `{ teamId?: string, months?: number }`
+- Projeta tendência de performance baseada no histórico de scores
+- Retorna `{ forecast: Array<{ period, predicted_score, confidence }> }`
+
+**`smart-recommendations/route.ts`** — POST
+- Body: `{ goal: string }` (ex: "melhorar engajamento", "reduzir turnover")
+- Gera recomendações personalizadas baseadas nos dados da org
+- Retorna `{ recommendations: Array<{ title, description, priority, effort }> }`
+
+---
+
+#### 2. Migration SQL — tabela de uso
+
+```sql
+-- 20260312_php_ai_usage.sql
+CREATE TABLE php_ai_usage (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  org_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+  user_id UUID REFERENCES auth.users(id),
+  endpoint TEXT NOT NULL, -- 'chat', 'report', 'predict-turnover', etc.
+  tokens_used INTEGER DEFAULT 0,
+  cost_usd DECIMAL(10,6) DEFAULT 0,
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+
+ALTER TABLE php_ai_usage ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "org members can read own usage"
+  ON php_ai_usage FOR SELECT
+  USING (is_org_member(org_id));
+
+CREATE POLICY "service role can insert usage"
+  ON php_ai_usage FOR INSERT
+  WITH CHECK (true); -- inserção feita via service role key
+```
+
+---
+
+#### 3. Provedor AI — decisão pendente
+
+Opções:
+- **Anthropic Claude** (Haiku 4.5 para custo-benefício, Sonnet 4.6 para qualidade) — `@anthropic-ai/sdk`
+- **OpenAI GPT-4o-mini** — `openai` SDK
+
+Configuração via variável de ambiente: `AI_PROVIDER_API_KEY`
+
+---
+
+#### 4. Correção do frontend
+
+Em `apps/web/src/app/(recruiter)/php/ai-chat/page.tsx`:
+1. Substituir obtenção de `orgId` (bug acima)
+2. Adicionar header `x-org-id` em todas as chamadas de API
+3. Verificar que o header `Authorization: Bearer <token>` é enviado em todas as chamadas
+
+---
+
+#### 5. Ordem de execução sugerida
+
+1. Decidir provedor AI e instalar SDK
+2. Criar migration `php_ai_usage`
+3. Criar `health/route.ts` (mais simples, valida o setup)
+4. Corrigir `orgId` no frontend
+5. Criar `chat/route.ts` (core da feature)
+6. Criar `usage/route.ts`
+7. Criar os endpoints de análise (`predict-turnover`, `forecast-performance`, `report`, `smart-recommendations`)
+
+---
+
+### Commits Sprint 40
+- (migration `20260311_org_career_tips.sql` + CRUD settings + renderização career page)
+
+---
+
+## Sprint 42 — Gate de Ativação do Módulo de Recrutamento (PLANEJADO)
+
+### Contexto
+
+O módulo de Recrutamento hoje carrega diretamente para todo recrutador sem nenhuma verificação de ativação. O PHP já possui o padrão correto (`php_module_activations` + `PhpModuleGuard`). O objetivo deste sprint é replicar esse padrão para o Recrutamento, tornando-o ativável/desativável por organização via Admin Panel.
+
+---
+
+### O que implementar
+
+#### 1. Migration SQL
+
+```sql
+-- 20260312_recruitment_module_activations.sql
+
+CREATE TABLE recruitment_module_activations (
+  id             UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  org_id         UUID REFERENCES organizations(id) ON DELETE CASCADE UNIQUE NOT NULL,
+  is_active      BOOLEAN DEFAULT FALSE,
+  activated_at   TIMESTAMPTZ,
+  deactivated_at TIMESTAMPTZ,
+  activated_by   UUID REFERENCES auth.users(id),
+  settings       JSONB DEFAULT '{}',
+  created_at     TIMESTAMPTZ DEFAULT NOW(),
+  updated_at     TIMESTAMPTZ DEFAULT NOW()
+);
+
+ALTER TABLE recruitment_module_activations ENABLE ROW LEVEL SECURITY;
+
+-- SELECT: qualquer membro ativo da org pode ver (mesmo padrão de php_module_activations)
+CREATE POLICY recruitment_activations_select ON recruitment_module_activations
+  FOR SELECT
+  USING (
+    EXISTS (
+      SELECT 1 FROM org_members om
+      WHERE om.org_id = recruitment_module_activations.org_id
+      AND om.user_id = auth.uid()
+      AND om.status = 'active'
+    )
+  );
+
+-- INSERT/UPDATE: apenas admin ou manager da org (write via service role em produção)
+CREATE POLICY recruitment_activations_write ON recruitment_module_activations
+  FOR INSERT WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM org_members om
+      WHERE om.org_id = recruitment_module_activations.org_id
+      AND om.user_id = auth.uid()
+      AND om.role IN ('admin', 'manager')
+      AND om.status = 'active'
+    )
+  );
+
+CREATE POLICY recruitment_activations_update ON recruitment_module_activations
+  FOR UPDATE USING (
+    EXISTS (
+      SELECT 1 FROM org_members om
+      WHERE om.org_id = recruitment_module_activations.org_id
+      AND om.user_id = auth.uid()
+      AND om.role IN ('admin', 'manager')
+      AND om.status = 'active'
+    )
+  );
+
+CREATE POLICY recruitment_activations_delete ON recruitment_module_activations
+  FOR DELETE USING (
+    EXISTS (
+      SELECT 1 FROM org_members om
+      WHERE om.org_id = recruitment_module_activations.org_id
+      AND om.user_id = auth.uid()
+      AND om.role = 'admin'
+      AND om.status = 'active'
+    )
+  );
+
+CREATE INDEX idx_recruitment_activations_org_id ON recruitment_module_activations(org_id);
+CREATE INDEX idx_recruitment_activations_is_active ON recruitment_module_activations(is_active);
+
+-- Trigger updated_at
+CREATE TRIGGER set_updated_at_recruitment_activations
+  BEFORE UPDATE ON recruitment_module_activations
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+```
+
+> ⚠️ **Atenção na ativação inicial**: ao criar a migration, fazer upsert de `is_active = true` para todas as orgs que já usam recrutamento (para não quebrar clientes existentes).
+
+```sql
+-- Ativar automaticamente todas as orgs ativas existentes
+INSERT INTO recruitment_module_activations (org_id, is_active, activated_at)
+SELECT id, true, NOW()
+FROM organizations
+WHERE status = 'active'
+ON CONFLICT (org_id) DO NOTHING;
+```
+
+---
+
+#### 2. API de status
+
+**Arquivo**: `apps/web/src/app/api/v1/recruitment/status/route.ts`
+
+```typescript
+// GET /api/v1/recruitment/status
+// Retorna: { is_active, activated_at, settings }
+// Segue o mesmo padrão de /api/v1/php/status
+```
+
+- Auth: `getAuthUser` + `validateOrgMembership` de `lib/api/auth.ts`
+- Se não houver registro → `is_active: false`
+
+---
+
+#### 3. Endpoints Admin Panel
+
+**Arquivo**: `apps/web/src/app/api/admin/companies/[id]/recruitment-module/route.ts`
+
+```
+POST   /api/admin/companies/:id/recruitment-module   // Ativar (upsert is_active=true)
+DELETE /api/admin/companies/:id/recruitment-module   // Desativar (is_active=false)
+```
+
+- Usa `SUPABASE_SERVICE_ROLE_KEY` diretamente (mesmo padrão de `php-module/route.ts`)
+- Segue o mesmo padrão de `apps/web/src/app/api/admin/companies/[id]/php-module/route.ts`
+
+---
+
+#### 4. Guard no layout do dashboard
+
+**Arquivo**: `apps/web/src/app/(recruiter)/dashboard/layout.tsx`
+
+Adicionar verificação no mount:
+```typescript
+// No useEffect de loadUserInfo(), após carregar currentOrg:
+const { data: status } = await supabase
+  .from('recruitment_module_activations')
+  .select('is_active')
+  .eq('org_id', currentOrg.id)
+  .maybeSingle();
+
+setRecruitmentActive(status?.is_active ?? false);
+```
+
+- Se `is_active === false`: renderizar tela de "Módulo de Recrutamento inativo" com CTA para contato
+- Exibir `ModuleStatusBadge` na sidebar (reutilizar o componente do PHP)
+
+---
+
+#### 5. Admin Panel UI
+
+**Arquivo**: `apps/web/src/components/admin/OrganizationDashboard.tsx`
+
+Adicionar card "Módulo de Recrutamento" seguindo o mesmo padrão visual do card "Módulo PHP":
+- Visual: Card verde (ativo) / cinza (inativo)
+- Botão toggle: "Ativar Recrutamento" / "Desativar Recrutamento"
+- Exibe timestamp de ativação
+
+---
+
+### Ordem de execução (sexta-feira)
+
+1. Criar migration com ativação automática das orgs existentes
+2. Criar `GET /api/v1/recruitment/status`
+3. Criar endpoints admin `POST/DELETE /api/admin/companies/:id/recruitment-module`
+4. Adicionar guard no `dashboard/layout.tsx`
+5. Adicionar card no `OrganizationDashboard.tsx`
+6. Testar: desativar org de teste → confirmar que dashboard bloqueia → reativar
+
+---
+
+### Arquivos a criar/modificar
+
+| Ação | Arquivo |
+|---|---|
+| CRIAR | `supabase/migrations/20260314_recruitment_module_activations.sql` |
+| CRIAR | `apps/web/src/app/api/v1/recruitment/status/route.ts` |
+| CRIAR | `apps/web/src/app/api/admin/companies/[id]/recruitment-module/route.ts` |
+| MODIFICAR | `apps/web/src/app/(recruiter)/dashboard/layout.tsx` |
+| MODIFICAR | `apps/web/src/components/admin/OrganizationDashboard.tsx` |
+
+---
+
 **FIM DO DOCUMENTO** — Versão 5.6 (Sprint 39: Depoimentos editáveis na career page)
 - **Seção 5**: Boas Práticas de Implantação (ciclo de avaliação, comunicação, anonimato)
 - **Seção 6**: FAQ para Auditoria Interna (MTE, fiscalização, jurídico)
@@ -6813,6 +7292,12 @@ Nova tabela `org_testimonials`:
 ---
 
 ## 📝 Histórico de Versões
+
+### v5.7 (2026-03-11)
+- ✅ **Score de Conformidade**: 100% mantido (Sprint 40)
+- ✅ **Migration `20260311_org_career_tips.sql`**: tabela `org_career_tips` — campos `title`, `summary`, `content`, `display_order`, `is_active`; trigger `updated_at`; RLS público (leitura `is_active=true`) + escrita via `is_org_member(org_id)`; GRANTs `anon + authenticated`
+- ✅ **Settings page — Dicas de Carreira**: novo card com ícone `Lightbulb`, lista de dicas, formulário inline (title/summary/content), CRUD completo via Supabase direto
+- ✅ **Career page dinâmica**: fetch de `org_career_tips` após `loadJobs()`; seção só renderiza se há dicas cadastradas e ativas
 
 ### v5.6 (2026-03-11)
 - ✅ **Score de Conformidade**: 100% mantido (Sprint 39)
@@ -7496,4 +7981,7 @@ O `ReportsService.getDashboard()` usa `applications.source` com fallback para `c
 | Sprint 37 | 2026-03-10 | Career Page redesign v3 — banner real como BG, logo flutuante `drop-shadow`, sticky nav glassmorphism, SVG curve, cards animados (`w-0→w-full`), TypeBadge, `daysAgo()`, Sparkles, ArrowUpRight | ✅ |
 | **Sprint 38** | **2026-03-11** | **Career Page v4 — `work_modality` + `salary_range` em `jobs`, `ModalityBadge`, `SeniorityBadge`, grid 2-col com `isLastOdd`, seção Banco de Talentos, headline editável 2 linhas, `max-w-7xl`; PHP mobile fixes: `grid-cols-*` responsivos no TFCI/ActionPlans + card view mobile em Employees** | ✅ |
 | **Sprint 39** | **2026-03-11** | **Depoimentos editáveis — tabela `org_testimonials` com RLS, CRUD no settings (formulário inline, estrelas clicáveis, paleta de cores), career page busca do DB e renderiza condicionalmente; ícones SVG reais das redes sociais na seção #vagas** | ✅ |
+| **Sprint 40** | **2026-03-11** | **Dicas de carreira — tabela `org_career_tips` com RLS + trigger updated_at, CRUD no settings (card Lightbulb, formulário inline title/summary/content), career page renderiza seção condicionalmente** | ✅ |
+| **Sprint 41** | **PLANEJADO** | **AI Assistant PHP Module — 7 endpoints `/api/php/ai/*`, tabela `php_ai_usage`, correção `orgId` no frontend, integração com provedor AI (Anthropic/OpenAI)** | 🔲 |
+| **Sprint 42** | **PLANEJADO** | **Gate de ativação do módulo Recrutamento — tabela `recruitment_module_activations`, `GET /api/v1/recruitment/status`, endpoints admin, guard no `dashboard/layout.tsx`, card no Admin Panel** | 🔲 |
 ```

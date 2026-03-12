@@ -25,6 +25,7 @@ import {
   Menu,
   X,
   Globe,
+  Lock,
 } from 'lucide-react';
 import { NotificationCenter } from '@/components/notifications/NotificationCenter';
 import { AgendaModal } from '@/components/calendar/AgendaModal';
@@ -62,6 +63,7 @@ export default function RecruiterLayout({ children }: { children: React.ReactNod
   const [orgDropdownOpen, setOrgDropdownOpen] = useState(false);
   const [agendaOpen, setAgendaOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [recruitmentActive, setRecruitmentActive] = useState<boolean | null>(null);
 
   // Fecha drawer ao navegar
   useEffect(() => { setMobileOpen(false); }, [pathname]);
@@ -184,6 +186,24 @@ export default function RecruiterLayout({ children }: { children: React.ReactNod
       ignore = true;
     };
   }, [supabase]);
+
+  // Verificar ativação do módulo de Recrutamento quando org carrega
+  useEffect(() => {
+    if (!currentOrg?.id) return;
+
+    async function checkRecruitmentModule() {
+      const { data } = await supabase
+        .from('recruitment_module_activations')
+        .select('is_active')
+        .eq('org_id', currentOrg!.id)
+        .maybeSingle();
+
+      // Se não houver registro, considera inativo
+      setRecruitmentActive(data?.is_active ?? false);
+    }
+
+    checkRecruitmentModule();
+  }, [currentOrg?.id, supabase]);
 
   const handleLogout = async () => {
     try {
@@ -474,7 +494,19 @@ export default function RecruiterLayout({ children }: { children: React.ReactNod
           </header>
 
           <main className="flex-1 px-4 py-4 pt-18 md:pt-6 md:px-5 md:py-6">
-            {children}
+            {recruitmentActive === false ? (
+              <div className="flex flex-col items-center justify-center min-h-[60vh] text-center px-4">
+                <div className="w-16 h-16 rounded-2xl bg-[#141042]/8 flex items-center justify-center mb-5">
+                  <Lock className="w-8 h-8 text-[#141042]/40" />
+                </div>
+                <h2 className="text-xl font-semibold text-[#141042] mb-2">Módulo de Recrutamento inativo</h2>
+                <p className="text-sm text-[#64748B] max-w-sm">
+                  O módulo de Recrutamento não está ativo para esta organização. Entre em contato com a Fartech para ativar.
+                </p>
+              </div>
+            ) : (
+              children
+            )}
           </main>
         </div>
 

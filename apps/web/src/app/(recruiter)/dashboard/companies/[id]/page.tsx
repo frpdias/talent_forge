@@ -85,6 +85,10 @@ function CompanyDetailContent() {
   const [phpModuleActive, setPhpModuleActive] = useState(false);
   const [phpLoading, setPhpLoading] = useState(false);
 
+  // Estado do módulo de Recrutamento
+  const [recruitmentModuleActive, setRecruitmentModuleActive] = useState(false);
+  const [recruitmentLoading, setRecruitmentLoading] = useState(false);
+
   useEffect(() => {
     getAuthToken().then(token => { if (token) setAuthToken(token); });
   }, []);
@@ -94,6 +98,7 @@ function CompanyDetailContent() {
       loadCompany();
       loadEmployees();
       loadPhpModuleStatus();
+      loadRecruitmentModuleStatus();
     } else if (companyId && !currentOrg?.id) {
       // Se após 3s currentOrg ainda não chegou, para o spinner
       const t = setTimeout(() => setLoading(false), 3000);
@@ -118,6 +123,45 @@ function CompanyDetailContent() {
       }
     } catch (error) {
       console.error('Erro ao carregar status PHP:', error);
+    }
+  };
+
+  // Carregar status do módulo de Recrutamento
+  const loadRecruitmentModuleStatus = async () => {
+    try {
+      const supabase = createClient();
+      const { data } = await supabase
+        .from('recruitment_module_activations')
+        .select('is_active')
+        .eq('org_id', companyId)
+        .maybeSingle();
+      setRecruitmentModuleActive(data?.is_active ?? false);
+    } catch (error) {
+      console.error('Erro ao carregar status Recrutamento:', error);
+    }
+  };
+
+  // Toggle módulo de Recrutamento
+  const toggleRecruitmentModule = async () => {
+    setRecruitmentLoading(true);
+    try {
+      const newStatus = !recruitmentModuleActive;
+      const method = newStatus ? 'POST' : 'DELETE';
+      const res = await fetch(`/api/admin/companies/${companyId}/recruitment-module`, { method });
+      if (!res.ok) {
+        const err = await res.json();
+        alert(`Erro: ${err.error || 'Falha ao atualizar módulo de Recrutamento'}`);
+      } else {
+        setRecruitmentModuleActive(newStatus);
+        alert(newStatus
+          ? '✅ Módulo de Recrutamento ativado!'
+          : '⚠️ Módulo de Recrutamento desativado para esta empresa.'
+        );
+      }
+    } catch (error) {
+      console.error('Erro:', error);
+    } finally {
+      setRecruitmentLoading(false);
     }
   };
 
@@ -356,6 +400,9 @@ function CompanyDetailContent() {
             phpModuleActive={phpModuleActive}
             phpLoading={phpLoading}
             togglePhpModule={togglePhpModule}
+            recruitmentModuleActive={recruitmentModuleActive}
+            recruitmentLoading={recruitmentLoading}
+            toggleRecruitmentModule={toggleRecruitmentModule}
             onOpenPhp={() => {
               setPhpContextOrg(companyId, company.name);
               router.push('/php/dashboard');
@@ -562,10 +609,13 @@ interface CompanyInfoTabProps {
   phpModuleActive: boolean;
   phpLoading: boolean;
   togglePhpModule: () => void;
+  recruitmentModuleActive: boolean;
+  recruitmentLoading: boolean;
+  toggleRecruitmentModule: () => void;
   onOpenPhp: () => void;
 }
 
-function CompanyInfoTab({ company, employees, phpModuleActive, phpLoading, togglePhpModule, onOpenPhp }: CompanyInfoTabProps) {
+function CompanyInfoTab({ company, employees, phpModuleActive, phpLoading, togglePhpModule, recruitmentModuleActive, recruitmentLoading, toggleRecruitmentModule, onOpenPhp }: CompanyInfoTabProps) {
   // Métricas calculadas dos funcionários
   const employeeStats = useMemo(() => {
     if (employees.length === 0) {
@@ -744,6 +794,66 @@ function CompanyInfoTab({ company, employees, phpModuleActive, phpLoading, toggl
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Coluna Esquerda - 2/3 */}
         <div className="lg:col-span-2 space-y-6">
+          {/* Card Módulo de Recrutamento */}
+          <div className={`rounded-xl border-2 p-6 transition-all ${
+            recruitmentModuleActive
+              ? 'bg-linear-to-r from-blue-50 to-indigo-50 border-blue-200'
+              : 'bg-gray-50 border-gray-200'
+          }`}>
+            <div className="flex items-start justify-between">
+              <div className="flex items-start gap-4">
+                <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
+                  recruitmentModuleActive ? 'bg-blue-600' : 'bg-gray-400'
+                }`}>
+                  <Briefcase className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-[#141042] text-lg">Módulo de Recrutamento</h3>
+                  <p className="text-sm text-[#666666] mb-3">
+                    Vagas, Pipeline Kanban, Candidatos e Career Page
+                  </p>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <div className={`flex items-center gap-2 text-sm ${recruitmentModuleActive ? 'text-blue-700' : 'text-gray-500'}`}>
+                      <CheckCircle2 className="w-4 h-4" />
+                      <span>Gestão de Vagas</span>
+                    </div>
+                    <div className={`flex items-center gap-2 text-sm ${recruitmentModuleActive ? 'text-blue-700' : 'text-gray-500'}`}>
+                      <CheckCircle2 className="w-4 h-4" />
+                      <span>Pipeline Kanban</span>
+                    </div>
+                    <div className={`flex items-center gap-2 text-sm ${recruitmentModuleActive ? 'text-blue-700' : 'text-gray-500'}`}>
+                      <CheckCircle2 className="w-4 h-4" />
+                      <span>Career Page</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <button
+                onClick={toggleRecruitmentModule}
+                disabled={recruitmentLoading}
+                className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-medium transition-all shadow-sm ${
+                  recruitmentModuleActive
+                    ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-blue-200'
+                    : 'bg-[#141042] text-white hover:bg-[#1a1557] shadow-gray-200'
+                } ${recruitmentLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+              >
+                {recruitmentLoading ? (
+                  <span className="animate-spin">⏳</span>
+                ) : recruitmentModuleActive ? (
+                  <><ToggleRight className="w-5 h-5" />Ativo</>
+                ) : (
+                  <><ToggleLeft className="w-5 h-5" />Ativar Módulo</>
+                )}
+              </button>
+            </div>
+            {recruitmentModuleActive && (
+              <div className="mt-5 pt-5 border-t border-blue-200 flex items-center gap-2 text-blue-700">
+                <CheckCircle2 className="w-5 h-5" />
+                <span className="font-medium">Módulo ativo — recrutamento habilitado para esta empresa</span>
+              </div>
+            )}
+          </div>
+
           {/* Card Módulo PHP */}
           <div className={`rounded-xl border-2 p-6 transition-all ${
             phpModuleActive 
