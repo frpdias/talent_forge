@@ -99,7 +99,7 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto">
           <div className="text-center max-w-3xl mx-auto mb-16">
 
-            <h1 className="text-6xl sm:text-7xl lg:text-8xl font-bold text-[#141042] tracking-tight mb-6 leading-tight">
+            <h1 className="text-7xl sm:text-8xl lg:text-9xl font-bold text-[#141042] tracking-tight mb-6 leading-tight">
               Recrute melhor.{' '}
               <span className="text-[#1F4ED8]">Gerencie pessoas.</span>
               <br />
