@@ -9,6 +9,7 @@ import { createClient } from '@/lib/supabase/client';
 import ColorTestModal from '@/components/candidate/ColorTestModal';
 import PiTestModal from '@/components/candidate/PiTestModal';
 import DiscTestModal from '@/components/candidate/DiscTestModal';
+import CropAvatarModal from '@/components/candidate/CropAvatarModal';
 
 const AssessmentRadarChart = dynamic(
   () => import('@/components/candidate/AssessmentRadarChart'),
@@ -97,6 +98,7 @@ export default function CandidateDashboard() {
   const [dashLoading, setDashLoading] = useState(true);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [imageToCrop, setImageToCrop] = useState<string | null>(null);
 
   const discProfileSummary: Record<string, string> = {
     D: 'Foco em resultados, decisão rápida e assertividade.',
@@ -421,19 +423,27 @@ export default function CandidateDashboard() {
 
   useEffect(() => { loadDashboard(); }, [loadDashboard]);
 
-  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleAvatarUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => setImageToCrop(reader.result as string);
+    reader.readAsDataURL(file);
+    // reset input so same file can be re-selected
+    e.target.value = '';
+  };
+
+  const handleCropSave = async (blob: Blob) => {
+    setImageToCrop(null);
     setUploadingAvatar(true);
     try {
       const supabase = createClient();
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
-      const ext = file.name.split('.').pop();
-      const path = `${user.id}/avatar.${ext}`;
+      const path = `${user.id}/avatar.jpg`;
       const { error: upErr } = await supabase.storage
         .from('candidate-avatars')
-        .upload(path, file, { upsert: true });
+        .upload(path, blob, { upsert: true, contentType: 'image/jpeg' });
       if (upErr) throw upErr;
       const { data: urlData } = supabase.storage
         .from('candidate-avatars')
@@ -452,6 +462,13 @@ export default function CandidateDashboard() {
 
   return (
     <div className="space-y-4 sm:space-y-6 lg:space-y-8 pb-16 lg:pb-0">
+      {imageToCrop && (
+        <CropAvatarModal
+          imageSrc={imageToCrop}
+          onCancel={() => setImageToCrop(null)}
+          onSave={handleCropSave}
+        />
+      )}
       {/* Welcome + Testes Banner */}
       <div className="bg-linear-to-r from-[#141042] to-[#3B82F6] rounded-xl sm:rounded-2xl p-4 sm:p-6 lg:p-8 relative overflow-hidden">
         <div className="absolute right-0 top-0 w-32 sm:w-64 h-32 sm:h-64 bg-white/10 rounded-full blur-3xl" />
