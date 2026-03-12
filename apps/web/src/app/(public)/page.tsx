@@ -248,7 +248,7 @@ export default function LandingPage() {
       <section id="recursos" className="py-24 px-4 sm:px-6 lg:px-8 bg-white">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-3xl sm:text-4xl font-bold text-[#141042] tracking-tight mb-4">
+            <h2 className="font-bold text-[#141042] tracking-tight mb-4" style={{ fontSize: 'clamp(5.6rem, 9vw, 6.75rem)' }}>
               Tudo que seu RH precisa
             </h2>
             <p className="text-lg text-[#666666] max-w-2xl mx-auto">
