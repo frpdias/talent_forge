@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { UserPlus, Mail, User, Lock, Building2, Phone, Calendar, Save, AlertCircle, CheckCircle } from 'lucide-react';
+import { UserPlus, Mail, User, Lock, Building2, Phone, Save, AlertCircle, CheckCircle, HelpCircle, X, ArrowRight, Database, Shield, Briefcase } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 
 type UserType = 'admin' | 'recruiter' | 'candidate';
@@ -19,6 +19,7 @@ interface FormData {
 export default function CreateUserPage() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [helpOpen, setHelpOpen] = useState(false);
   
   const [formData, setFormData] = useState<FormData>({
     email: '',
@@ -84,15 +85,166 @@ export default function CreateUserPage() {
 
   return (
     <div className="space-y-6 sm:space-y-8 pb-20 lg:pb-0">
+
+      {/* Modal de Instruções */}
+      {helpOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            {/* Header do modal */}
+            <div className="sticky top-0 bg-white flex items-center justify-between px-6 py-4 border-b border-[#E5E5DC] rounded-t-2xl">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-[#141042] flex items-center justify-center">
+                  <Briefcase className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <h3 className="text-base font-semibold text-[#141042]">Como cadastrar um Recrutador</h3>
+                  <p className="text-xs text-[#666666]">Guia completo do fluxo de criação</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setHelpOpen(false)}
+                className="p-2 rounded-lg text-[#666666] hover:bg-[#FAFAF8] hover:text-[#141042] transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="px-6 py-5 space-y-6">
+
+              {/* Passo 1 */}
+              <div className="flex gap-4">
+                <div className="shrink-0 w-8 h-8 rounded-full bg-[#141042] text-white flex items-center justify-center text-sm font-bold">1</div>
+                <div className="flex-1">
+                  <h4 className="font-semibold text-[#141042] mb-1">Preencha os campos obrigatórios</h4>
+                  <p className="text-sm text-[#666666] mb-3">Selecione o tipo <strong>Recrutador</strong> e informe os dados abaixo:</p>
+                  <div className="bg-[#FAFAF8] border border-[#E5E5DC] rounded-xl p-4 space-y-2 text-sm">
+                    <div className="flex items-start gap-2">
+                      <Mail className="w-4 h-4 text-[#141042] mt-0.5 shrink-0" />
+                      <div><span className="font-medium text-[#141042]">Email *</span> — será o login do recrutador. Deve ser único no sistema.</div>
+                    </div>
+                    <div className="flex items-start gap-2">
+                      <Lock className="w-4 h-4 text-[#141042] mt-0.5 shrink-0" />
+                      <div><span className="font-medium text-[#141042]">Senha *</span> — mínimo 6 caracteres. O recrutador pode alterar após o primeiro login.</div>
+                    </div>
+                    <div className="flex items-start gap-2">
+                      <User className="w-4 h-4 text-[#141042] mt-0.5 shrink-0" />
+                      <div><span className="font-medium text-[#141042]">Nome completo *</span> — usado no perfil e na exibição interna.</div>
+                    </div>
+                    <div className="flex items-start gap-2">
+                      <Building2 className="w-4 h-4 text-[#666666] mt-0.5 shrink-0" />
+                      <div><span className="font-medium text-[#141042]">Empresa</span> — nome da organização. Usado para nomear a org criada automaticamente.</div>
+                    </div>
+                    <div className="flex items-start gap-2">
+                      <Phone className="w-4 h-4 text-[#666666] mt-0.5 shrink-0" />
+                      <div><span className="font-medium text-[#141042]">Telefone / Cargo</span> — opcionais, armazenados no perfil.</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Passo 2 */}
+              <div className="flex gap-4">
+                <div className="shrink-0 w-8 h-8 rounded-full bg-[#141042] text-white flex items-center justify-center text-sm font-bold">2</div>
+                <div className="flex-1">
+                  <h4 className="font-semibold text-[#141042] mb-1">O sistema cria automaticamente</h4>
+                  <p className="text-sm text-[#666666] mb-3">Ao submeter o formulário, o backend executa em sequência:</p>
+                  <div className="space-y-2">
+                    <div className="flex items-start gap-3 p-3 bg-blue-50 border border-blue-100 rounded-lg text-sm">
+                      <Database className="w-4 h-4 text-blue-600 mt-0.5 shrink-0" />
+                      <div>
+                        <span className="font-medium text-blue-900">auth.users</span>
+                        <span className="text-blue-700"> — conta de acesso com email já confirmado (<code className="bg-blue-100 px-1 rounded">email_confirm: true</code>)</span>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-3 p-3 bg-purple-50 border border-purple-100 rounded-lg text-sm">
+                      <User className="w-4 h-4 text-purple-600 mt-0.5 shrink-0" />
+                      <div>
+                        <span className="font-medium text-purple-900">user_profiles</span>
+                        <span className="text-purple-700"> — perfil com full_name, email, user_type=<code className="bg-purple-100 px-1 rounded">'recruiter'</code>, phone, company, position</span>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-3 p-3 bg-green-50 border border-green-100 rounded-lg text-sm">
+                      <Building2 className="w-4 h-4 text-green-600 mt-0.5 shrink-0" />
+                      <div>
+                        <span className="font-medium text-green-900">organizations</span>
+                        <span className="text-green-700"> — org criada com nome <code className="bg-green-100 px-1 rounded">"&lt;Empresa&gt; - &lt;id_curto&gt;"</code>, org_type=<code className="bg-green-100 px-1 rounded">'headhunter'</code>, status=<code className="bg-green-100 px-1 rounded">'active'</code></span>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-3 p-3 bg-amber-50 border border-amber-100 rounded-lg text-sm">
+                      <Shield className="w-4 h-4 text-amber-600 mt-0.5 shrink-0" />
+                      <div>
+                        <span className="font-medium text-amber-900">org_members</span>
+                        <span className="text-amber-700"> — vínculo com role=<code className="bg-amber-100 px-1 rounded">'admin'</code> e status=<code className="bg-amber-100 px-1 rounded">'active'</code> (recrutador começa como admin da própria org)</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Passo 3 */}
+              <div className="flex gap-4">
+                <div className="shrink-0 w-8 h-8 rounded-full bg-[#10B981] text-white flex items-center justify-center text-sm font-bold">3</div>
+                <div className="flex-1">
+                  <h4 className="font-semibold text-[#141042] mb-1">Após a criação — próximos passos</h4>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex items-start gap-2 text-[#666666]">
+                      <ArrowRight className="w-4 h-4 text-[#10B981] mt-0.5 shrink-0" />
+                      <span>Acesse <strong className="text-[#141042]">Dashboard → Minhas Empresas → [nome da org]</strong> para ativar o módulo de Recrutamento via toggle no card da empresa.</span>
+                    </div>
+                    <div className="flex items-start gap-2 text-[#666666]">
+                      <ArrowRight className="w-4 h-4 text-[#10B981] mt-0.5 shrink-0" />
+                      <span>Se o cliente também usar o módulo PHP, ative-o pelo mesmo card.</span>
+                    </div>
+                    <div className="flex items-start gap-2 text-[#666666]">
+                      <ArrowRight className="w-4 h-4 text-[#10B981] mt-0.5 shrink-0" />
+                      <span>O recrutador já pode fazer login imediatamente — sem necessidade de confirmar email.</span>
+                    </div>
+                    <div className="flex items-start gap-2 text-[#666666]">
+                      <ArrowRight className="w-4 h-4 text-[#10B981] mt-0.5 shrink-0" />
+                      <span>Para adicionar outros usuários à mesma org, o próprio recrutador usa <strong className="text-[#141042]">Dashboard → Convidar Usuário</strong> para gerar um link de convite.</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Alerta de erro crítico */}
+              <div className="p-4 bg-red-50 border border-red-200 rounded-xl text-sm">
+                <p className="font-semibold text-red-800 mb-1">⚠️ Se a criação falhar</p>
+                <p className="text-red-700">Se o usuário for criado no Auth mas a org/org_members falharem, o recrutador ficará sem organização. Nesse caso, crie a org manualmente no Supabase e insira o vínculo em <code className="bg-red-100 px-1 rounded">org_members</code> com role=<code className="bg-red-100 px-1 rounded">'admin'</code>.</p>
+              </div>
+
+            </div>
+
+            <div className="px-6 py-4 border-t border-[#E5E5DC] flex justify-end">
+              <button
+                onClick={() => setHelpOpen(false)}
+                className="px-5 py-2 bg-[#141042] text-white rounded-lg text-sm font-medium hover:bg-[#1a1557] transition-colors"
+              >
+                Entendido
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
-      <div>
-        <h2 className="text-xl sm:text-2xl font-semibold text-[#141042] flex items-center">
-          <UserPlus className="w-6 h-6 mr-3 text-[#141042]" />
-          Criar Novo Usuário
-        </h2>
-        <p className="text-sm sm:text-base text-[#666666] mt-1">
-          Cadastre novos usuários diretamente no sistema (Admin, Recrutadores, Candidatos)
-        </p>
+      <div className="flex items-start justify-between">
+        <div>
+          <h2 className="text-xl sm:text-2xl font-semibold text-[#141042] flex items-center">
+            <UserPlus className="w-6 h-6 mr-3 text-[#141042]" />
+            Criar Novo Usuário
+          </h2>
+          <p className="text-sm sm:text-base text-[#666666] mt-1">
+            Cadastre novos usuários diretamente no sistema (Admin, Recrutadores, Candidatos)
+          </p>
+        </div>
+        <button
+          onClick={() => setHelpOpen(true)}
+          className="flex items-center gap-2 px-4 py-2 border border-[#E5E5DC] rounded-lg text-sm text-[#666666] hover:bg-[#FAFAF8] hover:text-[#141042] transition-colors shrink-0"
+        >
+          <HelpCircle className="w-4 h-4" />
+          Como cadastrar
+        </button>
       </div>
 
       {/* Mensagem de Feedback */}
@@ -105,9 +257,9 @@ export default function CreateUserPage() {
           }`}
         >
           {message.type === 'success' ? (
-            <CheckCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
+            <CheckCircle className="w-5 h-5 shrink-0 mt-0.5" />
           ) : (
-            <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
+            <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
           )}
           <p className="text-sm font-medium">{message.text}</p>
         </div>
