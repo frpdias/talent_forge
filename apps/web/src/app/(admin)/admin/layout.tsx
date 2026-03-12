@@ -25,18 +25,38 @@ import {
 import { createClient } from '@/lib/supabase/client';
 import Image from 'next/image';
 
-const navItems = [
-  { href: '/admin', label: 'Dashboard', icon: LayoutDashboard },
-  { href: '/admin/tenants', label: 'Tenants', icon: Building2 },
-  { href: '/admin/users', label: 'Usuários', icon: Users },
-  { href: '/admin/create-user', label: 'Criar Usuário', icon: UserPlus },
-  { href: '/admin/companies', label: 'Empresas', icon: Building },
-  { href: '/admin/security', label: 'Segurança', icon: Shield },
-  { href: '/admin/roles', label: 'Roles & Permissões', icon: Lock },
-  { href: '/admin/audit-logs', label: 'Audit Logs', icon: FileText },
-  { href: '/admin/security-events', label: 'Eventos de Segurança', icon: AlertTriangle },
-  { href: '/admin/api-keys', label: 'API Keys', icon: Key },
-  { href: '/admin/settings', label: 'Configurações', icon: Settings },
+const navGroups = [
+  {
+    label: null,
+    items: [
+      { href: '/admin', label: 'Dashboard', icon: LayoutDashboard },
+    ],
+  },
+  {
+    label: 'Tenants & Usuários',
+    items: [
+      { href: '/admin/tenants', label: 'Tenants', icon: Building2 },
+      { href: '/admin/companies', label: 'Empresas', icon: Building },
+      { href: '/admin/users', label: 'Usuários', icon: Users },
+      { href: '/admin/create-user', label: 'Criar Usuário', icon: UserPlus },
+    ],
+  },
+  {
+    label: 'Segurança & Compliance',
+    items: [
+      { href: '/admin/security', label: 'Segurança', icon: Shield },
+      { href: '/admin/roles', label: 'Roles & Permissões', icon: Lock },
+      { href: '/admin/audit-logs', label: 'Audit Logs', icon: FileText },
+      { href: '/admin/security-events', label: 'Eventos de Seg.', icon: AlertTriangle },
+    ],
+  },
+  {
+    label: 'Sistema',
+    items: [
+      { href: '/admin/api-keys', label: 'API Keys', icon: Key },
+      { href: '/admin/settings', label: 'Configurações', icon: Settings },
+    ],
+  },
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -125,25 +145,39 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           </div>
         </div>
 
-        <nav className="p-3 sm:p-4 space-y-0.5">
-          {navItems.map((item) => {
-            const isActive = pathname === item.href || (item.href !== '/admin' && pathname.startsWith(item.href));
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                onClick={() => setSidebarOpen(false)}
-                className={`flex items-center space-x-3 px-3 sm:px-4 py-2.5 rounded-lg transition-all duration-200 ${
-                  isActive
-                    ? 'bg-white/15 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.12)]'
-                    : 'text-white/60 hover:bg-white/10 hover:text-white'
-                }`}
-              >
-                <item.icon className="w-4 h-4 shrink-0" />
-                <span className="font-medium text-sm">{item.label}</span>
-              </Link>
-            );
-          })}
+        <nav className="p-3 sm:p-4 space-y-4 overflow-y-auto">
+          {navGroups.map((group, gi) => (
+            <div key={gi}>
+              {group.label && (
+                <p className="px-3 sm:px-4 mb-1 text-[10px] font-bold uppercase tracking-widest text-white/30 select-none">
+                  {group.label}
+                </p>
+              )}
+              <div className="space-y-0.5">
+                {group.items.map((item) => {
+                  const isActive = pathname === item.href || (item.href !== '/admin' && pathname.startsWith(item.href));
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      onClick={() => setSidebarOpen(false)}
+                      className={`flex items-center space-x-3 px-3 sm:px-4 py-2.5 rounded-lg transition-all duration-200 ${
+                        isActive
+                          ? 'bg-white/15 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.12)]'
+                          : 'text-white/60 hover:bg-white/10 hover:text-white'
+                      }`}
+                    >
+                      <item.icon className="w-4 h-4 shrink-0" />
+                      <span className="font-medium text-sm">{item.label}</span>
+                    </Link>
+                  );
+                })}
+              </div>
+              {gi < navGroups.length - 1 && (
+                <div className="mt-4 border-t border-white/8" />
+              )}
+            </div>
+          ))}
         </nav>
 
         <div className="absolute bottom-0 left-0 right-0 p-3 sm:p-4 space-y-3">
