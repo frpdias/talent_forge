@@ -9,7 +9,6 @@ import {
   Brain,
   BarChart3,
   CheckCircle2,
-  Sparkles,
   Building2,
   UserCircle,
   Shield,
@@ -99,10 +98,6 @@ export default function LandingPage() {
       <section className="pt-32 pb-20 px-4 sm:px-6 lg:px-8 bg-white">
         <div className="max-w-7xl mx-auto">
           <div className="text-center max-w-3xl mx-auto mb-16">
-            <div className="inline-flex items-center gap-2 bg-[#141042]/5 border border-[#141042]/10 rounded-full px-4 py-1.5 mb-6">
-              <Sparkles className="w-3.5 h-3.5 text-[#141042]" />
-              <span className="text-[#141042] text-xs font-medium">Recrutamento Inteligente + Gestão de Pessoas</span>
-            </div>
 
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-[#141042] tracking-tight mb-6 leading-tight">
               Recrute melhor.{' '}
