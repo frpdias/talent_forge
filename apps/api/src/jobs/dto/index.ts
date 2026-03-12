@@ -59,6 +59,11 @@ export class CreateJobDto {
   @IsEnum(SeniorityLevel)
   seniority?: SeniorityLevel;
 
+  @ApiPropertyOptional({ description: 'Work modality (remote, hybrid, on_site)' })
+  @IsOptional()
+  @IsString()
+  workModality?: string;
+
   @ApiPropertyOptional({ enum: JobStatus, default: JobStatus.OPEN })
   @IsOptional()
   @IsEnum(JobStatus)
@@ -100,6 +105,11 @@ export class UpdateJobDto {
   @IsOptional()
   @IsEnum(SeniorityLevel)
   seniority?: SeniorityLevel;
+
+  @ApiPropertyOptional({ description: 'Work modality (remote, hybrid, on_site)' })
+  @IsOptional()
+  @IsString()
+  workModality?: string;
 
   @ApiPropertyOptional({ enum: JobStatus })
   @IsOptional()

@@ -23,7 +23,7 @@ export class PublisherService {
       this.configService.get<string>('SUPABASE_SERVICE_ROLE_KEY')!,
     );
 
-    this.adapters = new Map([
+    this.adapters = new Map<ChannelCode, ChannelAdapter>([
       ['gupy', this.gupyAdapter],
       ['vagas', this.vagasAdapter],
       ['linkedin', this.linkedinAdapter],

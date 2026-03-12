@@ -32,5 +32,9 @@
   },
   "devDependencies": {
     "concurrently": "^8.2.2"
+  },
+  "overrides": {
+    "@types/react": "^18",
+    "@types/react-dom": "^18"
   }
 }
