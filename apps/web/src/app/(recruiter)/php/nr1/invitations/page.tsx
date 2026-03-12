@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { createClient, getAuthToken } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/button';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { Card } from '@/components/ui/card';
 import { Send, Copy, RefreshCw, X, CheckCircle, Clock, XCircle, AlertCircle, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
@@ -32,6 +33,7 @@ export default function InvitationsPage() {
   const [creating, setCreating] = useState(false);
   const [filter, setFilter] = useState<'all' | 'pending' | 'accepted' | 'completed' | 'expired'>('all');
   const [copiedToken, setCopiedToken] = useState<string>('');
+  const [confirmCancelId, setConfirmCancelId] = useState<string | null>(null);
   
   const supabase = createClient();
 
@@ -159,8 +161,6 @@ export default function InvitationsPage() {
   };
 
   const handleCancel = async (id: string) => {
-    if (!confirm('Deseja realmente cancelar este convite?')) return;
-
     try {
       const token = await getAuthToken();
       const res = await fetch(`/api/v1/php/nr1/invitations/${id}`, {
@@ -176,6 +176,8 @@ export default function InvitationsPage() {
       if (orgId) await loadInvitations(orgId);
     } catch (error: any) {
       alert(error.message);
+    } finally {
+      setConfirmCancelId(null);
     }
   };
 
@@ -233,6 +235,16 @@ export default function InvitationsPage() {
   }
 
   return (
+    <>
+    <ConfirmDialog
+      open={confirmCancelId !== null}
+      title="Cancelar convite"
+      message="Deseja realmente cancelar este convite?"
+      confirmLabel="Cancelar convite"
+      cancelLabel="Voltar"
+      onConfirm={() => confirmCancelId && handleCancel(confirmCancelId)}
+      onCancel={() => setConfirmCancelId(null)}
+    />
     <div className="container mx-auto p-6 max-w-7xl">
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
@@ -413,7 +425,7 @@ export default function InvitationsPage() {
                       <Button
                         size="sm"
                         variant="outline"
-                        onClick={() => handleCancel(invitation.id)}
+                        onClick={() => setConfirmCancelId(invitation.id)}
                         className="gap-2 text-red-600 border-red-300 hover:bg-red-50"
                       >
                         <X className="w-4 h-4" />
@@ -428,5 +440,6 @@ export default function InvitationsPage() {
         </div>
       )}
     </div>
+    </>
   );
 }

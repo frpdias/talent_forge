@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { Trash2, Edit2, Save, X, StickyNote } from 'lucide-react';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, Button } from '@/components/ui';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, Button, ConfirmDialog } from '@/components/ui';
 import { formatDate } from '@/lib/utils';
 import { createClient } from '@/lib/supabase/client';
 
@@ -48,6 +48,7 @@ export function NotesPanel({
   const [saving, setSaving] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
   const [userLabel, setUserLabel] = useState<string>('Você');
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
   // Get auth user
   useEffect(() => {
@@ -185,7 +186,6 @@ export function NotesPanel({
   };
 
   const handleDelete = async (noteId: string) => {
-    if (!confirm('Tem certeza que deseja excluir esta anotação?')) return;
     if (!userId) return;
 
     try {
@@ -202,12 +202,22 @@ export function NotesPanel({
     } catch (error) {
       console.error('Failed to delete note:', error);
       alert(`Erro ao excluir anotação: ${(error as Error)?.message || 'Tente novamente'}`);
+    } finally {
+      setConfirmDeleteId(null);
     }
   };
 
   const contextLabel = contextLabels[context] || context;
 
   return (
+    <>
+    <ConfirmDialog
+      open={confirmDeleteId !== null}
+      title="Excluir anotação"
+      message="Esta ação não pode ser desfeita."
+      onConfirm={() => confirmDeleteId && handleDelete(confirmDeleteId)}
+      onCancel={() => setConfirmDeleteId(null)}
+    />
     <Card className={className}>
       <CardHeader className="pb-3">
         <div className="flex items-center gap-2">
@@ -325,8 +335,8 @@ export function NotesPanel({
                           <Edit2 className="w-3.5 h-3.5" />
                         </button>
                         <button
-                          onClick={() => handleDelete(note.id)}
-                          className="p-1 text-foreground-muted hover:text-tf-error 
+                          onClick={() => setConfirmDeleteId(note.id)}
+                          className="p-1 text-foreground-muted hover:text-tf-error
                                    hover:bg-white rounded transition-colors"
                           title="Excluir"
                         >
@@ -348,5 +358,6 @@ export function NotesPanel({
         </div>
       </CardContent>
     </Card>
+    </>
   );
 }

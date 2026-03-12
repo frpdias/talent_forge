@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { Webhook, Plus, Trash2, Eye, EyeOff, Copy, Check } from 'lucide-react';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 
 interface WebhookConfig {
   id: string;
@@ -27,6 +28,7 @@ const availableEvents = [
 export function WebhookManager() {
   const [webhooks, setWebhooks] = useState<WebhookConfig[]>([]);
   const [isCreating, setIsCreating] = useState(false);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [showSecret, setShowSecret] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [calendarLoading, setCalendarLoading] = useState(true);
@@ -117,9 +119,8 @@ export function WebhookManager() {
   };
 
   const handleDelete = (id: string) => {
-    if (confirm('Tem certeza que deseja excluir este webhook?')) {
-      setWebhooks(webhooks.filter(w => w.id !== id));
-    }
+    setWebhooks(webhooks.filter(w => w.id !== id));
+    setConfirmDeleteId(null);
   };
 
   const toggleActive = (id: string) => {
@@ -135,6 +136,14 @@ export function WebhookManager() {
   };
 
   return (
+    <>
+    <ConfirmDialog
+      open={confirmDeleteId !== null}
+      title="Excluir webhook"
+      message="Esta ação não pode ser desfeita."
+      onConfirm={() => confirmDeleteId && handleDelete(confirmDeleteId)}
+      onCancel={() => setConfirmDeleteId(null)}
+    />
     <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
       <div className="mb-6 border border-gray-200 rounded-lg p-4 bg-gray-50">
         <div className="flex items-center justify-between gap-4">
@@ -416,7 +425,7 @@ export function WebhookManager() {
                   {webhook.active ? 'Desativar' : 'Ativar'}
                 </button>
                 <button
-                  onClick={() => handleDelete(webhook.id)}
+                  onClick={() => setConfirmDeleteId(webhook.id)}
                   className="p-1 text-red-600 hover:bg-red-50 rounded"
                 >
                   <Trash2 className="w-4 h-4" />
@@ -431,5 +440,6 @@ export function WebhookManager() {
         ))}
       </div>
     </div>
+    </>
   );
 }

@@ -6,6 +6,7 @@ import { Building2, Plus, Search, Edit, Eye, Trash2, MapPin, Mail, Phone } from 
 import { useOrgStore } from '@/lib/store';
 import { HIERARCHY_LEVELS } from '@/lib/constants/hierarchy';
 import { getAuthToken } from '@/lib/supabase/client';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 
 interface Company {
   id: string;
@@ -36,6 +37,7 @@ export default function RecruiterCompaniesPage() {
   const [companies, setCompanies] = useState<Company[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [showForm, setShowForm] = useState(false);
   const [editingCompany, setEditingCompany] = useState<Company | null>(null);
@@ -330,8 +332,6 @@ export default function RecruiterCompaniesPage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Tem certeza que deseja excluir esta empresa?')) return;
-
     try {
       const token = await getAuthToken();
 
@@ -353,6 +353,8 @@ export default function RecruiterCompaniesPage() {
       }
     } catch (error) {
       console.error('Error deleting company:', error);
+    } finally {
+      setConfirmDeleteId(null);
     }
   };
 
@@ -367,6 +369,14 @@ export default function RecruiterCompaniesPage() {
   );
 
   return (
+    <>
+    <ConfirmDialog
+      open={confirmDeleteId !== null}
+      title="Excluir empresa"
+      message="Esta ação não pode ser desfeita."
+      onConfirm={() => confirmDeleteId && handleDelete(confirmDeleteId)}
+      onCancel={() => setConfirmDeleteId(null)}
+    />
     <div className="min-h-screen bg-[#FAFAF8] p-6">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
@@ -768,7 +778,7 @@ export default function RecruiterCompaniesPage() {
                     <Edit className="w-4 h-4" />
                   </button>
                   <button
-                    onClick={() => handleDelete(company.id)}
+                    onClick={() => setConfirmDeleteId(company.id)}
                     className="px-3 py-2 border border-red-200 text-red-600 rounded-lg hover:bg-red-50 transition-colors"
                   >
                     <Trash2 className="w-4 h-4" />
@@ -780,5 +790,6 @@ export default function RecruiterCompaniesPage() {
         )}
       </div>
     </div>
+    </>
   );
 }

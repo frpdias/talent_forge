@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { useOrgStore } from '@/lib/store';
 import { getAuthToken } from '@/lib/supabase/client';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 
 interface Team {
   id: string;
@@ -53,6 +54,7 @@ export default function TeamsPage() {
   const [autoCreating, setAutoCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [employees, setEmployees] = useState<Employee[]>([]);
+  const [confirmDeleteTeam, setConfirmDeleteTeam] = useState<{ id: string; name: string } | null>(null);
 
   const loadTeams = useCallback(async () => {
     if (!effectiveOrgId) return;
@@ -187,9 +189,8 @@ export default function TeamsPage() {
     }
   };
 
-  const handleDeleteTeam = async (teamId: string, teamName: string) => {
+  const handleDeleteTeam = async (teamId: string) => {
     if (!effectiveOrgId) return;
-    if (!confirm(`Tem certeza que deseja excluir o time "${teamName}"? Esta ação não pode ser desfeita.`)) return;
 
     try {
       const token = await getAuthToken();
@@ -209,6 +210,8 @@ export default function TeamsPage() {
       }
     } catch {
       alert('Erro de conexão');
+    } finally {
+      setConfirmDeleteTeam(null);
     }
   };
 
@@ -226,6 +229,14 @@ export default function TeamsPage() {
   };
 
   return (
+    <>
+    <ConfirmDialog
+      open={confirmDeleteTeam !== null}
+      title={`Excluir time "${confirmDeleteTeam?.name}"`}
+      message="Esta ação não pode ser desfeita."
+      onConfirm={() => confirmDeleteTeam && handleDeleteTeam(confirmDeleteTeam.id)}
+      onCancel={() => setConfirmDeleteTeam(null)}
+    />
     <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center gap-3 justify-between">
@@ -364,7 +375,7 @@ export default function TeamsPage() {
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      handleDeleteTeam(team.id, team.name);
+                      setConfirmDeleteTeam({ id: team.id, name: team.name });
                     }}
                     className="p-1.5 text-[#666666] hover:text-red-600 hover:bg-[#FAFAF8] rounded"
                     title="Excluir"
@@ -485,5 +496,6 @@ export default function TeamsPage() {
         </div>
       )}
     </div>
+    </>
   );
 }

@@ -11,6 +11,7 @@ import { Building2, Save, User, Bell, Lock, Globe, ExternalLink, Upload, Instagr
 import { createClient } from '@/lib/supabase/client';
 import { useOrgStore } from '@/lib/store';
 import { WebhookManager } from '@/components';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 
 export default function SettingsPage() {
   const [saving, setSaving] = useState(false);
@@ -43,6 +44,8 @@ export default function SettingsPage() {
   const [uploadingAsset, setUploadingAsset] = useState<'logo' | 'banner' | null>(null);
   const [deletingAsset, setDeletingAsset] = useState<'logo' | 'banner' | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<'logo' | 'banner' | null>(null);
+  const [confirmDeleteTestimonialId, setConfirmDeleteTestimonialId] = useState<string | null>(null);
+  const [confirmDeleteTipId, setConfirmDeleteTipId] = useState<string | null>(null);
 
   // Depoimentos
   type Testimonial = { id?: string; author_name: string; author_role: string; text: string; avatar_color: string; rating: number; display_order: number; };
@@ -181,9 +184,9 @@ export default function SettingsPage() {
   }
 
   async function handleDeleteTestimonial(id: string) {
-    if (!confirm('Remover este depoimento?')) return;
     const { error } = await supabase.from('org_testimonials').delete().eq('id', id);
     if (!error) setTestimonials(prev => prev.filter(t => t.id !== id));
+    setConfirmDeleteTestimonialId(null);
   }
 
   async function handleSaveTip() {
@@ -223,9 +226,9 @@ export default function SettingsPage() {
   }
 
   async function handleDeleteTip(id: string) {
-    if (!confirm('Remover esta dica?')) return;
     const { error } = await supabase.from('org_career_tips').delete().eq('id', id);
     if (!error) setTips(prev => prev.filter(t => t.id !== id));
+    setConfirmDeleteTipId(null);
   }
 
   async function handleSaveCareerPage() {
@@ -457,6 +460,23 @@ export default function SettingsPage() {
   }
 
   return (
+    <>
+    <ConfirmDialog
+      open={confirmDeleteTestimonialId !== null}
+      title="Remover depoimento"
+      message="Esta ação não pode ser desfeita."
+      confirmLabel="Remover"
+      onConfirm={() => confirmDeleteTestimonialId && handleDeleteTestimonial(confirmDeleteTestimonialId)}
+      onCancel={() => setConfirmDeleteTestimonialId(null)}
+    />
+    <ConfirmDialog
+      open={confirmDeleteTipId !== null}
+      title="Remover dica"
+      message="Esta ação não pode ser desfeita."
+      confirmLabel="Remover"
+      onConfirm={() => confirmDeleteTipId && handleDeleteTip(confirmDeleteTipId)}
+      onCancel={() => setConfirmDeleteTipId(null)}
+    />
     <div className="min-h-screen bg-[#FAFAF8]">
       <DashboardHeader
         title="Configurações"
@@ -850,7 +870,7 @@ export default function SettingsPage() {
                       className="p-1.5 rounded-lg hover:bg-white border border-transparent hover:border-[#E5E5DC] text-[#666666] hover:text-[#141042] transition-all">
                       <Pencil className="w-4 h-4" />
                     </button>
-                    <button onClick={() => handleDeleteTestimonial(t.id!)}
+                    <button onClick={() => setConfirmDeleteTestimonialId(t.id!)}
                       className="p-1.5 rounded-lg hover:bg-red-50 border border-transparent hover:border-red-200 text-[#666666] hover:text-red-600 transition-all">
                       <Trash2 className="w-4 h-4" />
                     </button>
@@ -956,7 +976,7 @@ export default function SettingsPage() {
                       className="p-1.5 rounded-lg hover:bg-white border border-transparent hover:border-[#E5E5DC] text-[#666666] hover:text-[#141042] transition-all">
                       <Pencil className="w-4 h-4" />
                     </button>
-                    <button onClick={() => handleDeleteTip(t.id!)}
+                    <button onClick={() => setConfirmDeleteTipId(t.id!)}
                       className="p-1.5 rounded-lg hover:bg-red-50 border border-transparent hover:border-red-200 text-[#666666] hover:text-red-600 transition-all">
                       <Trash2 className="w-4 h-4" />
                     </button>
@@ -1136,5 +1156,6 @@ export default function SettingsPage() {
         </div>
       </div>
     </div>
+    </>
   );
 }

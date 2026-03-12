@@ -7,3 +7,4 @@ export * from './avatar';
 export * from './badge';
 export * from './modal';
 export * from './progress';
+export * from './confirm-dialog';

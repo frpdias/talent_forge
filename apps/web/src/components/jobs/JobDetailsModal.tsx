@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import {
   Briefcase,
   MapPin,
@@ -86,6 +87,7 @@ export function JobDetailsModal({ jobId, onClose, onUpdated }: JobDetailsModalPr
   const [applications, setApplications] = useState<Application[]>([]);
   const [loading, setLoading] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [savingStatus, setSavingStatus] = useState(false);
   const [copied, setCopied] = useState(false);
   const [showPublishDrawer, setShowPublishDrawer] = useState(false);
@@ -164,8 +166,6 @@ export function JobDetailsModal({ jobId, onClose, onUpdated }: JobDetailsModalPr
 
   async function handleDelete() {
     if (!job) return;
-    if (!confirm('Tem certeza que deseja excluir esta vaga? Esta ação não pode ser desfeita.'))
-      return;
     setDeleting(true);
     try {
       const { error } = await supabase.from('jobs').delete().eq('id', job.id);
@@ -176,6 +176,7 @@ export function JobDetailsModal({ jobId, onClose, onUpdated }: JobDetailsModalPr
       alert('Erro ao excluir vaga');
     } finally {
       setDeleting(false);
+      setShowDeleteConfirm(false);
     }
   }
 
@@ -190,6 +191,14 @@ export function JobDetailsModal({ jobId, onClose, onUpdated }: JobDetailsModalPr
 
   return (
     <>
+    <ConfirmDialog
+      open={showDeleteConfirm}
+      title="Excluir vaga"
+      message="Esta ação não pode ser desfeita."
+      loading={deleting}
+      onConfirm={() => void handleDelete()}
+      onCancel={() => setShowDeleteConfirm(false)}
+    />
     {/* Overlay */}
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-4"
@@ -301,7 +310,7 @@ export function JobDetailsModal({ jobId, onClose, onUpdated }: JobDetailsModalPr
                   size="sm"
                   variant="outline"
                   className="text-red-600 border-red-200 hover:bg-red-50"
-                  onClick={() => void handleDelete()}
+                  onClick={() => setShowDeleteConfirm(true)}
                   disabled={deleting}
                 >
                   <Trash2 className="h-3.5 w-3.5 mr-1.5" />

@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { 
   ArrowLeft, 
   Save, 
@@ -473,31 +474,13 @@ export default function ActionPlanDetailPage() {
           </div>
         </div>
 
-        {/* Delete Confirmation Modal */}
-        {showDeleteConfirm && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-xl p-6 max-w-md w-full mx-4 shadow-xl">
-              <h3 className="text-lg font-bold text-gray-900 mb-2">Excluir Plano de Ação?</h3>
-              <p className="text-gray-600 mb-4">
-                Esta ação não pode ser desfeita. Todas as tarefas associadas também serão excluídas.
-              </p>
-              <div className="flex justify-end gap-3">
-                <button
-                  onClick={() => setShowDeleteConfirm(false)}
-                  className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg"
-                >
-                  Cancelar
-                </button>
-                <button
-                  onClick={deletePlan}
-                  className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
-                >
-                  Excluir
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
+        <ConfirmDialog
+          open={showDeleteConfirm}
+          title="Excluir Plano de Ação"
+          message="Esta ação não pode ser desfeita. Todas as tarefas associadas também serão excluídas."
+          onConfirm={deletePlan}
+          onCancel={() => setShowDeleteConfirm(false)}
+        />
       </div>
     </div>
   );
