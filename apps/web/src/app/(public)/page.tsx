@@ -99,7 +99,7 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
 
-            <h1 className="font-bold text-[#141042] tracking-tight mb-6 leading-tight" style={{ fontSize: 'clamp(4.5rem, 8vw, 9rem)' }}>
+            <h1 className="font-bold text-[#141042] tracking-tight mb-6 leading-tight" style={{ fontSize: 'clamp(3.6rem, 6.4vw, 7.2rem)' }}>
               Recrute melhor.{' '}
               <span className="text-[#1F4ED8]">Gerencie pessoas.</span>
               <br />
