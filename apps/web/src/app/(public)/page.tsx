@@ -317,9 +317,9 @@ export default function LandingPage() {
       <section id="php-module" className="py-24 px-4 sm:px-6 lg:px-8 bg-[#141042]">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
-            <div className="inline-flex items-center gap-2 bg-[#F97316]/10 border border-[#F97316]/20 rounded-full px-4 py-1.5 mb-4">
-              <HeartPulse className="w-3.5 h-3.5 text-[#F97316]" />
-              <span className="text-[#F97316] text-xs font-bold uppercase tracking-wider">Módulo Premium</span>
+            <div className="inline-flex items-center gap-4 bg-[#F97316]/10 border border-[#F97316]/20 rounded-2xl px-12 py-6 mb-4">
+              <HeartPulse className="w-12 h-12 text-[#F97316]" />
+              <span className="text-[#F97316] font-bold uppercase tracking-wider" style={{ fontSize: 'clamp(3.96rem, 7.04vw, 7.92rem)' }}>Módulo Premium</span>
             </div>
             <h2 className="text-3xl sm:text-4xl font-bold text-white tracking-tight mb-4">
               PHP — People, Health & Performance
