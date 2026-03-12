@@ -100,7 +100,8 @@ export default function LandingPage() {
           <div className="text-center mb-16">
 
             <h1 className="font-bold text-[#141042] tracking-tight mb-6 leading-tight" style={{ fontSize: 'clamp(3.6rem, 6.4vw, 7.2rem)' }}>
-              Recrute melhor.{' '}
+              Recrute melhor.
+              <br />
               <span className="text-[#1F4ED8]">Gerencie pessoas.</span>
               <br />
               <span className="text-[#F97316]">Obtenha resultados.</span>
