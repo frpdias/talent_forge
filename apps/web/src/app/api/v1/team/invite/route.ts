@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Não autenticado' }, { status: 401 });
     }
 
-    // Solicitante deve ser admin ou manager da org
+    // Solicitante deve ser ao menos recruiter da org
     const { data: requesterMembership } = await supabase
       .from('org_members')
       .select('role')
@@ -55,7 +55,7 @@ export async function POST(request: NextRequest) {
 
     if (
       !requesterMembership ||
-      !['owner', 'admin', 'manager'].includes(requesterMembership.role)
+      !['owner', 'admin', 'manager', 'recruiter'].includes(requesterMembership.role)
     ) {
       return NextResponse.json(
         { error: 'Sem permissão para convidar membros nesta organização' },
