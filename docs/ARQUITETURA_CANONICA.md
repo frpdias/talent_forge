@@ -1,6 +1,6 @@
 # Arquitetura Canônica — TalentForge
 
-**Última atualização**: 2026-03-12 | **Score de Conformidade**: ✅ 100% (Sprint 42: Notificações + Team + CSP) | **Sprints planejados**: Sprint 41 (AI Assistant) + Sprint 43 (Gate Recrutamento)
+**Última atualização**: 2026-03-12 | **Score de Conformidade**: ✅ 100% (Sprint 43: Landing Polish + Avatar Candidato) | **Sprints planejados**: Sprint 41 (AI Assistant) + Sprint 44 (Gate Recrutamento)
 
 ## 📜 FONTE DA VERDADE — PRINCÍPIO FUNDAMENTAL
 
@@ -7094,7 +7094,73 @@ Em `apps/web/src/app/(recruiter)/php/ai-chat/page.tsx`:
 
 ---
 
-## Sprint 43 — Gate de Ativação do Módulo de Recrutamento (PLANEJADO)
+## Sprint 43 — Landing Polish + Avatar Candidato (CONCLUÍDO)
+
+### Data: 2026-03-12
+
+### Escopo
+Polimento visual da landing page pública e implementação de upload/recorte de foto de perfil para candidatos.
+
+---
+
+### Mudanças implementadas
+
+#### 1. Landing Page — Hero Title
+- Título `h1` passou de classes Tailwind para `style={{ fontSize: 'clamp(3.96rem, 7.04vw, 7.92rem)' }}` para garantir renderização independente do purge do Tailwind
+- Container do `h1` expandido para largura total (`max-w-7xl`) — texto descritivo e botões permanecem em `max-w-3xl`
+- Cada frase em linha própria: `Recrute melhor.` / `Gerencie pessoas.` / `Obtenha resultados.`
+- Badge "✦ Recrutamento Inteligente + Gestão de Pessoas" removido
+- Link "Já tem uma conta? Fazer login" removido
+- Travessão `—` substituído por vírgula no subtítulo
+
+#### 2. Landing Page — Seção PHP
+- Badge "MÓDULO PREMIUM": padding `px-12 py-6`, bordas `rounded-2xl`, ícone `w-12 h-12`, fonte `clamp(3.96rem, 7.04vw, 7.92rem)`
+
+#### 3. Candidate Avatar — Upload + Crop
+- **Nova coluna**: `candidate_profiles.avatar_url TEXT`
+- **Novo bucket Supabase Storage**: `candidate-avatars` (público, 5MB, JPEG/PNG/WebP)
+- **Migration**: `supabase/migrations/20260312_candidate_avatar.sql`
+- **Novo componente**: `apps/web/src/components/candidate/CropAvatarModal.tsx`
+  - Usa `react-easy-crop` para recorte circular
+  - Slider de zoom (1x a 3x)
+  - Exporta JPEG 90% via `canvas.toBlob()`
+- **Dashboard candidato** (`apps/web/src/app/(candidate)/candidate/page.tsx`):
+  - Avatar circular `w-16/w-20` com `overflow-hidden` à esquerda do nome
+  - Hover revela ícone `Camera`; sem foto exibe `User` placeholder
+  - Ao selecionar arquivo → abre `CropAvatarModal` → após salvar → faz upload para `candidate-avatars/{uid}/avatar.jpg` com `upsert: true` → persiste URL em `candidate_profiles.avatar_url`
+
+---
+
+### Arquivos modificados
+| Arquivo | Tipo |
+|---------|------|
+| `apps/web/src/app/(public)/page.tsx` | Modificado |
+| `apps/web/src/app/(candidate)/candidate/page.tsx` | Modificado |
+| `apps/web/src/components/candidate/CropAvatarModal.tsx` | Criado |
+| `supabase/migrations/20260312_candidate_avatar.sql` | Criado |
+| `apps/web/package.json` | Modificado (`react-easy-crop` adicionado) |
+
+---
+
+### Commits Sprint 43
+- `ad7327d` — fix(landing): remove badge 'Recrutamento Inteligente + Gestão de Pessoas'
+- `c9a866d` — feat(landing): aumentar tamanho do título hero em 50%
+- `7596580` — feat(landing): aumentar tamanho do título hero em 100%
+- `78f0933` — fix(landing): forçar tamanho do título com style inline (clamp)
+- `d211b9b` — fix(landing): expandir título hero para largura total da seção
+- `0b23958` — fix(landing): reduzir fonte do título hero em 20%
+- `435abe4` — fix(landing): separar 'Gerencie pessoas.' para linha própria
+- `ec75217` — fix(landing): aumentar fonte do título hero em 10%
+- `7d56457` — fix(landing): remover link 'Já tem uma conta? Fazer login'
+- `7c8cb48` — fix(landing): aumentar título 'Tudo que seu RH precisa' em 200%
+- `d6dad0a` — fix(landing): ampliar badge 'Módulo Premium' com fonte do título hero
+- `76c7eda` — fix(landing): remover travessão do subtítulo hero
+- `e1376d7` — feat(candidate): upload de foto de perfil no banner do dashboard
+- `b09f62b` — feat(candidate): modal de recorte/centralização do avatar
+
+---
+
+## Sprint 44 — Gate de Ativação do Módulo de Recrutamento (PLANEJADO)
 
 ### Contexto
 
@@ -7994,5 +8060,6 @@ O `ReportsService.getDashboard()` usa `applications.source` com fallback para `c
 | **Sprint 39** | **2026-03-11** | **Depoimentos editáveis — tabela `org_testimonials` com RLS, CRUD no settings (formulário inline, estrelas clicáveis, paleta de cores), career page busca do DB e renderiza condicionalmente; ícones SVG reais das redes sociais na seção #vagas** | ✅ |
 | **Sprint 40** | **2026-03-11** | **Dicas de carreira — tabela `org_career_tips` com RLS + trigger updated_at, CRUD no settings (card Lightbulb, formulário inline title/summary/content), career page renderiza seção condicionalmente** | ✅ |
 | **Sprint 41** | **PLANEJADO** | **AI Assistant PHP Module — 7 endpoints `/api/php/ai/*`, tabela `php_ai_usage`, correção `orgId` no frontend, integração com provedor AI (Anthropic/OpenAI)** | 🔲 |
-| **Sprint 42** | **PLANEJADO** | **Gate de ativação do módulo Recrutamento — tabela `recruitment_module_activations`, `GET /api/v1/recruitment/status`, endpoints admin, guard no `dashboard/layout.tsx`, card no Admin Panel** | 🔲 |
+| **Sprint 43** | **2026-03-12** | **Landing Polish + Avatar Candidato — título hero com `clamp()`, badge MÓDULO PREMIUM ampliado, avatar upload com modal de recorte (`react-easy-crop`), bucket `candidate-avatars`, migration `avatar_url`** | ✅ |
+| **Sprint 44** | **PLANEJADO** | **Gate de ativação do módulo Recrutamento — tabela `recruitment_module_activations`, `GET /api/v1/recruitment/status`, endpoints admin, guard no `dashboard/layout.tsx`, card no Admin Panel** | 🔲 |
 ```
