@@ -125,11 +125,7 @@ export default function LandingPage() {
               </Link>
             </div>
 
-            <p className="text-sm text-[#999999]">
-              Já tem uma conta?{' '}
-              <Link href="/login" className="text-[#141042] font-semibold hover:underline">Fazer login</Link>
-            </p>
-          </div>
+            </div>
           </div>
 
           {/* Dashboard Mockup */}
