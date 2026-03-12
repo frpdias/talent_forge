@@ -97,7 +97,7 @@ export default function LandingPage() {
       {/* Hero */}
       <section className="pt-32 pb-20 px-4 sm:px-6 lg:px-8 bg-white">
         <div className="max-w-7xl mx-auto">
-          <div className="text-center max-w-3xl mx-auto mb-16">
+          <div className="text-center mb-16">
 
             <h1 className="font-bold text-[#141042] tracking-tight mb-6 leading-tight" style={{ fontSize: 'clamp(4.5rem, 8vw, 9rem)' }}>
               Recrute melhor.{' '}
@@ -106,6 +106,7 @@ export default function LandingPage() {
               <span className="text-[#F97316]">Obtenha resultados.</span>
             </h1>
 
+          <div className="max-w-3xl mx-auto">
             <p className="text-lg text-[#666666] mb-10 leading-relaxed">
               Da atração de talentos à gestão contínua de performance — tudo em uma plataforma multi-tenant
               com avaliações comportamentais DISC, pipeline Kanban e o módulo PHP de saúde organizacional.
@@ -127,6 +128,7 @@ export default function LandingPage() {
               Já tem uma conta?{' '}
               <Link href="/login" className="text-[#141042] font-semibold hover:underline">Fazer login</Link>
             </p>
+          </div>
           </div>
 
           {/* Dashboard Mockup */}
