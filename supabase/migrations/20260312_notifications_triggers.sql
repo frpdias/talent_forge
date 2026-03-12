@@ -5,9 +5,23 @@
 -- ============================================================
 
 -- ============================================================
--- 1. Habilitar Realtime na tabela notifications
+-- 1. Habilitar Realtime na tabela notifications (idempotente)
+--    A tabela já foi adicionada em 20260205_realtime_dashboard.sql,
+--    portanto usamos DO block para evitar erro caso já exista.
 -- ============================================================
-ALTER publication supabase_realtime ADD TABLE public.notifications;
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+      FROM pg_publication_tables
+     WHERE pubname = 'supabase_realtime'
+       AND schemaname = 'public'
+       AND tablename = 'notifications'
+  ) THEN
+    ALTER publication supabase_realtime ADD TABLE public.notifications;
+  END IF;
+END;
+$$;
 
 -- Garantir REPLICA IDENTITY FULL para que o realtime envie o payload completo
 ALTER TABLE public.notifications REPLICA IDENTITY FULL;
