@@ -109,8 +109,7 @@ export default function LandingPage() {
 
           <div className="max-w-3xl mx-auto">
             <p className="text-lg text-[#666666] mb-10 leading-relaxed">
-              Da atração de talentos à gestão contínua de performance — tudo em uma plataforma multi-tenant
-              com avaliações comportamentais DISC, pipeline Kanban e o módulo PHP de saúde organizacional.
+              Da atração de talentos à gestão contínua de performance, tudo em uma plataforma multi-tenant com avaliações comportamentais DISC, pipeline Kanban e o módulo PHP de saúde organizacional.
             </p>
 
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-8">
