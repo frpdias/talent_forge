@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { Bell, X, Check, AlertCircle, UserPlus, Briefcase, FileText } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { Bell, X, AlertCircle, UserPlus, FileText } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -21,103 +21,96 @@ export function NotificationCenter() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(false);
+  const supabaseRef = useRef(createClient());
 
   useEffect(() => {
-    loadNotifications();
-    
-    // Setup realtime subscription
-    const supabase = createClient();
-    const channel = supabase
-      .channel('notifications')
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'notifications',
-        },
-        (payload) => {
-          const newNotification = payload.new as Notification;
-          setNotifications((prev) => [newNotification, ...prev]);
-          setUnreadCount((prev) => prev + 1);
-          
-          // Show browser notification
-          if ('Notification' in window && Notification.permission === 'granted') {
-            new Notification(newNotification.title, {
-              body: newNotification.message,
-              icon: '/logo.png',
-            });
-          }
+    const supabase = supabaseRef.current;
+    let channelRef: ReturnType<typeof supabase.channel> | null = null;
+
+    async function init() {
+      setLoading(true);
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+
+        // Carregar notificações iniciais
+        const { data } = await supabase
+          .from('notifications')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false })
+          .limit(20);
+
+        setNotifications(data || []);
+        setUnreadCount(data?.filter((n) => !n.read).length || 0);
+
+        // Realtime filtrado por user_id
+        channelRef = supabase
+          .channel(`notifications:${user.id}`)
+          .on(
+            'postgres_changes',
+            {
+              event: 'INSERT',
+              schema: 'public',
+              table: 'notifications',
+              filter: `user_id=eq.${user.id}`,
+            },
+            (payload) => {
+              const newNotification = payload.new as Notification;
+              setNotifications((prev) => [newNotification, ...prev]);
+              setUnreadCount((prev) => prev + 1);
+
+              // Notificação nativa do navegador
+              if ('Notification' in window && Notification.permission === 'granted') {
+                new window.Notification(newNotification.title, {
+                  body: newNotification.message,
+                  icon: '/logo.png',
+                });
+              }
+            }
+          )
+          .subscribe();
+
+        // Solicitar permissão para notificações nativas
+        if ('Notification' in window && Notification.permission === 'default') {
+          window.Notification.requestPermission();
         }
-      )
-      .subscribe();
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    init();
 
     return () => {
-      supabase.removeChannel(channel);
+      if (channelRef) supabase.removeChannel(channelRef);
     };
   }, []);
 
-  const loadNotifications = async () => {
-    setLoading(true);
-    try {
-      const supabase = createClient();
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) return;
-
-      const { data, error } = await supabase
-        .from('notifications')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false })
-        .limit(20);
-
-      if (error) throw error;
-
-      setNotifications(data || []);
-      setUnreadCount(data?.filter((n) => !n.read).length || 0);
-    } catch (error) {
-      console.error('Error loading notifications:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const markAsRead = async (notificationId: string) => {
-    try {
-      const supabase = createClient();
-      await supabase
-        .from('notifications')
-        .update({ read: true })
-        .eq('id', notificationId);
+    await supabaseRef.current
+      .from('notifications')
+      .update({ read: true })
+      .eq('id', notificationId);
 
-      setNotifications((prev) =>
-        prev.map((n) => (n.id === notificationId ? { ...n, read: true } : n))
-      );
-      setUnreadCount((prev) => Math.max(0, prev - 1));
-    } catch (error) {
-      console.error('Error marking notification as read:', error);
-    }
+    setNotifications((prev) =>
+      prev.map((n) => (n.id === notificationId ? { ...n, read: true } : n))
+    );
+    setUnreadCount((prev) => Math.max(0, prev - 1));
   };
 
   const markAllAsRead = async () => {
-    try {
-      const supabase = createClient();
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) return;
+    const { data: { user } } = await supabaseRef.current.auth.getUser();
+    if (!user) return;
 
-      await supabase
-        .from('notifications')
-        .update({ read: true })
-        .eq('user_id', user.id)
-        .eq('read', false);
+    await supabaseRef.current
+      .from('notifications')
+      .update({ read: true })
+      .eq('user_id', user.id)
+      .eq('read', false);
 
-      setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
-      setUnreadCount(0);
-    } catch (error) {
-      console.error('Error marking all as read:', error);
-    }
+    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+    setUnreadCount(0);
   };
 
   const getIcon = (type: string) => {
@@ -132,16 +125,6 @@ export function NotificationCenter() {
         return <Bell className="w-5 h-5 text-gray-600" />;
     }
   };
-
-  const requestNotificationPermission = async () => {
-    if ('Notification' in window && Notification.permission === 'default') {
-      await Notification.requestPermission();
-    }
-  };
-
-  useEffect(() => {
-    requestNotificationPermission();
-  }, []);
 
   return (
     <div className="relative">
@@ -168,7 +151,7 @@ export function NotificationCenter() {
           />
 
           {/* Panel */}
-          <div className="absolute right-0 mt-2 w-96 bg-white rounded-xl shadow-2xl border border-gray-200 z-50 max-h-150 overflow-hidden flex flex-col">
+            <div className="absolute right-0 mt-2 w-96 bg-white rounded-xl shadow-2xl border border-gray-200 z-50 max-h-150 overflow-hidden flex flex-col">
             {/* Header */}
             <div className="p-4 border-b border-gray-200 flex items-center justify-between">
               <div>
