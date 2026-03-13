@@ -323,7 +323,7 @@ export default function LandingPage() {
             <h2 className="text-3xl sm:text-4xl font-bold text-white tracking-tight mb-4">
               PHP — People, Health & Performance
             </h2>
-            <p className="text-lg text-white/60 max-w-2xl mx-auto">
+            <p className="text-lg text-white/75 max-w-2xl mx-auto">
               A camada de gestão contínua de pessoas que vai além do recrutamento.
               Score integrado de saúde organizacional em 3 pilares.
             </p>
@@ -352,7 +352,7 @@ export default function LandingPage() {
                 </div>
                 <p.icon className={`w-6 h-6 mb-2 ${p.color}`} />
                 <p className={`text-3xl font-bold mb-1 ${p.color}`}>{p.score}</p>
-                <p className="text-xs text-white/40">{p.desc}</p>
+                <p className="text-xs text-white/65">{p.desc}</p>
               </div>
             ))}
           </div>
@@ -398,12 +398,12 @@ export default function LandingPage() {
                   </span>
                 </div>
                 <p className="text-lg font-bold text-white mb-0.5">{pillar.acronym}</p>
-                <p className="text-xs text-white/50 mb-3">{pillar.name}</p>
-                <p className="text-sm text-white/60 leading-relaxed mb-4">{pillar.description}</p>
+                <p className="text-xs text-white/70 mb-3">{pillar.name}</p>
+                <p className="text-sm text-white/75 leading-relaxed mb-4">{pillar.description}</p>
                 <ul className="space-y-2">
                   {pillar.items.map((item) => (
-                    <li key={item} className="flex items-center gap-2 text-xs text-white/50">
-                      <CheckCircle2 className="w-3.5 h-3.5 shrink-0 text-white/30" />
+                    <li key={item} className="flex items-center gap-2 text-xs text-white/70">
+                      <CheckCircle2 className="w-3.5 h-3.5 shrink-0 text-white/50" />
                       {item}
                     </li>
                   ))}
