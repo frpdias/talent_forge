@@ -7,6 +7,7 @@ export interface Organization {
   orgType: string;
   slug: string;
   role?: string;
+  parentOrgId?: string | null;
 }
 
 interface OrgStore {

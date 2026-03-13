@@ -60,6 +60,10 @@ export default function RecruiterLayout({ children }: { children: React.ReactNod
   const { currentOrg, organizations, setCurrentOrg, setOrganizations } = useOrgStore();
   const [userName, setUserName] = useState<string>('Recrutador');
   const [orgName, setOrgName] = useState<string>('Organizacao');
+
+  // Separa org própria (recrutador) das orgs cliente
+  const ownOrg = useMemo(() => organizations.find(o => !o.parentOrgId) || null, [organizations]);
+  const clientOrgs = useMemo(() => organizations.filter(o => !!o.parentOrgId), [organizations]);
   const [orgDropdownOpen, setOrgDropdownOpen] = useState(false);
   const [agendaOpen, setAgendaOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -107,7 +111,7 @@ export default function RecruiterLayout({ children }: { children: React.ReactNod
         // Carregar memberships do usuário
         const { data: memberships, error: membershipsError } = await supabase
           .from('org_members')
-          .select('org_id, role, organizations(id, name, org_type, slug)')
+          .select('org_id, role, organizations(id, name, org_type, slug, parent_org_id)')
           .eq('user_id', userId);
 
         if (membershipsError) {
@@ -133,6 +137,7 @@ export default function RecruiterLayout({ children }: { children: React.ReactNod
               orgType: org.org_type as string,
               slug: org.slug as string,
               role: member.role as string,
+              parentOrgId: (org.parent_org_id as string | null) ?? null,
             }];
           });
 
@@ -145,32 +150,18 @@ export default function RecruiterLayout({ children }: { children: React.ReactNod
             setOrgName(orgs[0].name);
           }
 
-          if (!currentOrg) {
-            let preferredOrg: Organization = orgs[0];
-
-            try {
-              const counts = await Promise.all(
-                orgs.map(async (org) => {
-                  const { count } = await supabase
-                    .from('jobs')
-                    .select('id', { count: 'exact', head: true })
-                    .eq('org_id', org.id);
-
-                  return { org, count: count ?? 0 };
-                })
-              );
-
-              const best = counts.reduce((acc, item) =>
-                item.count > acc.count ? item : acc
-              );
-
-              preferredOrg = best.org;
-            } catch (error) {
-              console.warn('[RecruiterLayout] Falha ao escolher org padrão:', error);
-            }
-
-            if (!ignore) {
-              setCurrentOrg(preferredOrg);
+          // Sempre sincroniza currentOrg com dados frescos do banco
+          // (garante que parentOrgId esteja populado mesmo após migração)
+          const own = orgs.find(o => !o.parentOrgId) ?? orgs[0];
+          if (!ignore) {
+            if (!currentOrg || currentOrg.parentOrgId === undefined) {
+              // Primeira carga ou dados antigos sem parentOrgId → default para org própria
+              setCurrentOrg(own);
+            } else {
+              // Atualiza currentOrg com dados frescos (mantém seleção do usuário)
+              const refreshed = orgs.find(o => o.id === currentOrg.id);
+              if (refreshed) setCurrentOrg(refreshed);
+              else setCurrentOrg(own);
             }
           }
         } else if (orgs.length === 0) {
@@ -187,15 +178,17 @@ export default function RecruiterLayout({ children }: { children: React.ReactNod
     };
   }, [supabase]);
 
-  // Verificar ativação do módulo de Recrutamento quando org carrega
+  // Verificar ativação do módulo de Recrutamento — sempre pela org própria (FARTECH)
+  // Não usa currentOrg porque ele pode ser uma empresa cliente sem registro de ativação
   useEffect(() => {
-    if (!currentOrg?.id) return;
+    const orgIdToCheck = ownOrg?.id;
+    if (!orgIdToCheck) return;
 
     async function checkRecruitmentModule() {
       const { data } = await supabase
         .from('recruitment_module_activations')
         .select('is_active')
-        .eq('org_id', currentOrg!.id)
+        .eq('org_id', orgIdToCheck)
         .maybeSingle();
 
       // Se não houver registro, considera inativo
@@ -203,7 +196,7 @@ export default function RecruiterLayout({ children }: { children: React.ReactNod
     }
 
     checkRecruitmentModule();
-  }, [currentOrg?.id, supabase]);
+  }, [ownOrg?.id, supabase]);
 
   const handleLogout = async () => {
     try {
@@ -217,8 +210,9 @@ export default function RecruiterLayout({ children }: { children: React.ReactNod
   // Corpo da sidebar (reutilizado desktop + drawer mobile)
   const sidebarBody = (
     <>
-      {/* Org Selector */}
+      {/* Org Selector — mostra empresas cliente; org própria é o contexto base */}
       <div className="px-3 py-3 border-b border-white/10 shrink-0">
+        <p className="px-1 mb-1.5 text-[10px] font-semibold text-white/30 uppercase tracking-wider">Filtrar empresa cliente</p>
         <button
           onClick={() => setOrgDropdownOpen(!orgDropdownOpen)}
           className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm border border-white/10 bg-white/5 hover:bg-white/10 transition-colors"
@@ -226,7 +220,9 @@ export default function RecruiterLayout({ children }: { children: React.ReactNod
           <div className="flex items-center gap-2 min-w-0">
             <Building2 className="h-4 w-4 text-white/40 shrink-0" />
             <span className="truncate text-white/75">
-              {currentOrg?.name || orgName || 'Selecionar empresa'}
+              {currentOrg && currentOrg.id !== ownOrg?.id
+                ? currentOrg.name
+                : 'Todas as empresas'}
             </span>
           </div>
           <ChevronDown className={`h-4 w-4 text-white/40 shrink-0 transition-transform ${orgDropdownOpen ? 'rotate-180' : ''}`} />
@@ -236,15 +232,30 @@ export default function RecruiterLayout({ children }: { children: React.ReactNod
             {organizations.length === 0 ? (
               <div className="px-3 py-2 text-sm text-white/50">Carregando empresas...</div>
             ) : (
-              organizations.map((org: Organization) => (
-                <button
-                  key={org.id}
-                  onClick={() => { setCurrentOrg(org); setOrgDropdownOpen(false); }}
-                  className={`w-full text-left px-3 py-2 text-sm text-white/75 hover:bg-white/10 hover:text-white transition-colors ${currentOrg?.id === org.id ? 'bg-white/15 text-white font-medium' : ''}`}
-                >
-                  {org.name}
-                </button>
-              ))
+              <>
+                {/* Opção base: volta para a org própria (sem filtro de cliente) */}
+                {ownOrg && (
+                  <button
+                    onClick={() => { setCurrentOrg(ownOrg); setOrgDropdownOpen(false); }}
+                    className={`w-full text-left px-3 py-2 text-sm text-white/75 hover:bg-white/10 hover:text-white transition-colors ${(!currentOrg || currentOrg.id === ownOrg.id) ? 'bg-white/15 text-white font-medium' : ''}`}
+                  >
+                    Todas as empresas
+                  </button>
+                )}
+                {/* Empresas cliente */}
+                {clientOrgs.map((org: Organization) => (
+                  <button
+                    key={org.id}
+                    onClick={() => { setCurrentOrg(org); setOrgDropdownOpen(false); }}
+                    className={`w-full text-left px-3 py-2 text-sm text-white/75 hover:bg-white/10 hover:text-white transition-colors ${currentOrg?.id === org.id ? 'bg-white/15 text-white font-medium' : ''}`}
+                  >
+                    {org.name}
+                  </button>
+                ))}
+                {clientOrgs.length === 0 && (
+                  <div className="px-3 py-2 text-xs text-white/40">Nenhuma empresa cliente vinculada</div>
+                )}
+              </>
             )}
           </div>
         )}

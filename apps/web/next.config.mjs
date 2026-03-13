@@ -24,7 +24,7 @@ const securityHeaders = [
       "img-src 'self' data: blob: https://fjudsjzfnysaztcwlwgm.supabase.co",
       "font-src 'self' https://fonts.gstatic.com",
       "connect-src 'self' https://fjudsjzfnysaztcwlwgm.supabase.co wss://fjudsjzfnysaztcwlwgm.supabase.co https://accounts.google.com https://vercel.live",
-      "frame-src 'none'",
+      isDev ? "frame-src 'self' http://localhost:8051" : "frame-src 'none'",
       "object-src 'none'",
       "base-uri 'self'",
       "form-action 'self'",
