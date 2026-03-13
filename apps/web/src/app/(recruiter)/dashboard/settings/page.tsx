@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -14,7 +14,7 @@ import { useOrgStore } from '@/lib/store';
 import { WebhookManager } from '@/components';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 
-export default function SettingsPage() {
+function SettingsPageContent() {
   const [saving, setSaving] = useState(false);
   const [orgData, setOrgData] = useState({
     name: '',
@@ -1291,5 +1291,13 @@ export default function SettingsPage() {
       </div>
     </div>
     </>
+  );
+}
+
+export default function SettingsPage() {
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center min-h-screen"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div></div>}>
+      <SettingsPageContent />
+    </Suspense>
   );
 }
