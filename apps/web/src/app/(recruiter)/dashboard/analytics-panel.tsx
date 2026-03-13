@@ -278,45 +278,45 @@ export default function AnalyticsPanel({ orgId }: AnalyticsPanelProps) {
 
   return (
     <div className="flex-1 overflow-auto bg-[#F1F5F9]">
-      <div className="p-5 space-y-4">
+      <div className="p-3 sm:p-5 space-y-3 sm:space-y-4">
 
         {/* ── KPI Cards ──────────────────────────────────── */}
-        <div className="grid grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
           {kpis.map(k => (
             <div key={k.label}
-                 className="bg-white rounded-2xl shadow-sm p-4 border border-gray-100 hover:shadow-md transition-shadow"
+                 className="bg-white rounded-xl sm:rounded-2xl shadow-sm p-3 sm:p-4 border border-gray-100 hover:shadow-md transition-shadow"
                  style={{ borderLeft: `4px solid ${k.color}` }}>
-              <div className="flex items-start justify-between mb-3">
-                <div className="p-2 rounded-xl" style={{ backgroundColor: k.bg, color: k.color }}>
+              <div className="flex items-start justify-between mb-2 sm:mb-3">
+                <div className="p-1.5 sm:p-2 rounded-lg sm:rounded-xl" style={{ backgroundColor: k.bg, color: k.color }}>
                   {k.icon}
                 </div>
-                <ArrowUpRight className="w-4 h-4 text-gray-300" />
+                <ArrowUpRight className="w-3.5 h-3.5 text-gray-300" />
               </div>
-              <div className="text-3xl font-black tracking-tight text-[#0F172A]">{k.value}</div>
-              <div className="text-xs font-semibold text-[#374151] mt-1">{k.label}</div>
-              {k.sub && <div className="text-[11px] text-[#9CA3AF] mt-0.5">{k.sub}</div>}
+              <div className="text-2xl sm:text-3xl font-black tracking-tight text-[#0F172A]">{k.value}</div>
+              <div className="text-[11px] sm:text-xs font-semibold text-[#374151] mt-1 leading-tight">{k.label}</div>
+              {k.sub && <div className="hidden sm:block text-[10px] sm:text-[11px] text-[#9CA3AF] mt-0.5">{k.sub}</div>}
             </div>
           ))}
         </div>
 
         {/* ── Funil + Dist. pizza ────────────────────────── */}
-        <div className="grid grid-cols-5 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-5 gap-3">
 
-          <div className="col-span-3 bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
-            <div className="mb-4">
+          <div className="sm:col-span-3 bg-white rounded-xl sm:rounded-2xl shadow-sm border border-gray-100 p-3 sm:p-5">
+            <div className="mb-3 sm:mb-4">
               <h3 className="text-sm font-bold text-[#0F172A]">Funil de Recrutamento</h3>
               <p className="text-xs text-[#9CA3AF] mt-0.5">{totalPipeline} candidatos no total</p>
             </div>
             {pipeline.length === 0 ? <EmptyChart /> : (
-              <ResponsiveContainer width="100%" height={230}>
+              <ResponsiveContainer width="100%" height={200}>
                 <BarChart data={pipeline} layout="vertical"
-                          margin={{ left: 0, right: 52, top: 4, bottom: 4 }}>
+                          margin={{ left: 0, right: 44, top: 4, bottom: 4 }}>
                   <XAxis type="number" hide />
                   <YAxis type="category" dataKey="label"
-                         tick={{ fontSize: 12, fill: '#374151', fontWeight: 500 }}
-                         width={108} axisLine={false} tickLine={false} />
+                         tick={{ fontSize: 11, fill: '#374151', fontWeight: 500 }}
+                         width={96} axisLine={false} tickLine={false} />
                   <Tooltip content={<TooltipBox />} />
-                  <Bar dataKey="count" name="Candidatos" radius={[0, 6, 6, 0]} maxBarSize={28}>
+                  <Bar dataKey="count" name="Candidatos" radius={[0, 6, 6, 0]} maxBarSize={24}>
                     {pipeline.map((entry, i) => <Cell key={i} fill={entry.color} />)}
                     <LabelList content={<BarEndLabel />} />
                   </Bar>
@@ -325,17 +325,17 @@ export default function AnalyticsPanel({ orgId }: AnalyticsPanelProps) {
             )}
           </div>
 
-          <div className="col-span-2 bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
-            <div className="mb-3">
+          <div className="sm:col-span-2 bg-white rounded-xl sm:rounded-2xl shadow-sm border border-gray-100 p-3 sm:p-5">
+            <div className="mb-2 sm:mb-3">
               <h3 className="text-sm font-bold text-[#0F172A]">Distribuição</h3>
               <p className="text-xs text-[#9CA3AF] mt-0.5">por etapa atual</p>
             </div>
             {pipeline.length === 0 ? <EmptyChart /> : (
-              <>
-                <ResponsiveContainer width="100%" height={155}>
+              <div className="flex flex-row sm:flex-col items-center gap-4 sm:gap-0">
+                <ResponsiveContainer width="100%" height={130}>
                   <PieChart>
                     <Pie data={pipeline} dataKey="count" nameKey="label"
-                         cx="50%" cy="50%" innerRadius={42} outerRadius={70}
+                         cx="50%" cy="50%" innerRadius={36} outerRadius={58}
                          paddingAngle={2}>
                       {pipeline.map((entry, i) => (
                         <Cell key={i} fill={entry.color} stroke="white" strokeWidth={2} />
@@ -344,7 +344,7 @@ export default function AnalyticsPanel({ orgId }: AnalyticsPanelProps) {
                     <Tooltip content={<PieTooltip />} />
                   </PieChart>
                 </ResponsiveContainer>
-                <div className="space-y-1.5 mt-3">
+                <div className="space-y-1.5 mt-0 sm:mt-3 min-w-[110px] sm:min-w-0 w-full sm:w-auto">
                   {pipeline.map(p => (
                     <div key={p.status} className="flex items-center justify-between text-xs">
                       <span className="flex items-center gap-1.5 text-[#374151]">
@@ -355,22 +355,22 @@ export default function AnalyticsPanel({ orgId }: AnalyticsPanelProps) {
                     </div>
                   ))}
                 </div>
-              </>
+              </div>
             )}
           </div>
         </div>
 
         {/* ── Trend (área) + Vagas ───────────────────────── */}
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
 
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
-            <div className="mb-4">
+          <div className="bg-white rounded-xl sm:rounded-2xl shadow-sm border border-gray-100 p-3 sm:p-5">
+            <div className="mb-3 sm:mb-4">
               <h3 className="text-sm font-bold text-[#0F172A]">Evolução Mensal</h3>
               <p className="text-xs text-[#9CA3AF] mt-0.5">candidaturas vs contratações — últimos 6 meses</p>
             </div>
             {trend.length === 0 ? <EmptyChart /> : (
-              <ResponsiveContainer width="100%" height={220}>
-                <AreaChart data={trend} margin={{ left: -10, right: 10, top: 8, bottom: 4 }}>
+              <ResponsiveContainer width="100%" height={190}>
+                <AreaChart data={trend} margin={{ left: -16, right: 8, top: 8, bottom: 4 }}>
                   <defs>
                     <linearGradient id="gCand" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="5%"  stopColor={C.accent}    stopOpacity={0.25} />
@@ -399,15 +399,15 @@ export default function AnalyticsPanel({ orgId }: AnalyticsPanelProps) {
             )}
           </div>
 
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
-            <div className="mb-4">
+          <div className="bg-white rounded-xl sm:rounded-2xl shadow-sm border border-gray-100 p-3 sm:p-5">
+            <div className="mb-3 sm:mb-4">
               <h3 className="text-sm font-bold text-[#0F172A]">Candidatos por Vaga</h3>
               <p className="text-xs text-[#9CA3AF] mt-0.5">vagas abertas — top {jobs.length}</p>
             </div>
             {jobs.length === 0 ? <EmptyChart /> : (
-              <ResponsiveContainer width="100%" height={220}>
+              <ResponsiveContainer width="100%" height={190}>
                 <BarChart data={jobs} layout="vertical"
-                          margin={{ left: 0, right: 40, top: 4, bottom: 4 }}>
+                          margin={{ left: 0, right: 36, top: 4, bottom: 4 }}>
                   <XAxis type="number" hide />
                   <YAxis type="category" dataKey="title"
                          tick={{ fontSize: 11, fill: '#374151' }}
@@ -427,30 +427,31 @@ export default function AnalyticsPanel({ orgId }: AnalyticsPanelProps) {
 
         {/* ── Candidatos parados ─────────────────────────── */}
         {stalled.length > 0 && (
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
-            <div className="flex items-center justify-between mb-4">
+          <div className="bg-white rounded-xl sm:rounded-2xl shadow-sm border border-gray-100 p-3 sm:p-5">
+            <div className="flex items-center justify-between mb-3 sm:mb-4">
               <div>
                 <h3 className="text-sm font-bold text-[#0F172A]">Candidatos Parados</h3>
                 <p className="text-xs text-[#9CA3AF] mt-0.5">sem movimentação há mais de 3 dias</p>
               </div>
-              <span className="text-xs font-semibold bg-orange-50 text-orange-600 px-3 py-1 rounded-full border border-orange-100">
-                {stalled.reduce((s, x) => s + x.count, 0)} candidatos
+              <span className="text-xs font-semibold bg-orange-50 text-orange-600 px-2.5 py-1 rounded-full border border-orange-100">
+                {stalled.reduce((s, x) => s + x.count, 0)}
               </span>
             </div>
             <div className="grid gap-2">
               {stalled.map(s => (
                 <div key={s.label}
-                     className="flex items-center gap-4 px-4 py-3 rounded-xl border border-gray-100 hover:bg-gray-50 transition-colors">
-                  <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: s.color }} />
-                  <span className="text-sm font-medium text-[#374151] w-36 shrink-0">{s.label}</span>
-                  <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
+                     className="flex items-center gap-2 sm:gap-4 px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl border border-gray-100 hover:bg-gray-50 transition-colors">
+                  <span className="w-2 h-2 rounded-full shrink-0" style={{ background: s.color }} />
+                  <span className="text-xs sm:text-sm font-medium text-[#374151] w-20 sm:w-36 shrink-0 truncate">{s.label}</span>
+                  <div className="flex-1 h-1.5 sm:h-2 bg-gray-100 rounded-full overflow-hidden">
                     <div className="h-full rounded-full"
                          style={{ width: `${Math.min((s.count / maxStalled) * 100, 100)}%`, background: s.color }} />
                   </div>
-                  <span className="font-bold text-[#0F172A] w-6 text-right shrink-0">{s.count}</span>
-                  <span className="text-[11px] text-[#9CA3AF] bg-gray-50 px-2.5 py-1 rounded-lg border border-gray-100 shrink-0">
+                  <span className="font-bold text-[#0F172A] w-5 text-right shrink-0 text-sm">{s.count}</span>
+                  <span className="hidden sm:inline text-[11px] text-[#9CA3AF] bg-gray-50 px-2.5 py-1 rounded-lg border border-gray-100 shrink-0">
                     ø {s.avg_days}d parado
                   </span>
+                  <span className="sm:hidden text-[10px] text-[#9CA3AF] shrink-0">{s.avg_days}d</span>
                 </div>
               ))}
             </div>

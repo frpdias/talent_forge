@@ -766,13 +766,13 @@ export default function DashboardPage() {
             onClick={() => setAnalyticsOpen(false)}
           />
           {/* Container */}
-          <div className="relative z-10 w-[95vw] max-w-350 h-[90vh] bg-white rounded-2xl shadow-2xl flex flex-col overflow-hidden">
+          <div className="relative z-10 w-[98vw] sm:w-[95vw] max-w-350 h-[92vh] sm:h-[90vh] bg-white rounded-xl sm:rounded-2xl shadow-2xl flex flex-col overflow-hidden">
             {/* Header do modal */}
-            <div className="flex items-center justify-between px-6 py-4 bg-[#141042] shrink-0">
-              <div className="flex items-center gap-3">
-                <BarChart2 className="w-5 h-5 text-[#10B981]" />
-                <span className="text-white font-semibold text-base">Analytics Avançado</span>
-                <span className="text-[#94A3B8] text-xs">{currentOrg?.name}</span>
+            <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 bg-[#141042] shrink-0">
+              <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+                <BarChart2 className="w-4 h-4 sm:w-5 sm:h-5 text-[#10B981] shrink-0" />
+                <span className="text-white font-semibold text-sm sm:text-base">Analytics</span>
+                <span className="text-[#94A3B8] text-xs truncate hidden xs:block">{currentOrg?.name}</span>
               </div>
               <button
                 onClick={() => setAnalyticsOpen(false)}
