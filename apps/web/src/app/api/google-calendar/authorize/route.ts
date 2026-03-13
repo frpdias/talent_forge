@@ -22,8 +22,7 @@ export async function GET() {
     );
     await serviceSupabase
       .from('user_profiles')
-      .update({ google_calendar_state: state })
-      .eq('id', session.user.id);
+      .upsert({ id: session.user.id, google_calendar_state: state }, { onConflict: 'id' });
 
     const redirectUri = `${process.env.NEXT_PUBLIC_APP_URL ?? 'https://web-eight-rho-84.vercel.app'}/api/google-calendar/callback`;
 
