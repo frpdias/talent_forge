@@ -1,13 +1,14 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { DashboardHeader } from '@/components/DashboardHeader';
-import { Building2, Save, User, Bell, Lock, Globe, ExternalLink, Upload, Instagram, Linkedin, MessageCircle, Trash2, Plus, Star, Pencil, GripVertical, Lightbulb } from 'lucide-react';
+import { Building2, Save, User, Bell, Lock, Globe, ExternalLink, Upload, Instagram, Linkedin, MessageCircle, Trash2, Plus, Star, Pencil, GripVertical, Lightbulb, Calendar, CheckCircle2, XCircle, Loader2 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { useOrgStore } from '@/lib/store';
 import { WebhookManager } from '@/components';
@@ -64,9 +65,74 @@ export default function SettingsPage() {
   const [savingTip, setSavingTip] = useState(false);
   const emptyTip = (): Tip => ({ title: '', summary: '', content: '', display_order: tips.length });
 
+  // Google Calendar
+  const [gcal, setGcal] = useState<{ connected: boolean; email: string | null; loading: boolean; connecting: boolean; error: string | null }>({
+    connected: false, email: null, loading: true, connecting: false, error: null,
+  });
+  const searchParams = useSearchParams();
+
   const { currentOrg } = useOrgStore();
 
   const supabase = createClient();
+
+  const loadGcalStatus = useCallback(async () => {
+    try {
+      const res = await fetch('/api/google-calendar/status');
+      const data = await res.json();
+      setGcal(prev => ({ ...prev, connected: data.connected, email: data.email, loading: false }));
+    } catch {
+      setGcal(prev => ({ ...prev, loading: false }));
+    }
+  }, []);
+
+  useEffect(() => {
+    loadGcalStatus();
+  }, [loadGcalStatus]);
+
+  // Lê resultado do callback OAuth (?google=connected | ?google=error)
+  useEffect(() => {
+    const google = searchParams.get('google');
+    const reason = searchParams.get('reason');
+    if (google === 'connected') {
+      loadGcalStatus();
+    } else if (google === 'error') {
+      const msgMap: Record<string, string> = {
+        redirect_uri_mismatch: 'URL de callback não autorizada no Google. Contate o suporte.',
+        invalid_client:        'Credenciais do Google Calendar inválidas. Contate o suporte.',
+        access_denied:         'Acesso negado pelo usuário.',
+        invalid_grant:         'Código de autorização expirado ou já utilizado. Tente novamente.',
+        missing_params:        'Parâmetros inválidos no retorno do Google.',
+        invalid_state:         'Sessão expirada. Tente conectar novamente.',
+        token_exchange:        'Falha ao obter token do Google. Tente novamente.',
+      };
+      const msg = (reason && msgMap[reason]) || 'Erro ao conectar com o Google Calendar. Tente novamente.';
+      setGcal(prev => ({ ...prev, error: msg, loading: false }));
+    }
+  }, [searchParams, loadGcalStatus]);
+
+  async function handleConnectGoogleCalendar() {
+    setGcal(prev => ({ ...prev, connecting: true, error: null }));
+    try {
+      const res = await fetch('/api/google-calendar/authorize');
+      const data = await res.json();
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        setGcal(prev => ({ ...prev, error: data.error || 'Erro ao iniciar conexão com Google Calendar.', connecting: false }));
+      }
+    } catch {
+      setGcal(prev => ({ ...prev, error: 'Erro ao conectar com Google Calendar.', connecting: false }));
+    }
+  }
+
+  async function handleDisconnectGoogleCalendar() {
+    try {
+      await fetch('/api/google-calendar/disconnect', { method: 'POST' });
+      setGcal(prev => ({ ...prev, connected: false, email: null }));
+    } catch {
+      alert('Erro ao desconectar Google Calendar');
+    }
+  }
 
   useEffect(() => {
     loadData();
@@ -1147,6 +1213,74 @@ export default function SettingsPage() {
             <Button variant="outline">
               Alterar Senha
             </Button>
+          </CardContent>
+        </Card>
+
+        {/* Google Calendar */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Calendar className="h-5 w-5" />
+              Google Calendar
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {gcal.error && (
+              <div className="mb-4 flex items-start gap-2 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
+                <XCircle className="h-4 w-4 shrink-0 mt-0.5" />
+                <span>{gcal.error}</span>
+              </div>
+            )}
+            {gcal.loading ? (
+              <div className="flex items-center gap-2 text-sm text-[#666666]">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Verificando conexão...
+              </div>
+            ) : gcal.connected ? (
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 bg-green-50 border border-green-200 rounded-lg">
+                <div className="flex items-center gap-3">
+                  <CheckCircle2 className="h-5 w-5 text-green-600 shrink-0" />
+                  <div>
+                    <p className="font-medium text-green-800">Conectado</p>
+                    {gcal.email && (
+                      <p className="text-sm text-green-600">{gcal.email}</p>
+                    )}
+                  </div>
+                </div>
+                <Button
+                  variant="outline"
+                  onClick={handleDisconnectGoogleCalendar}
+                  className="text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700 shrink-0"
+                >
+                  <XCircle className="h-4 w-4 mr-2" />
+                  Desconectar
+                </Button>
+              </div>
+            ) : (
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 bg-[#FAFAF8] border border-[#E5E5DC] rounded-lg">
+                <div>
+                  <p className="font-medium text-[#141042]">Calendário não conectado</p>
+                  <p className="text-sm text-[#666666]">Conecte para criar eventos de entrevista diretamente no Google Calendar</p>
+                </div>
+                <Button
+                  onClick={handleConnectGoogleCalendar}
+                  disabled={gcal.connecting}
+                  className="shrink-0"
+                >
+                  {gcal.connecting ? (
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
+                    <Calendar className="h-4 w-4 mr-2" />
+                  )}
+                  {gcal.connecting ? 'Redirecionando...' : 'Conectar Google Calendar'}
+                </Button>
+              </div>
+            )}
+            {searchParams.get('google') === 'error' && (
+              <p className="mt-3 text-sm text-red-600">
+                Erro ao conectar: {searchParams.get('reason') === 'token_exchange' ? 'falha ao trocar código de autorização' : searchParams.get('reason') ?? 'tente novamente'}
+              </p>
+            )}
           </CardContent>
         </Card>
 

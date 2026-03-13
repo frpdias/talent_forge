@@ -45,19 +45,30 @@ function RegisterContent() {
     if (!inviteToken) return;
     let ignore = false;
 
+    // Traduz os códigos de reason da API para português
+    function translateReason(reason?: string): string {
+      switch (reason) {
+        case 'expired':   return 'Este convite expirou.';
+        case 'inactive':  return 'Este convite não está mais ativo.';
+        case 'not_found': return 'Convite não encontrado.';
+        case 'max_uses':  return 'Este convite já atingiu o limite de usos.';
+        default:          return 'Convite inválido.';
+      }
+    }
+
     async function loadInvite() {
       try {
         const res = await fetch(`/api/v1/invite-links/${inviteToken}`);
         const data = await res.json();
         if (!res.ok || !data?.valid) {
-          throw new Error(data?.reason || 'Convite invalido');
+          throw new Error(translateReason(data?.reason));
         }
         if (!ignore) {
           setInviteOrgName(data.orgName || null);
         }
       } catch (err: any) {
         if (!ignore) {
-          setError(err?.message || 'Convite invalido');
+          setError(err?.message || 'Convite inválido.');
         }
       }
     }

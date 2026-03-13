@@ -61,12 +61,19 @@ export default function InviteCandidatePage() {
         });
         const data = (await res.json()) as InviteStatus;
         if (!res.ok) {
-          throw new Error(data?.reason || 'Link invalido');
+          // API retorna reason em inglês — traduzimos aqui
+          const reasonMap: Record<string, string> = {
+            expired:   'Este link expirou.',
+            inactive:  'Este link foi desativado.',
+            not_found: 'Link não encontrado.',
+            max_uses:  'Este link já atingiu o limite de usos.',
+          };
+          throw new Error(reasonMap[data?.reason ?? ''] || 'Link inválido.');
         }
         setStatus(data);
       } catch (err: any) {
         if (err?.name === 'AbortError') return;
-        setError(err?.message || 'Erro ao validar convite');
+        setError(err?.message || 'Erro ao validar convite.');
       } finally {
         setLoading(false);
       }
