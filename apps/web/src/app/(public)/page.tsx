@@ -181,29 +181,80 @@ export default function LandingPage() {
                   {/* Stats row */}
                   <div className="grid grid-cols-4 gap-3 mb-4">
                     {[
-                      { label: 'Vagas Ativas', value: '12', color: 'text-[#1F4ED8]' },
-                      { label: 'Candidatos', value: '84', color: 'text-[#141042]' },
-                      { label: 'Em Avaliação', value: '27', color: 'text-[#D97706]' },
-                      { label: 'Contratados', value: '6', color: 'text-[#10B981]' },
+                      { label: 'Vagas Ativas', value: '12', delta: '+2',  color: '#1F4ED8', bar: '#DBEAFE' },
+                      { label: 'Candidatos',   value: '84', delta: '+17', color: '#141042', bar: '#E0E7FF' },
+                      { label: 'Em Avaliação', value: '27', delta: '+5',  color: '#D97706', bar: '#FEF3C7' },
+                      { label: 'Contratados',  value: '6',  delta: '+1',  color: '#10B981', bar: '#D1FAE5' },
                     ].map((s) => (
-                      <div key={s.label} className="bg-white rounded-lg border border-[#E5E5DC] p-3">
+                      <div key={s.label} className="bg-white rounded-lg border border-[#E5E5DC] p-3 overflow-hidden relative">
                         <p className="text-[10px] text-[#999999] mb-1">{s.label}</p>
-                        <p className={`text-xl font-bold ${s.color}`}>{s.value}</p>
+                        <div className="flex items-end gap-1.5">
+                          <p className="text-xl font-bold leading-none" style={{ color: s.color }}>{s.value}</p>
+                          <span className="text-[8px] font-semibold text-[#10B981] mb-0.5">{s.delta}</span>
+                        </div>
+                        <div className="absolute bottom-0 left-0 right-0 h-0.5" style={{ background: s.color, opacity: 0.4 }} />
                       </div>
                     ))}
                   </div>
 
                   {/* Pipeline preview */}
                   <div className="bg-white rounded-lg border border-[#E5E5DC] p-3">
-                    <p className="text-[10px] font-semibold text-[#141042] mb-2">Pipeline · Desenvolvedor Full-Stack</p>
+                    <div className="flex items-center justify-between mb-2.5">
+                      <p className="text-[10px] font-semibold text-[#141042]">Pipeline · Desenvolvedor Full-Stack</p>
+                      <span className="text-[9px] text-[#1F4ED8]">Ver todas →</span>
+                    </div>
                     <div className="grid grid-cols-4 gap-2">
-                      {['Triagem', 'Entrevista', 'Avaliação', 'Proposta'].map((stage, i) => (
+                      {[
+                        {
+                          stage: 'Triagem', color: '#6B7280', count: 3,
+                          cards: [
+                            { name: 'Ana Souza',    initials: 'AS', score: null },
+                            { name: 'Carlos Lima',  initials: 'CL', score: null },
+                            { name: 'Paula Mendes', initials: 'PM', score: null },
+                          ],
+                        },
+                        {
+                          stage: 'Entrevista', color: '#3B82F6', count: 2,
+                          cards: [
+                            { name: 'Bruno Costa', initials: 'BC', score: null },
+                            { name: 'Julia Nunes', initials: 'JN', score: null },
+                          ],
+                        },
+                        {
+                          stage: 'Avaliação', color: '#F97316', count: 2,
+                          cards: [
+                            { name: 'Marcos Vieira', initials: 'MV', score: 78 },
+                            { name: 'Laura Pinto',   initials: 'LP', score: 85 },
+                          ],
+                        },
+                        {
+                          stage: 'Proposta', color: '#10B981', count: 1,
+                          cards: [
+                            { name: 'Camila Torres', initials: 'CT', score: 92 },
+                          ],
+                        },
+                      ].map(({ stage, color, count, cards }) => (
                         <div key={stage} className="bg-[#FAFAF8] rounded border border-[#E5E5DC] p-2">
-                          <p className="text-[9px] font-medium text-[#666666] mb-1.5">{stage}</p>
-                          {[...Array(i === 0 ? 3 : i === 1 ? 2 : i === 2 ? 2 : 1)].map((_, j) => (
-                            <div key={j} className="bg-white border border-[#E5E5DC] rounded p-1.5 mb-1">
-                              <div className="w-full h-1.5 bg-[#141042]/10 rounded mb-1" />
-                              <div className="w-3/4 h-1 bg-[#E5E5DC] rounded" />
+                          {/* Column header */}
+                          <div className="flex items-center gap-1 mb-2">
+                            <div className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: color }} />
+                            <p className="text-[9px] font-semibold text-[#444]">{stage}</p>
+                            <span className="ml-auto text-[8px] font-medium text-[#999] bg-[#E5E5DC] rounded-full px-1.5">{count}</span>
+                          </div>
+                          {/* Cards */}
+                          {cards.map((c) => (
+                            <div key={c.name} className="bg-white border border-[#E5E5DC] rounded p-1.5 mb-1 last:mb-0" style={{ borderLeft: `2px solid ${color}` }}>
+                              <div className="flex items-center gap-1">
+                                <div className="w-4 h-4 rounded-full flex-shrink-0 flex items-center justify-center text-white font-bold" style={{ fontSize: '5px', background: color + 'CC' }}>
+                                  {c.initials}
+                                </div>
+                                <span className="text-[8px] font-medium text-[#333] truncate flex-1">{c.name}</span>
+                                {c.score && (
+                                  <span className="text-[7px] font-bold px-1 rounded" style={{ background: c.score >= 80 ? '#D1FAE5' : '#FEF3C7', color: c.score >= 80 ? '#065F46' : '#92400E' }}>
+                                    {c.score}
+                                  </span>
+                                )}
+                              </div>
                             </div>
                           ))}
                         </div>
