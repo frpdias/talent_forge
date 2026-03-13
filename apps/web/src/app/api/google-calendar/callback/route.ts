@@ -3,19 +3,26 @@ import { createClient as createServiceClient } from '@supabase/supabase-js';
 
 export const dynamic = 'force-dynamic';
 
-// Extrai a base URL da própria requisição — funciona em qualquer deploy (preview, prod, domínio customizado).
-function getBaseUrl(request: Request): string {
-  const url = new URL(request.url);
-  const proto = request.headers.get('x-forwarded-proto') ?? url.protocol.replace(':', '');
-  const host = request.headers.get('x-forwarded-host') ?? request.headers.get('host') ?? url.host;
-  return `${proto}://${host}`;
+// Mesma lógica do authorize — URL fixa para garantir match perfeito com o Google.
+function getFixedBase(): string {
+  return (
+    process.env.NEXT_PUBLIC_APP_URL ??
+    'https://web-eight-rho-84.vercel.app'
+  );
+}
+
+function getRedirectUri(): string {
+  return (
+    process.env.GOOGLE_CALENDAR_REDIRECT_URI ??
+    `${getFixedBase()}/api/google-calendar/callback`
+  );
 }
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const code = searchParams.get('code');
   const state = searchParams.get('state');
-  const baseUrl = getBaseUrl(request);
+  const baseUrl = getFixedBase();
 
   if (!code || !state) {
     return NextResponse.redirect(`${baseUrl}/dashboard/settings?google=error&reason=missing_params`);
@@ -38,7 +45,7 @@ export async function GET(request: Request) {
   }
 
   // redirect_uri deve ser idêntico ao usado no authorize
-  const redirectUri = `${baseUrl}/api/google-calendar/callback`;
+  const redirectUri = getRedirectUri();
 
   // Trocar code por tokens
   const tokenRes = await fetch('https://oauth2.googleapis.com/token', {
