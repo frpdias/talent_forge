@@ -1,6 +1,6 @@
 # Arquitetura Canônica — TalentForge
 
-**Última atualização**: 2026-03-12 | **Score de Conformidade**: ✅ 100% (Sprint 43: Landing Polish + Avatar Candidato) | **Sprints planejados**: Sprint 41 (AI Assistant) + Sprint 44 (Gate Recrutamento)
+**Última atualização**: 2026-03-13 | **Score de Conformidade**: ✅ 100% (Hotfix: Botão Analytics visível em produção) | **Sprints planejados**: Sprint 41 (AI Assistant) + Sprint 44 (Gate Recrutamento)
 
 ## 📜 FONTE DA VERDADE — PRINCÍPIO FUNDAMENTAL
 
@@ -8061,5 +8061,6 @@ O `ReportsService.getDashboard()` usa `applications.source` com fallback para `c
 | **Sprint 40** | **2026-03-11** | **Dicas de carreira — tabela `org_career_tips` com RLS + trigger updated_at, CRUD no settings (card Lightbulb, formulário inline title/summary/content), career page renderiza seção condicionalmente** | ✅ |
 | **Sprint 41** | **PLANEJADO** | **AI Assistant PHP Module — 7 endpoints `/api/php/ai/*`, tabela `php_ai_usage`, correção `orgId` no frontend, integração com provedor AI (Anthropic/OpenAI)** | 🔲 |
 | **Sprint 43** | **2026-03-12** | **Landing Polish + Avatar Candidato — título hero com `clamp()`, badge MÓDULO PREMIUM ampliado, avatar upload com modal de recorte (`react-easy-crop`), bucket `candidate-avatars`, migration `avatar_url`** | ✅ |
+| **Hotfix** | **2026-03-13** | **Botão Analytics Dashboard — removida guarda `isLocalhost` em `(recruiter)/dashboard/page.tsx`; botão "Analytics" e `AnalyticsPanel` (recharts) agora visíveis em produção para todos os usuários** | ✅ |
 | **Sprint 44** | **PLANEJADO** | **Gate de ativação do módulo Recrutamento — tabela `recruitment_module_activations`, `GET /api/v1/recruitment/status`, endpoints admin, guard no `dashboard/layout.tsx`, card no Admin Panel** | 🔲 |
 ```
