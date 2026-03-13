@@ -3,14 +3,22 @@ import { createClient as createServiceClient } from '@supabase/supabase-js';
 
 export const dynamic = 'force-dynamic';
 
+// Extrai a base URL da própria requisição — funciona em qualquer deploy (preview, prod, domínio customizado).
+function getBaseUrl(request: Request): string {
+  const url = new URL(request.url);
+  const proto = request.headers.get('x-forwarded-proto') ?? url.protocol.replace(':', '');
+  const host = request.headers.get('x-forwarded-host') ?? request.headers.get('host') ?? url.host;
+  return `${proto}://${host}`;
+}
+
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const code = searchParams.get('code');
   const state = searchParams.get('state');
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://web-eight-rho-84.vercel.app';
+  const baseUrl = getBaseUrl(request);
 
   if (!code || !state) {
-    return NextResponse.redirect(`${appUrl}/dashboard/settings?google=error&reason=missing_params`);
+    return NextResponse.redirect(`${baseUrl}/dashboard/settings?google=error&reason=missing_params`);
   }
 
   const serviceSupabase = createServiceClient(
@@ -26,10 +34,11 @@ export async function GET(request: Request) {
     .maybeSingle();
 
   if (!profile) {
-    return NextResponse.redirect(`${appUrl}/dashboard/settings?google=error&reason=invalid_state`);
+    return NextResponse.redirect(`${baseUrl}/dashboard/settings?google=error&reason=invalid_state`);
   }
 
-  const redirectUri = `${appUrl}/api/google-calendar/callback`;
+  // redirect_uri deve ser idêntico ao usado no authorize
+  const redirectUri = `${baseUrl}/api/google-calendar/callback`;
 
   // Trocar code por tokens
   const tokenRes = await fetch('https://oauth2.googleapis.com/token', {
@@ -46,8 +55,11 @@ export async function GET(request: Request) {
 
   if (!tokenRes.ok) {
     const err = await tokenRes.text();
-    console.error('google token exchange error:', err);
-    return NextResponse.redirect(`${appUrl}/dashboard/settings?google=error&reason=token_exchange`);
+    console.error('google token exchange error | redirectUri usado:', redirectUri, '| resposta Google:', err);
+    // Extrai o campo "error" do JSON do Google para facilitar diagnóstico na URL
+    let reason = 'token_exchange';
+    try { reason = (JSON.parse(err) as any).error ?? 'token_exchange'; } catch { /* mantém fallback */ }
+    return NextResponse.redirect(`${baseUrl}/dashboard/settings?google=error&reason=${encodeURIComponent(reason)}`);
   }
 
   const tokens = await tokenRes.json();
@@ -81,5 +93,5 @@ export async function GET(request: Request) {
     })
     .eq('id', profile.id);
 
-  return NextResponse.redirect(`${appUrl}/dashboard/settings?google=connected`);
+  return NextResponse.redirect(`${baseUrl}/dashboard/settings?google=connected`);
 }

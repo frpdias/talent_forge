@@ -5,7 +5,16 @@ import crypto from 'crypto';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET() {
+// Deriva a origin da própria requisição para garantir que redirect_uri
+// seja idêntico ao que o callback irá usar — sem depender de NEXT_PUBLIC_APP_URL.
+function getRedirectUri(request: Request): string {
+  const url = new URL(request.url);
+  const proto = request.headers.get('x-forwarded-proto') ?? url.protocol.replace(':', '');
+  const host = request.headers.get('x-forwarded-host') ?? request.headers.get('host') ?? url.host;
+  return `${proto}://${host}/api/google-calendar/callback`;
+}
+
+export async function GET(request: Request) {
   try {
     const supabase = await createClient();
     const { data: { session } } = await supabase.auth.getSession();
@@ -24,7 +33,7 @@ export async function GET() {
       .from('user_profiles')
       .upsert({ id: session.user.id, google_calendar_state: state }, { onConflict: 'id' });
 
-    const redirectUri = `${process.env.NEXT_PUBLIC_APP_URL ?? 'https://web-eight-rho-84.vercel.app'}/api/google-calendar/callback`;
+    const redirectUri = getRedirectUri(request);
 
     const params = new URLSearchParams({
       client_id: process.env.GOOGLE_CALENDAR_CLIENT_ID!,
