@@ -144,9 +144,9 @@ export default function LandingPage() {
               </div>
 
               {/* Mockup Content */}
-              <div className="grid grid-cols-[200px_1fr] min-h-[360px]">
+              <div className="grid grid-cols-1 sm:grid-cols-[200px_1fr] min-h-[360px]">
                 {/* Sidebar */}
-                <div className="bg-[#0D0B2E] px-3 py-4 border-r border-white/10">
+                <div className="hidden sm:block bg-[#0D0B2E] px-3 py-4 border-r border-white/10">
                   <div className="flex items-center gap-2 mb-6 px-2">
                     <div className="w-6 h-6 bg-white/15 rounded flex items-center justify-center">
                       <span className="text-white text-[8px] font-bold">TF</span>
@@ -172,21 +172,21 @@ export default function LandingPage() {
                 </div>
 
                 {/* Main Content */}
-                <div className="p-5 bg-[#FAFAF8]">
+                <div className="p-3 sm:p-5 bg-[#FAFAF8]">
                   <div className="mb-4">
                     <h3 className="text-sm font-bold text-[#141042]">Dashboard</h3>
                     <p className="text-xs text-[#999999]">Fartech · Março 2026</p>
                   </div>
 
                   {/* Stats row */}
-                  <div className="grid grid-cols-4 gap-3 mb-4">
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 mb-4">
                     {[
                       { label: 'Vagas Ativas', value: '12', delta: '+2',  color: '#1F4ED8', bar: '#DBEAFE' },
                       { label: 'Candidatos',   value: '84', delta: '+17', color: '#141042', bar: '#E0E7FF' },
                       { label: 'Em Avaliação', value: '27', delta: '+5',  color: '#D97706', bar: '#FEF3C7' },
                       { label: 'Contratados',  value: '6',  delta: '+1',  color: '#10B981', bar: '#D1FAE5' },
                     ].map((s) => (
-                      <div key={s.label} className="bg-white rounded-lg border border-[#E5E5DC] p-3 overflow-hidden relative">
+                      <div key={s.label} className="bg-white rounded-lg border border-[#E5E5DC] p-2 sm:p-3 overflow-hidden relative">
                         <p className="text-[10px] text-[#999999] mb-1">{s.label}</p>
                         <div className="flex items-end gap-1.5">
                           <p className="text-xl font-bold leading-none" style={{ color: s.color }}>{s.value}</p>
@@ -203,7 +203,7 @@ export default function LandingPage() {
                       <p className="text-[10px] font-semibold text-[#141042]">Pipeline · Desenvolvedor Full-Stack</p>
                       <span className="text-[9px] text-[#1F4ED8]">Ver todas →</span>
                     </div>
-                    <div className="grid grid-cols-4 gap-2">
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                       {[
                         {
                           stage: 'Triagem', color: '#6B7280', count: 3,
