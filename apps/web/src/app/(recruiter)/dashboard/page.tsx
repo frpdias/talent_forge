@@ -108,7 +108,6 @@ export default function DashboardPage() {
   const [stalledApplications, setStalledApplications] = useState<StalledApplication[]>([]);
   const [alerts, setAlerts] = useState<AlertItem[]>([]);
   const [analyticsOpen, setAnalyticsOpen] = useState(false);
-  const isLocalhost = typeof window !== 'undefined' && window.location.hostname === 'localhost';
   const supabase = useMemo(() => createClient(), []);
 
   useEffect(() => {
@@ -444,15 +443,13 @@ export default function DashboardPage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          {isLocalhost && (
-            <button
-              onClick={() => setAnalyticsOpen(true)}
-              className="flex items-center justify-center space-x-2 px-4 py-2 bg-[#141042] text-white rounded-lg hover:bg-[#1e1a6e] transition-colors"
-            >
-              <BarChart2 className="w-4 h-4" />
-              <span className="hidden sm:inline">Analytics</span>
-            </button>
-          )}
+          <button
+            onClick={() => setAnalyticsOpen(true)}
+            className="flex items-center justify-center space-x-2 px-4 py-2 bg-[#141042] text-white rounded-lg hover:bg-[#1e1a6e] transition-colors"
+          >
+            <BarChart2 className="w-4 h-4" />
+            <span className="hidden sm:inline">Analytics</span>
+          </button>
           <button className="flex items-center justify-center space-x-2 px-4 py-2 border border-[#E5E5DC] text-[#666666] rounded-lg hover:bg-[#FAFAF8] transition-colors">
             <Clock className="w-4 h-4" />
             <span>Último mês</span>
