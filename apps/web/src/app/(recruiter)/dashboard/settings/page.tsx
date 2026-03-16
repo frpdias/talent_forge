@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { DashboardHeader } from '@/components/DashboardHeader';
-import { Building2, Save, User, Bell, Lock, Globe, ExternalLink, Upload, Instagram, Linkedin, MessageCircle, Trash2, Plus, Star, Pencil, GripVertical, Lightbulb, Calendar, CheckCircle2, XCircle, Loader2 } from 'lucide-react';
+import { Building2, Save, User, Bell, Lock, Globe, ExternalLink, Upload, Instagram, Linkedin, MessageCircle, Trash2, Plus, Star, Pencil, GripVertical, Lightbulb, Calendar, CheckCircle2, XCircle, Loader2, Sparkles, RotateCcw } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { useOrgStore } from '@/lib/store';
 import { WebhookManager } from '@/components';
@@ -64,6 +64,13 @@ function SettingsPageContent() {
   const [showTipForm, setShowTipForm] = useState(false);
   const [savingTip, setSavingTip] = useState(false);
   const emptyTip = (): Tip => ({ title: '', summary: '', content: '', display_order: tips.length });
+
+  // Prompt IA de avaliação
+  const [aiPrompt, setAiPrompt] = useState('');
+  const [defaultPrompt, setDefaultPrompt] = useState('');
+  const [savingAiPrompt, setSavingAiPrompt] = useState(false);
+  const [aiPromptSaved, setAiPromptSaved] = useState(false);
+  const [loadingAiPrompt, setLoadingAiPrompt] = useState(false);
 
   // Google Calendar
   const [gcal, setGcal] = useState<{ connected: boolean; email: string | null; loading: boolean; connecting: boolean; error: string | null }>({
@@ -136,7 +143,58 @@ function SettingsPageContent() {
 
   useEffect(() => {
     loadData();
+    loadAiSettings();
   }, []);
+
+  async function loadAiSettings() {
+    try {
+      setLoadingAiPrompt(true);
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+      const orgId = localStorage.getItem('selected_org_id');
+      if (!orgId) return;
+      const res = await fetch('/api/recruiter/settings', {
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+          'x-org-id': orgId,
+        },
+      });
+      const data = await res.json();
+      setDefaultPrompt(data.default_prompt ?? '');
+      setAiPrompt(data.review_prompt ?? '');
+    } catch (err) {
+      console.error('loadAiSettings error:', err);
+    } finally {
+      setLoadingAiPrompt(false);
+    }
+  }
+
+  async function saveAiPrompt() {
+    try {
+      setSavingAiPrompt(true);
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+      const orgId = localStorage.getItem('selected_org_id');
+      if (!orgId) return;
+      const res = await fetch('/api/recruiter/settings', {
+        method: 'PUT',
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+          'x-org-id': orgId,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ review_prompt: aiPrompt }),
+      });
+      if (res.ok) {
+        setAiPromptSaved(true);
+        setTimeout(() => setAiPromptSaved(false), 3000);
+      }
+    } catch (err) {
+      console.error('saveAiPrompt error:', err);
+    } finally {
+      setSavingAiPrompt(false);
+    }
+  }
 
   async function loadData() {
     try {
@@ -1280,6 +1338,83 @@ function SettingsPageContent() {
               <p className="mt-3 text-sm text-red-600">
                 Erro ao conectar: {searchParams.get('reason') === 'token_exchange' ? 'falha ao trocar código de autorização' : searchParams.get('reason') ?? 'tente novamente'}
               </p>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Prompt IA de Avaliação */}
+        <Card className="col-span-1 md:col-span-2">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Sparkles className="h-5 w-5 text-purple-600" />
+              Prompt de Avaliação por IA
+            </CardTitle>
+            <p className="text-sm text-[#666666] mt-1">
+              Personalize as instruções que a IA usa ao gerar pareceres técnicos dos candidatos.
+              Deixe em branco para usar o <strong>prompt padrão do sistema</strong>.
+            </p>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {loadingAiPrompt ? (
+              <div className="flex items-center gap-2 text-sm text-[#666666]">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Carregando configurações...
+              </div>
+            ) : (
+              <>
+                <div>
+                  <Label className="mb-2 block">Seu prompt personalizado</Label>
+                  <Textarea
+                    value={aiPrompt}
+                    onChange={e => setAiPrompt(e.target.value)}
+                    placeholder="Deixe vazio para usar o prompt padrão do sistema."
+                    rows={12}
+                    className="font-mono text-sm resize-y"
+                  />
+                  <p className="text-xs text-[#999] mt-1">
+                    Use as variáveis: <code className="bg-gray-100 px-1 rounded">&#123;&#123;nome&#125;&#125;</code>,{' '}
+                    <code className="bg-gray-100 px-1 rounded">&#123;&#123;cargo&#125;&#125;</code>,{' '}
+                    <code className="bg-gray-100 px-1 rounded">&#123;&#123;disc&#125;&#125;</code>,{' '}
+                    <code className="bg-gray-100 px-1 rounded">&#123;&#123;score_total&#125;&#125;</code>,{' '}
+                    <code className="bg-gray-100 px-1 rounded">&#123;&#123;experiencias&#125;&#125;</code>,{' '}
+                    <code className="bg-gray-100 px-1 rounded">&#123;&#123;anotacoes&#125;&#125;</code> e outras.
+                  </p>
+                </div>
+
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    onClick={saveAiPrompt}
+                    disabled={savingAiPrompt}
+                  >
+                    {savingAiPrompt ? (
+                      <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Salvando...</>
+                    ) : aiPromptSaved ? (
+                      <><CheckCircle2 className="h-4 w-4 mr-2 text-green-500" />Salvo!</>
+                    ) : (
+                      <><Save className="h-4 w-4 mr-2" />Salvar Prompt</>  
+                    )}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => setAiPrompt('')}
+                    title="Limpar e usar o prompt padrão do sistema"
+                  >
+                    <RotateCcw className="h-4 w-4 mr-2" />
+                    Restaurar Padrão
+                  </Button>
+                </div>
+
+                {/* Preview do prompt padrão */}
+                <details className="group">
+                  <summary className="cursor-pointer text-sm text-purple-600 hover:underline list-none flex items-center gap-1">
+                    <Sparkles className="h-3.5 w-3.5" />
+                    Ver prompt padrão do sistema
+                  </summary>
+                  <div className="mt-3 rounded-xl bg-[#FAFAF8] border border-[#E5E5DC] p-4">
+                    <pre className="text-xs text-gray-600 whitespace-pre-wrap font-mono leading-relaxed">{defaultPrompt}</pre>
+                  </div>
+                </details>
+              </>
             )}
           </CardContent>
         </Card>

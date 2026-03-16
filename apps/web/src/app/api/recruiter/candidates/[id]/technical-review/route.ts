@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import OpenAI from 'openai';
+import { DEFAULT_REVIEW_PROMPT } from '@/app/api/recruiter/settings/route';
 
 function createAdminClient() {
   return createClient(
@@ -44,6 +45,11 @@ function calcScoreTotal(testes: number, experiencia: number, recrutador: number)
   return Math.round(testes * 0.4 + experiencia * 0.35 + recrutador * 0.25);
 }
 
+// ─── Substitui variáveis {{var}} no template do prompt ───────────────────────
+function fillPrompt(template: string, vars: Record<string, string>): string {
+  return template.replace(/\{\{(\w+)\}\}/g, (_, key) => vars[key] ?? `{{${key}}}`);
+}
+
 // ─── Handler ─────────────────────────────────────────────────────────────────
 
 export async function POST(
@@ -77,6 +83,15 @@ export async function POST(
     if (!member) {
       return NextResponse.json({ error: 'Acesso negado' }, { status: 403 });
     }
+
+    // 2.5 Buscar prompt customizado do recrutador (ou usar padrão)
+    const { data: recruiterSettings } = await supabase
+      .from('recruiter_settings')
+      .select('review_prompt')
+      .eq('user_id', user.id)
+      .eq('org_id', orgId)
+      .maybeSingle();
+    const promptTemplate: string = recruiterSettings?.review_prompt?.trim() || DEFAULT_REVIEW_PROMPT;
 
     // 3. Body
     const body = await request.json().catch(() => ({}));
@@ -239,6 +254,12 @@ export async function POST(
     if (openaiKey) {
       const openai = new OpenAI({ apiKey: openaiKey });
 
+      const grauMap: Record<string, string> = {
+        doutorado: 'Doutorado', mestrado: 'Mestrado', mba: 'MBA',
+        pos_graduacao: 'Pós-Graduação', graduacao: 'Graduação',
+        tecnico: 'Técnico', ensino_medio: 'Ensino Médio', ensino_fundamental: 'Ensino Fundamental',
+      };
+
       const discSummary = discResult
         ? `DISC: D=${discResult.D}%, I=${discResult.I}%, S=${discResult.S}%, C=${discResult.C}% (Perfil: ${discResult.profile})`
         : 'Não realizado';
@@ -248,71 +269,35 @@ export async function POST(
       const piSummary = piResult
         ? `Natural: ${JSON.stringify(piResult.natural)}`
         : 'Não realizado';
-      const grauMap: Record<string, string> = {
-        doutorado: 'Doutorado', mestrado: 'Mestrado', mba: 'MBA',
-        pos_graduacao: 'Pós-Graduação', graduacao: 'Graduação',
-        tecnico: 'Técnico', ensino_medio: 'Ensino Médio', ensino_fundamental: 'Ensino Fundamental',
-      };
-      const topEduLabel = grauMap[topEdu] ?? topEdu;
       const expSummary = experiences.map((e: any) =>
         `- ${e.job_title} @ ${e.company_name}${e.is_current ? ' (atual)' : ''}`
       ).join('\n') || 'Sem experiências cadastradas';
-
       const eduSummary = educations.map((e: any) =>
         `- ${grauMap[e.degree_level] ?? e.degree_level} em ${e.course_name} — ${e.institution}`
       ).join('\n') || 'Sem formação cadastrada';
-
       const notesSummary = (notes ?? []).length > 0
         ? (notes ?? []).map((n: any) => `• ${n.note}`).join('\n')
         : 'Sem anotações do recrutador';
 
-      const prompt = `Você é um consultor sênior de Recursos Humanos. Analise o perfil do candidato abaixo e elabore um **Parecer Técnico** completo em português brasileiro, com linguagem formal e objetiva.
-
-## Candidato
-Nome: ${candidate.full_name}
-Cargo desejado: ${candidate.current_title ?? 'Não informado'}
-Localização: ${candidate.location ?? 'Não informada'}
-
-## Formação Acadêmica
-${eduSummary}
-
-## Experiência Profissional (${experienceYears} anos total)
-${expSummary}
-
-## Resultados Comportamentais
-${discSummary}
-Avaliação de Cores: ${colorSummary}
-Predictive Index (PI): ${piSummary}
-
-## Anotações do Recrutador
-${notesSummary}
-Nota do recrutador: ${recruiterRating}/10
-${recruiterNote ? `Observação: ${recruiterNote}` : ''}
-
-## Score Calculado
-- Total: ${scoreTotal}/100
-- Testes comportamentais: ${scoreTestes}/100
-- Experiência e formação: ${scoreExperiencia}/100
-- Avaliação do recrutador: ${scoreRecrutador}/100
-
----
-
-Estruture o parecer EXATAMENTE nestes tópicos:
-
-### 1. Resumo Executivo
-Parágrafo conciso (3–4 linhas) sobre o perfil geral do candidato.
-
-### 2. Pontos Fortes
-Liste 3–5 pontos fortes identificados com base nos dados.
-
-### 3. Pontos de Desenvolvimento
-Liste 2–4 áreas que necessitam atenção ou desenvolvimento.
-
-### 4. Análise Comportamental
-Interprete os resultados dos testes (DISC, Cores, PI) e o que indicam sobre o candidato no ambiente de trabalho.
-
-### 5. Recomendação Final
-Conclusão objetiva: Recomendado / Recomendado com ressalvas / Não recomendado. Justifique em 2–3 linhas.`;
+      // Preenche o template com os dados do candidato
+      const prompt = fillPrompt(promptTemplate, {
+        nome: candidate.full_name,
+        cargo: candidate.current_title ?? 'Não informado',
+        localizacao: candidate.location ?? 'Não informada',
+        formacao: eduSummary,
+        anos_experiencia: String(experienceYears),
+        experiencias: expSummary,
+        disc: discSummary,
+        cores: colorSummary,
+        pi: piSummary,
+        anotacoes: notesSummary,
+        nota_recrutador: String(recruiterRating),
+        observacao_recrutador: recruiterNote ? `Observação: ${recruiterNote}` : '',
+        score_total: String(scoreTotal),
+        score_testes: String(scoreTestes),
+        score_experiencia: String(scoreExperiencia),
+        score_recrutador: String(scoreRecrutador),
+      });
 
       const completion = await openai.chat.completions.create({
         model: 'gpt-4o',
