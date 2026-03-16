@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { DashboardHeader } from '@/components/DashboardHeader';
 import { Building2, Save, User, Bell, Lock, Globe, ExternalLink, Upload, Instagram, Linkedin, MessageCircle, Trash2, Plus, Star, Pencil, GripVertical, Lightbulb, Calendar, CheckCircle2, XCircle, Loader2, Sparkles, RotateCcw } from 'lucide-react';
+import { DEFAULT_REVIEW_PROMPT } from '@/lib/defaults';
 import { createClient } from '@/lib/supabase/client';
 import { useOrgStore } from '@/lib/store';
 import { WebhookManager } from '@/components';
@@ -160,10 +161,13 @@ function SettingsPageContent() {
         },
       });
       const data = await res.json();
-      setDefaultPrompt(data.default_prompt ?? '');
+      // Fallback garantido: usa constante local se a API não retornar
+      setDefaultPrompt(data.default_prompt || DEFAULT_REVIEW_PROMPT);
       setAiPrompt(data.review_prompt ?? '');
     } catch (err) {
       console.error('loadAiSettings error:', err);
+      // Garante que o prompt padrão apareça mesmo se a API falhar
+      setDefaultPrompt(DEFAULT_REVIEW_PROMPT);
     } finally {
       setLoadingAiPrompt(false);
     }

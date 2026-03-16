@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import OpenAI from 'openai';
-import { DEFAULT_REVIEW_PROMPT } from '@/app/api/recruiter/settings/route';
+import { DEFAULT_REVIEW_PROMPT } from '@/lib/defaults';
 
 function createAdminClient() {
   return createClient(
