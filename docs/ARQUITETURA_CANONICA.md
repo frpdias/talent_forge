@@ -1,6 +1,6 @@
 # Arquitetura Canônica — TalentForge
 
-**Última atualização**: 2026-03-16 | **Score de Conformidade**: ✅ 100% (Sprint 47 — Fix Assessments DISC/PI/Color via service_role) | **Sprints planejados**: Sprint 41 (AI Assistant) + Sprint 44 (Gate Recrutamento)
+**Última atualização**: 2026-03-16 | **Score de Conformidade**: ✅ 100% (Sprint 47 — Relatório PDF Completo) | **Sprints planejados**: Sprint 41 (AI Assistant) + Sprint 44 (Gate Recrutamento)
 
 ## 📜 FONTE DA VERDADE — PRINCÍPIO FUNDAMENTAL
 
@@ -7459,15 +7459,24 @@ Adicionar card "Módulo de Recrutamento" seguindo o mesmo padrão visual do card
 - ✅ **Rodapé dinâmico**: `drawAllFooters()` percorre todas as páginas e aplica paginação "X / Y" + branding TalentForge
 - ✅ **Commits**: `e296a14` → `origin/main`
 
-### v5.13 (2026-03-16)
-- ✅ **Score de Conformidade**: 100% mantido (Sprint 47 — Fix Assessments display)
-- ✅ **Bug fix DISC 0%**: query `assessments` client-side não filtrava por `assessment_type = 'disc'` — todos os registros eram marcados como DISC independente do tipo real, resultando em traits zerados
-- ✅ **Bug fix PI/Color "Não realizado"**: queries client-side via JWT do recrutador sujeitas a RLS; blocos pulados quando `candidate.user_id = NULL`
-- ✅ **API Route `GET /api/recruiter/candidates/[id]/assessments`**: nova rota com `service_role` (bypass RLS) — valida token + membership antes de buscar; DISC filtrado por `assessment_type = 'disc'`; Color/PI por `candidate_user_id`; fallback via `candidate_profiles.email` quando `user_id` é nulo; retorna `{ disc: [], color: [], pi: [] }`
-- ✅ **`loadCandidateDetails` refatorado**: 3 queries client-side substituídas por única chamada `fetch('/api/recruiter/candidates/[id]/assessments')` com headers `Authorization` + `x-org-id`; usa `resolvedOrgId ?? localStorage('selected_org_id')` para orgId
-- ✅ **Commits**: `9f8d716` → `origin/main`
+### v5.15 (2026-03-16)
+- ✅ **Score de Conformidade**: 100% mantido (Sprint 47 — Relatório PDF Completo)
+- ✅ **`generateFullReportPDF(data: FullReportData)`**: nova função em `CandidateCurriculumPDF.ts` — reutiliza `buildCurriculumPDF()` e appenda páginas de testes + parecer no mesmo documento jsPDF; exporta `relatorio_<nome>.pdf`
+- ✅ **Interface `FullReportData extends CurriculumData`**: campo `report?` com `disc`, `color`, `pi`, `scores`, `recruiterNote`, `aiReview`, `reviewDate`, `jobApplied`
+- ✅ **Estrutura do PDF (múltiplas páginas)**: (1+) Currículo layout 2 colunas; (penúltima) Score TalentForge 4 cards + gráficos DISC barras verticais + swatches Cores + barras PI natural/adaptado; (última) Anotações do recrutador + Parecer GPT-4o + linhas em branco para anotações manuscritas; rodapé TalentForge com paginação `N / Total` em todas as páginas
+- ✅ **`handleGeneratePDF` atualizado**: monta `FullReportData` com `discResult`, `colorResult`, `piResult`, `currentReview` (score + ai_review + recruiter_note); botão "Relatório PDF" no header do modal com spinner e ícone `Download`
+- ✅ **Botão reintroduzido**: `handleGeneratePDF` corrigido após refactor de assessments que havia removido o botão acidentalmente
+- ✅ **Commits**: `3b67e49` → `f6ed5cd` → `origin/main`
 
-### v5.12 (2026-03-16)
+### v5.14 (2026-03-16)
+- ✅ **Score de Conformidade**: 100% mantido (Sprint 47 — Fix Assessments display)
+- ✅ **Bug fix DISC 0%**: query `assessments` client-side não filtrava por `assessment_type = 'disc'` — todos os registros eram marcados como DISC, resultando em traits zerados
+- ✅ **Bug fix PI/Color "Não realizado"**: queries client-side via JWT do recrutador sujeitas a RLS; blocos pulados quando `candidate.user_id = NULL`
+- ✅ **API Route `GET /api/recruiter/candidates/[id]/assessments`**: nova rota com `service_role` (bypass RLS) — valida token + membership; DISC filtrado por `assessment_type = 'disc'`; Color/PI por `candidate_user_id`; fallback via `candidate_profiles.email` quando `user_id` é nulo; retorna `{ disc: [], color: [], pi: [] }`
+- ✅ **`loadCandidateDetails` refatorado**: 3 queries client-side → única chamada `fetch('/api/recruiter/candidates/[id]/assessments')` com headers `Authorization` + `x-org-id`
+- ✅ **Commits**: `9f8d716` → `b8415c1` → `origin/main`
+
+### v5.13 (2026-03-16)
 - ✅ **Score de Conformidade**: 100% mantido (Sprint 47 — Fix geração de parecer)
 - ✅ **Bug fix `handleGenerateReview`**: botão "Gerar Parecer com IA" em `/dashboard/candidates` não disparava quando `localStorage.getItem('selected_org_id')` era null (retorno silencioso)
 - ✅ **`resolvedOrgId` em estado**: `loadCandidates()` resolve orgId via `org_members` (DB) e persiste em estado React + sobrescreve localStorage — eliminando dependência exclusiva do localStorage
