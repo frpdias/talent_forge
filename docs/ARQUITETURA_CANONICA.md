@@ -252,7 +252,8 @@ PROJETO_TALENT_FORGE/
 │   │   ├── 20260311_career_page_v3_work_modality.sql ✅ colunas work_modality + salary_range em jobs; view v_public_jobs e RPC get_public_jobs_by_org recriados
 │   │   ├── 20260311_org_testimonials.sql ✅ tabela org_testimonials (depoimentos editáveis) + RLS público + escrita via is_org_member
 │   │   ├── 20260311_org_career_tips.sql ✅ tabela org_career_tips (dicas de carreira editáveis) + RLS público + escrita via is_org_member
-│   │   └── 20260302_job_publication_engine.sql ✅ job_publication_channels + job_publications + job_publication_logs + RLS + triggers
+│   │   ├── 20260302_job_publication_engine.sql ✅ job_publication_channels + job_publications + job_publication_logs + RLS + triggers
+│   │   └── 20260316_add_interview_status.sql ✅ enum application_status + 'interview_hr' + 'interview_manager' (pipeline sub-status)
 │   ├── VALIDATE_IMPROVEMENTS.sql  # Script de validação
 │   └── README.md                  # Instruções de migrations
 │
