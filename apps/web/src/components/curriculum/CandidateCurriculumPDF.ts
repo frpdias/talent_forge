@@ -728,6 +728,7 @@ async function appendReportPages(doc: jsPDF, data: FullReportData): Promise<void
     const c = report.color;
     const colorNames = ['Vermelho', 'Amarelo', 'Verde', 'Azul'];
     const colorKeys = ['red', 'yellow', 'green', 'blue'];
+    const colorYStart = y;
 
     // Swatches de cor primária/secundária
     if (c.primary_color) {
@@ -754,6 +755,7 @@ async function appendReportPages(doc: jsPDF, data: FullReportData): Promise<void
     }
 
     // Barras de scores por cor
+    let colorBarsBottom = colorYStart;
     if (c.scores && Object.keys(c.scores).length > 0) {
       const scoreBarX = ml + 52;
       const scoreBarW = contentW - 52;
@@ -761,7 +763,7 @@ async function appendReportPages(doc: jsPDF, data: FullReportData): Promise<void
         const val = c.scores?.[key] ?? c.scores?.[colorNames[i].toLowerCase()] ?? 0;
         const bX = scoreBarX;
         const bY = y + i * 8;
-        const bColor = DISC_COLORS[['D', 'I', 'S', 'C'][i]] ?? [150, 150, 160];
+        colorBarsBottom = bY + 6;
         // Label cor
         doc.setFontSize(7.5);
         doc.setFont('helvetica', 'bold');
@@ -781,7 +783,8 @@ async function appendReportPages(doc: jsPDF, data: FullReportData): Promise<void
         doc.text(`${Math.round(Number(val))}%`, bX + 22 + (scoreBarW - 30) + 2, bY + 5.5);
       });
     }
-    y += 22;
+    // Avança y pelo maior entre swatches (14mm) e barras, com padding de 8mm
+    y = Math.max(colorYStart + 14, colorBarsBottom) + 8;
   }
 
   // ══ PI ════════════════════════════════════════════════════════════════
@@ -790,36 +793,55 @@ async function appendReportPages(doc: jsPDF, data: FullReportData): Promise<void
     const pi = report.pi;
     const piColW = contentW / 2 - 4;
 
+    // Rótulos em português para os eixos PI
+    const PI_LABELS: Record<string, string> = {
+      direcao: 'Direção',
+      energia_social: 'Energia Social',
+      ritmo: 'Ritmo',
+      estrutura: 'Estrutura',
+    };
+
+    // Scores PI estão na escala -10 a +10; normaliza para 0-100% para as barras
+    function normalizePi(v: number): number {
+      return Math.round(((Number(v) + 10) / 20) * 100);
+    }
+
     const renderPiScores = (scores: Record<string, number> | null | undefined, label: string, startX: number) => {
-      if (!scores) return;
+      if (!scores || Object.keys(scores).length === 0) return;
       doc.setFontSize(7.5);
       doc.setFont('helvetica', 'bold');
       doc.setTextColor(...primary);
       doc.text(label.toUpperCase(), startX, y);
       let piY = y + 6;
       Object.entries(scores).slice(0, 6).forEach(([k, v]) => {
+        const displayLabel = PI_LABELS[k] ?? k;
+        const pct = normalizePi(Number(v));
         doc.setFontSize(7);
         doc.setFont('helvetica', 'normal');
         doc.setTextColor(...textDark);
-        doc.text(k, startX, piY);
+        doc.text(displayLabel, startX, piY);
         doc.setFillColor(230, 230, 245);
-        doc.roundedRect(startX + 30, piY - 4, piColW - 40, 6, 1.5, 1.5, 'F');
+        doc.roundedRect(startX + 36, piY - 4, piColW - 46, 6, 1.5, 1.5, 'F');
         doc.setFillColor(...accent);
-        const fw = Math.max(2, (Number(v) / 100) * (piColW - 40));
-        doc.roundedRect(startX + 30, piY - 4, fw, 6, 1.5, 1.5, 'F');
+        const fw = Math.max(2, (pct / 100) * (piColW - 46));
+        doc.roundedRect(startX + 36, piY - 4, fw, 6, 1.5, 1.5, 'F');
         doc.setFontSize(6.5);
         doc.setTextColor(...textGray);
-        doc.text(`${Math.round(Number(v))}`, startX + piColW - 8, piY);
+        const rawLabel = `${Number(v) >= 0 ? '+' : ''}${Number(v)}`;
+        doc.text(rawLabel, startX + piColW - 6, piY);
         piY += 8;
       });
     };
 
-    renderPiScores(pi.scores_natural as Record<string, number>, 'Natural', ml);
-    renderPiScores(pi.scores_adapted as Record<string, number>, 'Adaptado', ml + piColW + 8);
-    y += 14 + Math.max(
-      Object.keys(pi.scores_natural ?? {}).slice(0, 6).length,
-      Object.keys(pi.scores_adapted ?? {}).slice(0, 6).length,
-    ) * 8;
+    const piNatural = pi.scores_natural as Record<string, number> | null | undefined;
+    const piAdapted = pi.scores_adapted as Record<string, number> | null | undefined;
+    renderPiScores(piNatural, 'Natural', ml);
+    renderPiScores(piAdapted, 'Adaptado', ml + piColW + 8);
+    const piRows = Math.max(
+      Object.keys(piNatural ?? {}).slice(0, 6).length,
+      Object.keys(piAdapted ?? {}).slice(0, 6).length,
+    );
+    y += 14 + piRows * 8;
   }
 
   // ══ Rodapé desta página ═══════════════════════════════════════════════
