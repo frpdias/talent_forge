@@ -13,7 +13,7 @@ import {
 } from 'recharts';
 import {
   Loader2, TrendingUp, Briefcase, Users, CheckCircle,
-  AlertTriangle, ArrowUpRight, RotateCcw,
+  AlertTriangle, ArrowUpRight, RotateCcw, Star, Brain,
 } from 'lucide-react';
 
 // ── Design tokens ─────────────────────────────────────────────────────────────
@@ -35,6 +35,8 @@ const STATUS_LABEL: Record<string, string> = {
   applied:          'Triagem',
   in_review:        'Em Análise',
   interview:        'Entrevista',
+  interview_hr:     'Entrevista RH',
+  interview_manager:'Entrevista Gestor',
   technical:        'Técnica',
   in_documentation: 'Documentação',
   hired:            'Contratado',
@@ -45,6 +47,8 @@ const STATUS_COLOR: Record<string, string> = {
   applied:          C.accent,
   in_review:        C.purple,
   interview:        C.indigo,
+  interview_hr:     '#8B5CF6',
+  interview_manager:'#0891B2',
   technical:        C.warning,
   in_documentation: C.sky,
   hired:            C.secondary,
@@ -54,11 +58,13 @@ const STATUS_COLOR: Record<string, string> = {
 const MONTHS_PT = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
 
 // ── Types ─────────────────────────────────────────────────────────────────────
-interface PipelineItem { status: string; label: string; count: number; pct: number; color: string }
-interface TrendItem    { month: string; candidaturas: number; contratacoes: number }
-interface JobItem      { title: string; count: number }
-interface StalledItem  { label: string; count: number; avg_days: number; color: string }
-interface KPI          { label: string; value: string | number; sub?: string; icon: React.ReactNode; color: string; bg: string }
+interface PipelineItem  { status: string; label: string; count: number; pct: number; color: string }
+interface TrendItem     { month: string; candidaturas: number; contratacoes: number }
+interface JobItem       { title: string; count: number }
+interface StalledItem   { label: string; count: number; avg_days: number; color: string }
+interface KPI           { label: string; value: string | number; sub?: string; icon: React.ReactNode; color: string; bg: string }
+interface ScoreDistItem { range: string; count: number; color: string; fill: string }
+interface ScoreStats    { avg: number; total: number; dist: ScoreDistItem[]; avgTestes: number; avgExperiencia: number; avgRecrutador: number }
 
 interface AnalyticsPanelProps { orgId: string }
 
@@ -109,14 +115,15 @@ function BarEndLabel({ x, y, width, height, value }: any) {
 export default function AnalyticsPanel({ orgId }: AnalyticsPanelProps) {
   const supabase = useMemo(() => createClient(), []);
 
-  const [loading, setLoading]     = useState(true);
-  const [loadError, setLoadError] = useState<string | null>(null);
-  const [pipeline, setPipeline]   = useState<PipelineItem[]>([]);
-  const [trend, setTrend]         = useState<TrendItem[]>([]);
-  const [jobs, setJobs]           = useState<JobItem[]>([]);
-  const [stalled, setStalled]     = useState<StalledItem[]>([]);
-  const [kpis, setKpis]           = useState<KPI[]>([]);
-  const [updatedAt, setUpdatedAt] = useState('');
+  const [loading, setLoading]       = useState(true);
+  const [loadError, setLoadError]   = useState<string | null>(null);
+  const [pipeline, setPipeline]     = useState<PipelineItem[]>([]);
+  const [trend, setTrend]           = useState<TrendItem[]>([]);
+  const [jobs, setJobs]             = useState<JobItem[]>([]);
+  const [stalled, setStalled]       = useState<StalledItem[]>([]);
+  const [kpis, setKpis]             = useState<KPI[]>([]);
+  const [scoreStats, setScoreStats] = useState<ScoreStats | null>(null);
+  const [updatedAt, setUpdatedAt]   = useState('');
 
   useEffect(() => { if (orgId) void load(); }, [orgId]);
 
@@ -149,7 +156,7 @@ export default function AnalyticsPanel({ orgId }: AnalyticsPanelProps) {
         const s = a.status ?? 'applied';
         statusCounts[s] = (statusCounts[s] ?? 0) + 1;
       }
-      const FUNNEL_ORDER = ['applied','in_review','interview','technical','in_documentation','hired'];
+      const FUNNEL_ORDER = ['applied','in_review','interview','interview_hr','interview_manager','technical','in_documentation','hired'];
       const pipelineData: PipelineItem[] = FUNNEL_ORDER
         .filter(s => statusCounts[s])
         .map(s => ({
@@ -190,7 +197,7 @@ export default function AnalyticsPanel({ orgId }: AnalyticsPanelProps) {
 
       // ── Candidatos parados ────────────────────────────────────
       const cutoff = new Date(Date.now() - 3 * 86_400_000);
-      const activeSet = new Set(['applied','in_review','interview','technical','in_documentation']);
+      const activeSet = new Set(['applied','in_review','interview','interview_hr','interview_manager','technical','in_documentation']);
       const stalledMap: Record<string, { count: number; days: number[] }> = {};
       for (const a of apps) {
         if (!activeSet.has(a.status) || new Date(a.updated_at) >= cutoff) continue;
@@ -207,12 +214,39 @@ export default function AnalyticsPanel({ orgId }: AnalyticsPanelProps) {
         }))
       );
 
+      // ── Score TalentForge ─────────────────────────────────
+      const { data: reviewsData } = await supabase
+        .from('candidate_technical_reviews')
+        .select('score_total, score_testes, score_experiencia, score_recrutador')
+        .eq('org_id', orgId);
+      const reviews = (reviewsData ?? []) as Array<{
+        score_total: number; score_testes: number; score_experiencia: number; score_recrutador: number;
+      }>;
+      if (reviews.length > 0) {
+        const avg  = Math.round(reviews.reduce((s, r) => s + r.score_total,       0) / reviews.length);
+        const avgT = Math.round(reviews.reduce((s, r) => s + r.score_testes,      0) / reviews.length);
+        const avgE = Math.round(reviews.reduce((s, r) => s + r.score_experiencia, 0) / reviews.length);
+        const avgR = Math.round(reviews.reduce((s, r) => s + r.score_recrutador,  0) / reviews.length);
+        const dist: ScoreDistItem[] = [
+          { range: '80–100', count: reviews.filter(r => r.score_total >= 80).length,                       color: C.secondary, fill: '#D1FAE5' },
+          { range: '60–79',  count: reviews.filter(r => r.score_total >= 60 && r.score_total < 80).length, color: C.accent,    fill: '#DBEAFE' },
+          { range: '40–59',  count: reviews.filter(r => r.score_total >= 40 && r.score_total < 60).length, color: C.warning,   fill: '#FEF3C7' },
+          { range: '0–39',   count: reviews.filter(r => r.score_total < 40).length,                        color: C.danger,    fill: '#FEE2E2' },
+        ].filter(d => d.count > 0);
+        setScoreStats({ avg, total: reviews.length, dist, avgTestes: avgT, avgExperiencia: avgE, avgRecrutador: avgR });
+      } else {
+        setScoreStats(null);
+      }
+
       // ── KPIs ──────────────────────────────────────────────────
       const hired = statusCounts['hired'] ?? 0;
       const appliedC = statusCounts['applied'] ?? 0;
       const base = appliedC + hired;
       const convRate = base ? Math.round((hired / base) * 100) : 0;
       const totalStalled = Object.values(stalledMap).reduce((s, v) => s + v.count, 0);
+      const avgScore = reviews.length > 0
+        ? Math.round(reviews.reduce((s, r) => s + r.score_total, 0) / reviews.length)
+        : null;
 
       setKpis([
         {
@@ -234,6 +268,17 @@ export default function AnalyticsPanel({ orgId }: AnalyticsPanelProps) {
           label: 'Candidatos Parados', value: totalStalled,
           sub: 'sem movimento há +3 dias',
           icon: <AlertTriangle className="w-5 h-5" />, color: C.warning, bg: '#FFF7ED',
+        },
+        {
+          label: 'Score Médio IA',
+          value: avgScore !== null ? avgScore : '–',
+          sub: reviews.length > 0 ? `sobre ${reviews.length} avaliações` : 'sem avaliações IA',
+          icon: <Star className="w-5 h-5" />, color: '#F59E0B', bg: '#FFFBEB',
+        },
+        {
+          label: 'Avaliados por IA', value: reviews.length,
+          sub: total > 0 ? `${Math.round((reviews.length / total) * 100)}% do pipeline` : 'nenhum ainda',
+          icon: <Brain className="w-5 h-5" />, color: C.indigo, bg: '#EEF2FF',
         },
       ]);
 
@@ -281,7 +326,7 @@ export default function AnalyticsPanel({ orgId }: AnalyticsPanelProps) {
       <div className="p-3 sm:p-5 space-y-3 sm:space-y-4">
 
         {/* ── KPI Cards ──────────────────────────────────── */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 sm:gap-3">
           {kpis.map(k => (
             <div key={k.label}
                  className="bg-white rounded-xl sm:rounded-2xl shadow-sm p-3 sm:p-4 border border-gray-100 hover:shadow-md transition-shadow"
@@ -454,6 +499,69 @@ export default function AnalyticsPanel({ orgId }: AnalyticsPanelProps) {
                   <span className="sm:hidden text-[10px] text-[#9CA3AF] shrink-0">{s.avg_days}d</span>
                 </div>
               ))}
+            </div>
+          </div>
+        )}
+
+        {/* ── Score TalentForge ──────────────────────────── */}
+        {scoreStats && (
+          <div className="grid grid-cols-1 sm:grid-cols-5 gap-3">
+            <div className="sm:col-span-3 bg-white rounded-xl sm:rounded-2xl shadow-sm border border-gray-100 p-3 sm:p-5">
+              <div className="mb-3 sm:mb-4">
+                <h3 className="text-sm font-bold text-[#0F172A]">Distribuição de Score TalentForge</h3>
+                <p className="text-xs text-[#9CA3AF] mt-0.5">{scoreStats.total} candidatos avaliados por IA · média {scoreStats.avg}/100</p>
+              </div>
+              <ResponsiveContainer width="100%" height={160}>
+                <BarChart data={scoreStats.dist} layout="vertical"
+                          margin={{ left: 0, right: 44, top: 4, bottom: 4 }}>
+                  <XAxis type="number" hide domain={[0, 'dataMax']} />
+                  <YAxis type="category" dataKey="range"
+                         tick={{ fontSize: 12, fill: '#374151', fontWeight: 600 }}
+                         width={64} axisLine={false} tickLine={false} />
+                  <Tooltip formatter={(v) => [`${v} candidatos`, 'Total']} />
+                  <Bar dataKey="count" name="Candidatos" radius={[0, 8, 8, 0]} maxBarSize={28}>
+                    {scoreStats.dist.map((entry, i) => (
+                      <Cell key={i} fill={entry.color} />
+                    ))}
+                    <LabelList content={<BarEndLabel />} />
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+
+            <div className="sm:col-span-2 bg-white rounded-xl sm:rounded-2xl shadow-sm border border-gray-100 p-3 sm:p-5">
+              <div className="mb-3">
+                <h3 className="text-sm font-bold text-[#0F172A]">Componentes do Score</h3>
+                <p className="text-xs text-[#9CA3AF] mt-0.5">médias por dimensão avaliada</p>
+              </div>
+              <div className="space-y-3">
+                {[
+                  { label: 'Testes Comportamentais', value: scoreStats.avgTestes,     weight: '40%', color: C.indigo   },
+                  { label: 'Experiência Profissional', value: scoreStats.avgExperiencia, weight: '35%', color: C.accent   },
+                  { label: 'Avaliação do Recrutador',  value: scoreStats.avgRecrutador,  weight: '25%', color: C.secondary},
+                ].map(({ label, value, weight, color }) => (
+                  <div key={label}>
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-xs font-medium text-[#374151] truncate max-w-35">{label}</span>
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        <span className="text-[10px] text-[#9CA3AF]">{weight}</span>
+                        <span className="text-sm font-bold" style={{ color }}>{value}</span>
+                      </div>
+                    </div>
+                    <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                      <div className="h-full rounded-full transition-all"
+                           style={{ width: `${value}%`, background: color }} />
+                    </div>
+                  </div>
+                ))}
+                <div className="pt-2 mt-1 border-t border-gray-100 flex items-center justify-between">
+                  <span className="text-xs font-semibold text-[#374151]">Score Médio Total</span>
+                  <span className="text-lg font-black"
+                        style={{ color: scoreStats.avg >= 80 ? C.secondary : scoreStats.avg >= 60 ? C.accent : scoreStats.avg >= 40 ? C.warning : C.danger }}>
+                    {scoreStats.avg}
+                  </span>
+                </div>
+              </div>
             </div>
           </div>
         )}
