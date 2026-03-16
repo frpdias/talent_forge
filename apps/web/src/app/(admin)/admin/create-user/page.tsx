@@ -21,6 +21,7 @@ interface SuccessData {
   userType: string;
   emailSent: boolean;
   tempPassword?: string;
+  emailError?: string;
 }
 
 export default function CreateUserPage() {
@@ -71,6 +72,7 @@ export default function CreateUserPage() {
         ...prev,
         emailSent: data.emailSent,
         tempPassword: data.tempPassword,
+        emailError: data.emailError,
       } : prev);
     } catch (err: any) {
       setErrorMsg(err.message || 'Erro ao reenviar');
@@ -109,6 +111,7 @@ export default function CreateUserPage() {
         userType: data.userType,
         emailSent: data.emailSent,
         tempPassword: data.tempPassword,
+        emailError: data.emailError,
       });
 
       // Limpar formulário
@@ -321,6 +324,9 @@ export default function CreateUserPage() {
           ) : (
             <div className="bg-amber-50 border border-amber-300 rounded-lg p-3 space-y-2">
               <p className="text-sm font-semibold text-amber-800">⚠️ E-mail não enviado — compartilhe a senha manualmente:</p>
+              {successData.emailError && (
+                <p className="text-xs text-amber-700 bg-amber-100 rounded px-2 py-1 font-mono break-all">{successData.emailError}</p>
+              )}
               <div className="flex items-center gap-2">
                 <code className="flex-1 bg-white border border-amber-200 rounded px-3 py-1.5 text-sm font-mono font-bold text-[#141042] tracking-widest">
                   {successData.tempPassword}

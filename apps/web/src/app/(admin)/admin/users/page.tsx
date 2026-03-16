@@ -58,10 +58,10 @@ export default function UsersPage() {
       if (!res.ok) throw new Error(data.error);
       setFeedback({
         userId: user.id,
-        success: true,
+        success: data.emailSent,
         msg: data.emailSent
           ? `E-mail enviado para ${user.email}`
-          : `E-mail não enviado — copie a senha temporária`,
+          : `E-mail não enviado${data.emailError ? `: ${data.emailError}` : ' — copie a senha temporária'}`,
         tempPassword: data.tempPassword,
       });
     } catch (err: any) {

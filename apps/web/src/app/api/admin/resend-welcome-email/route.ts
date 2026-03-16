@@ -100,10 +100,12 @@ async function sendWelcomeEmail(params: {
     if (!res.ok) {
       const errBody = await res.text();
       console.error('❌ Brevo API error:', res.status, errBody);
-      return { sent: false, error: `Brevo API ${res.status}: ${errBody}` };
+      return { sent: false, error: `Brevo ${res.status}: ${errBody}` };
     }
 
-    return { sent: true };
+    const resBody = await res.json().catch(() => ({}));
+    console.log('✅ Brevo response:', JSON.stringify(resBody));
+    return { sent: true, messageId: resBody.messageId };
   } catch (err: any) {
     console.error('❌ Brevo fetch error:', err.message);
     return { sent: false, error: err.message };

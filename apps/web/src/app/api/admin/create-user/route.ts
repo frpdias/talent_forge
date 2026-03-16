@@ -113,10 +113,12 @@ async function sendWelcomeEmail(params: {
     if (!res.ok) {
       const errBody = await res.text();
       console.error('❌ Brevo API error:', res.status, errBody);
-      return { sent: false, error: `Brevo API ${res.status}: ${errBody}` };
+      return { sent: false, error: `Brevo ${res.status}: ${errBody}` };
     }
 
-    return { sent: true };
+    const resBody = await res.json().catch(() => ({}));
+    console.log('✅ Brevo response:', JSON.stringify(resBody));
+    return { sent: true, messageId: resBody.messageId };
   } catch (err: any) {
     console.error('❌ Brevo fetch error:', err.message);
     return { sent: false, error: err.message };
@@ -305,7 +307,7 @@ export async function POST(request: NextRequest) {
     if (!emailResult.sent) {
       console.warn('⚠️ E-mail de boas-vindas não enviado:', emailResult.error);
     } else {
-      console.log('✅ E-mail de boas-vindas enviado para:', email);
+      console.log('✅ E-mail de boas-vindas enviado para:', email, '| messageId:', (emailResult as any).messageId);
     }
 
     return NextResponse.json({
@@ -314,8 +316,7 @@ export async function POST(request: NextRequest) {
       email: authData.user.email,
       userType,
       emailSent: emailResult.sent,
-      // Retorna senha temporária APENAS se o e-mail não foi enviado,
-      // para que o admin possa compartilhá-la manualmente.
+      emailError: emailResult.sent ? undefined : emailResult.error,
       ...(emailResult.sent ? {} : { tempPassword: password }),
     });
   } catch (error: any) {
