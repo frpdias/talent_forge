@@ -78,6 +78,7 @@ export default function CandidatesPage() {
   } | null>(null);
   const [reviewHistory, setReviewHistory] = useState<typeof currentReview[]>([]);
   const [showReviewHistory, setShowReviewHistory] = useState(false);
+  const [resolvedOrgId, setResolvedOrgId] = useState<string | null>(null);
   const [candidateDetails, setCandidateDetails] = useState<{
     profile: any;
     experiences: any[];
@@ -108,7 +109,9 @@ export default function CandidatesPage() {
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
-      const orgId = localStorage.getItem('selected_org_id');
+      const orgId = resolvedOrgId
+        ?? localStorage.getItem('selected_org_id')
+        ?? session.user.user_metadata?.org_id;
       if (!orgId) return;
       const res = await fetch(`/api/recruiter/candidates/${candidateId}/technical-review`, {
         headers: {
@@ -133,9 +136,17 @@ export default function CandidatesPage() {
     try {
       setReviewLoading(true);
       const { data: { session } } = await supabase.auth.getSession();
-      if (!session) return;
-      const orgId = localStorage.getItem('selected_org_id');
-      if (!orgId) return;
+      if (!session) {
+        alert('Sessão expirada. Faça login novamente.');
+        return;
+      }
+      const orgId = resolvedOrgId
+        ?? localStorage.getItem('selected_org_id')
+        ?? session.user.user_metadata?.org_id;
+      if (!orgId) {
+        alert('Organização não identificada. Tente recarregar a página.');
+        return;
+      }
       const res = await fetch(`/api/recruiter/candidates/${selectedCandidate.id}/technical-review`, {
         method: 'POST',
         headers: {
@@ -335,6 +346,11 @@ export default function CandidatesPage() {
         .limit(1)
         .maybeSingle();
       orgId = orgMembership?.org_id || null;
+
+      if (orgId) {
+        setResolvedOrgId(orgId);
+        localStorage.setItem('selected_org_id', orgId);
+      }
 
       if (!orgId) {
         setCandidates([]);
