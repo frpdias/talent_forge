@@ -88,7 +88,7 @@ const DEGREE_PT: Record<string, string> = {
 
 // ─── Geração do PDF ───────────────────────────────────────────────────────────
 
-export async function generateCurriculumPDF(data: CurriculumData): Promise<void> {
+async function buildCurriculumPDF(data: CurriculumData): Promise<{ doc: jsPDF; safeName: string }> {
   const avatarB64 = data.avatarUrl ? await toCircularBase64(data.avatarUrl, 300) : null;
 
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
@@ -446,7 +446,20 @@ export async function generateCurriculumPDF(data: CurriculumData): Promise<void>
     doc.text(pgText, pageW - mr - doc.getTextWidth(pgText), fY + 1);
   }
 
-  // ── Salvar ──────────────────────────────────────────────────────────────────
+  // ── Retorna o doc e o nome seguro ────────────────────────────────────────────
   const safeName = data.fullName.replace(/\s+/g, '_').toLowerCase();
+  return { doc, safeName };
+}
+
+// ── Download direto ─────────────────────────────────────────────────────────────
+export async function generateCurriculumPDF(data: CurriculumData): Promise<void> {
+  const { doc, safeName } = await buildCurriculumPDF(data);
   doc.save(`curriculo_${safeName}.pdf`);
+}
+
+// ── Abre o PDF no browser como visualização (nova aba) ───────────────────────────
+export async function previewCurriculumPDF(data: CurriculumData): Promise<void> {
+  const { doc } = await buildCurriculumPDF(data);
+  const blobUrl = doc.output('bloburl');
+  window.open(blobUrl, '_blank', 'noopener,noreferrer');
 }

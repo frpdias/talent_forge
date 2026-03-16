@@ -22,7 +22,7 @@ import {
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { UserAvatar } from '@/components/UserAvatar';
-import { generateCurriculumPDF, type CurriculumData } from '@/components/curriculum/CandidateCurriculumPDF';
+import { generateCurriculumPDF, previewCurriculumPDF, type CurriculumData } from '@/components/curriculum/CandidateCurriculumPDF';
 
 type NavItem = { href: string; label: string; icon: typeof Home };
 
@@ -48,6 +48,7 @@ export default function CandidateLayout({ children }: { children: React.ReactNod
   const [resumeError, setResumeError] = useState<string | null>(null);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [exportingPDF, setExportingPDF] = useState(false);
+  const [previewingPDF, setPreviewingPDF] = useState(false);
   const [, startTransition] = useTransition();
   const [resumeExplode, setResumeExplode] = useState(false);
   const [resumePreviewOpen, setResumePreviewOpen] = useState(false);
@@ -256,6 +257,34 @@ export default function CandidateLayout({ children }: { children: React.ReactNod
       console.error('Erro ao gerar currículo PDF:', err);
     } finally {
       setExportingPDF(false);
+    }
+  };
+
+  const handlePreviewCurriculum = async () => {
+    if (previewingPDF) return;
+    setPreviewingPDF(true);
+    try {
+      const curriculumData: CurriculumData = {
+        fullName: profile?.full_name || 'Candidato',
+        email: profile?.email || '',
+        phone: profile?.phone,
+        city: profile?.city,
+        state: profile?.state,
+        currentTitle: profile?.current_title,
+        areaOfExpertise: profile?.area_of_expertise,
+        seniorityLevel: profile?.seniority_level,
+        salaryExpectation: profile?.salary_expectation,
+        employmentType: profile?.employment_type,
+        linkedinUrl: profile?.linkedin_url,
+        avatarUrl: avatarUrl,
+        experiences,
+        education,
+      };
+      await previewCurriculumPDF(curriculumData);
+    } catch (err) {
+      console.error('Erro ao visualizar currículo PDF:', err);
+    } finally {
+      setPreviewingPDF(false);
     }
   };
 
@@ -801,11 +830,12 @@ export default function CandidateLayout({ children }: { children: React.ReactNod
 
               <div className="flex flex-wrap gap-3">
                 <button
-                  onClick={handleResumeDownload}
+                  onClick={handlePreviewCurriculum}
+                  disabled={previewingPDF}
                   type="button"
-                  className="inline-flex items-center gap-2 rounded-xl bg-[#141042] px-4 py-2 text-sm font-medium text-white hover:bg-[#1f1a66]"
+                  className="inline-flex items-center gap-2 rounded-xl bg-[#141042] px-4 py-2 text-sm font-medium text-white hover:bg-[#1f1a66] disabled:opacity-60 disabled:cursor-not-allowed"
                 >
-                  Abrir arquivo enviado
+                  {previewingPDF ? 'Gerando...' : 'Ver currículo PDF'}
                 </button>
                 <button
                   onClick={handleExportCurriculum}
