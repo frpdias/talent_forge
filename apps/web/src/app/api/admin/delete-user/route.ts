@@ -53,6 +53,22 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
+    // Registrar em audit_logs (DA obrigatório: todas ações críticas)
+    try {
+      await supabaseAdmin.from('audit_logs').insert({
+        actor_id: authUser.id,
+        action: 'user.deleted',
+        resource: 'user',
+        metadata: {
+          deleted_user_id: userId,
+          deleted_by: authUser.id,
+          ip: request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || null,
+        },
+      });
+    } catch (auditError) {
+      console.error('Erro ao registrar em audit_logs:', auditError);
+    }
+
     return NextResponse.json({ success: true });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Erro interno';
