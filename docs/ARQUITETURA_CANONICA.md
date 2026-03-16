@@ -1,6 +1,6 @@
 # Arquitetura Canônica — TalentForge
 
-**Última atualização**: 2026-03-16 | **Score de Conformidade**: ✅ 100% (Sprint 47 — Relatório PDF Completo) | **Sprints planejados**: Sprint 41 (AI Assistant) + Sprint 44 (Gate Recrutamento)
+**Última atualização**: 2026-03-16 | **Score de Conformidade**: ✅ 100% (Sprint 47 — Fix PI PDF) | **Sprints planejados**: Sprint 41 (AI Assistant) + Sprint 44 (Gate Recrutamento)
 
 ## 📜 FONTE DA VERDADE — PRINCÍPIO FUNDAMENTAL
 
@@ -260,7 +260,8 @@ PROJETO_TALENT_FORGE/
 │   │   ├── 20260315_admin_delete_user_fn.sql ✅ função admin_cleanup_user_references() SECURITY DEFINER (pré-limpeza antes de deleteUser)
 │   │   ├── 20260316_add_interview_status.sql ✅ enum application_status + 'interview_hr' + 'interview_manager' (pipeline sub-status)
 │   │   ├── 20260316_candidate_technical_reviews.sql ✅ tabela candidate_technical_reviews (scores, ai_review, input_snapshot) + RLS is_org_member
-│   │   └── 20260316_recruiter_settings.sql ✅ tabela recruiter_settings (review_prompt customizável por recrutador/org) + RLS user_id + is_org_member
+│   │   ├── 20260316_recruiter_settings.sql ✅ tabela recruiter_settings (review_prompt customizável por recrutador/org) + RLS user_id + is_org_member
+│   │   └── 20260316_get_auth_user_id_by_email.sql ✅ função get_auth_user_id_by_email(email) SECURITY DEFINER — resolve UUID de auth.users por email (fallback para candidate_user_id quando candidates.user_id é null)
 │   ├── VALIDATE_IMPROVEMENTS.sql  # Script de validação
 │   └── README.md                  # Instruções de migrations
 │
@@ -7459,6 +7460,12 @@ Adicionar card "Módulo de Recrutamento" seguindo o mesmo padrão visual do card
 - ✅ **Rodapé dinâmico**: `drawAllFooters()` percorre todas as páginas e aplica paginação "X / Y" + branding TalentForge
 - ✅ **Commits**: `e296a14` → `origin/main`
 
+### v5.16 (2026-03-16)
+- ✅ **Score de Conformidade**: 100% mantido (Sprint 47 — Fix PI PDF)
+- ✅ **Bug fix PI ausente no PDF**: candidatos adicionados manualmente pelo recrutador têm `candidates.user_id = NULL`; o segundo fallback via `candidate_profiles.email` também falhava; adicionado **terceiro fallback** na rota `GET /api/recruiter/candidates/[id]/assessments` via `rpc('get_auth_user_id_by_email')` — busca direto em `auth.users` por email usando `SECURITY DEFINER`
+- ✅ **Migration `20260316_get_auth_user_id_by_email.sql`**: função `get_auth_user_id_by_email(p_email text) RETURNS uuid` — SECURITY DEFINER, `search_path = auth, public`, acesso concedido a `service_role`
+- ✅ **Commits**: `3bb0c04` → `origin/main`
+
 ### v5.15 (2026-03-16)
 - ✅ **Score de Conformidade**: 100% mantido (Sprint 47 — Relatório PDF Completo)
 - ✅ **`generateFullReportPDF(data: FullReportData)`**: nova função em `CandidateCurriculumPDF.ts` — reutiliza `buildCurriculumPDF()` e appenda páginas de testes + parecer no mesmo documento jsPDF; exporta `relatorio_<nome>.pdf`
@@ -7472,7 +7479,7 @@ Adicionar card "Módulo de Recrutamento" seguindo o mesmo padrão visual do card
 - ✅ **Score de Conformidade**: 100% mantido (Sprint 47 — Fix Assessments display)
 - ✅ **Bug fix DISC 0%**: query `assessments` client-side não filtrava por `assessment_type = 'disc'` — todos os registros eram marcados como DISC, resultando em traits zerados
 - ✅ **Bug fix PI/Color "Não realizado"**: queries client-side via JWT do recrutador sujeitas a RLS; blocos pulados quando `candidate.user_id = NULL`
-- ✅ **API Route `GET /api/recruiter/candidates/[id]/assessments`**: nova rota com `service_role` (bypass RLS) — valida token + membership; DISC filtrado por `assessment_type = 'disc'`; Color/PI por `candidate_user_id`; fallback via `candidate_profiles.email` quando `user_id` é nulo; retorna `{ disc: [], color: [], pi: [] }`
+- ✅ **API Route `GET /api/recruiter/candidates/[id]/assessments`**: nova rota com `service_role` (bypass RLS) — valida token + membership; DISC filtrado por `assessment_type = 'disc'`; Color/PI por `candidate_user_id`; fallback via `candidate_profiles.email` quando `user_id` é nulo; **terceiro fallback via `rpc('get_auth_user_id_by_email')`** para candidatos sem `candidate_profiles`; retorna `{ disc: [], color: [], pi: [] }`
 - ✅ **`loadCandidateDetails` refatorado**: 3 queries client-side → única chamada `fetch('/api/recruiter/candidates/[id]/assessments')` com headers `Authorization` + `x-org-id`
 - ✅ **Commits**: `9f8d716` → `b8415c1` → `origin/main`
 
