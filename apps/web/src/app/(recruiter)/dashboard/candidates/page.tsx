@@ -33,7 +33,6 @@ import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { DashboardHeader } from '@/components/DashboardHeader';
 import { NotesPanel } from '@/components/candidates/NotesPanel';
 import { createClient } from '@/lib/supabase/client';
-import { generateCandidateFullReport } from '@/components/reports/CandidateFullReportPDF';
 
 interface Candidate {
   id: string;
@@ -64,7 +63,6 @@ export default function CandidatesPage() {
   const [showNotesPanel, setShowNotesPanel] = useState(false);
   const [reviewNote, setReviewNote] = useState('');
   const [reviewLoading, setReviewLoading] = useState(false);
-  const [pdfLoading, setPdfLoading] = useState(false);
   const [currentReview, setCurrentReview] = useState<{
     id: string;
     score_total: number;
@@ -168,58 +166,6 @@ export default function CandidatesPage() {
     }
   }
 
-  async function handleGenerateFullReport() {
-    if (!selectedCandidate || !candidateDetails) return;
-    try {
-      setPdfLoading(true);
-      // Busca anotações do candidato
-      const { data: notesData } = await supabase
-        .from('candidate_notes')
-        .select('note, created_at')
-        .eq('candidate_id', selectedCandidate.id)
-        .order('created_at', { ascending: false })
-        .limit(30);
-
-      const loc = selectedCandidate.location ?? '';
-      const [city, ...stateArr] = loc.split(',');
-
-      await generateCandidateFullReport({
-        candidate: {
-          fullName: selectedCandidate.full_name,
-          email: selectedCandidate.email,
-          phone: selectedCandidate.phone ?? null,
-          city: city?.trim() || null,
-          state: stateArr.join(',').trim() || null,
-          currentTitle: candidateDetails.profile?.headline ?? selectedCandidate.headline ?? null,
-          areaOfExpertise: candidateDetails.profile?.area_of_expertise ?? null,
-          seniorityLevel: candidateDetails.profile?.seniority_level ?? null,
-          salaryExpectation: selectedCandidate.salary_expectation ?? null,
-          linkedinUrl: selectedCandidate.linkedin_url ?? null,
-          avatarUrl: candidateDetails.profile?.avatar_url ?? null,
-        },
-        experiences: candidateDetails.experiences ?? [],
-        education: candidateDetails.education ?? [],
-        disc: discResult ? {
-          D: discResult.dominance_score,
-          I: discResult.influence_score,
-          S: discResult.steadiness_score,
-          C: discResult.conscientiousness_score,
-          primary_profile: discResult.primary_profile,
-          secondary_profile: discResult.secondary_profile,
-          description: discResult.description,
-        } : null,
-        colorAssessment: colorResult,
-        piAssessment: piResult,
-        review: currentReview ?? null,
-        notes: (notesData ?? []).map((n: any) => n.note ?? '').filter(Boolean),
-      });
-    } catch (err: any) {
-      alert('Erro ao gerar PDF: ' + (err?.message ?? err));
-    } finally {
-      setPdfLoading(false);
-    }
-  }
-
   async function loadCandidateDetails(candidate: Candidate) {
     try {
       setDetailsLoading(true);
@@ -281,59 +227,42 @@ export default function CandidatesPage() {
         console.log('[loadCandidateDetails] Educação:', education.length);
       }
       
-      // Buscar assessments principais (DISC)
-      const { data: assessments, error: assessmentError } = await supabase
-        .from('assessments')
-        .select('*')
-        .eq('candidate_id', candidate.id)
-        .order('created_at', { ascending: false });
+      // Buscar assessments via API server-side (service_role — sem bloqueio de RLS)
+      const { data: { session: assessSession } } = await supabase.auth.getSession();
+      const assessOrgId = resolvedOrgId ?? localStorage.getItem('selected_org_id');
       
-      if (assessmentError) {
-        console.error('[loadCandidateDetails] Erro ao carregar assessments:', assessmentError);
+      let allAssessments: any[] = [];
+      
+      if (assessSession?.access_token && assessOrgId) {
+        const assessRes = await fetch(`/api/recruiter/candidates/${candidate.id}/assessments`, {
+          headers: {
+            'Authorization': `Bearer ${assessSession.access_token}`,
+            'x-org-id': assessOrgId,
+          },
+        });
+        if (assessRes.ok) {
+          const assessData = await assessRes.json();
+          const discList: any[] = assessData.disc ?? [];
+          const colorList: any[] = assessData.color ?? [];
+          const piList: any[] = assessData.pi ?? [];
+          
+          console.log('[loadCandidateDetails] Testes DISC:', discList.length);
+          console.log('[loadCandidateDetails] Testes de Cores:', colorList.length);
+          console.log('[loadCandidateDetails] Testes PI:', piList.length);
+          
+          allAssessments = [
+            ...discList.map(a => ({ ...a, test_type: 'disc' })),
+            ...colorList.map(a => ({ ...a, test_type: 'color', type: 'color' })),
+            ...piList.map(a => ({ ...a, test_type: 'pi', type: 'pi' })),
+          ].sort((a, b) => new Date(b.created_at ?? 0).getTime() - new Date(a.created_at ?? 0).getTime());
+        } else {
+          console.error('[loadCandidateDetails] Erro na API de assessments:', await assessRes.text());
+        }
       } else {
-        console.log('[loadCandidateDetails] Testes DISC:', assessments?.length || 0);
+        console.warn('[loadCandidateDetails] Sem sessão ou org_id, assessments não carregados');
       }
       
-      // Buscar testes de cores (user_id do candidato)
-      let colorAssessments: any[] = [];
-      if (candidate.user_id) {
-        const { data: colorData, error: colorError } = await supabase
-          .from('color_assessments')
-          .select('*')
-          .eq('candidate_user_id', candidate.user_id)
-          .order('created_at', { ascending: false });
-        colorAssessments = colorData || [];
-        console.log('[loadCandidateDetails] Testes de Cores:', colorAssessments.length, colorError ? `(Erro: ${colorError.message})` : '');
-      } else {
-        console.log('[loadCandidateDetails] Sem user_id, pulando testes de cores');
-      }
-      
-      // Buscar testes PI (user_id do candidato)
-      let piAssessments: any[] = [];
-      if (candidate.user_id) {
-        const { data: piData, error: piError } = await supabase
-          .from('pi_assessments')
-          .select('*')
-          .eq('candidate_user_id', candidate.user_id)
-          .order('created_at', { ascending: false });
-        piAssessments = piData || [];
-        console.log('[loadCandidateDetails] Testes PI:', piAssessments.length, piError ? `(Erro: ${piError.message})` : '');
-      } else {
-        console.log('[loadCandidateDetails] Sem user_id, pulando testes PI');
-      }
-      
-      // Combinar todos os assessments
-      const allAssessments = [
-        ...(assessments || []).map(a => ({ ...a, test_type: 'disc' })),
-        ...colorAssessments.map(a => ({ ...a, test_type: 'color', type: 'color' })),
-        ...piAssessments.map(a => ({ ...a, test_type: 'pi', type: 'pi' })),
-      ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-      
-      console.log('[loadCandidateDetails] Total de testes combinados:', allAssessments.length, {
-        disc: (assessments || []).length,
-        color: colorAssessments.length,
-        pi: piAssessments.length
-      });
+      console.log('[loadCandidateDetails] Total de testes combinados:', allAssessments.length);
       
       setCandidateDetails({
         profile,
@@ -1553,18 +1482,6 @@ export default function CandidatesPage() {
                             <p className="text-xs text-gray-400">
                               Gerado em {new Date(currentReview.created_at).toLocaleString('pt-BR')} • {currentReview.ai_model}
                             </p>
-                            {/* Botão PDF Relatório Completo */}
-                            <button
-                              onClick={handleGenerateFullReport}
-                              disabled={pdfLoading}
-                              className="w-full flex items-center justify-center gap-2 border border-[#141042] text-[#141042] rounded-xl py-2.5 font-medium text-sm hover:bg-[#141042] hover:text-white transition-colors disabled:opacity-50"
-                            >
-                              {pdfLoading ? (
-                                <><RefreshCw className="h-4 w-4 animate-spin" /> Gerando PDF...</>
-                              ) : (
-                                <><Download className="h-4 w-4" /> Baixar Relatório Completo (PDF)</>
-                              )}
-                            </button>
                             {reviewHistory.length > 1 && (
                               <button
                                 onClick={() => setShowReviewHistory(p => !p)}
