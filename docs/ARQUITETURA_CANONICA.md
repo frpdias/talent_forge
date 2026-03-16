@@ -1,6 +1,6 @@
 # Arquitetura Canônica — TalentForge
 
-**Última atualização**: 2026-03-16 | **Score de Conformidade**: ✅ 100% (Sprint 47 — Parecer Técnico com IA + Score do Candidato) | **Sprints planejados**: Sprint 41 (AI Assistant) + Sprint 44 (Gate Recrutamento)
+**Última atualização**: 2026-03-16 | **Score de Conformidade**: ✅ 100% (Sprint 47 — Parecer Técnico com IA + Prompt Customizável por Recrutador) | **Sprints planejados**: Sprint 41 (AI Assistant) + Sprint 44 (Gate Recrutamento)
 
 ## 📜 FONTE DA VERDADE — PRINCÍPIO FUNDAMENTAL
 
@@ -258,7 +258,9 @@ PROJETO_TALENT_FORGE/
 │   │   ├── 20260302_job_publication_engine.sql ✅ job_publication_channels + job_publications + job_publication_logs + RLS + triggers
 │   │   ├── 20260315_fix_fk_on_delete_auth_users.sql ✅ FKs auth.users: ON DELETE SET NULL/CASCADE em 15 tabelas (fix delete-user 500)
 │   │   ├── 20260315_admin_delete_user_fn.sql ✅ função admin_cleanup_user_references() SECURITY DEFINER (pré-limpeza antes de deleteUser)
-│   │   └── 20260316_add_interview_status.sql ✅ enum application_status + 'interview_hr' + 'interview_manager' (pipeline sub-status)
+│   │   ├── 20260316_add_interview_status.sql ✅ enum application_status + 'interview_hr' + 'interview_manager' (pipeline sub-status)
+│   │   ├── 20260316_candidate_technical_reviews.sql ✅ tabela candidate_technical_reviews (scores, ai_review, input_snapshot) + RLS is_org_member
+│   │   └── 20260316_recruiter_settings.sql ✅ tabela recruiter_settings (review_prompt customizável por recrutador/org) + RLS user_id + is_org_member
 │   ├── VALIDATE_IMPROVEMENTS.sql  # Script de validação
 │   └── README.md                  # Instruções de migrations
 │
@@ -7447,6 +7449,16 @@ Adicionar card "Módulo de Recrutamento" seguindo o mesmo padrão visual do card
 - ✅ **CSP fix (`next.config.mjs`)**: `style-src` + `https://fonts.googleapis.com`; `font-src` + `https://fonts.gstatic.com`; `script-src` + `connect-src` + `https://vercel.live`
 - ✅ **`.env.example` unificado**: criado na raiz com todas as variáveis do monorepo documentadas; `VERCEL_OIDC_TOKEN` explicitamente proibido
 - ✅ **Commits**: `4d2f45f` → `80b2f89` → `7866ab2` → `dc76c11` → `e18fb03` → `ec67c44` → `ff116e7` → `266d366` → `origin/main`
+
+### v5.11 (2026-03-16)
+- ✅ **Score de Conformidade**: 100% mantido (Sprint 47 — Prompt IA Customizável)
+- ✅ **`recruiter_settings`**: nova tabela `(user_id, org_id, review_prompt TEXT NULL)` — UNIQUE(user_id, org_id); trigger `updated_at`; RLS `user_id = auth.uid() AND is_org_member(org_id)`; GRANT ALL para `service_role`
+- ✅ **`DEFAULT_REVIEW_PROMPT`**: constante canônica em `apps/web/src/lib/defaults.ts` com variáveis `{{nome}}`, `{{cargo}}`, `{{disc}}`, `{{score_total}}` etc.; re-exportada pela API route para retrocompatibilidade
+- ✅ **API Route `GET /api/recruiter/settings`**: retorna `{ review_prompt, default_prompt, updated_at }` — `default_prompt` sempre presente como fallback
+- ✅ **API Route `PUT /api/recruiter/settings`**: upsert em `recruiter_settings` com `onConflict: 'user_id,org_id'`; prompt vazio/null persiste como NULL (usa padrão do sistema)
+- ✅ **`technical-review/route.ts`**: step 2.5 — busca `recruiter_settings` do recrutador antes de chamar GPT-4o; função `fillPrompt(template, vars)` substitui `{{variavel}}` via regex; fallback automático para `DEFAULT_REVIEW_PROMPT`
+- ✅ **Settings page `/dashboard/settings`** — novo card "Prompt de Avaliação por IA": textarea mono com 12 linhas, lista de variáveis disponíveis, botão Salvar + Restaurar Padrão, `<details>` para preview do prompt padrão; `defaultPrompt` inicializado com a constante (sem dependência da API)
+- ✅ **Commits**: `786c1d6` → `deb1ab5` → `81f5c03` → `origin/main`
 
 ### v5.10 (2026-03-16)
 - ✅ **Score de Conformidade**: 100% mantido (Sprint 47)
