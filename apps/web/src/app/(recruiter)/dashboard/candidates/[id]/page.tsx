@@ -12,7 +12,12 @@ import {
   Palette,
   Target,
   Plus,
-  Trash2
+  Trash2,
+  Sparkles,
+  Star,
+  ChevronDown,
+  ChevronUp,
+  RefreshCw,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -99,7 +104,25 @@ export default function CandidateDetailPage() {
   const [loading, setLoading] = useState(true);
   const [editMode, setEditMode] = useState(false);
   const [editedCandidate, setEditedCandidate] = useState<Partial<Candidate>>({});
-  const [activeTab, setActiveTab] = useState<'profile' | 'tests' | 'notes'>('profile');
+  const [activeTab, setActiveTab] = useState<'profile' | 'tests' | 'notes' | 'review'>('profile');
+
+  // Parecer Técnico
+  const [reviewRating, setReviewRating] = useState(7);
+  const [reviewNote, setReviewNote] = useState('');
+  const [reviewLoading, setReviewLoading] = useState(false);
+  const [currentReview, setCurrentReview] = useState<{
+    id: string;
+    score_total: number;
+    score_testes: number;
+    score_experiencia: number;
+    score_recrutador: number;
+    ai_review: string;
+    recruiter_rating: number;
+    recruiter_note: string;
+    created_at: string;
+  } | null>(null);
+  const [reviewHistory, setReviewHistory] = useState<typeof currentReview[]>([]);
+  const [showHistory, setShowHistory] = useState(false);
 
   const supabase = createClient();
 
@@ -107,7 +130,30 @@ export default function CandidateDetailPage() {
 
   useEffect(() => {
     loadData();
+    loadReviews();
   }, [candidateId]);
+
+  async function loadReviews() {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+      const orgId = localStorage.getItem('selected_org_id') ?? session.user.user_metadata?.org_id ?? '';
+      const res = await fetch(`/api/recruiter/candidates/${candidateId}/technical-review`, {
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+          'x-org-id': orgId,
+        },
+      });
+      if (!res.ok) return;
+      const data = await res.json();
+      if (data.reviews?.length > 0) {
+        setCurrentReview(data.reviews[0]);
+        setReviewHistory(data.reviews);
+      }
+    } catch {
+      // silencioso
+    }
+  }
 
   async function loadData() {
     try {
@@ -647,6 +693,34 @@ export default function CandidateDetailPage() {
     }
   }
 
+  async function handleGenerateReview() {
+    if (reviewLoading) return;
+    setReviewLoading(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error('Sessão expirada');
+      const orgId = localStorage.getItem('selected_org_id') ?? session.user.user_metadata?.org_id ?? '';
+      const res = await fetch(`/api/recruiter/candidates/${candidateId}/technical-review`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session.access_token}`,
+          'x-org-id': orgId,
+        },
+        body: JSON.stringify({ recruiter_rating: reviewRating, recruiter_note: reviewNote }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Erro ao gerar parecer');
+      setCurrentReview(data);
+      setReviewHistory([data, ...reviewHistory]);
+      toast.success('Parecer técnico gerado com sucesso!');
+    } catch (err: any) {
+      toast.error(err.message || 'Erro ao gerar parecer');
+    } finally {
+      setReviewLoading(false);
+    }
+  }
+
   const getColorBadge = (color: string) => {
     const colorMap: Record<string, { bg: string; text: string; name: string }> = {
       vermelho: { bg: 'bg-red-100', text: 'text-red-700', name: 'Vermelho (Diretor)' },
@@ -733,6 +807,27 @@ export default function CandidateDetailPage() {
           >
             <MessageSquare className="w-4 h-4 inline mr-2" />
             Anotações ({notes.length})
+          </button>
+          <button
+            onClick={() => setActiveTab('review')}
+            className={`px-4 py-2 font-medium transition-colors border-b-2 flex items-center gap-2 ${
+              activeTab === 'review'
+                ? 'border-[#141042] text-[#141042]'
+                : 'border-transparent text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            <Sparkles className="w-4 h-4" />
+            Parecer Técnico
+            {currentReview && (
+              <span className={`ml-1 px-2 py-0.5 rounded-full text-xs font-bold ${
+                currentReview.score_total >= 80 ? 'bg-green-100 text-green-700' :
+                currentReview.score_total >= 60 ? 'bg-blue-100 text-blue-700' :
+                currentReview.score_total >= 40 ? 'bg-yellow-100 text-yellow-700' :
+                'bg-red-100 text-red-700'
+              }`}>
+                {currentReview.score_total}
+              </span>
+            )}
           </button>
         </div>
 
@@ -1174,6 +1269,198 @@ export default function CandidateDetailPage() {
           </div>
         )}
       </div>
+
+        {/* Review Tab */}
+        {activeTab === 'review' && (
+          <div className="space-y-6 p-6 pt-0">
+            {/* Gerador */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Sparkles className="h-5 w-5 text-[#141042]" />
+                  Gerar Novo Parecer Técnico
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-5">
+                {/* Avaliação do recrutador */}
+                <div>
+                  <Label className="mb-2 block text-sm font-semibold text-[#141042]">
+                    Sua Avaliação Geral (0–10)
+                  </Label>
+                  <div className="flex items-center gap-3">
+                    <div className="flex gap-1">
+                      {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((n) => (
+                        <button
+                          key={n}
+                          type="button"
+                          onClick={() => setReviewRating(n)}
+                          className={`w-8 h-8 rounded-lg text-sm font-bold transition-all ${
+                            n <= reviewRating
+                              ? 'bg-[#141042] text-white'
+                              : 'bg-[#F5F5F0] text-[#999] hover:bg-[#E5E5DC]'
+                          }`}
+                        >
+                          {n}
+                        </button>
+                      ))}
+                    </div>
+                    <span className={`px-2 py-1 rounded-lg text-xs font-bold ${
+                      reviewRating >= 8 ? 'bg-green-100 text-green-700' :
+                      reviewRating >= 6 ? 'bg-blue-100 text-blue-700' :
+                      reviewRating >= 4 ? 'bg-yellow-100 text-yellow-700' :
+                      'bg-red-100 text-red-700'
+                    }`}>
+                      {reviewRating >= 8 ? 'Excelente' : reviewRating >= 6 ? 'Bom' : reviewRating >= 4 ? 'Regular' : 'Fraco'}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Observação do recrutador */}
+                <div>
+                  <Label className="mb-2 block text-sm font-semibold text-[#141042]">
+                    Observações (opcional)
+                  </Label>
+                  <textarea
+                    rows={3}
+                    value={reviewNote}
+                    onChange={(e) => setReviewNote(e.target.value)}
+                    placeholder="Adicione observações específicas que devem constar no parecer..."
+                    className="w-full px-3 py-2 border border-[#E5E5DC] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#141042]/20 resize-none"
+                  />
+                </div>
+
+                <button
+                  type="button"
+                  onClick={handleGenerateReview}
+                  disabled={reviewLoading}
+                  className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#141042] text-white rounded-xl text-sm font-medium hover:bg-[#1f1a66] disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
+                >
+                  {reviewLoading
+                    ? <><RefreshCw className="w-4 h-4 animate-spin" /> Gerando com IA...</>
+                    : <><Sparkles className="w-4 h-4" /> Gerar Parecer com IA</>}
+                </button>
+              </CardContent>
+            </Card>
+
+            {/* Resultado atual */}
+            {currentReview && (
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between pb-3">
+                  <CardTitle className="flex items-center gap-2 text-base">
+                    <FileText className="h-4 w-4" />
+                    Parecer Técnico
+                    <span className="text-xs text-[#999] font-normal">
+                      {new Date(currentReview.created_at).toLocaleString('pt-BR')}
+                    </span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  {/* Score visual */}
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    {[
+                      { label: 'Score Total', value: currentReview.score_total, highlight: true },
+                      { label: 'Testes', value: currentReview.score_testes, highlight: false },
+                      { label: 'Experiência', value: currentReview.score_experiencia, highlight: false },
+                      { label: 'Recrutador', value: currentReview.score_recrutador, highlight: false },
+                    ].map(({ label, value, highlight }) => {
+                      const color = value >= 80 ? 'text-green-600 bg-green-50 border-green-200'
+                        : value >= 60 ? 'text-blue-600 bg-blue-50 border-blue-200'
+                        : value >= 40 ? 'text-yellow-600 bg-yellow-50 border-yellow-200'
+                        : 'text-red-600 bg-red-50 border-red-200';
+                      return (
+                        <div key={label} className={`rounded-xl border p-3 text-center ${highlight ? color : 'bg-[#FAFAF8] border-[#E5E5DC]'}`}>
+                          <p className={`text-2xl font-bold ${highlight ? '' : 'text-[#141042]'}`}>{Math.round(value)}</p>
+                          <p className={`text-xs mt-1 ${highlight ? '' : 'text-[#666]'}`}>{label}</p>
+                          {highlight && (
+                            <p className="text-xs font-medium mt-0.5">
+                              {value >= 80 ? 'Excelente' : value >= 60 ? 'Bom' : value >= 40 ? 'Regular' : 'Fraco'}
+                            </p>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {/* Barra de score total */}
+                  <div>
+                    <div className="flex justify-between text-xs text-[#666] mb-1">
+                      <span>0</span>
+                      <span className="font-medium text-[#141042]">{Math.round(currentReview.score_total)}/100</span>
+                      <span>100</span>
+                    </div>
+                    <div className="h-3 bg-[#E5E5DC] rounded-full overflow-hidden">
+                      <div
+                        className={`h-full rounded-full transition-all ${
+                          currentReview.score_total >= 80 ? 'bg-green-500' :
+                          currentReview.score_total >= 60 ? 'bg-blue-500' :
+                          currentReview.score_total >= 40 ? 'bg-yellow-500' : 'bg-red-500'
+                        }`}
+                        style={{ width: `${currentReview.score_total}%` }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Nota do recrutador */}
+                  <div className="flex items-center gap-2 text-sm text-[#666]">
+                    <Star className="w-4 h-4 text-yellow-500" />
+                    <span>Avaliação do recrutador: <strong className="text-[#141042]">{currentReview.recruiter_rating}/10</strong></span>
+                    {currentReview.recruiter_note && (
+                      <span className="text-[#999]">· "{currentReview.recruiter_note}"</span>
+                    )}
+                  </div>
+
+                  {/* Texto do parecer */}
+                  <div className="bg-[#FAFAF8] border border-[#E5E5DC] rounded-xl p-5">
+                    <div className="prose prose-sm max-w-none text-[#333] whitespace-pre-wrap leading-relaxed text-sm">
+                      {currentReview.ai_review}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Histórico */}
+            {reviewHistory.length > 1 && (
+              <div>
+                <button
+                  type="button"
+                  onClick={() => setShowHistory(!showHistory)}
+                  className="flex items-center gap-2 text-sm text-[#666] hover:text-[#141042] transition-colors"
+                >
+                  {showHistory ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                  Histórico ({reviewHistory.length - 1} pareceres anteriores)
+                </button>
+                {showHistory && (
+                  <div className="mt-3 space-y-3">
+                    {reviewHistory.slice(1).map((r) => r && (
+                      <div key={r.id} className="border border-[#E5E5DC] rounded-xl p-4 bg-white">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-xs text-[#999]">{new Date(r.created_at).toLocaleString('pt-BR')}</span>
+                          <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${
+                            r.score_total >= 80 ? 'bg-green-100 text-green-700' :
+                            r.score_total >= 60 ? 'bg-blue-100 text-blue-700' :
+                            r.score_total >= 40 ? 'bg-yellow-100 text-yellow-700' :
+                            'bg-red-100 text-red-700'
+                          }`}>{Math.round(r.score_total)}/100</span>
+                        </div>
+                        <p className="text-xs text-[#666] line-clamp-3">{r.ai_review?.substring(0, 200)}…</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Empty state */}
+            {!currentReview && !reviewLoading && (
+              <div className="text-center py-12 text-[#999]">
+                <Sparkles className="w-10 h-10 mx-auto mb-3 text-[#E5E5DC]" />
+                <p className="text-sm">Nenhum parecer gerado ainda.<br />Configure sua avaliação acima e clique em <strong>Gerar Parecer com IA</strong>.</p>
+              </div>
+            )}
+          </div>
+        )}
+
       <ConfirmDialog
         open={!!confirmDeleteNoteId}
         title="Excluir anotação"

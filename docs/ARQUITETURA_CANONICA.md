@@ -1,6 +1,6 @@
 # Arquitetura Canônica — TalentForge
 
-**Última atualização**: 2026-03-16 | **Score de Conformidade**: ✅ 100% (Sprint 46 — Currículo PDF profissional + COPC Tendências) | **Sprints planejados**: Sprint 41 (AI Assistant) + Sprint 44 (Gate Recrutamento)
+**Última atualização**: 2026-03-16 | **Score de Conformidade**: ✅ 100% (Sprint 47 — Parecer Técnico com IA + Score do Candidato) | **Sprints planejados**: Sprint 41 (AI Assistant) + Sprint 44 (Gate Recrutamento)
 
 ## 📜 FONTE DA VERDADE — PRINCÍPIO FUNDAMENTAL
 
@@ -7447,6 +7447,17 @@ Adicionar card "Módulo de Recrutamento" seguindo o mesmo padrão visual do card
 - ✅ **CSP fix (`next.config.mjs`)**: `style-src` + `https://fonts.googleapis.com`; `font-src` + `https://fonts.gstatic.com`; `script-src` + `connect-src` + `https://vercel.live`
 - ✅ **`.env.example` unificado**: criado na raiz com todas as variáveis do monorepo documentadas; `VERCEL_OIDC_TOKEN` explicitamente proibido
 - ✅ **Commits**: `4d2f45f` → `80b2f89` → `7866ab2` → `dc76c11` → `e18fb03` → `ec67c44` → `ff116e7` → `266d366` → `origin/main`
+
+### v5.10 (2026-03-16)
+- ✅ **Score de Conformidade**: 100% mantido (Sprint 47)
+- ✅ **`candidate_technical_reviews`**: nova tabela com `score_total` (NUMERIC 0-100), `score_testes` (40%), `score_experiencia` (35%), `score_recrutador` (25%), `ai_review` TEXT gerado via GPT-4o, `recruiter_rating` SMALLINT (0-10), `input_snapshot` JSONB; RLS `is_org_member(org_id)` em todas as operações
+- ✅ **Fórmula de Score**: Testes=40% (DISC×0.4 + Color×0.3 + PI×0.3) + Experiência=35% (anos×4 max60 + grau acadêmico max40) + Recrutador=25% (rating×10)
+- ✅ **API Route `POST /api/recruiter/candidates/[id]/technical-review`**: auth → membership → fetch candidato+notas+testes+experiência → calcScores → GPT-4o → INSERT tabela → return
+- ✅ **API Route `GET /api/recruiter/candidates/[id]/technical-review`**: últimos 5 pareceres (candidate_id + org_id)
+- ✅ **Aba "Parecer Técnico"** em `/dashboard/candidates/[id]`: seletor 0-10, textarea observações, botão IA com loading state, 4 score cards + barra de progresso colorida, texto do parecer, histórico expansível
+- ✅ **`openai` SDK** instalado em `apps/web` (anteriormente apenas em `apps/api`)
+- ⚠️ **`OPENAI_API_KEY`** necessária em `apps/web/.env.local` e na Vercel para geração real de pareceres
+- ✅ **Migration**: `supabase/migrations/20260316_candidate_technical_reviews.sql`
 
 ### v5.9 (2026-03-16)
 - ✅ **Score de Conformidade**: 100% mantido (Sprint 46)
