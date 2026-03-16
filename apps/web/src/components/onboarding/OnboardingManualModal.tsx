@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { X, ChevronLeft, ChevronRight, CheckCircle, Circle, BookOpen } from 'lucide-react';
+import { X, ChevronLeft, ChevronRight, CheckCircle, Circle, BookOpen, ChevronDown } from 'lucide-react';
 import manualData from '@/data/manual_onboarding_data.json';
 
 type Section = (typeof manualData.sections)[number];
@@ -30,28 +30,27 @@ function saveReadSections(ids: Set<string>) {
 export function OnboardingManualModal({ isOpen, onClose }: Props) {
   const [currentIdx, setCurrentIdx] = useState(0);
   const [readSections, setReadSections] = useState<Set<string>>(new Set());
+  const [expandedIdx, setExpandedIdx] = useState<number | null>(null);
   const contentRef = useRef<HTMLDivElement>(null);
 
   const sections: Section[] = manualData.sections;
   const current = sections[currentIdx];
   const progress = Math.round((readSections.size / sections.length) * 100);
 
-  // Carrega progresso salvo ao abrir
   useEffect(() => {
     if (isOpen) setReadSections(loadReadSections());
   }, [isOpen]);
 
-  // Marca seção atual como lida ao visualizar + volta ao topo
   useEffect(() => {
     if (!isOpen || !current) return;
     const updated = new Set(readSections).add(current.id);
     setReadSections(updated);
     saveReadSections(updated);
     contentRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
+    setExpandedIdx(currentIdx);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentIdx, isOpen]);
 
-  // Fechar com Escape
   useEffect(() => {
     const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
     if (isOpen) document.addEventListener('keydown', handler);
@@ -63,9 +62,23 @@ export function OnboardingManualModal({ isOpen, onClose }: Props) {
   const goTo = (idx: number) => setCurrentIdx(Math.max(0, Math.min(idx, sections.length - 1)));
   const isLast = currentIdx === sections.length - 1;
 
+  // Injeta IDs nas sub-seções para ancoragem
+  const htmlWithAnchors = current?.html?.replace(
+    /<div class="ss">/g,
+    (_, offset, str) => {
+      const before = str.slice(0, offset);
+      const subIdx = (before.match(/<div class="ss">/g) || []).length;
+      return `<div class="ss" id="sub-${subIdx}">`;
+    }
+  ) ?? '';
+
+  const scrollToSub = (idx: number) => {
+    const el = contentRef.current?.querySelector(`#sub-${idx}`);
+    el?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
   return (
     <>
-      {/* Estilos do manual injetados com escopo */}
       <style>{`
         .manual-content * { box-sizing: border-box; }
         .manual-content { font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; font-size: 14px; line-height: 1.7; color: #374151; }
@@ -110,8 +123,8 @@ export function OnboardingManualModal({ isOpen, onClose }: Props) {
         .manual-content tr:hover td { background: #F9FAFB; }
         .manual-content .dw { background: #fff; border: 1px solid #E5E5DC; border-radius: 14px; padding: 1.75rem; margin: 1.5rem 0; text-align: center; box-shadow: 0 1px 4px rgba(0,0,0,.06); overflow-x: auto; }
         .manual-content .dc { font-size: .78rem; color: #6B7280; margin-top: .75rem; font-style: italic; }
-        .manual-content .ss { margin: 1.75rem 0; padding-top: 1.4rem; border-top: 1px dashed #E5E5DC; }
-        .manual-content .ss-t { font-size: 1rem; font-weight: 700; color: #141042; margin-bottom: .65rem; display: flex; align-items: center; gap: .5rem; }
+        .manual-content .ss { margin: 2rem 0; padding-top: 1.5rem; border-top: 2px solid #E5E5DC; scroll-margin-top: 16px; }
+        .manual-content .ss-t { font-size: 1rem; font-weight: 700; color: #141042; margin-bottom: .75rem; display: flex; align-items: center; gap: .5rem; }
         .manual-content .sdot { width: 10px; height: 10px; border-radius: 50%; background: #10B981; flex-shrink: 0; }
         .manual-content .metric { background: #fff; border: 1px solid #E5E5DC; border-radius: 12px; padding: 1.25rem; text-align: center; box-shadow: 0 1px 4px rgba(0,0,0,.05); }
         .manual-content .mv { font-size: 1.8rem; font-weight: 800; margin-bottom: .2rem; }
@@ -148,7 +161,6 @@ export function OnboardingManualModal({ isOpen, onClose }: Props) {
                   <p className="text-white/40 text-xs">{manualData.version}</p>
                 </div>
               </div>
-              {/* Barra de progresso */}
               <div className="mt-2">
                 <div className="flex justify-between text-xs text-white/50 mb-1.5">
                   <span>{readSections.size}/{sections.length} seções</span>
@@ -163,35 +175,57 @@ export function OnboardingManualModal({ isOpen, onClose }: Props) {
               </div>
             </div>
 
-            {/* Lista de seções */}
+            {/* Lista de seções com sub-itens expansíveis */}
             <nav className="flex-1 py-3 px-2">
               {sections.map((sec, idx) => {
                 const isActive = idx === currentIdx;
                 const isRead = readSections.has(sec.id);
+                const isExpanded = expandedIdx === idx;
+                const hasSubs = sec.subsections.length > 0;
+
                 return (
-                  <button
-                    key={sec.id}
-                    onClick={() => goTo(idx)}
-                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left mb-0.5 transition-all duration-150 ${
-                      isActive
-                        ? 'bg-white/15 shadow-sm'
-                        : 'hover:bg-white/8'
-                    }`}
-                  >
-                    <div
-                      className="w-7 h-7 rounded-lg flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
-                      style={{ background: isActive ? sec.color : `${sec.color}80` }}
+                  <div key={sec.id} className="mb-0.5">
+                    <button
+                      onClick={() => {
+                        goTo(idx);
+                        setExpandedIdx(isExpanded && isActive ? null : idx);
+                      }}
+                      className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-all duration-150 ${
+                        isActive ? 'bg-white/15 shadow-sm' : 'hover:bg-white/8'
+                      }`}
                     >
-                      {sec.number}
-                    </div>
-                    <span className={`flex-1 text-xs leading-tight truncate ${isActive ? 'text-white font-semibold' : 'text-white/60'}`}>
-                      {sec.title}
-                    </span>
-                    {isRead
-                      ? <CheckCircle className="w-3.5 h-3.5 text-[#10B981] flex-shrink-0" />
-                      : <Circle className="w-3.5 h-3.5 text-white/20 flex-shrink-0" />
-                    }
-                  </button>
+                      <div
+                        className="w-7 h-7 rounded-lg flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
+                        style={{ background: isActive ? sec.color : `${sec.color}80` }}
+                      >
+                        {sec.number}
+                      </div>
+                      <span className={`flex-1 text-xs leading-tight truncate ${isActive ? 'text-white font-semibold' : 'text-white/60'}`}>
+                        {sec.title}
+                      </span>
+                      {isRead
+                        ? <CheckCircle className="w-3.5 h-3.5 text-[#10B981] flex-shrink-0" />
+                        : hasSubs
+                          ? <ChevronDown className={`w-3.5 h-3.5 text-white/30 flex-shrink-0 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+                          : <Circle className="w-3.5 h-3.5 text-white/20 flex-shrink-0" />
+                      }
+                    </button>
+
+                    {/* Sub-seções */}
+                    {isExpanded && isActive && hasSubs && (
+                      <div className="ml-4 mt-0.5 border-l border-white/10 pl-3 pb-1">
+                        {sec.subsections.map((sub, subIdx) => (
+                          <button
+                            key={subIdx}
+                            onClick={() => scrollToSub(subIdx)}
+                            className="w-full text-left py-1.5 px-2 text-xs text-white/45 hover:text-white/80 hover:bg-white/5 rounded-lg transition-colors leading-tight"
+                          >
+                            {sub.title}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 );
               })}
             </nav>
@@ -215,7 +249,6 @@ export function OnboardingManualModal({ isOpen, onClose }: Props) {
                 </div>
               </div>
               <div className="flex items-center gap-2 flex-shrink-0">
-                {/* Progresso mobile */}
                 <span className="lg:hidden text-xs text-[#6B7280] mr-2">
                   {currentIdx + 1}/{sections.length}
                 </span>
@@ -229,7 +262,7 @@ export function OnboardingManualModal({ isOpen, onClose }: Props) {
               </div>
             </div>
 
-            {/* Barra de progresso (mobile) */}
+            {/* Barra de progresso mobile */}
             <div className="lg:hidden h-1 bg-[#E5E5DC]">
               <div
                 className="h-full bg-[#10B981] transition-all duration-500"
@@ -237,11 +270,30 @@ export function OnboardingManualModal({ isOpen, onClose }: Props) {
               />
             </div>
 
-            {/* Corpo — HTML da seção */}
+            {/* Mini-índice de sub-seções (quando há mais de 1) */}
+            {current?.subsections && current.subsections.length > 1 && (
+              <div className="shrink-0 px-6 py-3 border-b border-[#E5E5DC] bg-white/60 overflow-x-auto">
+                <div className="flex items-center gap-1.5 flex-nowrap">
+                  <span className="text-xs text-[#94A3B8] whitespace-nowrap mr-1">Ir para:</span>
+                  {current.subsections.map((sub, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => scrollToSub(idx)}
+                      className="whitespace-nowrap text-xs px-2.5 py-1 rounded-full border border-[#E5E5DC] text-[#6B7280] hover:border-current hover:text-[#141042] transition-colors"
+                      style={{ '--hover-color': current.color } as React.CSSProperties}
+                    >
+                      {sub.title.replace(/^\d+\.\d+\s/, '')}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Corpo — HTML completo da seção com sub-seções */}
             <div ref={contentRef} className="flex-1 overflow-y-auto px-6 py-6">
               <div
                 className="manual-content max-w-3xl mx-auto"
-                dangerouslySetInnerHTML={{ __html: current?.html ?? '' }}
+                dangerouslySetInnerHTML={{ __html: htmlWithAnchors }}
               />
             </div>
 
@@ -256,7 +308,6 @@ export function OnboardingManualModal({ isOpen, onClose }: Props) {
                 <span className="hidden sm:inline">Anterior</span>
               </button>
 
-              {/* Dots mobile */}
               <div className="flex gap-1.5 lg:hidden">
                 {sections.map((_, idx) => (
                   <button
@@ -268,7 +319,6 @@ export function OnboardingManualModal({ isOpen, onClose }: Props) {
                 ))}
               </div>
 
-              {/* Info desktop */}
               <p className="hidden lg:block text-xs text-[#94A3B8]">
                 Seção {currentIdx + 1} de {sections.length} &bull; {readSections.size} lidas
               </p>

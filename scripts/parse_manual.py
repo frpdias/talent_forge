@@ -92,9 +92,17 @@ def parse():
         subsections = extract_subsections(sec)
 
         # Remove .ss dos filhos diretos para não duplicar no html principal
+        # Remove também .sh (cabeçalho de seção) — já exibido na barra do modal
         sec_copy = BeautifulSoup(str(sec), "html.parser")
         for ss in sec_copy.find_all(class_="ss"):
             ss.decompose()
+        for sh in sec_copy.find_all(class_="sh"):
+            sh.decompose()
+
+        # HTML completo = conteúdo principal + sub-seções inline
+        full_html = sec_copy.decode_contents().strip()
+        for sub in subsections:
+            full_html += f'\n<div class="ss"><div class="ss-t"><span class="sdot"></span>{sub["title"]}</div>{sub["html"]}</div>'
 
         sections.append({
             "id": sec_id,
@@ -103,7 +111,7 @@ def parse():
             "subtitle": subtitle,
             "color": SECTION_COLORS.get(sec_id, "#141042"),
             "icon": SECTION_ICONS.get(sec_id, ""),
-            "html": sec_copy.decode_contents().strip(),
+            "html": full_html,
             "subsections": subsections,
         })
 
