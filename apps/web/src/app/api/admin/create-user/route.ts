@@ -12,7 +12,8 @@ function generateSecurePassword(): string {
 
 /**
  * Envia e-mail de boas-vindas via Brevo Transactional Email API.
- * Usa BREVO_SMTP_PASS como API key (o mesmo valor configurado no NestJS/email.module).
+ * Usa BREVO_API_KEY (ou BREVO_SMTP_PASS como fallback) para a REST API do Brevo.
+ * No painel Brevo: SMTP & API → API Keys → chave que começa com xkeysib-
  */
 async function sendWelcomeEmail(params: {
   email: string;
@@ -20,12 +21,12 @@ async function sendWelcomeEmail(params: {
   password: string;
   userType: string;
 }): Promise<{ sent: boolean; error?: string }> {
-  const apiKey = process.env.BREVO_SMTP_PASS;
+  const apiKey = process.env.BREVO_API_KEY || process.env.BREVO_SMTP_PASS;
   const senderEmail = process.env.BREVO_SENDER_EMAIL || 'noreply@talentforge.com.br';
   const senderName = process.env.BREVO_SENDER_NAME || 'TalentForge';
 
   if (!apiKey) {
-    return { sent: false, error: 'BREVO_SMTP_PASS não configurada' };
+    return { sent: false, error: 'BREVO_API_KEY não configurada' };
   }
 
   const userTypeLabel: Record<string, string> = {
@@ -111,11 +112,13 @@ async function sendWelcomeEmail(params: {
 
     if (!res.ok) {
       const errBody = await res.text();
+      console.error('❌ Brevo API error:', res.status, errBody);
       return { sent: false, error: `Brevo API ${res.status}: ${errBody}` };
     }
 
     return { sent: true };
   } catch (err: any) {
+    console.error('❌ Brevo fetch error:', err.message);
     return { sent: false, error: err.message };
   }
 }
