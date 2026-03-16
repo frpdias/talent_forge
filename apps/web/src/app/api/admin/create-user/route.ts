@@ -20,7 +20,7 @@ async function sendWelcomeEmail(params: {
   fullName: string;
   password: string;
   userType: string;
-}): Promise<{ sent: boolean; error?: string }> {
+}): Promise<{ sent: boolean; error?: string; messageId?: string }> {
   const apiKey = process.env.BREVO_API_KEY || process.env.BREVO_SMTP_PASS;
   const senderEmail = process.env.BREVO_SENDER_EMAIL || 'noreply@talentforge.com.br';
   const senderName = process.env.BREVO_SENDER_NAME || 'TalentForge';
