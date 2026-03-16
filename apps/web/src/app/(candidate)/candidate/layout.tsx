@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { UserAvatar } from '@/components/UserAvatar';
+import { generateCurriculumPDF, type CurriculumData } from '@/components/curriculum/CandidateCurriculumPDF';
 
 type NavItem = { href: string; label: string; icon: typeof Home };
 
@@ -45,6 +46,8 @@ export default function CandidateLayout({ children }: { children: React.ReactNod
   const [resumeUrl, setResumeUrl] = useState<string | null>(null);
   const [resumeName, setResumeName] = useState<string | null>(null);
   const [resumeError, setResumeError] = useState<string | null>(null);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [exportingPDF, setExportingPDF] = useState(false);
   const [resumeExplode, setResumeExplode] = useState(false);
   const [resumePreviewOpen, setResumePreviewOpen] = useState(false);
   const [profile, setProfile] = useState<any>(null);
@@ -74,7 +77,7 @@ export default function CandidateLayout({ children }: { children: React.ReactNod
 
       const userEmail = user.email || '';
 
-      const selectColumns = 'id, user_id, full_name, cpf, email, phone, birth_date, city, state, current_title, area_of_expertise, seniority_level, salary_expectation, employment_type, resume_url, resume_filename, updated_at, created_at';
+      const selectColumns = 'id, user_id, full_name, cpf, email, phone, birth_date, city, state, current_title, area_of_expertise, seniority_level, salary_expectation, employment_type, resume_url, resume_filename, avatar_url, updated_at, created_at';
       const orFilters = userEmail
         ? `user_id.eq.${user.id},email.eq.${userEmail}`
         : `user_id.eq.${user.id}`;
@@ -117,6 +120,7 @@ export default function CandidateLayout({ children }: { children: React.ReactNod
       setProfile(profileData || null);
       setResumeUrl(profileData?.resume_url || null);
       setResumeName(profileData?.resume_filename || null);
+      setAvatarUrl(profileData?.avatar_url || null);
 
       if (profileIds.length === 0) {
         return;
@@ -217,6 +221,34 @@ export default function CandidateLayout({ children }: { children: React.ReactNod
   const handleResumePrint = () => {
     if (typeof window !== 'undefined') {
       setTimeout(() => window.print(), 0);
+    }
+  };
+
+  const handleExportCurriculum = async () => {
+    if (exportingPDF) return;
+    setExportingPDF(true);
+    try {
+      const curriculumData: CurriculumData = {
+        fullName: profile?.full_name || 'Candidato',
+        email: profile?.email || '',
+        phone: profile?.phone,
+        city: profile?.city,
+        state: profile?.state,
+        currentTitle: profile?.current_title,
+        areaOfExpertise: profile?.area_of_expertise,
+        seniorityLevel: profile?.seniority_level,
+        salaryExpectation: profile?.salary_expectation,
+        employmentType: profile?.employment_type,
+        linkedinUrl: profile?.linkedin_url,
+        avatarUrl: avatarUrl,
+        experiences,
+        education,
+      };
+      await generateCurriculumPDF(curriculumData);
+    } catch (err) {
+      console.error('Erro ao gerar currículo PDF:', err);
+    } finally {
+      setExportingPDF(false);
     }
   };
 
@@ -769,11 +801,12 @@ export default function CandidateLayout({ children }: { children: React.ReactNod
                   Abrir arquivo enviado
                 </button>
                 <button
-                  onClick={handleResumePrint}
+                  onClick={handleExportCurriculum}
+                  disabled={exportingPDF}
                   type="button"
-                  className="resume-print-hide inline-flex items-center gap-2 rounded-xl border border-[#E5E5DC] bg-white px-4 py-2 text-sm font-medium text-[#141042] hover:border-[#141042] hover:bg-[#F5F5F0]"
+                  className="resume-print-hide inline-flex items-center gap-2 rounded-xl border border-[#E5E5DC] bg-white px-4 py-2 text-sm font-medium text-[#141042] hover:border-[#141042] hover:bg-[#F5F5F0] disabled:opacity-60 disabled:cursor-not-allowed"
                 >
-                  Exportar PDF
+                  {exportingPDF ? 'Gerando PDF…' : 'Exportar currículo PDF'}
                 </button>
                 <button
                   onClick={() => setResumePreviewOpen(false)}
