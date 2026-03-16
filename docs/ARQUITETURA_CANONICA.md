@@ -1,6 +1,6 @@
 # Arquitetura Canônica — TalentForge
 
-**Última atualização**: 2026-03-13 | **Score de Conformidade**: ✅ 100% (Hotfix: Botão Analytics visível em produção) | **Sprints planejados**: Sprint 41 (AI Assistant) + Sprint 44 (Gate Recrutamento)
+**Última atualização**: 2026-03-15 | **Score de Conformidade**: ✅ 100% (Delete user + audit log + anti-spam email) | **Sprints planejados**: Sprint 41 (AI Assistant) + Sprint 44 (Gate Recrutamento)
 
 ## 📜 FONTE DA VERDADE — PRINCÍPIO FUNDAMENTAL
 
@@ -159,10 +159,17 @@ PROJETO_TALENT_FORGE/
 │       │   │   │   └── assessment/
 │       │   │   ├── api/             # API Routes
 │       │   │   │   └── admin/
-│       │   │   │       ├── users/
-│       │   │   │       ├── create-user/
-│       │   │   │       ├── companies/
-│       │   │   │       └── metrics/
+│       │   │   │       ├── users/                    # GET lista usuários
+│       │   │   │       ├── create-user/              # POST criar usuário + envio de e-mail boas-vindas
+│       │   │   │       ├── delete-user/              # DELETE excluir usuário + audit log (2026-03-15)
+│       │   │   │       ├── resend-welcome-email/     # POST reenviar e-mail boas-vindas (2026-03-14)
+│       │   │   │       ├── companies/                # CRUD empresas
+│       │   │   │       ├── metrics/                  # Métricas sistema
+│       │   │   │       ├── audit-logs/               # GET logs de auditoria
+│       │   │   │       ├── settings/                 # GET/PATCH configurações + audit log
+│       │   │   │       ├── tenants/                  # Gestão de tenants
+│       │   │   │       ├── security/                 # Score e verificações de segurança
+│       │   │   │       └── security-events/          # Eventos de segurança
 │       │   │   ├── layout.tsx       # Root layout
 │       │   │   └── middleware.ts    # Auth + routing
 │       │   ├── components/          # Componentes reutilizáveis
@@ -3347,7 +3354,9 @@ Dashboard dedicado em `/admin/security` com:
 | Endpoint | GET | POST | PATCH | DELETE | Notas |
 |----------|-----|------|-------|--------|-------|
 | `/api/admin/users` | ✅ | — | — | — | Lista usuários Auth |
-| `/api/admin/create-user` | — | ✅ | — | — | Cria usuário via service role |
+| `/api/admin/create-user` | — | ✅ | — | — | Cria usuário via service role + e-mail boas-vindas (Brevo) |
+| `/api/admin/delete-user` | — | — | — | ✅ | Exclui usuário + registra audit log (2026-03-15) |
+| `/api/admin/resend-welcome-email` | — | ✅ | — | — | Reenvia e-mail boas-vindas via Brevo (2026-03-14) |
 | `/api/admin/companies` | ✅ | ✅ | — | — | CRUD de empresas |
 | `/api/admin/companies/:id` | — | — | ✅ | ✅ | Update/Delete empresa |
 
@@ -3361,8 +3370,8 @@ Dashboard dedicado em `/admin/security` com:
 | Página | Rota | Funcionalidade |
 |--------|------|----------------|
 | Dashboard | `/admin` | Métricas reais: usuários, organizações, vagas, assessments + **Painel de Monitoramento em Tempo Real** |
-| Usuários | `/admin/users` | Lista todos usuários (Auth), filtro por tipo (admin/recruiter/candidate) |
-| **Criar Usuário** | `/admin/create-user` | **Cadastro direto de usuários** (admin/recrutador/candidato via service role) |
+| Usuários | `/admin/users` | Lista todos usuários (Auth), filtro por tipo (admin/recruiter/candidate) + **botão Excluir** com modal de confirmação (2026-03-15) |
+| **Criar Usuário** | `/admin/create-user` | **Cadastro direto de usuários** (admin/recrutador/candidato via service role) + envio automático de e-mail boas-vindas (Brevo) |
 | **Empresas** | `/admin/companies` | **Gestão de empresas** (CRUD completo, busca, porte) |
 | Tenants | `/admin/tenants` | Gerenciamento de tenants |
 | **Centro de Segurança** | `/admin/security` | **Score de segurança, verificações automáticas, eventos em tempo real, recomendações** |
@@ -3386,7 +3395,9 @@ Componente visual integrado ao dashboard admin com:
 | Rota | Método | Descrição |
 |------|--------|-----------|
 | `/api/admin/users` | GET | Lista todos usuários do Supabase Auth (requer `SUPABASE_SERVICE_ROLE_KEY`) |
-| `/api/admin/create-user` | POST | Cria usuários diretamente no Auth + user_profiles (admin/recruiter/candidate) |
+| `/api/admin/create-user` | POST | Cria usuários diretamente no Auth + user_profiles (admin/recruiter/candidate) + dispara e-mail boas-vindas via Brevo |
+| `/api/admin/delete-user` | DELETE | Exclui usuário do Auth (cascata via trigger) + registra em `audit_logs` (2026-03-15) |
+| `/api/admin/resend-welcome-email` | POST | Reenvia e-mail de boas-vindas com senha temporária via Brevo (2026-03-14) |
 | `/api/admin/companies` | GET, POST | Lista e cria empresas |
 | `/api/admin/companies/[id]` | PATCH, DELETE | Atualiza e deleta empresas |
 
