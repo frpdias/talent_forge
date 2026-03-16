@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Button, Card, CardContent, CardHeader, CardTitle, Progress } from '@/components/ui';
 import { Activity, LogOut, Sparkles } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 
 type ColorCode = 'azul' | 'rosa' | 'amarelo' | 'verde' | 'branco';
 
@@ -58,6 +59,7 @@ export default function ColorTestPage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<ColorResult | null>(null);
+  const [showExitConfirm, setShowExitConfirm] = useState(false);
   const router = useRouter();
   const supabase = createClient();
 
@@ -232,8 +234,7 @@ export default function ColorTestPage() {
             <Button
               variant="ghost"
               onClick={() => {
-                if (!window.confirm('Tem certeza que deseja abandonar o teste? Seu progresso será perdido.')) return;
-                router.push('/candidate');
+                setShowExitConfirm(true);
               }}
               className="border border-[#E5E5DC] bg-white text-[#141042] hover:border-[#141042] hover:bg-[#F5F5F0] flex items-center justify-center gap-2"
             >
@@ -413,6 +414,14 @@ export default function ColorTestPage() {
           className="h-16 w-auto opacity-70"
         />
       </div>
+      <ConfirmDialog
+        open={showExitConfirm}
+        title="Abandonar teste"
+        message="Tem certeza que deseja abandonar o teste? Seu progresso será perdido."
+        confirmLabel="Abandonar"
+        onConfirm={() => { setShowExitConfirm(false); router.push('/candidate'); }}
+        onCancel={() => setShowExitConfirm(false)}
+      />
     </div>
   );
 }

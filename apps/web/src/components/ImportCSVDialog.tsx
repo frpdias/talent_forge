@@ -3,6 +3,7 @@
 import { useState, useRef } from 'react';
 import { Upload, X, FileText, AlertCircle, CheckCircle, Download } from 'lucide-react';
 import { API_V1_URL } from '@/lib/api-config';
+import { toast } from 'sonner';
 
 interface ImportResult {
   success: number;
@@ -44,7 +45,7 @@ export default function ImportCSVDialog({
       setFile(selectedFile);
       setResult(null);
     } else {
-      alert('Por favor, selecione um arquivo CSV válido');
+      toast.warning('Por favor, selecione um arquivo CSV válido');
     }
   };
 
@@ -76,11 +77,11 @@ export default function ImportCSVDialog({
           onImportComplete();
         }
       } else {
-        alert(`Erro ao importar: ${data.message || 'Erro desconhecido'}`);
+        toast.error(`Erro ao importar: ${data.message || 'Erro desconhecido'}`);
       }
     } catch (error) {
       console.error('Error importing CSV:', error);
-      alert('Erro ao importar arquivo CSV');
+      toast.error('Erro ao importar arquivo CSV');
     } finally {
       setImporting(false);
     }

@@ -23,6 +23,8 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { createClient } from '@/lib/supabase/client';
 import { DashboardHeader } from '@/components/DashboardHeader';
+import { toast } from 'sonner';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 
 interface Candidate {
   id: string;
@@ -89,6 +91,7 @@ export default function CandidateDetailPage() {
 
   const [candidate, setCandidate] = useState<Candidate | null>(null);
   const [notes, setNotes] = useState<Note[]>([]);
+  const [confirmDeleteNoteId, setConfirmDeleteNoteId] = useState<string | null>(null);
   const [newNote, setNewNote] = useState('');
   const [colorResult, setColorResult] = useState<ColorResult | null>(null);
   const [discResult, setDiscResult] = useState<DISCResult | null>(null);
@@ -616,12 +619,18 @@ export default function CandidateDetailPage() {
       }
     } catch (error: any) {
       console.error('Error adding note:', error);
-      alert(error.message || 'Erro ao adicionar anotação');
+      toast.error(error.message || 'Erro ao adicionar anotação');
     }
   }
 
   async function handleDeleteNote(noteId: string) {
-    if (!confirm('Tem certeza que deseja excluir esta anotação?')) return;
+    setConfirmDeleteNoteId(noteId);
+  }
+
+  async function doDeleteNote() {
+    if (!confirmDeleteNoteId) return;
+    const noteId = confirmDeleteNoteId;
+    setConfirmDeleteNoteId(null);
 
     try {
       const { error } = await supabase
@@ -634,7 +643,7 @@ export default function CandidateDetailPage() {
       setNotes(notes.filter(n => n.id !== noteId));
     } catch (error: any) {
       console.error('Error deleting note:', error);
-      alert(error.message || 'Erro ao excluir anotação');
+      toast.error(error.message || 'Erro ao excluir anotação');
     }
   }
 
@@ -1165,6 +1174,13 @@ export default function CandidateDetailPage() {
           </div>
         )}
       </div>
+      <ConfirmDialog
+        open={!!confirmDeleteNoteId}
+        title="Excluir anotação"
+        message="Tem certeza que deseja excluir esta anotação?"
+        onConfirm={doDeleteNote}
+        onCancel={() => setConfirmDeleteNoteId(null)}
+      />
     </div>
   );
 }

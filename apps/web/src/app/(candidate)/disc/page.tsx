@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Activity, Sparkles, Shield, Target, ArrowLeft, ArrowRight, LogOut } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 
 interface DISCQuestion {
   id: string;
@@ -36,6 +37,7 @@ export default function DISCAssessmentPage() {
   const [assessmentId, setAssessmentId] = useState<string>('');
   const [userId, setUserId] = useState<string>('');
   const [loadError, setLoadError] = useState<string>('');
+  const [showExitConfirm, setShowExitConfirm] = useState(false);
 
   useEffect(() => {
     const initialize = async () => {
@@ -201,7 +203,11 @@ export default function DISCAssessmentPage() {
   };
 
   const handleExit = () => {
-    if (!window.confirm('Tem certeza que deseja abandonar o teste? Seu progresso será perdido.')) return;
+    setShowExitConfirm(true);
+  };
+
+  const doExit = () => {
+    setShowExitConfirm(false);
     router.push('/candidate');
   };
 
@@ -484,6 +490,14 @@ export default function DISCAssessmentPage() {
           className="h-16 w-auto opacity-70"
         />
       </div>
+      <ConfirmDialog
+        open={showExitConfirm}
+        title="Abandonar teste"
+        message="Tem certeza que deseja abandonar o teste? Seu progresso será perdido."
+        confirmLabel="Abandonar"
+        onConfirm={doExit}
+        onCancel={() => setShowExitConfirm(false)}
+      />
     </div>
   );
 }

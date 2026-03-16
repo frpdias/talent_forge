@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { Save, RotateCcw, AlertTriangle, CheckCircle, Settings2, Bell, Brain, Sliders } from 'lucide-react';
 import { useCurrentOrg } from '@/lib/hooks/useCurrentOrg';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+import { toast } from 'sonner';
 
 interface PhpSettings {
   weights: {
@@ -61,6 +63,7 @@ export default function SettingsPage() {
   const [success, setSuccess] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'weights' | 'thresholds' | 'notifications' | 'advanced'>('weights');
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
 
   useEffect(() => {
     if (orgId) {
@@ -135,7 +138,12 @@ export default function SettingsPage() {
 
   async function resetSettings() {
     if (!orgId) return;
-    if (!confirm('Restaurar todas as configurações para os valores padrão?')) return;
+    setShowResetConfirm(true);
+  }
+
+  async function doResetSettings() {
+    if (!orgId) return;
+    setShowResetConfirm(false);
 
     setSaving(true);
     setError(null);
@@ -652,6 +660,14 @@ export default function SettingsPage() {
           </ul>
         </div>
       </div>
+      <ConfirmDialog
+        open={showResetConfirm}
+        title="Restaurar configurações"
+        message="Restaurar todas as configurações para os valores padrão? Esta ação não pode ser desfeita."
+        confirmLabel="Restaurar"
+        onConfirm={doResetSettings}
+        onCancel={() => setShowResetConfirm(false)}
+      />
     </div>
   );
 }

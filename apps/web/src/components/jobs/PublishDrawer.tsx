@@ -13,6 +13,7 @@ import { ChannelSelector, useChannelSelection, type Channel } from '@/components
 import { PublicationStatusList } from '@/components/publisher/PublicationStatus';
 import { PublicationTimeline, type PublicationLog } from '@/components/publisher/PublicationTimeline';
 import { createClient } from '@/lib/supabase/client';
+import { toast } from 'sonner';
 
 interface Publication {
   id: string;
@@ -130,10 +131,10 @@ export function PublishDrawer({ jobId, orgId, jobTitle, isOpen, onClose }: Publi
         clearAll();
         await loadData();
       } else {
-        alert(data.error || 'Erro ao publicar');
+        toast.error(data.error || 'Erro ao publicar');
       }
     } catch {
-      alert('Erro de conexão');
+      toast.error('Erro de conexão');
     } finally {
       setPublishing(false);
     }

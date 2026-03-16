@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { createClient } from '@/lib/supabase/client';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 
 type DISCOption = 'D' | 'I' | 'S' | 'C';
 
@@ -49,6 +50,7 @@ interface Props {
 export default function DiscTestModal({ onClose }: Props) {
   const supabase = createClient();
 
+  const [showExitConfirm, setShowExitConfirm] = useState(false);
   const [questions, setQuestions] = useState<DISCQuestion[]>([]);
   const [sequence, setSequence] = useState<DISCQuestion[]>([]);
   const [responses, setResponses] = useState<UserResponse[]>([]);
@@ -204,7 +206,8 @@ export default function DiscTestModal({ onClose }: Props) {
           <button
             onClick={() => {
               if (!result && !error) {
-                if (!window.confirm('Tem certeza que deseja abandonar o teste? Seu progresso será perdido.')) return;
+                setShowExitConfirm(true);
+                return;
               }
               onClose(!!result);
             }}
@@ -356,6 +359,14 @@ export default function DiscTestModal({ onClose }: Props) {
           </div>
         )}
       </div>
+      <ConfirmDialog
+        open={showExitConfirm}
+        title="Abandonar teste"
+        message="Tem certeza que deseja abandonar o teste? Seu progresso será perdido."
+        confirmLabel="Abandonar"
+        onConfirm={() => { setShowExitConfirm(false); onClose(false); }}
+        onCancel={() => setShowExitConfirm(false)}
+      />
     </div>,
     document.body,
   );

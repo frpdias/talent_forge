@@ -7,6 +7,7 @@ import { useOrgStore } from '@/lib/store';
 import { HIERARCHY_LEVELS } from '@/lib/constants/hierarchy';
 import { getAuthToken } from '@/lib/supabase/client';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+import { toast } from 'sonner';
 
 interface Company {
   id: string;
@@ -186,7 +187,7 @@ export default function RecruiterCompaniesPage() {
     
     // Validações
     if (!formData.adminName || !formData.adminCpf) {
-      alert('❌ Nome e CPF do administrador são obrigatórios');
+      toast.warning('Nome e CPF do administrador são obrigatórios');
       return;
     }
 
@@ -196,7 +197,7 @@ export default function RecruiterCompaniesPage() {
       const token = await getAuthToken();
 
       if (!token) {
-        alert('Sessão expirada. Faça login novamente.');
+        toast.error('Sessão expirada. Faça login novamente.');
         setSaving(false);
         return;
       }

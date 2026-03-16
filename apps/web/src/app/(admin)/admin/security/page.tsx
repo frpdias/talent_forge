@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react';
 import { Shield, AlertTriangle, Lock, Eye, Activity, Clock, Globe, Terminal, RefreshCw, TrendingUp, Server, Database, Users, FileText, Unlock, ChevronDown, ChevronUp, Ban, UserCheck } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
+import { toast } from 'sonner';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 
 interface SecurityEvent {
   id: string;
@@ -96,6 +98,7 @@ export default function SecurityDashboard() {
   const [blockedIPs, setBlockedIPs] = useState<BlockedIP[]>([]);
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
   const [activeSessions, setActiveSessions] = useState<ActiveSession[]>([]);
+  const [confirmUnblockId, setConfirmUnblockId] = useState<string | null>(null);
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
     blockedIPs: false,
     auditLogs: false,
@@ -203,8 +206,13 @@ export default function SecurityDashboard() {
   }
 
   async function handleUnblockIP(ipId: string) {
-    if (!confirm('Tem certeza que deseja desbloquear este IP?')) return;
-    
+    setConfirmUnblockId(ipId);
+  }
+
+  async function doUnblockIP() {
+    if (!confirmUnblockId) return;
+    const ipId = confirmUnblockId;
+    setConfirmUnblockId(null);
     try {
       const supabase = createClient();
       const { error } = await supabase
@@ -220,7 +228,7 @@ export default function SecurityDashboard() {
       ));
     } catch (error) {
       console.error('Erro ao desbloquear IP:', error);
-      alert('Erro ao desbloquear IP');
+      toast.error('Erro ao desbloquear IP');
     }
   }
 
@@ -720,6 +728,14 @@ export default function SecurityDashboard() {
           </div>
         )}
       </div>
+      <ConfirmDialog
+        open={!!confirmUnblockId}
+        title="Desbloquear IP"
+        message="Tem certeza que deseja desbloquear este IP?"
+        confirmLabel="Desbloquear"
+        onConfirm={doUnblockIP}
+        onCancel={() => setConfirmUnblockId(null)}
+      />
     </div>
   );
 }

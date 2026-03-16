@@ -14,6 +14,8 @@ import { API_V1_URL } from '@/lib/api-config';
 import OrgChart from '@/components/OrgChart';
 import ImportCSVDialog from '@/components/ImportCSVDialog';
 import { HIERARCHY_LEVELS } from '@/lib/hierarchy-constants';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+import { toast } from 'sonner';
 
 interface Company {
   id: string;
@@ -88,6 +90,7 @@ function CompanyDetailContent() {
   // Estado do módulo de Recrutamento
   const [recruitmentModuleActive, setRecruitmentModuleActive] = useState(false);
   const [recruitmentLoading, setRecruitmentLoading] = useState(false);
+  const [confirmDeleteEmployeeId, setConfirmDeleteEmployeeId] = useState<string | null>(null);
 
   useEffect(() => {
     getAuthToken().then(token => { if (token) setAuthToken(token); });
@@ -274,8 +277,14 @@ function CompanyDetailContent() {
     }
   };
 
-  const handleDeleteEmployee = async (employeeId: string) => {
-    if (!confirm('Tem certeza que deseja excluir este funcionário?')) return;
+  const handleDeleteEmployee = (employeeId: string) => {
+    setConfirmDeleteEmployeeId(employeeId);
+  };
+
+  const doDeleteEmployee = async () => {
+    if (!confirmDeleteEmployeeId) return;
+    const employeeId = confirmDeleteEmployeeId;
+    setConfirmDeleteEmployeeId(null);
 
     try {
       const token = await getAuthToken();
@@ -1284,6 +1293,13 @@ function CompanyInfoTab({ company, employees, phpModuleActive, phpLoading, toggl
           </div>
         </div>
       </div>
+      <ConfirmDialog
+        open={!!confirmDeleteEmployeeId}
+        title="Excluir funcionário"
+        message="Tem certeza que deseja excluir este funcionário? Esta ação não pode ser desfeita."
+        onConfirm={doDeleteEmployee}
+        onCancel={() => setConfirmDeleteEmployeeId(null)}
+      />
     </div>
   );
 }

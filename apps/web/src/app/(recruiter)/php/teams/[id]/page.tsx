@@ -22,6 +22,8 @@ import TeamOrgChartModal from '@/components/php/TeamOrgChartModal';
 import TransferEmployeeModal from '@/components/php/TransferEmployeeModal';
 import { useOrgStore } from '@/lib/store';
 import { createClient, getAuthToken } from '@/lib/supabase/client';
+import { toast } from 'sonner';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 
 interface TeamMember {
   id: string;
@@ -104,6 +106,8 @@ export default function TeamDetailsPage() {
   const [availableEmployees, setAvailableEmployees] = useState<AvailableEmployee[]>([]);
   const [loadingAvailable, setLoadingAvailable] = useState(false);
   const [addingMember, setAddingMember] = useState(false);
+  const [confirmRemoveMemberId, setConfirmRemoveMemberId] = useState<{ id: string; name: string } | null>(null);
+  const [confirmDeleteTeam, setConfirmDeleteTeam] = useState(false);
   const [selectedRole, setSelectedRole] = useState<'member' | 'lead' | 'coordinator'>('member');
   const [showOrgChart, setShowOrgChart] = useState(false);
   const [transferEmployee, setTransferEmployee] = useState<{
@@ -232,19 +236,23 @@ export default function TeamDetailsPage() {
         await loadAvailableEmployees();
       } else {
         const err = await res.json();
-        alert(err.message || 'Erro ao adicionar funcionário');
+        toast.error(err.message || 'Erro ao adicionar funcionário');
       }
     } catch (error) {
-      alert('Erro de conexão');
+      toast.error('Erro de conexão');
     } finally {
       setAddingMember(false);
     }
   };
 
-  const handleRemoveMember = async (memberId: string, memberName: string) => {
-    if (!effectiveOrgId || !team) return;
-    if (!confirm(`Remover ${memberName} do time?`)) return;
+  const handleRemoveMember = (memberId: string, memberName: string) => {
+    setConfirmRemoveMemberId({ id: memberId, name: memberName });
+  };
 
+  const doRemoveMember = async () => {
+    if (!effectiveOrgId || !team || !confirmRemoveMemberId) return;
+    const memberId = confirmRemoveMemberId.id;
+    setConfirmRemoveMemberId(null);
     try {
       const token = await getAuthToken();
       const res = await fetch(`/api/v1/php/teams/${team.id}/members/${memberId}`, {
@@ -259,10 +267,10 @@ export default function TeamDetailsPage() {
         await loadTeam();
       } else {
         const err = await res.json();
-        alert(err.message || 'Erro ao remover funcionário');
+        toast.error(err.message || 'Erro ao remover funcionário');
       }
     } catch (error) {
-      alert('Erro de conexão');
+      toast.error('Erro de conexão');
     }
   };
 
@@ -283,17 +291,20 @@ export default function TeamDetailsPage() {
         await loadTeam();
       } else {
         const err = await res.json();
-        alert(err.message || 'Erro ao atualizar papel');
+        toast.error(err.message || 'Erro ao atualizar papel');
       }
     } catch (error) {
-      alert('Erro de conexão');
+      toast.error('Erro de conexão');
     }
   };
 
-  const handleDeleteTeam = async () => {
-    if (!effectiveOrgId || !team) return;
-    if (!confirm(`Tem certeza que deseja excluir o time "${team.name}"? Esta ação não pode ser desfeita.`)) return;
+  const handleDeleteTeam = () => {
+    setConfirmDeleteTeam(true);
+  };
 
+  const doDeleteTeam = async () => {
+    if (!effectiveOrgId || !team) return;
+    setConfirmDeleteTeam(false);
     try {
       const token = await getAuthToken();
       const res = await fetch(`/api/v1/php/teams/${team.id}`, {
@@ -308,10 +319,10 @@ export default function TeamDetailsPage() {
         router.push('/php/teams');
       } else {
         const err = await res.json();
-        alert(err.message || 'Erro ao excluir time');
+        toast.error(err.message || 'Erro ao excluir time');
       }
     } catch (error) {
-      alert('Erro de conexão');
+      toast.error('Erro de conexão');
     }
   };
 
@@ -638,6 +649,22 @@ export default function TeamDetailsPage() {
           </div>
         </div>
       )}
+      <ConfirmDialog
+        open={!!confirmRemoveMemberId}
+        title="Remover membro"
+        message={`Remover ${confirmRemoveMemberId?.name} do time?`}
+        confirmLabel="Remover"
+        onConfirm={doRemoveMember}
+        onCancel={() => setConfirmRemoveMemberId(null)}
+      />
+      <ConfirmDialog
+        open={confirmDeleteTeam}
+        title="Excluir time"
+        message={`Tem certeza que deseja excluir o time "${team?.name}"? Esta ação não pode ser desfeita.`}
+        confirmLabel="Excluir"
+        onConfirm={doDeleteTeam}
+        onCancel={() => setConfirmDeleteTeam(false)}
+      />
     </div>
   );
 }

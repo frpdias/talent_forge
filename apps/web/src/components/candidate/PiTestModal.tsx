@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { createClient } from '@/lib/supabase/client';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 
 type Block = 'natural' | 'adaptado';
 type Axis = 'direcao' | 'energia_social' | 'ritmo' | 'estrutura';
@@ -72,6 +73,7 @@ interface Props {
 export default function PiTestModal({ onClose }: Props) {
   const supabase = createClient();
 
+  const [showExitConfirm, setShowExitConfirm] = useState(false);
   const [phase, setPhase] = useState<Phase>('natural-descritores');
   const [descriptors, setDescriptors] = useState<Descriptor[]>([]);
   const [situational, setSituational] = useState<SituationalQuestion[]>([]);
@@ -268,7 +270,8 @@ export default function PiTestModal({ onClose }: Props) {
             <button
               onClick={() => {
                 if (phase !== 'resultado' && !error) {
-                  if (!window.confirm('Tem certeza que deseja abandonar o teste? Seu progresso será perdido.')) return;
+                  setShowExitConfirm(true);
+                  return;
                 }
                 onClose(phase === 'resultado');
               }}
@@ -443,6 +446,14 @@ export default function PiTestModal({ onClose }: Props) {
           </div>
         )}
       </div>
+      <ConfirmDialog
+        open={showExitConfirm}
+        title="Abandonar teste"
+        message="Tem certeza que deseja abandonar o teste? Seu progresso será perdido."
+        confirmLabel="Abandonar"
+        onConfirm={() => { setShowExitConfirm(false); onClose(false); }}
+        onCancel={() => setShowExitConfirm(false)}
+      />
     </div>,
     document.body,
   );

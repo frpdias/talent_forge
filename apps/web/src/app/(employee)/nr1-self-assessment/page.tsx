@@ -4,6 +4,7 @@ import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { Heart, AlertTriangle, CheckCircle, Info, ArrowLeft, XCircle } from 'lucide-react';
+import { toast } from 'sonner';
 
 interface SelfAssessmentData {
   workload_pace_risk: number;
@@ -220,7 +221,7 @@ function NR1SelfAssessmentContent() {
     e.preventDefault();
     
     if (!employee) {
-      alert('Dados do funcionário não encontrados');
+      toast.error('Dados do funcionário não encontrados');
       return;
     }
 
@@ -230,7 +231,7 @@ function NR1SelfAssessmentContent() {
       const authToken = session?.access_token;
 
       if (!authToken && !token) {
-        alert('Sessão expirada. Faça login novamente.');
+        toast.error('Sessão expirada. Faça login novamente.');
         return;
       }
 
@@ -259,20 +260,20 @@ function NR1SelfAssessmentContent() {
       });
 
       if (response.ok) {
-        alert('✅ Avaliação enviada com sucesso!');
+        toast.success('Avaliação enviada com sucesso!');
         // Se veio via token, mostrar mensagem de conclusão
         if (token) {
-          alert('Obrigado por responder! Você pode fechar esta página.');
+          toast.info('Obrigado por responder! Você pode fechar esta página.');
         } else {
           router.push('/dashboard');
         }
       } else {
         const errorData = await response.json();
-        alert(`Erro ao enviar avaliação: ${errorData.message || 'Erro desconhecido'}`);
+        toast.error(`Erro ao enviar avaliação: ${errorData.message || 'Erro desconhecido'}`);
       }
     } catch (error) {
       console.error('Erro ao enviar:', error);
-      alert('Erro ao enviar avaliação. Tente novamente.');
+      toast.error('Erro ao enviar avaliação. Tente novamente.');
     } finally {
       setLoading(false);
     }

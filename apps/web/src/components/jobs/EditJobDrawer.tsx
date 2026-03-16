@@ -15,6 +15,7 @@ import {
 } from '@/components/ui/select';
 import { CboSelector } from '@/components/CboSelector';
 import { createClient } from '@/lib/supabase/client';
+import { toast } from 'sonner';
 
 interface EditJobDrawerProps {
   jobId: string | null;
@@ -128,7 +129,7 @@ export function EditJobDrawer({ jobId, isOpen, onClose, onSaved }: EditJobDrawer
       onClose();
     } catch (error: any) {
       console.error('Erro ao salvar vaga:', error);
-      alert(error.message || 'Erro ao atualizar vaga');
+      toast.error(error.message || 'Erro ao atualizar vaga');
     } finally {
       setSaving(false);
     }

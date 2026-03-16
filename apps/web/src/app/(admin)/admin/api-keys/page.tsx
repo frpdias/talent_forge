@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react';
 import { Key, Plus, Copy, Trash2, Eye, EyeOff, Search, Calendar, Check, X, AlertCircle } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { API_V1_URL } from '@/lib/api-config';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+import { toast } from 'sonner';
 
 interface ApiKey {
   id: string;
@@ -28,6 +30,7 @@ export default function ApiKeysPage() {
     permissions: [] as string[],
     expires_in_days: 30,
   });
+  const [confirmRevokeId, setConfirmRevokeId] = useState<string | null>(null);
 
   const availablePermissions = [
     'jobs:read', 'jobs:write',
@@ -96,9 +99,13 @@ export default function ApiKeysPage() {
   }
 
   async function handleRevoke(keyId: string) {
-    if (!confirm('Tem certeza que deseja revogar esta API key? Esta ação não pode ser desfeita.')) {
-      return;
-    }
+    setConfirmRevokeId(keyId);
+  }
+
+  async function doRevoke() {
+    if (!confirmRevokeId) return;
+    const keyId = confirmRevokeId;
+    setConfirmRevokeId(null);
 
     try {
       const supabase = createClient();
@@ -374,6 +381,14 @@ export default function ApiKeysPage() {
           </div>
         </div>
       )}
+      <ConfirmDialog
+        open={!!confirmRevokeId}
+        title="Revogar API Key"
+        message="Tem certeza que deseja revogar esta API key? Esta ação não pode ser desfeita."
+        confirmLabel="Revogar"
+        onConfirm={doRevoke}
+        onCancel={() => setConfirmRevokeId(null)}
+      />
     </div>
   );
 }

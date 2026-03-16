@@ -3,6 +3,8 @@
 import React, { useState, useEffect } from 'react';
 import { Building, Plus, Search, Edit2, Trash2, Save, X, Building2, Mail, Phone, Globe, MapPin, Users, CheckCircle, AlertCircle, Briefcase } from 'lucide-react';
 import OrganizationDashboard from '@/components/admin/OrganizationDashboard';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+import { toast } from 'sonner';
 
 interface Company {
   id: string;
@@ -43,6 +45,7 @@ export default function CompaniesPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [expandedCompanyId, setExpandedCompanyId] = useState<string | null>(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
   const emptyForm: FormData = {
     name: '',
@@ -137,9 +140,14 @@ export default function CompaniesPage() {
     setMessage(null);
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Tem certeza que deseja excluir esta empresa?')) return;
+  const handleDelete = (id: string) => {
+    setConfirmDeleteId(id);
+  };
 
+  const doDelete = async () => {
+    if (!confirmDeleteId) return;
+    const id = confirmDeleteId;
+    setConfirmDeleteId(null);
     try {
       const response = await fetch(`/api/admin/companies/${id}`, {
         method: 'DELETE',
@@ -690,6 +698,13 @@ export default function CompaniesPage() {
           )}
         </>
       )}
+      <ConfirmDialog
+        open={!!confirmDeleteId}
+        title="Excluir empresa"
+        message="Tem certeza que deseja excluir esta empresa? Esta ação não pode ser desfeita."
+        onConfirm={doDelete}
+        onCancel={() => setConfirmDeleteId(null)}
+      />
     </div>
   );
 }

@@ -23,6 +23,7 @@ import { EditJobDrawer } from '@/components/jobs/EditJobDrawer';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { createClient } from '@/lib/supabase/client';
+import { toast } from 'sonner';
 
 interface Job {
   id: string;
@@ -158,7 +159,7 @@ export function JobDetailsModal({ jobId, onClose, onUpdated }: JobDetailsModalPr
       setJob(prev => (prev ? { ...prev, status: newStatus } : null));
       onUpdated();
     } catch {
-      alert('Erro ao atualizar status');
+      toast.error('Erro ao atualizar status');
     } finally {
       setSavingStatus(false);
     }
@@ -173,7 +174,7 @@ export function JobDetailsModal({ jobId, onClose, onUpdated }: JobDetailsModalPr
       onUpdated();
       onClose();
     } catch {
-      alert('Erro ao excluir vaga');
+      toast.error('Erro ao excluir vaga');
     } finally {
       setDeleting(false);
       setShowDeleteConfirm(false);

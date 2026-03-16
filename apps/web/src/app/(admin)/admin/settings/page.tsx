@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Settings, Bell, Shield, Database, Mail, Globe, Save, RefreshCw } from 'lucide-react';
+import { toast } from 'sonner';
 
 export default function AdminSettingsPage() {
   const [saving, setSaving] = useState(false);
@@ -121,14 +122,14 @@ export default function AdminSettingsPage() {
       });
 
       if (response.ok) {
-        alert('✅ Configurações salvas com sucesso!');
+        toast.success('Configurações salvas com sucesso!');
       } else {
         const error = await response.json();
-        alert(`❌ Erro ao salvar: ${error.error || 'Erro desconhecido'}`);
+        toast.error(`Erro ao salvar: ${error.error || 'Erro desconhecido'}`);
       }
     } catch (error) {
       console.error('Erro ao salvar configurações:', error);
-      alert('❌ Erro ao salvar configurações');
+      toast.error('Erro ao salvar configurações');
     } finally {
       setSaving(false);
     }

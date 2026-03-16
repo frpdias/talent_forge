@@ -15,6 +15,7 @@ import {
 import { useOrgStore } from '@/lib/store';
 import { getAuthToken } from '@/lib/supabase/client';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+import { toast } from 'sonner';
 
 interface Team {
   id: string;
@@ -55,6 +56,7 @@ export default function TeamsPage() {
   const [error, setError] = useState<string | null>(null);
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [confirmDeleteTeam, setConfirmDeleteTeam] = useState<{ id: string; name: string } | null>(null);
+  const [showAutoCreateConfirm, setShowAutoCreateConfirm] = useState(false);
 
   const loadTeams = useCallback(async () => {
     if (!effectiveOrgId) return;
@@ -152,10 +154,14 @@ export default function TeamsPage() {
     }
   };
 
-  const handleAutoCreate = async () => {
+  const handleAutoCreate = () => {
     if (!effectiveOrgId) return;
-    if (!confirm('Criar times automaticamente agrupando funcionários por departamento e gestor?\n\nTimes já existentes com o mesmo nome serão ignorados.')) return;
+    setShowAutoCreateConfirm(true);
+  };
 
+  const doAutoCreate = async () => {
+    if (!effectiveOrgId) return;
+    setShowAutoCreateConfirm(false);
     try {
       setAutoCreating(true);
       const token = await getAuthToken();
@@ -206,10 +212,10 @@ export default function TeamsPage() {
         loadTeams();
       } else {
         const err = await res.json();
-        alert(err.message || 'Erro ao excluir time');
+        toast.error(err.message || 'Erro ao excluir time');
       }
     } catch {
-      alert('Erro de conexão');
+      toast.error('Erro de conexão');
     } finally {
       setConfirmDeleteTeam(null);
     }
@@ -495,6 +501,14 @@ export default function TeamsPage() {
           </div>
         </div>
       )}
+      <ConfirmDialog
+        open={showAutoCreateConfirm}
+        title="Criar times automaticamente"
+        message="Criar times automaticamente agrupando funcionários por departamento e gestor? Times já existentes com o mesmo nome serão ignorados."
+        confirmLabel="Criar"
+        onConfirm={doAutoCreate}
+        onCancel={() => setShowAutoCreateConfirm(false)}
+      />
     </div>
     </>
   );
