@@ -52,9 +52,9 @@ Guarda: `PhpModuleGuard` | 3 pilares: TFCI (30%) + NR-1 (40%) + COPC (30%)
 Tabelas: `php_integrated_scores`, `tfci_cycles`, `tfci_assessments`, `nr1_risk_assessments`, `copc_*`
 
 ## Backlog Prioritário
-- [ ] Gráficos de tendência COPC (recharts instalado)
-- [ ] PDF de compliance NR-1
-- [ ] NestJS API: startup silencioso (não vincula porta 3001)
+- [x] Gráficos de tendência COPC (recharts instalado) — `/php/copc/trends` linkado
+- [x] PDF de compliance NR-1 — `Nr1CompliancePDF.tsx` ativo em `/php/nr1`
+- [x] NestJS API: startup silencioso (escuta em 127.0.0.1, não expõe porta)
 
 ## Dev Local — Troubleshooting Rápido
 - **NUNCA** colocar `VERCEL_OIDC_TOKEN` em `.env.local` (causa hang do servidor)

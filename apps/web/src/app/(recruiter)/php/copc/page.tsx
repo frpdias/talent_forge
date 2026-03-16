@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { BarChart3, Plus } from 'lucide-react';
+import { BarChart3, Plus, TrendingUp } from 'lucide-react';
 import { useOrgStore } from '@/lib/store';
 import { createClient, getAuthToken } from '@/lib/supabase/client';
 
@@ -132,6 +132,13 @@ export default function CopcDashboard() {
             </p>
           </div>
           <div className="flex items-center gap-3">
+            <Link
+              href="/php/copc/trends"
+              className="flex items-center gap-2 px-4 py-2.5 bg-white text-[#141042] font-medium border border-[#E5E5DC] rounded-lg hover:bg-[#FAFAF8] hover:border-[#141042] transition-all shadow-sm"
+            >
+              <TrendingUp className="w-4 h-4" />
+              Tendências
+            </Link>
             <Link
               href="/php/copc/areas"
               className="flex items-center gap-2 px-4 py-2.5 bg-white text-[#141042] font-medium border border-[#E5E5DC] rounded-lg hover:bg-[#FAFAF8] hover:border-[#141042] transition-all shadow-sm"
