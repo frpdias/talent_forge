@@ -106,6 +106,7 @@ code{background:#F3F4F6;padding:1px 5px;border-radius:4px;font-size:.82rem;font-
   <a href="#sec6"><div class="toc-item"><div class="tn" style="background:#E11D48">6</div><div class="ti"><strong>Painel Administrativo</strong><span>Usu&#225;rios, organiza&#231;&#245;es, m&#243;dulos e auditoria</span></div></div></a>
   <a href="#sec7"><div class="toc-item"><div class="tn" style="background:#D97706">7</div><div class="ti"><strong>Portal do Candidato</strong><span>Cadastro, perfil, candidaturas e assessments</span></div></div></a>
   <a href="#sec8"><div class="toc-item"><div class="tn" style="background:#7C3AED">8</div><div class="ti"><strong>Relat&#243;rios e Exporta&#231;&#245;es</strong><span>Analytics, PDF, CSV e KPIs</span></div></div></a>
+  <a href="#sec9"><div class="toc-item"><div class="tn" style="background:#0F766E">9</div><div class="ti"><strong>MCP Server &amp; Integra&#231;&#245;es LLM</strong><span>TalentForge MCP, tools, contexto externo para IA</span></div></div></a>
 </div>
 </div>
 <!-- SEC 1: VISAO GERAL -->
@@ -621,30 +622,92 @@ code{background:#F3F4F6;padding:1px 5px;border-radius:4px;font-size:.82rem;font-
 </div>
 
 <!-- 5.6 AI -->
-<div class="ss"><div class="ss-t"><div class="sdot"></div>5.6 AI Insights e Chat</div>
-<p>O m&#243;dulo PHP inclui um <strong>Assistente de IA</strong> que analisa os dados coletados e gera insights acion&#225;veis para gestores. A IA utiliza hist&#243;ricos de TFCI, NR-1, COPC e dados de recrutamento para identificar padr&#245;es e prever riscos.</p>
+<div class="ss"><div class="ss-t"><div class="sdot"></div>5.6 IA Generativa &amp; AI Insights</div>
+<p>O m&#243;dulo PHP inclui um motor de <strong>Intelig&#234;ncia Artificial generativa</strong> (OpenAI GPT-4) que analisa dados de TFCI, NR-1, COPC e recrutamento para gerar insights acion&#225;veis, predi&#231;&#245;es de risco e recomenda&#231;&#245;es priorizadas. A IA &#233; ativada automaticamente ap&#243;s cada ciclo de avalia&#231;&#227;o.</p>
+
+<div class="g4">
+  <div class="card" style="text-align:center">
+    <div style="font-size:1.5rem;margin-bottom:.4rem">&#128276;</div>
+    <div class="badge br" style="display:block;margin-bottom:.4rem">alert</div>
+    <p style="font-size:.8rem;color:#6B7280;margin:0">Risco iminente que requer a&#231;&#227;o imediata</p>
+  </div>
+  <div class="card" style="text-align:center">
+    <div style="font-size:1.5rem;margin-bottom:.4rem">&#9888;&#65039;</div>
+    <div class="badge bo" style="display:block;margin-bottom:.4rem">risk</div>
+    <p style="font-size:.8rem;color:#6B7280;margin:0">Padr&#227;o negativo detectado para monitoramento</p>
+  </div>
+  <div class="card" style="text-align:center">
+    <div style="font-size:1.5rem;margin-bottom:.4rem">&#128640;</div>
+    <div class="badge bg" style="display:block;margin-bottom:.4rem">opportunity</div>
+    <p style="font-size:.8rem;color:#6B7280;margin:0">Potencial de melhoria identificado</p>
+  </div>
+  <div class="card" style="text-align:center">
+    <div style="font-size:1.5rem;margin-bottom:.4rem">&#128161;</div>
+    <div class="badge bb" style="display:block;margin-bottom:.4rem">recommendation</div>
+    <p style="font-size:.8rem;color:#6B7280;margin:0">A&#231;&#227;o sugerida com base nos dados</p>
+  </div>
+</div>
+
+<h3>Dashboard AI Insights &mdash; <code>/php/ai</code></h3>
 <div class="g2">
   <div class="card">
-    <h4>Insights Autom&#225;ticos</h4>
-    <ul style="font-size:.87rem">
-      <li>Predi&#231;&#227;o de risco de turnover por colaborador</li>
-      <li>Identifica&#231;&#227;o de times com baixo engajamento</li>
-      <li>Correla&#231;&#227;o entre perfil DISC e desempenho COPC</li>
-      <li>Alertas de deteriora&#231;&#227;o de score em tempo real</li>
-      <li>Benchmark com m&#233;dias do setor por porte de empresa</li>
+    <h4>Predi&#231;&#227;o de Turnover</h4>
+    <p style="font-size:.87rem">A IA calcula um <strong>&#237;ndice de risco de sa&#237;da (0&ndash;100%)</strong> por colaborador, cruzando:</p>
+    <ul style="font-size:.85rem">
+      <li>Score TFCI do &#250;ltimo ciclo vs. ciclo anterior</li>
+      <li>Resultados de NR-1 (riscos psicossociais)</li>
+      <li>Absenteismo e desempenho COPC</li>
+      <li>Hist&#243;rico de avalia&#231;&#245;es comportamentais DISC</li>
+    </ul>
+    <div class="callout warn"><div class="cb"><strong>Alerta autom&#225;tico</strong><p>Colaboradores com risco &gt; 70% s&#227;o listados em destaque no painel. Gestores recebem notifica&#231;&#227;o por e-mail.</p></div></div>
+  </div>
+  <div class="card">
+    <h4>Forecast de Performance</h4>
+    <p style="font-size:.87rem">Proje&#231;&#227;o de desempenho para os <strong>pr&#243;ximos 12 meses</strong> com base em tend&#234;ncias hist&#243;ricas:</p>
+    <ul style="font-size:.85rem">
+      <li>Evolu&#231;&#227;o do score PHP por trimestre</li>
+      <li>Proje&#231;&#227;o de riscos NR-1 sazonais</li>
+      <li>Tend&#234;ncia de m&#233;tricas COPC por equipe</li>
+      <li>Estimativa de Need for Improvement por colaborador</li>
+    </ul>
+    <div class="callout info"><div class="cb"><strong>Vis&#227;o Executiva</strong><p>O forecast &#233; exibido como gr&#225;fico de linha com intervalo de confian&#231;a (P10/P90) no dashboard PHP.</p></div></div>
+  </div>
+</div>
+
+<h3>Smart Recommendations</h3>
+<p>O motor de <strong>recomenda&#231;&#245;es priorizadas</strong> ordena as a&#231;&#245;es sugeridas pela IA por impacto estimado × urgência, gerando um backlog pronto para ser transformado em Planos de A&#231;&#227;o:</p>
+<table>
+  <tr><th>Prioridade</th><th>&#193;rea</th><th>A&#231;&#227;o Recomendada</th><th>Impacto Estimado</th></tr>
+  <tr><td><span class="badge br">P1 Alta</span></td><td>NR-1</td><td>Aplicar pesquisa psicossocial complementar no time de Suporte</td><td>Redu&#231;&#227;o de 23pts no risco</td></tr>
+  <tr><td><span class="badge bo">P2 M&#233;dia</span></td><td>TFCI</td><td>Criar ciclo de feedback estruturado para o time comercial</td><td>+12pts no score TFCI</td></tr>
+  <tr><td><span class="badge bg">P3 Baixa</span></td><td>COPC</td><td>Revisar meta de FCR (First Call Resolution) para Q3</td><td>Melhora de 8% no CSAT</td></tr>
+</table>
+
+<h3>Chat com IA &mdash; <code>/php/ai-chat</code> <span class="badge bp" style="font-size:.7rem">Sprint 41</span></h3>
+<p>Interface de <strong>conversa interativa</strong> com contexto persistente por organiza&#231;&#227;o. O assistente tem acesso completo aos dados da organiza&#231;&#227;o (escopo RLS garantido) e responde em linguagem natural:</p>
+<div class="g2">
+  <div class="card">
+    <h4>Exemplos de Consultas</h4>
+    <ul style="font-size:.85rem">
+      <li>&#8220;Quais colaboradores t&#234;m maior risco de sa&#237;da este trimestre?&#8221;</li>
+      <li>&#8220;Como est&#225; o score NR-1 da equipe de atendimento vs. meta?&#8221;</li>
+      <li>&#8220;Gere um relat&#243;rio narrativo do ciclo TFCI de fevereiro&#8221;</li>
+      <li>&#8220;Quais vagas t&#234;m o pipeline mais represado?&#8221;</li>
+      <li>&#8220;Compare o perfil DISC dos contratados com os candidatos ativos&#8221;</li>
     </ul>
   </div>
   <div class="card">
-    <h4>Chat com IA</h4>
-    <ul style="font-size:.87rem">
-      <li>Interface de chat para consultas em linguagem natural</li>
-      <li>Exemplo: &#8220;Quais colaboradores t&#234;m maior risco de sa&#237;da?&#8221;</li>
-      <li>Exemplo: &#8220;Como est&#225; o score NR-1 da equipe de suporte?&#8221;</li>
-      <li>Exporta&#231;&#227;o das respostas em PDF ou envio por e-mail</li>
-      <li>Hist&#243;rico de conversas salvo por organiza&#231;&#227;o</li>
+    <h4>Funcionalidades do Chat</h4>
+    <ul style="font-size:.85rem">
+      <li>Contexto persistente por sess&#227;o e por organiza&#231;&#227;o</li>
+      <li>Gera&#231;&#227;o de relat&#243;rios narrativos com gr&#225;ficos inline</li>
+      <li>Exporta&#231;&#227;o da conversa em PDF ou envio por e-mail</li>
+      <li>Hist&#243;rico de consultas salvo por organiza&#231;&#227;o</li>
+      <li>Streaming em tempo real das respostas (token by token)</li>
     </ul>
   </div>
 </div>
+<div class="callout tip"><div class="cb"><strong>Seguran&#231;a &amp; Privacidade</strong><p>Nenhum dado da organiza&#231;&#227;o &#233; usado para treinar modelos OpenAI. Todas as consultas s&#227;o feitas com <code>data[&#8220;purpose&#8221;] = &#8220;non-training&#8221;</code> e passam pelo RLS do Supabase antes de chegar ao LLM. O contexto &#233; isolado por org_id.</p></div></div>
 </div>
 </div>
 
@@ -939,6 +1002,98 @@ code{background:#F3F4F6;padding:1px 5px;border-radius:4px;font-size:.82rem;font-
   <div class="metric"><div class="mv" style="color:#7C3AED">78</div><div class="ml">Score PHP m&#233;dio da organiza&#231;&#227;o no &#250;ltimo ciclo</div></div>
 </div>
 <div class="callout info"><span class="ck">&#8505;&#65039;</span><div class="cb"><strong>Integra&#231;&#227;o BI</strong><p>Os dados do TalentForge podem ser conectados a ferramentas de Business Intelligence (Power BI, Looker, Tableau) via API REST com autentica&#231;&#227;o Bearer Token. Documentacao dispon&#237;vel em <code>/admin/api-docs</code>.</p></div></div>
+</div>
+</div>
+
+<!-- SEC 9: MCP SERVER -->
+<div class="sec" id="sec9">
+<div class="sh">
+  <div class="sb" style="background:#0F766E">9</div>
+  <div class="st"><h2>MCP Server &amp; Integra&#231;&#245;es LLM</h2><p>TalentForge MCP v1.0 — 10 tools via stdio para acesso a dados por LLMs externos</p></div>
+</div>
+<p>O <strong>TalentForge MCP Server</strong> implementa o protocolo <strong>Model Context Protocol</strong> (Anthropic MCP) para expor dados da plataforma a assistentes de IA externos, como Claude, GPT-4 e Copilot. Isso permite que equipes de RH utilizem modelos de linguagem de sua prefer&#234;ncia — dentro de suas pr&#243;prias ferramentas — com dados reais do TalentForge.</p>
+
+<div class="callout info"><div class="cb"><strong>O que &#233; MCP?</strong><p>O Model Context Protocol (MCP) &#233; um padr&#227;o aberto que permite que LLMs leiam e manipulem dados de sistemas externos de forma segura, sem expor credenciais ou contornar seguran&#231;a. O TalentForge implementa o transporte <code>stdio</code>, compatível com Claude Desktop, Cursor, VS Code Copilot e outros clientes MCP.</p></div></div>
+
+<div class="ss"><div class="ss-t"><div class="sdot"></div>9.1 Tools Dispon&#237;veis</div>
+<p>O servidor MCP expõe <strong>10 tools</strong> que um LLM pode invocar automaticamente ao processar uma consulta do usu&#225;rio:</p>
+<table>
+  <tr><th>#</th><th>Tool</th><th>Descri&#231;&#227;o</th><th>Escopo</th></tr>
+  <tr><td>1</td><td><code>list_jobs</code></td><td>Lista vagas abertas com filtros por status, titulo e organiza&#231;&#227;o</td><td>Recrutador</td></tr>
+  <tr><td>2</td><td><code>get_pipeline</code></td><td>Retorna candidatos no pipeline por etapa e vaga</td><td>Recrutador</td></tr>
+  <tr><td>3</td><td><code>get_candidate_profile</code></td><td>Perfil completo do candidato com assessments e hist&#243;rico</td><td>Recrutador</td></tr>
+  <tr><td>4</td><td><code>list_org_members</code></td><td>Membros da organiza&#231;&#227;o com times e fun&#231;&#245;es</td><td>Gestor</td></tr>
+  <tr><td>5</td><td><code>get_php_score</code></td><td>Score PHP integrado (TFCI + NR-1 + COPC) por organiza&#231;&#227;o ou membro</td><td>PHP</td></tr>
+  <tr><td>6</td><td><code>get_tfci_cycle</code></td><td>Resultados de um ciclo TFCI específico com breakdown por pilar</td><td>PHP</td></tr>
+  <tr><td>7</td><td><code>get_nr1_assessment</code></td><td>Avalia&#231;&#227;o NR-1 com mapa de riscos psicossociais</td><td>PHP</td></tr>
+  <tr><td>8</td><td><code>get_copc_metrics</code></td><td>M&#233;tricas COPC atuais com compara&#231;&#227;o vs. meta</td><td>PHP</td></tr>
+  <tr><td>9</td><td><code>generate_ai_insights</code></td><td>Gera insights OpenAI para uma organiza&#231;&#227;o (4 tipos)</td><td>PHP</td></tr>
+  <tr><td>10</td><td><code>get_recruitment_metrics</code></td><td>M&#233;tricas de recrutamento: time-to-hire, convers&#227;o, fontes</td><td>Recrutador</td></tr>
+</table>
+</div>
+
+<div class="ss"><div class="ss-t"><div class="sdot"></div>9.2 Como Usar com Claude Desktop</div>
+<p>Para conectar o Claude Desktop ao TalentForge MCP, adicione a seguinte configura&#231;&#227;o em <code>claude_desktop_config.json</code>:</p>
+<div class="card">
+<pre style="background:#1A1A2E;color:#E2E8F0;padding:1.25rem;border-radius:10px;font-family:monospace;font-size:.82rem;overflow-x:auto;line-height:1.6"><code>{
+  "mcpServers": {
+    "talentforge": {
+      "command": "/caminho/para/talent_forge/packages/mcp/start.sh",
+      "env": {
+        "SUPABASE_URL": "https://&lt;seu-projeto&gt;.supabase.co",
+        "SUPABASE_SERVICE_KEY": "&lt;service-role-key&gt;"
+      }
+    }
+  }
+}</code></pre>
+</div>
+<div class="callout tip"><div class="cb"><strong>Inicializa&#231;&#227;o r&#225;pida</strong><p>O script <code>start.sh</code> auto-importa as vari&#225;veis de <code>apps/api/.env</code>, ent&#227;o n&#227;o &#233; necess&#225;rio duplicar credenciais. Execute <code>npm run build:mcp</code> antes do primeiro uso.</p></div></div>
+</div>
+
+<div class="ss"><div class="ss-t"><div class="sdot"></div>9.3 Exemplos de Fluxo LLM + MCP</div>
+<p>Exemplos de prompts que um usu&#225;rio pode fazer em qualquer cliente MCP-compat&#237;vel, com as tools que ser&#227;o invocadas automaticamente:</p>
+<div class="g2">
+  <div class="card">
+    <h4>Fluxo: An&#225;lise de Pipeline</h4>
+    <ol class="steps" style="list-style:none;padding:0">
+      <li><div class="sn">U</div><div class="sbody"><strong>Usu&#225;rio</strong><span>"Quais vagas est&#227;o com candidatos parados h&#225; mais de 7 dias?"</span></div></li>
+      <li><div class="sn" style="background:#3B82F6">M</div><div class="sbody"><strong>MCP chama</strong><span><code>list_jobs</code> + <code>get_pipeline</code> para cada vaga</span></div></li>
+      <li><div class="sn" style="background:#10B981">A</div><div class="sbody"><strong>LLM responde</strong><span>Lista priorizada com &#250;ltima atividade e respons&#225;vel pela vaga</span></div></li>
+    </ol>
+  </div>
+  <div class="card">
+    <h4>Fluxo: Sa&#250;de Organizacional</h4>
+    <ol class="steps" style="list-style:none;padding:0">
+      <li><div class="sn">U</div><div class="sbody"><strong>Usu&#225;rio</strong><span>"Qual time tem mais risco de burnout esse trimestre?"</span></div></li>
+      <li><div class="sn" style="background:#3B82F6">M</div><div class="sbody"><strong>MCP chama</strong><span><code>get_nr1_assessment</code> + <code>get_php_score</code> por time</span></div></li>
+      <li><div class="sn" style="background:#10B981">A</div><div class="sbody"><strong>LLM responde</strong><span>Ranking com scores NR-1, fatores de risco e a&#231;&#245;es recomendadas</span></div></li>
+    </ol>
+  </div>
+</div>
+</div>
+
+<div class="ss"><div class="ss-t"><div class="sdot"></div>9.4 Seguran&#231;a &amp; Auditoria</div>
+<div class="g2">
+  <div class="card">
+    <h4>Isolamento Multi-Tenant</h4>
+    <ul style="font-size:.87rem">
+      <li>Cada sess&#227;o MCP opera com o JWT da organiza&#231;&#227;o autenticada</li>
+      <li>RLS do Supabase se aplica em todas as tools — n&#227;o h&#225; bypass</li>
+      <li>O <code>service_role</code> &#233; usado apenas para opera&#231;&#245;es admin, n&#227;o expostas via MCP</li>
+      <li>Consultas cross-org s&#227;o bloqueadas em n&#237;vel de banco</li>
+    </ul>
+  </div>
+  <div class="card">
+    <h4>Auditoria de Acesso</h4>
+    <ul style="font-size:.87rem">
+      <li>Cada invoca&#231;&#227;o de tool gera registro em <code>audit_logs</code></li>
+      <li>Campos registrados: <code>actor_id</code>, <code>action</code>, <code>resource</code>, <code>metadata</code></li>
+      <li>Rastreabilidade completa de quais dados foram consultados por qual LLM</li>
+      <li>Acesso ao log em <code>/admin/audit</code> (somente admins Fartech)</li>
+    </ul>
+  </div>
+</div>
+<div class="callout warn"><div class="cb"><strong>Uso em Produ&#231;&#227;o</strong><p>O MCP Server exige que a <code>SUPABASE_SERVICE_KEY</code> seja mantida em ambiente seguro. Nunca exponha a chave em reposit&#243;rios p&#250;blicos ou no frontend. O servidor deve rodar apenas em m&#225;quinas autorizadas da equipe de RH ou em infraestrutura privada da Fartech.</p></div></div>
 </div>
 </div>
 
