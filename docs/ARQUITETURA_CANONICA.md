@@ -1,6 +1,6 @@
 # Arquitetura Canônica — TalentForge
 
-**Última atualização**: 2026-03-16 | **Score de Conformidade**: ✅ 100% (Sprint 47 — Parecer Técnico com IA + Prompt Customizável por Recrutador) | **Sprints planejados**: Sprint 41 (AI Assistant) + Sprint 44 (Gate Recrutamento)
+**Última atualização**: 2026-03-16 | **Score de Conformidade**: ✅ 100% (Sprint 47 — Parecer Técnico com IA + Prompt Customizável + Fix orgId) | **Sprints planejados**: Sprint 41 (AI Assistant) + Sprint 44 (Gate Recrutamento)
 
 ## 📜 FONTE DA VERDADE — PRINCÍPIO FUNDAMENTAL
 
@@ -7449,6 +7449,14 @@ Adicionar card "Módulo de Recrutamento" seguindo o mesmo padrão visual do card
 - ✅ **CSP fix (`next.config.mjs`)**: `style-src` + `https://fonts.googleapis.com`; `font-src` + `https://fonts.gstatic.com`; `script-src` + `connect-src` + `https://vercel.live`
 - ✅ **`.env.example` unificado**: criado na raiz com todas as variáveis do monorepo documentadas; `VERCEL_OIDC_TOKEN` explicitamente proibido
 - ✅ **Commits**: `4d2f45f` → `80b2f89` → `7866ab2` → `dc76c11` → `e18fb03` → `ec67c44` → `ff116e7` → `266d366` → `origin/main`
+
+### v5.12 (2026-03-16)
+- ✅ **Score de Conformidade**: 100% mantido (Sprint 47 — Fix geração de parecer)
+- ✅ **Bug fix `handleGenerateReview`**: botão "Gerar Parecer com IA" em `/dashboard/candidates` não disparava quando `localStorage.getItem('selected_org_id')` era null (retorno silencioso)
+- ✅ **`resolvedOrgId` em estado**: `loadCandidates()` resolve orgId via `org_members` (DB) e persiste em estado React + sobrescreve localStorage — eliminando dependência exclusiva do localStorage
+- ✅ **Cadeia de fallback**: `resolvedOrgId ?? localStorage('selected_org_id') ?? session.user_metadata.org_id` aplicada em `handleGenerateReview` e `loadReviews`
+- ✅ **Alertas visíveis**: retornos antecipados por sessão expirada ou org não identificada agora exibem `alert()` em vez de falhar silenciosamente
+- ✅ **Commits**: `81f5c03` → `deb1ab5` → `0c87076` → `000d3a9` → `origin/main`
 
 ### v5.11 (2026-03-16)
 - ✅ **Score de Conformidade**: 100% mantido (Sprint 47 — Prompt IA Customizável)
