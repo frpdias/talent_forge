@@ -49,13 +49,16 @@ export async function DELETE(request: NextRequest) {
     }
 
     // 5. Limpar referências FK antes de deletar (evita constraint violations)
-    await supabaseAdmin.rpc('admin_cleanup_user_references', { p_user_id: userId });
+    const { error: rpcError } = await supabaseAdmin.rpc('admin_cleanup_user_references', { p_user_id: userId });
+    if (rpcError) {
+      console.error('[delete-user] RPC cleanup error:', rpcError.message);
+    }
 
     // 6. Excluir usuário do Supabase Auth (trigger remove user_profiles em cascata)
     const { error: deleteError } = await supabaseAdmin.auth.admin.deleteUser(userId);
     if (deleteError) {
-      console.error('[delete-user] Erro ao excluir:', deleteError.message);
-      return NextResponse.json({ error: deleteError.message }, { status: 500 });
+      console.error('[delete-user] Erro ao excluir:', deleteError.message, '| rpcError:', rpcError?.message);
+      return NextResponse.json({ error: deleteError.message, rpcError: rpcError?.message ?? null }, { status: 500 });
     }
 
     // 7. Registrar em audit_logs — schema real: (actor_id, action, resource, metadata)
