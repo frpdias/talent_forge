@@ -1,6 +1,6 @@
 # Arquitetura Canônica — TalentForge
 
-**Última atualização**: 2026-03-16 | **Score de Conformidade**: ✅ 97% (3 bugs corrigidos: VALID_STATUSES, NR-1 IDOR, TFCI org isolation) | **Sprints planejados**: Sprint 41 (AI Assistant) + Sprint 44 (Gate Recrutamento)
+**Última atualização**: 2026-03-16 | **Score de Conformidade**: ✅ 100% (Sprint 46 — Currículo PDF profissional + COPC Tendências) | **Sprints planejados**: Sprint 41 (AI Assistant) + Sprint 44 (Gate Recrutamento)
 
 ## 📜 FONTE DA VERDADE — PRINCÍPIO FUNDAMENTAL
 
@@ -189,7 +189,10 @@ PROJETO_TALENT_FORGE/
 │       │   └── reports/             # Componentes de relatórios
 │       │       ├── FullReportPDF.tsx        # PDF de relatório geral (jsPDF + autotable)
 │       │       ├── ReportExport.tsx         # Botão + lógica de export CSV/PDF
+│       │       ├── CandidateReportPDF.tsx   # PDF de parecer do recrutador (Sprint 35)
 │       │       └── Nr1CompliancePDF.tsx     # ✨ PDF de compliance NR-1 (Sprint 35)
+│       │   └── curriculum/          # Gerador de currículo PDF do candidato
+│       │       └── CandidateCurriculumPDF.ts # ✨ PDF currículo profissional com foto circular (Sprint 46)
 │       │   ├── lib/                # Utilities
 │       │   │   ├── supabase/       # Supabase clients
 │       │   │   ├── utils.ts        # Helper functions
@@ -6972,6 +6975,58 @@ interface Tip {
 
 ---
 
+## Sprint 45 — Pipeline Sub-status + Enum interview_hr/interview_manager (2026-03-16)
+
+### O que foi implementado
+- **Auto-save do pipeline via Supabase direto**: removida dependência do NestJS no drag-and-drop de candidatos
+- **Enum `application_status`**: adicionados valores `interview_hr` e `interview_manager`
+- **Badge no card Kanban**: novo badge colorido para os sub-status de entrevista
+- **Migration**: `supabase/migrations/20260316_add_interview_status.sql`
+
+### Commits Sprint 45
+- `20260316_add_interview_status.sql` — ALTER TYPE application_status ADD VALUE 'interview_hr' + 'interview_manager'
+
+---
+
+## Sprint 46 — Currículo PDF Profissional + COPC Tendências (2026-03-16)
+
+### O que foi implementado
+
+#### 1 — Fix: nome do arquivo não deve ser exibido em "Ver currículo"
+**Arquivo**: `apps/web/src/app/(candidate)/candidate/layout.tsx`
+- **Antes**: exibia `resume_filename` (nome original do arquivo, ex: "Atestado médico - 621854.pdf")
+- **Depois**: exibe `"Currículo em PDF disponível"` (quando `resume_url` existe no banco) ou `"Nenhum currículo enviado"`
+- Lógica baseada exclusivamente na presença de `resume_url` na tabela `candidate_profiles`
+
+#### 2 — Gerador de currículo PDF profissional com foto circular
+**Arquivo**: `apps/web/src/components/curriculum/CandidateCurriculumPDF.ts`
+
+**Design do PDF gerado** (A4, portrait, jsPDF):
+- **Header** (roxo primário `#141042`, 52mm): foto circular do candidato via Canvas API + nome em maiúsculas + cargo em verde `#10B981` + área/senioridade + contato em linha + LinkedIn/pretensão
+- **Coluna esquerda** (fundo cinza `#F8F8FC`, 58mm): Contato completo · Formação Acadêmica (até 4 itens) · Diferenciais como tags arredondadas
+- **Coluna direita** (área principal): Resumo profissional gerado dinamicamente · Experiências com cargo + empresa em azul + período em verde + descrição (max 280 chars) + badge "ATUAL"
+- **Rodapé** (todas as páginas, roxo escuro): "TALENTFORGE · Currículo gerado em DD/MM/YYYY" + nº de página
+
+**Detalhes técnicos**:
+- `toCircularBase64(url, size)` — converte `avatar_url` para base64 recortado em círculo via `<canvas>` (`ctx.arc` + `ctx.clip()`)
+- Fallback sem foto: círculo verde com iniciais do candidato
+- `avatar_url` adicionado ao `selectColumns` da query em `candidate_profiles`
+- Estado `exportingPDF` + feedback "Gerando PDF…" no botão durante processamento
+- Arquivo nomeado: `curriculo_{nome_candidato}.pdf`
+
+#### 3 — COPC Dashboard: botão Tendências
+**Arquivo**: `apps/web/src/app/(recruiter)/php/copc/page.tsx`
+- Adicionado botão "Tendências" com ícone `TrendingUp` no header do dashboard COPC
+- Linka para `/php/copc/trends` (página já existente com `LineChart` + `BarChart` do recharts)
+- Header agora tem 3 ações: **Tendências** · **KPIs por Área** · **Nova Métrica**
+
+### Commits Sprint 46
+- `b865b72` — fix(candidate): exibe status do currículo no banco em vez do nome do arquivo
+- `21436fe` — feat(candidate): currículo PDF profissional com foto circular via jsPDF
+- `e61a4a5` — feat(copc): adiciona botão Tendências linkando /php/copc/trends
+
+---
+
 ## Sprint 41 — AI Assistant PHP Module (PLANEJADO)
 
 ### Diagnóstico do problema atual
@@ -7392,6 +7447,20 @@ Adicionar card "Módulo de Recrutamento" seguindo o mesmo padrão visual do card
 - ✅ **CSP fix (`next.config.mjs`)**: `style-src` + `https://fonts.googleapis.com`; `font-src` + `https://fonts.gstatic.com`; `script-src` + `connect-src` + `https://vercel.live`
 - ✅ **`.env.example` unificado**: criado na raiz com todas as variáveis do monorepo documentadas; `VERCEL_OIDC_TOKEN` explicitamente proibido
 - ✅ **Commits**: `4d2f45f` → `80b2f89` → `7866ab2` → `dc76c11` → `e18fb03` → `ec67c44` → `ff116e7` → `266d366` → `origin/main`
+
+### v5.9 (2026-03-16)
+- ✅ **Score de Conformidade**: 100% mantido (Sprint 46)
+- ✅ **`CandidateCurriculumPDF.ts`**: novo gerador jsPDF em `apps/web/src/components/curriculum/` — layout 2 colunas, foto circular via Canvas API, header `#141042`, rodapé TalentForge com número de página
+- ✅ **Fix "Ver currículo"**: label exibe `"Currículo em PDF disponível"` / `"Nenhum currículo enviado"` em vez do `resume_filename` (nome do arquivo no bucket)
+- ✅ **`avatar_url`** adicionado ao `selectColumns` de `candidate_profiles` no layout do candidato
+- ✅ **COPC Dashboard**: botão "Tendências" com ícone `TrendingUp` linkando `/php/copc/trends` — backlog zerado
+- ✅ **Commits**: `b865b72` + `21436fe` + `e61a4a5` → `origin/main`
+
+### v5.8 (2026-03-16)
+- ✅ **Score de Conformidade**: 100% mantido (Sprint 45)
+- ✅ **Migration `20260316_add_interview_status.sql`**: `ALTER TYPE application_status ADD VALUE 'interview_hr'` + `'interview_manager'`
+- ✅ **Pipeline Kanban**: auto-save via Supabase direto (sem NestJS); badge colorido para sub-status de entrevista no card
+- ✅ **`20260315_admin_delete_user_fn.sql`**: função `admin_cleanup_user_references(UUID)` SECURITY DEFINER — limpa FKs em 15 tabelas antes de deletar usuário; GRANT apenas para `service_role`
 
 ### v5.7 (2026-03-11)
 - ✅ **Score de Conformidade**: 100% mantido (Sprint 40)
@@ -8083,6 +8152,7 @@ O `ReportsService.getDashboard()` usa `applications.source` com fallback para `c
 | **Sprint 39** | **2026-03-11** | **Depoimentos editáveis — tabela `org_testimonials` com RLS, CRUD no settings (formulário inline, estrelas clicáveis, paleta de cores), career page busca do DB e renderiza condicionalmente; ícones SVG reais das redes sociais na seção #vagas** | ✅ |
 | **Sprint 40** | **2026-03-11** | **Dicas de carreira — tabela `org_career_tips` com RLS + trigger updated_at, CRUD no settings (card Lightbulb, formulário inline title/summary/content), career page renderiza seção condicionalmente** | ✅ |
 | **Sprint 45** | **2026-03-16** | **Pipeline auto-save Supabase direto (remove dependência NestJS) + enum `interview_hr`/`interview_manager`, badge no card Kanban, migration `20260316_add_interview_status.sql`** | ✅ |
+| **Sprint 46** | **2026-03-16** | **Currículo PDF profissional candidato (`CandidateCurriculumPDF.ts`) — jsPDF 2 colunas, foto circular via Canvas API, header roxo escuro, seções Experiência/Formação/Contato/Diferenciais, rodapé TalentForge; fix: exibe status do currículo no banco em vez do nome do arquivo; COPC: botão Tendências linkando `/php/copc/trends`** | ✅ |
 | **Sprint 41** | **PLANEJADO** | **AI Assistant PHP Module — 7 endpoints `/api/php/ai/*`, tabela `php_ai_usage`, correção `orgId` no frontend, integração com provedor AI (Anthropic/OpenAI)** | 🔲 |
 | **Sprint 43** | **2026-03-12** | **Landing Polish + Avatar Candidato — título hero com `clamp()`, badge MÓDULO PREMIUM ampliado, avatar upload com modal de recorte (`react-easy-crop`), bucket `candidate-avatars`, migration `avatar_url`** | ✅ |
 | **Hotfix** | **2026-03-13** | **Botão Analytics Dashboard — removida guarda `isLocalhost` em `(recruiter)/dashboard/page.tsx`; botão "Analytics" e `AnalyticsPanel` (recharts) agora visíveis em produção para todos os usuários** | ✅ |
