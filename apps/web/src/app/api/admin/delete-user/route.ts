@@ -1,0 +1,61 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { createClient } from '@supabase/supabase-js';
+
+async function getAuthUser(request: NextRequest) {
+  const authHeader = request.headers.get('authorization');
+  if (!authHeader) return null;
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+  );
+  const token = authHeader.replace('Bearer ', '');
+  const { data: { user } } = await supabase.auth.getUser(token);
+  return user;
+}
+
+export async function DELETE(request: NextRequest) {
+  try {
+    const authUser = await getAuthUser(request);
+    if (!authUser) {
+      return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+    }
+
+    const supabaseAdmin = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    );
+
+    // Verificar se o usuário autenticado é admin
+    const { data: profile } = await supabaseAdmin
+      .from('user_profiles')
+      .select('user_type')
+      .eq('id', authUser.id)
+      .single();
+
+    if (profile?.user_type !== 'admin') {
+      return NextResponse.json({ error: 'Acesso negado — apenas admins' }, { status: 403 });
+    }
+
+    const { userId } = await request.json();
+    if (!userId) {
+      return NextResponse.json({ error: 'userId é obrigatório' }, { status: 400 });
+    }
+
+    // Impedir que o admin se exclua
+    if (userId === authUser.id) {
+      return NextResponse.json({ error: 'Você não pode excluir sua própria conta' }, { status: 400 });
+    }
+
+    // Excluir o usuário do Supabase Auth (cascata remove user_profiles via trigger)
+    const { error } = await supabaseAdmin.auth.admin.deleteUser(userId);
+    if (error) {
+      console.error('Erro ao excluir usuário:', error);
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    return NextResponse.json({ success: true });
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : 'Erro interno';
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
+}

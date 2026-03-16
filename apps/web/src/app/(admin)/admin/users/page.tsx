@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Users, Search, UserCheck, Briefcase, Mail, Calendar, Loader2, Shield, UserPlus, SendHorizonal, CheckCircle, AlertCircle, RefreshCw } from 'lucide-react';
+import { Users, Search, UserCheck, Briefcase, Mail, Calendar, Loader2, Shield, UserPlus, SendHorizonal, CheckCircle, AlertCircle, RefreshCw, Trash2, X } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 
 interface User {
@@ -34,6 +34,35 @@ export default function UsersPage() {
   const [activeTab, setActiveTab] = useState<TabType>('all');
   const [sendingId, setSendingId] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<ResendFeedback | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<User | null>(null);
+
+  async function handleDeleteUser(user: User) {
+    setDeletingId(user.id);
+    setConfirmDelete(null);
+    try {
+      const supabase = createClient();
+      const { data: { session } } = await supabase.auth.getSession();
+      const res = await fetch('/api/admin/delete-user', {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session?.access_token ?? ''}`,
+        },
+        body: JSON.stringify({ userId: user.id }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      setUsers(prev => prev.filter(u => u.id !== user.id));
+      setFeedback({ userId: user.id, success: true, msg: `Usuário ${user.email} excluído com sucesso` });
+      setTimeout(() => setFeedback(null), 5000);
+    } catch (err: any) {
+      setFeedback({ userId: user.id, success: false, msg: err.message || 'Erro ao excluir usuário' });
+      setTimeout(() => setFeedback(null), 8000);
+    } finally {
+      setDeletingId(null);
+    }
+  }
 
   async function handleResendEmail(user: User) {
     setSendingId(user.id);
@@ -120,6 +149,46 @@ export default function UsersPage() {
 
   return (
     <div className="space-y-6 pb-20 lg:pb-0">
+
+      {/* Modal de confirmação de exclusão */}
+      {confirmDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 space-y-4">
+            <div className="flex items-start justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-red-100 rounded-xl flex items-center justify-center">
+                  <Trash2 className="w-5 h-5 text-red-600" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-[#141042]">Excluir usuário</h3>
+                  <p className="text-xs text-[#999]">Esta ação não pode ser desfeita</p>
+                </div>
+              </div>
+              <button onClick={() => setConfirmDelete(null)} className="text-[#999] hover:text-[#141042]">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <p className="text-sm text-[#555]">
+              Tem certeza que deseja excluir <strong className="text-[#141042]">{confirmDelete.full_name || confirmDelete.email}</strong>?
+              O usuário perderá acesso imediatamente e todos os seus dados serão removidos.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setConfirmDelete(null)}
+                className="flex-1 px-4 py-2 border border-[#E5E5DC] rounded-xl text-sm font-medium text-[#666] hover:bg-[#F5F5F0] transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={() => handleDeleteUser(confirmDelete)}
+                className="flex-1 px-4 py-2 bg-red-600 text-white rounded-xl text-sm font-medium hover:bg-red-700 transition-colors"
+              >
+                Excluir
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Toast de feedback */}
       {feedback && (
@@ -270,7 +339,7 @@ export default function UsersPage() {
                             )}
                             <button
                               onClick={() => handleResendEmail(user)}
-                              disabled={sendingId === user.id}
+                              disabled={sendingId === user.id || deletingId === user.id}
                               title="Gera nova senha e reenvia as credenciais por e-mail"
                               className="mt-1 flex items-center gap-1 text-xs font-medium text-[#3B82F6] hover:text-[#2563EB] disabled:opacity-50 transition-colors"
                             >
@@ -278,6 +347,17 @@ export default function UsersPage() {
                                 ? <RefreshCw className="w-3 h-3 animate-spin" />
                                 : <SendHorizonal className="w-3 h-3" />}
                               {sendingId === user.id ? 'Enviando...' : 'Reenviar e-mail'}
+                            </button>
+                            <button
+                              onClick={() => setConfirmDelete(user)}
+                              disabled={sendingId === user.id || deletingId === user.id}
+                              title="Excluir usuário"
+                              className="mt-0.5 flex items-center gap-1 text-xs font-medium text-red-500 hover:text-red-700 disabled:opacity-50 transition-colors"
+                            >
+                              {deletingId === user.id
+                                ? <RefreshCw className="w-3 h-3 animate-spin" />
+                                : <Trash2 className="w-3 h-3" />}
+                              {deletingId === user.id ? 'Excluindo...' : 'Excluir'}
                             </button>
                           </div>
                         </div>
