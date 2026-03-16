@@ -4,7 +4,7 @@ import { createClient } from '@supabase/supabase-js';
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
-const VALID_STATUSES = ['applied', 'in_process', 'in_documentation', 'hired', 'rejected'];
+const VALID_STATUSES = ['applied', 'in_process', 'interview_hr', 'interview_manager', 'in_documentation', 'hired', 'rejected'];
 
 function getSupabase() {
   return createClient(supabaseUrl, supabaseServiceKey);

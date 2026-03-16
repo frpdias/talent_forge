@@ -32,21 +32,30 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Buscar organization do usuário
-    const { data: orgMember } = await supabase
-      .from('org_members')
-      .select('org_id')
-      .eq('user_id', user.id)
-      .single();
-
-    if (!orgMember?.org_id) {
+    // Buscar org_id do header (fonte canônica para multi-tenant)
+    const orgId = request.headers.get('x-org-id');
+    if (!orgId) {
       return NextResponse.json(
-        { error: 'Usuário não pertence a nenhuma organização' },
-        { status: 403 }
+        { error: 'x-org-id é obrigatório' },
+        { status: 400 }
       );
     }
 
-    const orgId = orgMember.org_id;
+    // Valida que o usuário pertence à org
+    const { data: orgMember } = await supabase
+      .from('org_members')
+      .select('id')
+      .eq('user_id', user.id)
+      .eq('org_id', orgId)
+      .eq('status', 'active')
+      .maybeSingle();
+
+    if (!orgMember) {
+      return NextResponse.json(
+        { error: 'Sem permissão para esta organização' },
+        { status: 403 }
+      );
+    }
 
     // Buscar ciclos TFCI
     const { data: cycles, error } = await supabase
@@ -101,21 +110,31 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Buscar organization do usuário
+    // Buscar org_id do header (fonte canônica para multi-tenant)
+    const orgId = request.headers.get('x-org-id');
+    if (!orgId) {
+      return NextResponse.json(
+        { error: 'x-org-id é obrigatório' },
+        { status: 400 }
+      );
+    }
+
+    // Valida que o usuário pertence à org
     const { data: orgMember } = await supabase
       .from('org_members')
-      .select('org_id')
+      .select('id')
       .eq('user_id', user.id)
-      .single();
+      .eq('org_id', orgId)
+      .eq('status', 'active')
+      .maybeSingle();
 
-    if (!orgMember?.org_id) {
+    if (!orgMember) {
       return NextResponse.json(
-        { error: 'Usuário não pertence a nenhuma organização' },
+        { error: 'Sem permissão para esta organização' },
         { status: 403 }
       );
     }
 
-    const orgId = orgMember.org_id;
     const body = await request.json();
 
     // Criar ciclo TFCI

@@ -31,11 +31,30 @@ export async function DELETE(
       return NextResponse.json({ error: 'Não autenticado' }, { status: 401 });
     }
 
+    const orgId = request.headers.get('x-org-id');
+    if (!orgId) {
+      return NextResponse.json({ error: 'x-org-id é obrigatório' }, { status: 400 });
+    }
+
     const supabase = getSupabase();
+
+    // Valida que o convite pertence à org do usuário antes de deletar
+    const { data: invitation } = await supabase
+      .from('nr1_assessment_invitations')
+      .select('id, org_id')
+      .eq('id', id)
+      .eq('org_id', orgId)
+      .maybeSingle();
+
+    if (!invitation) {
+      return NextResponse.json({ error: 'Convite não encontrado' }, { status: 404 });
+    }
+
     const { error } = await supabase
       .from('nr1_assessment_invitations')
       .delete()
-      .eq('id', id);
+      .eq('id', id)
+      .eq('org_id', orgId);
 
     if (error) {
       console.error('Erro ao cancelar convite:', error);
