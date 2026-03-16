@@ -7450,6 +7450,15 @@ Adicionar card "Módulo de Recrutamento" seguindo o mesmo padrão visual do card
 - ✅ **`.env.example` unificado**: criado na raiz com todas as variáveis do monorepo documentadas; `VERCEL_OIDC_TOKEN` explicitamente proibido
 - ✅ **Commits**: `4d2f45f` → `80b2f89` → `7866ab2` → `dc76c11` → `e18fb03` → `ec67c44` → `ff116e7` → `266d366` → `origin/main`
 
+### v5.13 (2026-03-16)
+- ✅ **Score de Conformidade**: 100% mantido (Sprint 47 — PDF Relatório Completo)
+- ✅ **`CandidateFullReportPDF.ts`**: novo gerador em `apps/web/src/components/reports/` — jsPDF A4, quatro seções: Currículo (layout de duas colunas idêntico ao PDF do candidato), Resultados dos Testes (DISC com barras por D/I/S/C, Cores, PI), Parecer Técnico (cards de score, barra de progresso, texto da IA), Anotações do Recrutador (notas salvas + 12 linhas em branco para novas anotações)
+- ✅ **Interface `FullReportData`**: aceita `candidate`, `experiences`, `education`, `disc`, `colorAssessment`, `piAssessment`, `review`, `notes[]`
+- ✅ **`handleGenerateFullReport()`**: novo handler em `candidates/page.tsx` — busca anotações via Supabase client-side, monta `FullReportData` com todo estado já carregado (`discResult`, `colorResult`, `piResult`, `currentReview`, `candidateDetails`) e aciona o gerador; estado `pdfLoading` controla loading indicator
+- ✅ **Botão PDF**: "Baixar Relatório Completo (PDF)" exibido no bloco `currentReview` da aba Revisão — reutiliza ícone `Download` do Lucide
+- ✅ **Rodapé dinâmico**: `drawAllFooters()` percorre todas as páginas e aplica paginação "X / Y" + branding TalentForge
+- ✅ **Commits**: `e296a14` → `origin/main`
+
 ### v5.12 (2026-03-16)
 - ✅ **Score de Conformidade**: 100% mantido (Sprint 47 — Fix geração de parecer)
 - ✅ **Bug fix `handleGenerateReview`**: botão "Gerar Parecer com IA" em `/dashboard/candidates` não disparava quando `localStorage.getItem('selected_org_id')` era null (retorno silencioso)
