@@ -24,6 +24,9 @@ import {
   FolderOpen,
   Eye,
   Download,
+  UserCheck,
+  Building2,
+  ChevronRight,
 } from 'lucide-react';
 
 interface PipelineApplication {
@@ -82,17 +85,30 @@ interface Props {
   application: PipelineApplication | null;
   isOpen: boolean;
   onClose: () => void;
+  onStatusChange?: (applicationId: string, newStatus: string) => void;
 }
 
 const STATUS_LABELS: Record<string, { label: string; color: string }> = {
   applied: { label: 'Nova Candidatura', color: 'bg-blue-100 text-blue-700 border-blue-200' },
   in_process: { label: 'Em Avaliação', color: 'bg-amber-100 text-amber-700 border-amber-200' },
+  interview_hr: { label: 'Entrevista com o RH', color: 'bg-orange-100 text-orange-700 border-orange-200' },
+  interview_manager: { label: 'Entrevista com o Gestor', color: 'bg-teal-100 text-teal-700 border-teal-200' },
   in_documentation: { label: 'Em Documentação', color: 'bg-violet-100 text-violet-700 border-violet-200' },
   hired: { label: 'Contratado', color: 'bg-emerald-100 text-emerald-700 border-emerald-200' },
   rejected: { label: 'Não Aprovado', color: 'bg-red-100 text-red-700 border-red-200' },
 };
 
-export function ApplicationDetailsDrawer({ application, isOpen, onClose }: Props) {
+const STAGE_PIPELINE = [
+  { id: 'applied',          label: 'Nova Candidatura',        icon: Clock,         colorClass: 'border-blue-200 text-blue-700 bg-blue-50',   activeClass: 'bg-blue-100 border-blue-400 text-blue-800' },
+  { id: 'in_process',       label: 'Em Avaliação',            icon: Clock,         colorClass: 'border-amber-200 text-amber-700 bg-amber-50', activeClass: 'bg-amber-100 border-amber-400 text-amber-800' },
+  { id: 'interview_hr',     label: 'Entrevista com o RH',     icon: UserCheck,     colorClass: 'border-orange-200 text-orange-700 bg-orange-50', activeClass: 'bg-orange-100 border-orange-400 text-orange-800' },
+  { id: 'interview_manager',label: 'Entrevista com o Gestor', icon: Building2,     colorClass: 'border-teal-200 text-teal-700 bg-teal-50',   activeClass: 'bg-teal-100 border-teal-400 text-teal-800' },
+  { id: 'in_documentation', label: 'Em Documentação',         icon: ArrowRight,    colorClass: 'border-violet-200 text-violet-700 bg-violet-50', activeClass: 'bg-violet-100 border-violet-400 text-violet-800' },
+  { id: 'hired',            label: 'Contratado',              icon: CheckCircle2,  colorClass: 'border-emerald-200 text-emerald-700 bg-emerald-50', activeClass: 'bg-emerald-100 border-emerald-400 text-emerald-800' },
+  { id: 'rejected',         label: 'Não Aprovado',            icon: XCircle,       colorClass: 'border-red-200 text-red-700 bg-red-50',      activeClass: 'bg-red-100 border-red-400 text-red-800' },
+];
+
+export function ApplicationDetailsDrawer({ application, isOpen, onClose, onStatusChange }: Props) {
   const [profile, setProfile] = useState<CandidateProfile | null>(null);
   const [loadingProfile, setLoadingProfile] = useState(false);
   const [resumeViewerUrl, setResumeViewerUrl] = useState<string | null>(null);
@@ -102,6 +118,7 @@ export function ApplicationDetailsDrawer({ application, isOpen, onClose }: Props
   const [docViewerUrl, setDocViewerUrl] = useState<string | null>(null);
   const [docViewerLabel, setDocViewerLabel] = useState('');
   const [docViewerLoading, setDocViewerLoading] = useState(false);
+  const [updatingStatus, setUpdatingStatus] = useState(false);
 
   const supabase = createClient();
 
@@ -330,7 +347,7 @@ export function ApplicationDetailsDrawer({ application, isOpen, onClose }: Props
         <div className="flex-1 overflow-y-auto">
           {application && (
             <>
-              {/* Application Info */}
+              {/* Candidatura */}
               <div className="px-5 py-4 border-b border-[#E5E5DC]">
                 <h3 className="text-xs font-semibold text-[#94A3B8] uppercase tracking-wider mb-3">
                   Candidatura
@@ -408,6 +425,54 @@ export function ApplicationDetailsDrawer({ application, isOpen, onClose }: Props
                   )}
                 </div>
               </div>
+
+              {/* Mover Etapa */}
+              {onStatusChange && (
+                <div className="px-5 py-4 border-b border-[#E5E5DC]">
+                  <h3 className="text-xs font-semibold text-[#94A3B8] uppercase tracking-wider mb-3">
+                    Atualizar Etapa
+                  </h3>
+                  <div className="space-y-1.5">
+                    {STAGE_PIPELINE.map((stage, index) => {
+                      const isCurrent = application.status === stage.id;
+                      const Icon = stage.icon;
+                      return (
+                        <button
+                          key={stage.id}
+                          disabled={isCurrent || updatingStatus}
+                          onClick={() => {
+                            if (!isCurrent && onStatusChange) {
+                              setUpdatingStatus(true);
+                              onStatusChange(application.id, stage.id);
+                              setTimeout(() => setUpdatingStatus(false), 500);
+                            }
+                          }}
+                          className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg border text-left transition-all ${
+                            isCurrent
+                              ? `${stage.activeClass} font-semibold cursor-default`
+                              : 'bg-white border-[#E5E5DC] hover:border-[#141042]/30 hover:bg-[#FAFAF8] cursor-pointer'
+                          }`}
+                        >
+                          <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
+                            isCurrent ? 'border-current bg-current/10' : 'border-[#E5E5DC]'
+                          }`}>
+                            {isCurrent ? (
+                              <CheckCircle2 className="h-3.5 w-3.5" />
+                            ) : (
+                              <span className="text-[9px] font-bold text-[#94A3B8]">{index + 1}</span>
+                            )}
+                          </div>
+                          <Icon className={`h-3.5 w-3.5 flex-shrink-0 ${isCurrent ? '' : 'text-[#94A3B8]'}`} />
+                          <span className="text-sm flex-1">{stage.label}</span>
+                          {!isCurrent && (
+                            <ChevronRight className="h-3.5 w-3.5 text-[#94A3B8] flex-shrink-0" />
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
 
               {/* Candidate Profile */}
               <div className="px-5 py-4 border-b border-[#E5E5DC]">

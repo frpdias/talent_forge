@@ -21,7 +21,9 @@ import {
   Mail,
   Briefcase,
   Filter,
-  RefreshCw
+  RefreshCw,
+  UserCheck,
+  Building2,
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { applicationsApi } from '@/lib/api';
@@ -272,7 +274,11 @@ export default function PipelinePage() {
       title: stage.title,
       color: stage.color,
       applications: filteredApplications
-        .filter((app: any) => app.status === stage.id)
+        .filter((app: any) =>
+          stage.id === 'in_process'
+            ? ['in_process', 'interview_hr', 'interview_manager'].includes(app.status)
+            : app.status === stage.id
+        )
         .map((app: any) => ({
           id: app.id,
           candidate_name: app.candidate_name,
@@ -346,6 +352,19 @@ export default function PipelinePage() {
     }
   };
 
+  function handleStatusChangeFromDrawer(applicationId: string, newStatus: string) {
+    setApplicationsCache(prev =>
+      prev.map(app => app.id === applicationId ? { ...app, status: newStatus } : app)
+    );
+    setSelectedApplication(prev =>
+      prev && prev.id === applicationId ? { ...prev, status: newStatus } : prev
+    );
+    setPendingChanges(prev => ({
+      ...prev,
+      [applicationId]: { type: 'status', status: newStatus },
+    }));
+  }
+
   const handleSaveChanges = async () => {
     if (!orgId) return;
     const entries = Object.entries(pendingChanges);
@@ -408,7 +427,7 @@ export default function PipelinePage() {
 
   // Calculate stats
   const totalCandidates = applicationsCache.length;
-  const inProcessCount = applicationsCache.filter(a => a.status === 'in_process').length;
+  const inProcessCount = applicationsCache.filter(a => ['in_process', 'interview_hr', 'interview_manager'].includes(a.status)).length;
   const inDocumentationCount = applicationsCache.filter(a => a.status === 'in_documentation').length;
   const hiredCount = applicationsCache.filter(a => a.status === 'hired').length;
   const conversionRate = totalCandidates > 0 ? Math.round((hiredCount / totalCandidates) * 100) : 0;
@@ -716,6 +735,21 @@ export default function PipelinePage() {
                                       </div>
                                     </div>
 
+                                    {/* Interview Stage Badge */}
+                                    {(app.status === 'interview_hr' || app.status === 'interview_manager') && (
+                                      <div className={`mt-2 inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium border ${
+                                        app.status === 'interview_hr'
+                                          ? 'bg-orange-50 text-orange-700 border-orange-200'
+                                          : 'bg-teal-50 text-teal-700 border-teal-200'
+                                      }`}>
+                                        {app.status === 'interview_hr' ? (
+                                          <><UserCheck className="h-3 w-3 mr-1" />Entrevista c/ RH</>
+                                        ) : (
+                                          <><Building2 className="h-3 w-3 mr-1" />Entrevista c/ Gestor</>
+                                        )}
+                                      </div>
+                                    )}
+
                                     {/* Card Footer */}
                                     <div className="mt-3 pt-3 border-t border-[#E5E5DC]/60 flex items-center justify-between">
                                       <div className="flex items-center gap-1.5 text-xs text-[#94A3B8]">
@@ -772,6 +806,7 @@ export default function PipelinePage() {
         application={selectedApplication}
         isOpen={selectedApplication !== null}
         onClose={() => setSelectedApplication(null)}
+        onStatusChange={handleStatusChangeFromDrawer}
       />
     </div>
   );
