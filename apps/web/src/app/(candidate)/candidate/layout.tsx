@@ -216,7 +216,7 @@ export default function CandidateLayout({ children }: { children: React.ReactNod
 
   const handleResumePrint = () => {
     if (typeof window !== 'undefined') {
-      window.print();
+      setTimeout(() => window.print(), 0);
     }
   };
 

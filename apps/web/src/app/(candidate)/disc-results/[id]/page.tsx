@@ -254,7 +254,7 @@ const discProfileSummary: Record<string, string> = {
             Voltar ao Dashboard
           </Button>
           <Button 
-            onClick={() => window.print()}
+            onClick={() => setTimeout(() => window.print(), 0)}
             variant="outline"
             className="flex-1"
           >

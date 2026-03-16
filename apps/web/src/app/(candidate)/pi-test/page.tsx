@@ -77,7 +77,7 @@ export default function PiTestPage() {
 
   const handlePrint = () => {
     if (typeof window !== 'undefined') {
-      window.print();
+      setTimeout(() => window.print(), 0);
     }
   };
 

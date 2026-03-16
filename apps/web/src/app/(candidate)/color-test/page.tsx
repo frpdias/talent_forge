@@ -62,7 +62,7 @@ export default function ColorTestPage() {
   const supabase = createClient();
 
   const handlePrint = () => {
-    window.print();
+    setTimeout(() => window.print(), 0);
   };
 
   useEffect(() => {

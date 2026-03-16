@@ -306,7 +306,7 @@ export default function DISCReportsPage() {
       </Card>
 
       {/* Actions */}
-      <Button onClick={() => window.print()} className="bg-blue-600 hover:bg-blue-700">
+      <Button onClick={() => setTimeout(() => window.print(), 0)} className="bg-blue-600 hover:bg-blue-700">
         Imprimir Relatório
       </Button>
     </div>

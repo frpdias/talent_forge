@@ -262,7 +262,7 @@ export default function AssessmentsPage() {
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => window.print()}
+                      onClick={() => setTimeout(() => window.print(), 0)}
                     >
                       <Download className="w-4 h-4 mr-2" />
                       Baixar Relatório

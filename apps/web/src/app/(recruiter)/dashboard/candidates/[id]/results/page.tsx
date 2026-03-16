@@ -451,7 +451,7 @@ const discProfileSummary: Record<string, string> = {
 
       {/* Actions */}
       <div className="flex gap-4 mt-8">
-        <Button onClick={() => window.print()} className="flex-1 bg-blue-600 hover:bg-blue-700">
+        <Button onClick={() => setTimeout(() => window.print(), 0)} className="flex-1 bg-blue-600 hover:bg-blue-700">
           <Download className="w-4 h-4 mr-2" />
           Baixar Relatório Completo
         </Button>
