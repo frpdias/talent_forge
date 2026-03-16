@@ -33,7 +33,7 @@ export function OnboardingManualModal({ isOpen, onClose }: Props) {
   const [expandedIdx, setExpandedIdx] = useState<number | null>(null);
   const contentRef = useRef<HTMLDivElement>(null);
 
-  const sections: Section[] = manualData.sections;
+  const sections = (manualData.sections as Array<Section & { adminOnly?: boolean }>).filter(s => !s.adminOnly);
   const current = sections[currentIdx];
   const progress = Math.round((readSections.size / sections.length) * 100);
 

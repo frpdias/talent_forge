@@ -89,6 +89,7 @@ def parse():
         if not sec_id:
             continue
 
+        admin_only = sec.get("data-admin-only") == "true"
         title, subtitle = extract_title(sec)
         number = int(re.sub(r"\D", "", sec_id)) if re.search(r"\d", sec_id) else 0
         subsections = extract_subsections(sec)
@@ -115,6 +116,7 @@ def parse():
             "icon": SECTION_ICONS.get(sec_id, ""),
             "html": full_html,
             "subsections": subsections,
+            "adminOnly": admin_only,
         })
 
     # Metadados gerais extraídos da capa

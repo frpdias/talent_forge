@@ -711,8 +711,8 @@ code{background:#F3F4F6;padding:1px 5px;border-radius:4px;font-size:.82rem;font-
 </div>
 </div>
 
-<!-- SEC 6: ADMIN -->
-<div class="sec" id="sec6">
+<!-- SEC 6: ADMIN ONLY -->
+<div class="sec" id="sec6" data-admin-only="true">
 <div class="sh">
   <div class="sb" style="background:#E11D48">6</div>
   <div class="st"><h2>Painel Administrativo</h2><p>Gest&#227;o de usu&#225;rios, organiza&#231;&#245;es, m&#243;dulos e seguran&#231;a</p></div>
@@ -1005,95 +1005,92 @@ code{background:#F3F4F6;padding:1px 5px;border-radius:4px;font-size:.82rem;font-
 </div>
 </div>
 
-<!-- SEC 9: MCP SERVER -->
+<!-- SEC 9: IA ASSISTENTE -->
 <div class="sec" id="sec9">
 <div class="sh">
   <div class="sb" style="background:#0F766E">9</div>
-  <div class="st"><h2>MCP Server &amp; Integra&#231;&#245;es LLM</h2><p>TalentForge MCP v1.0 — 10 tools via stdio para acesso a dados por LLMs externos</p></div>
+  <div class="st"><h2>TalentForge com Seu Assistente de IA</h2><p>Converse com seus dados de RH usando Claude, ChatGPT ou qualquer IA da sua prefer&#234;ncia</p></div>
 </div>
-<p>O <strong>TalentForge MCP Server</strong> implementa o protocolo <strong>Model Context Protocol</strong> (Anthropic MCP) para expor dados da plataforma a assistentes de IA externos, como Claude, GPT-4 e Copilot. Isso permite que equipes de RH utilizem modelos de linguagem de sua prefer&#234;ncia — dentro de suas pr&#243;prias ferramentas — com dados reais do TalentForge.</p>
+<p>O TalentForge pode ser conectado ao assistente de IA que sua equipe j&#225; usa no dia a dia — Claude, ChatGPT, Copilot e outros. Com essa integra&#231;&#227;o, voc&#234; n&#227;o precisa mais abrir o sistema para tirar uma d&#250;vida r&#225;pida: basta perguntar em linguagem natural e a IA busca as informa&#231;&#245;es diretamente da plataforma para voc&#234;.</p>
 
-<div class="callout info"><div class="cb"><strong>O que &#233; MCP?</strong><p>O Model Context Protocol (MCP) &#233; um padr&#227;o aberto que permite que LLMs leiam e manipulem dados de sistemas externos de forma segura, sem expor credenciais ou contornar seguran&#231;a. O TalentForge implementa o transporte <code>stdio</code>, compatível com Claude Desktop, Cursor, VS Code Copilot e outros clientes MCP.</p></div></div>
+<div class="callout tip"><div class="cb"><strong>Como funciona na pr&#225;tica</strong><p>Imagine poder perguntar ao seu assistente de IA: <em>"Quais candidatos est&#227;o esperando feedback h&#225; mais de 5 dias?"</em> e receber a lista na hora, sem precisar navegar pelo sistema. &#201; isso que essa integra&#231;&#227;o oferece.</p></div></div>
 
-<div class="ss"><div class="ss-t"><div class="sdot"></div>9.1 Tools Dispon&#237;veis</div>
-<p>O servidor MCP expõe <strong>10 tools</strong> que um LLM pode invocar automaticamente ao processar uma consulta do usu&#225;rio:</p>
-<table>
-  <tr><th>#</th><th>Tool</th><th>Descri&#231;&#227;o</th><th>Escopo</th></tr>
-  <tr><td>1</td><td><code>list_jobs</code></td><td>Lista vagas abertas com filtros por status, titulo e organiza&#231;&#227;o</td><td>Recrutador</td></tr>
-  <tr><td>2</td><td><code>get_pipeline</code></td><td>Retorna candidatos no pipeline por etapa e vaga</td><td>Recrutador</td></tr>
-  <tr><td>3</td><td><code>get_candidate_profile</code></td><td>Perfil completo do candidato com assessments e hist&#243;rico</td><td>Recrutador</td></tr>
-  <tr><td>4</td><td><code>list_org_members</code></td><td>Membros da organiza&#231;&#227;o com times e fun&#231;&#245;es</td><td>Gestor</td></tr>
-  <tr><td>5</td><td><code>get_php_score</code></td><td>Score PHP integrado (TFCI + NR-1 + COPC) por organiza&#231;&#227;o ou membro</td><td>PHP</td></tr>
-  <tr><td>6</td><td><code>get_tfci_cycle</code></td><td>Resultados de um ciclo TFCI específico com breakdown por pilar</td><td>PHP</td></tr>
-  <tr><td>7</td><td><code>get_nr1_assessment</code></td><td>Avalia&#231;&#227;o NR-1 com mapa de riscos psicossociais</td><td>PHP</td></tr>
-  <tr><td>8</td><td><code>get_copc_metrics</code></td><td>M&#233;tricas COPC atuais com compara&#231;&#227;o vs. meta</td><td>PHP</td></tr>
-  <tr><td>9</td><td><code>generate_ai_insights</code></td><td>Gera insights OpenAI para uma organiza&#231;&#227;o (4 tipos)</td><td>PHP</td></tr>
-  <tr><td>10</td><td><code>get_recruitment_metrics</code></td><td>M&#233;tricas de recrutamento: time-to-hire, convers&#227;o, fontes</td><td>Recrutador</td></tr>
-</table>
-</div>
-
-<div class="ss"><div class="ss-t"><div class="sdot"></div>9.2 Como Usar com Claude Desktop</div>
-<p>Para conectar o Claude Desktop ao TalentForge MCP, adicione a seguinte configura&#231;&#227;o em <code>claude_desktop_config.json</code>:</p>
-<div class="card">
-<pre style="background:#1A1A2E;color:#E2E8F0;padding:1.25rem;border-radius:10px;font-family:monospace;font-size:.82rem;overflow-x:auto;line-height:1.6"><code>{
-  "mcpServers": {
-    "talentforge": {
-      "command": "/caminho/para/talent_forge/packages/mcp/start.sh",
-      "env": {
-        "SUPABASE_URL": "https://&lt;seu-projeto&gt;.supabase.co",
-        "SUPABASE_SERVICE_KEY": "&lt;service-role-key&gt;"
-      }
-    }
-  }
-}</code></pre>
-</div>
-<div class="callout tip"><div class="cb"><strong>Inicializa&#231;&#227;o r&#225;pida</strong><p>O script <code>start.sh</code> auto-importa as vari&#225;veis de <code>apps/api/.env</code>, ent&#227;o n&#227;o &#233; necess&#225;rio duplicar credenciais. Execute <code>npm run build:mcp</code> antes do primeiro uso.</p></div></div>
-</div>
-
-<div class="ss"><div class="ss-t"><div class="sdot"></div>9.3 Exemplos de Fluxo LLM + MCP</div>
-<p>Exemplos de prompts que um usu&#225;rio pode fazer em qualquer cliente MCP-compat&#237;vel, com as tools que ser&#227;o invocadas automaticamente:</p>
+<div class="ss"><div class="ss-t"><div class="sdot"></div>9.1 O que voc&#234; pode perguntar ao seu assistente</div>
+<p>A integra&#231;&#227;o entende o contexto completo da sua organiza&#231;&#227;o. Veja exemplos de perguntas que j&#225; funcionam:</p>
 <div class="g2">
   <div class="card">
-    <h4>Fluxo: An&#225;lise de Pipeline</h4>
-    <ol class="steps" style="list-style:none;padding:0">
-      <li><div class="sn">U</div><div class="sbody"><strong>Usu&#225;rio</strong><span>"Quais vagas est&#227;o com candidatos parados h&#225; mais de 7 dias?"</span></div></li>
-      <li><div class="sn" style="background:#3B82F6">M</div><div class="sbody"><strong>MCP chama</strong><span><code>list_jobs</code> + <code>get_pipeline</code> para cada vaga</span></div></li>
-      <li><div class="sn" style="background:#10B981">A</div><div class="sbody"><strong>LLM responde</strong><span>Lista priorizada com &#250;ltima atividade e respons&#225;vel pela vaga</span></div></li>
-    </ol>
-  </div>
-  <div class="card">
-    <h4>Fluxo: Sa&#250;de Organizacional</h4>
-    <ol class="steps" style="list-style:none;padding:0">
-      <li><div class="sn">U</div><div class="sbody"><strong>Usu&#225;rio</strong><span>"Qual time tem mais risco de burnout esse trimestre?"</span></div></li>
-      <li><div class="sn" style="background:#3B82F6">M</div><div class="sbody"><strong>MCP chama</strong><span><code>get_nr1_assessment</code> + <code>get_php_score</code> por time</span></div></li>
-      <li><div class="sn" style="background:#10B981">A</div><div class="sbody"><strong>LLM responde</strong><span>Ranking com scores NR-1, fatores de risco e a&#231;&#245;es recomendadas</span></div></li>
-    </ol>
-  </div>
-</div>
-</div>
-
-<div class="ss"><div class="ss-t"><div class="sdot"></div>9.4 Seguran&#231;a &amp; Auditoria</div>
-<div class="g2">
-  <div class="card">
-    <h4>Isolamento Multi-Tenant</h4>
+    <h4>Para Recrutadores</h4>
     <ul style="font-size:.87rem">
-      <li>Cada sess&#227;o MCP opera com o JWT da organiza&#231;&#227;o autenticada</li>
-      <li>RLS do Supabase se aplica em todas as tools — n&#227;o h&#225; bypass</li>
-      <li>O <code>service_role</code> &#233; usado apenas para opera&#231;&#245;es admin, n&#227;o expostas via MCP</li>
-      <li>Consultas cross-org s&#227;o bloqueadas em n&#237;vel de banco</li>
+      <li>&#8220;Quantas vagas est&#227;o abertas agora e quantos candidatos cada uma tem?&#8221;</li>
+      <li>&#8220;Quais candidatos chegaram at&#233; a etapa final mas n&#227;o foram contratados neste m&#234;s?&#8221;</li>
+      <li>&#8220;Qual &#233; o tempo m&#233;dio de contrata&#231;&#227;o para vagas de tecnologia?&#8221;</li>
+      <li>&#8220;Me d&#234; um resumo do perfil do candidato Jo&#227;o Silva que est&#225; na vaga de Analista&#8221;</li>
+      <li>&#8220;Quais fontes de recrutamento t&#234;m a maior taxa de convers&#227;o?&#8221;</li>
     </ul>
   </div>
   <div class="card">
-    <h4>Auditoria de Acesso</h4>
+    <h4>Para Gestores de Pessoas</h4>
     <ul style="font-size:.87rem">
-      <li>Cada invoca&#231;&#227;o de tool gera registro em <code>audit_logs</code></li>
-      <li>Campos registrados: <code>actor_id</code>, <code>action</code>, <code>resource</code>, <code>metadata</code></li>
-      <li>Rastreabilidade completa de quais dados foram consultados por qual LLM</li>
-      <li>Acesso ao log em <code>/admin/audit</code> (somente admins Fartech)</li>
+      <li>&#8220;Como est&#225; o score de sa&#250;de organizacional da minha equipe hoje?&#8221;</li>
+      <li>&#8220;Quais colaboradores apresentam sinais de risco de sa&#237;da nos pr&#243;ximos 90 dias?&#8221;</li>
+      <li>&#8220;Compare o engajamento das equipes de Suporte e Comercial&#8221;</li>
+      <li>&#8220;Gere um resumo do &#250;ltimo ciclo de avalia&#231;&#227;o comportamental&#8221;</li>
+      <li>&#8220;Quais planos de a&#231;&#227;o est&#227;o atrasados e quem &#233; o respons&#225;vel?&#8221;</li>
     </ul>
   </div>
 </div>
-<div class="callout warn"><div class="cb"><strong>Uso em Produ&#231;&#227;o</strong><p>O MCP Server exige que a <code>SUPABASE_SERVICE_KEY</code> seja mantida em ambiente seguro. Nunca exponha a chave em reposit&#243;rios p&#250;blicos ou no frontend. O servidor deve rodar apenas em m&#225;quinas autorizadas da equipe de RH ou em infraestrutura privada da Fartech.</p></div></div>
+</div>
+
+<div class="ss"><div class="ss-t"><div class="sdot"></div>9.2 Problemas que a IA resolve no seu dia a dia</div>
+<div class="g3">
+  <div class="card">
+    <div style="font-size:1.6rem;margin-bottom:.5rem">&#9203;</div>
+    <h4>Economiza tempo</h4>
+    <p style="font-size:.85rem">Sem precisar navegar por menus e filtros, voc&#234; obt&#233;m a resposta que precisa com uma pergunta direta. Ideal para reuni&#245;es r&#225;pidas e tomadas de decis&#227;o.</p>
+  </div>
+  <div class="card">
+    <div style="font-size:1.6rem;margin-bottom:.5rem">&#128202;</div>
+    <h4>Conecta os dados</h4>
+    <p style="font-size:.85rem">A IA cruza informa&#231;&#245;es de recrutamento, avalia&#231;&#245;es comportamentais e sa&#250;de organizacional em uma &#250;nica resposta — algo que levaria minutos de forma manual.</p>
+  </div>
+  <div class="card">
+    <div style="font-size:1.6rem;margin-bottom:.5rem">&#128172;</div>
+    <h4>Fala sua l&#237;ngua</h4>
+    <p style="font-size:.85rem">N&#227;o &#233; preciso saber o nome de nenhuma tela ou campo. Pergunte como falaria com um colega de trabalho e a IA entende o que voc&#234; precisa.</p>
+  </div>
+</div>
+</div>
+
+<div class="ss"><div class="ss-t"><div class="sdot"></div>9.3 Exemplos de conversa</div>
+<div class="g2">
+  <div class="card">
+    <h4>&#128269; Reuni&#227;o de pipeline</h4>
+    <p style="font-size:.85rem;color:#6B7280;margin-bottom:1rem">Antes da reuni&#227;o semanal de recrutamento, o gestor pergunta:</p>
+    <div style="background:#F0FDF4;border-radius:10px;padding:.9rem 1rem;margin-bottom:.6rem;font-size:.85rem">&#128172; <em>"Me d&#234; um status geral do pipeline desta semana: quantos candidatos em cada etapa e quais vagas est&#227;o com mais atraso?"</em></div>
+    <div style="background:#EFF6FF;border-radius:10px;padding:.9rem 1rem;font-size:.85rem">&#129302; A IA responde com um resumo completo por vaga, destacando gargalos e sugerindo pr&#243;ximos passos.</div>
+  </div>
+  <div class="card">
+    <h4>&#127775; Check mensal de sa&#250;de</h4>
+    <p style="font-size:.85rem;color:#6B7280;margin-bottom:1rem">No fechamento do m&#234;s, o RH perguntar:</p>
+    <div style="background:#F0FDF4;border-radius:10px;padding:.9rem 1rem;margin-bottom:.6rem;font-size:.85rem">&#128172; <em>"Quais equipes tiveram piora no score PHP este m&#234;s e o que a plataforma est&#225; sugerindo para cada uma?"</em></div>
+    <div style="background:#EFF6FF;border-radius:10px;padding:.9rem 1rem;font-size:.85rem">&#129302; A IA lista as equipes com varia&#231;&#227;o negativa, os fatores identificados e os planos de a&#231;&#227;o gerados automaticamente.</div>
+  </div>
+</div>
+</div>
+
+<div class="ss"><div class="ss-t"><div class="sdot"></div>9.4 Seus dados ficam protegidos</div>
+<p>A integra&#231;&#227;o com assistentes de IA externos &#233; feita de forma segura: a IA acessa apenas os dados da <strong>sua organiza&#231;&#227;o</strong>, nunca de outras empresas. Nenhuma informa&#231;&#227;o &#233; usada para treinar modelos de IA ou compartilhada com terceiros.</p>
+<div class="g2">
+  <div class="card">
+    <h4>&#128274; Isolamento total por empresa</h4>
+    <p style="font-size:.87rem">A IA s&#243; v&#234; os dados da sua organiza&#231;&#227;o. Os dados de outras empresas na plataforma s&#227;o completamente invis&#237;veis — como se cada empresa fosse o &#250;nico cliente.</p>
+  </div>
+  <div class="card">
+    <h4>&#128683; Nada vai para treinamento</h4>
+    <p style="font-size:.87rem">As consultas feitas ao TalentForge via IA <strong>n&#227;o alimentam</strong> os modelos da OpenAI, Anthropic ou qualquer outro provedor. Seus dados s&#227;o seus.</p>
+  </div>
+</div>
+<div class="callout info"><div class="cb"><strong>Ativando para sua equipe</strong><p>A conex&#227;o do assistente de IA ao TalentForge &#233; configurada pela equipe Fartech durante o onboarding. Ap&#243;s ativada, qualquer membro da organiza&#231;&#227;o com acesso ao sistema pode usar o assistente normalmente. Entre em contato com o suporte para habilitar essa funcionalidade.</p></div></div>
 </div>
 </div>
 
