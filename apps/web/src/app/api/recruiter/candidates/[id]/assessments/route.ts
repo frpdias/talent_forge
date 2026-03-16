@@ -65,7 +65,8 @@ export async function GET(
       .order('completed_at', { ascending: false });
 
     // Color e PI — usa candidate_user_id
-    // Tenta por user_id direto; se nulo, tenta via email no candidate_profiles
+    // Tenta por user_id direto; se nulo, tenta via email no candidate_profiles;
+    // se ainda nulo, resolve via auth.users usando função SECURITY DEFINER.
     let resolvedUserId: string | null = candidate.user_id ?? null;
 
     if (!resolvedUserId && candidate.email) {
@@ -76,6 +77,12 @@ export async function GET(
         .not('user_id', 'is', null)
         .maybeSingle();
       resolvedUserId = profile?.user_id ?? null;
+    }
+
+    if (!resolvedUserId && candidate.email) {
+      const { data: authUid } = await supabase
+        .rpc('get_auth_user_id_by_email', { p_email: candidate.email });
+      resolvedUserId = authUid ?? null;
     }
 
     let colorRows: any[] = [];
