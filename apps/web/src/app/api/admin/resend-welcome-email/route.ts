@@ -13,8 +13,9 @@ async function sendWelcomeEmail(params: {
   userType: string;
 }): Promise<{ sent: boolean; error?: string; messageId?: string }> {
   const apiKey = process.env.BREVO_API_KEY || process.env.BREVO_SMTP_PASS;
-  const senderEmail = process.env.BREVO_SENDER_EMAIL || 'noreply@talentforge.com.br';
+  const senderEmail = process.env.BREVO_SENDER_EMAIL || 'equipe@talentforge.com.br';
   const senderName = process.env.BREVO_SENDER_NAME || 'TalentForge';
+  const replyToEmail = process.env.BREVO_REPLY_TO || senderEmail;
 
   if (!apiKey) {
     return { sent: false, error: 'BREVO_API_KEY não configurada' };
@@ -67,12 +68,12 @@ async function sendWelcomeEmail(params: {
               <a href="https://web-eight-rho-84.vercel.app/login" style="display:inline-block;background:#10B981;color:#ffffff;text-decoration:none;padding:12px 28px;border-radius:8px;font-size:15px;font-weight:600;">Acessar o TalentForge →</a>
             </div>
 
-            <p style="margin:0;color:#999;font-size:12px;">Se você não solicitou esta redefinição, entre em contato com o administrador do sistema imediatamente.</p>
+            <p style="margin:0;color:#999;font-size:12px;">Se você não solicitou esta redefinição, por favor responda a este e-mail ou contate o administrador.</p>
           </td>
         </tr>
         <tr>
           <td style="background:#f8f8f6;padding:16px 32px;border-top:1px solid #e0e0d8;">
-            <p style="margin:0;color:#aaa;font-size:12px;">© ${new Date().getFullYear()} TalentForge — Este é um e-mail automático, não responda.</p>
+            <p style="margin:0;color:#aaa;font-size:12px;">© ${new Date().getFullYear()} TalentForge · Fartech Soluções em Tecnologia · talentforge.com.br</p>
           </td>
         </tr>
       </table>
@@ -91,9 +92,11 @@ async function sendWelcomeEmail(params: {
       },
       body: JSON.stringify({
         sender: { name: senderName, email: senderEmail },
+        replyTo: { email: replyToEmail, name: senderName },
         to: [{ email: params.email, name: params.fullName }],
-        subject: 'TalentForge — novas credenciais de acesso',
+        subject: 'TalentForge - novas credenciais de acesso',
         htmlContent,
+        textContent: `Olá, ${params.fullName}!\n\nSuas credenciais foram redefinidas no TalentForge.\n\nCredenciais de acesso:\nE-mail: ${params.email}\nNova senha: ${params.password}\n\nAcesse em: https://web-eight-rho-84.vercel.app/login\n\nRecomendamos alterar sua senha após o acesso.\n\nAtenciosamente,\nEquipe TalentForge\ntalentforge.com.br`,
       }),
     });
 
