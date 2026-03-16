@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>TalentForge — Manual de Onboarding v1.0</title>
+<title>TalentForge — Manual de Onboarding v1.1</title>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{--p:#141042;--s:#10B981;--a:#3B82F6;--o:#F97316;--bg:#FAFAF8;--w:#FFFFFF;--b:#E5E5DC;--t:#1A1A2E;--m:#6B7280}
@@ -82,7 +82,7 @@ code{background:#F3F4F6;padding:1px 5px;border-radius:4px;font-size:.82rem;font-
   <strong style="color:#34D399">People Health Performance (PHP)</strong> &#8212;
   tudo que sua equipe de RH precisa para recrutar com efici&#234;ncia e gerir pessoas com sa&#250;de.
 </div>
-<div class="cver">v1.0 &nbsp;|&nbsp; Mar&#231;o 2026 &nbsp;|&nbsp; pt-BR</div>
+<div class="cver">v1.1 &nbsp;|&nbsp; Mar&#231;o 2026 &nbsp;|&nbsp; pt-BR</div>
 <div class="dots" style="margin-top:2rem">
   <div class="dot" style="background:#60A5FA"></div>
   <div class="dot" style="background:#34D399"></div>
@@ -99,7 +99,7 @@ code{background:#F3F4F6;padding:1px 5px;border-radius:4px;font-size:.82rem;font-
 <div class="toc-h">Sum&#225;rio</div>
 <div class="toc-grid">
   <a href="#sec1"><div class="toc-item"><div class="tn" style="background:#141042">1</div><div class="ti"><strong>Vis&#227;o Geral da Plataforma</strong><span>Arquitetura, personas e m&#233;tricas principais</span></div></div></a>
-  <a href="#sec2"><div class="toc-item"><div class="tn" style="background:#3B82F6">2</div><div class="ti"><strong>M&#243;dulo de Recrutamento (ATS)</strong><span>Dashboard, vagas, kanban, candidatos, entrevistas</span></div></div></a>
+  <a href="#sec2"><div class="toc-item"><div class="tn" style="background:#3B82F6">2</div><div class="ti"><strong>M&#243;dulo de Recrutamento (ATS)</strong><span>Dashboard, vagas, kanban, candidatos, entrevistas, Score IA e PDF completo</span></div></div></a>
   <a href="#sec3"><div class="toc-item"><div class="tn" style="background:#6366F1">3</div><div class="ti"><strong>Assessments Comportamentais</strong><span>DISC, Cores, PI Assessment e compara&#231;&#227;o</span></div></div></a>
   <a href="#sec4"><div class="toc-item"><div class="tn" style="background:#0891B2">4</div><div class="ti"><strong>P&#225;gina de Carreira</strong><span>Career page p&#250;blica, personaliza&#231;&#227;o e candidaturas</span></div></div></a>
   <a href="#sec5"><div class="toc-item"><div class="tn" style="background:#10B981">5</div><div class="ti"><strong>M&#243;dulo PHP &#8212; People Health Performance</strong><span>TFCI, NR-1, COPC, Planos de A&#231;&#227;o e IA</span></div></div></a>
@@ -299,6 +299,16 @@ code{background:#F3F4F6;padding:1px 5px;border-radius:4px;font-size:.82rem;font-
 <div class="dc">Figura 3 &#8212; Pipeline Kanban: candidatos organizados por est&#225;gio do processo seletivo</div>
 </div>
 <div class="callout tip"><span class="ck">&#128161;</span><div class="cb"><strong>Dica</strong><p>Clique em qualquer card de candidato no Kanban para ver o perfil completo, adicionar notas, agendar entrevistas e visualizar resultados de assessments sem sair da tela.</p></div></div>
+<table>
+  <tr><th>Status (valor interno)</th><th>R&#243;tulo exibido</th><th>Descri&#231;&#227;o</th></tr>
+  <tr><td><code>screening</code></td><td><span class="badge bgr">Triagem</span></td><td>Candidatura recebida, aguardando an&#225;lise inicial</td></tr>
+  <tr><td><code>interview</code></td><td><span class="badge bb">Entrevista</span></td><td>Aprovado na triagem &#8212; entrevista gen&#233;rica em andamento</td></tr>
+  <tr><td><code>interview_hr</code></td><td><span class="badge bb">Entrevista com o RH</span></td><td>Etapa de entrevista conduzida pelo time de RH &#9733; <em>Novo Sprint 47</em></td></tr>
+  <tr><td><code>interview_manager</code></td><td><span class="badge bp">Entrevista com o Gestor</span></td><td>Etapa de entrevista conduzida pelo gestor da &#225;rea &#9733; <em>Novo Sprint 47</em></td></tr>
+  <tr><td><code>offer</code></td><td><span class="badge bo">Oferta</span></td><td>Proposta salarial enviada, aguardando resposta do candidato</td></tr>
+  <tr><td><code>hired</code></td><td><span class="badge bg">Contratado</span></td><td>Candidato aceito e processo encerrado com &#234;xito</td></tr>
+  <tr><td><code>rejected</code></td><td><span class="badge br">Reprovado</span></td><td>Candidato n&#227;o avan&#231;ou no processo seletivo</td></tr>
+</table>
 </div>
 
 <!-- 2.4 Candidatos -->
@@ -352,6 +362,87 @@ code{background:#F3F4F6;padding:1px 5px;border-radius:4px;font-size:.82rem;font-
   <li><div class="sn">5</div><div class="sbody"><strong>Confirmar</strong><span>O sistema envia e-mail autom&#225;tico ao candidato e adiciona evento na agenda</span></div></li>
 </ol>
 <div class="callout info"><span class="ck">&#8505;&#65039;</span><div class="cb"><strong>Informa&#231;&#227;o</strong><p>O e-mail de confirma&#231;&#227;o inclui: data/hora, formato, link de videoconfer&#234;ncia (se aplic&#225;vel), nome do entrevistador e instru&#231;&#245;es para cancelamento ou reagendamento.</p></div></div>
+</div>
+
+<!-- 2.7 Score TalentForge -->
+<div class="ss"><div class="ss-t"><div class="sdot"></div>2.7 Score TalentForge e Avalia&#231;&#227;o T&#233;cnica com IA</div>
+<p>O <strong>Score TalentForge</strong> &#233; um indicador num&#233;rico de 0 a 100 que consolida a avalia&#231;&#227;o completa do candidato em tr&#234;s dimens&#245;es complementares. Ele &#233; gerado automaticamente ap&#243;s o recrutador solicitar o <strong>Parecer T&#233;cnico IA</strong> na aba <em>Review</em> do perfil do candidato.</p>
+<div class="g3">
+  <div class="card" style="text-align:center">
+    <div class="mv" style="color:#6366F1;font-size:2rem">40%</div>
+    <div class="ml" style="font-weight:700;color:#141042;margin-bottom:.3rem">Testes Comportamentais</div>
+    <p style="font-size:.82rem;color:#6B7280">DISC (40 pts) + Cores (30 pts) + PI (30 pts)<br>Baseado nos assessments j&#225; realizados</p>
+  </div>
+  <div class="card" style="text-align:center">
+    <div class="mv" style="color:#3B82F6;font-size:2rem">35%</div>
+    <div class="ml" style="font-weight:700;color:#141042;margin-bottom:.3rem">Experi&#234;ncia Profissional</div>
+    <p style="font-size:.82rem;color:#6B7280">Anos de experi&#234;ncia (m&#225;x 60 pts) + n&#237;vel de forma&#231;&#227;o (4&#8211;40 pts)<br>Extra&#237;do do curr&#237;culo do candidato</p>
+  </div>
+  <div class="card" style="text-align:center">
+    <div class="mv" style="color:#10B981;font-size:2rem">25%</div>
+    <div class="ml" style="font-weight:700;color:#141042;margin-bottom:.3rem">Avalia&#231;&#227;o do Recrutador</div>
+    <p style="font-size:.82rem;color:#6B7280">Nota 0&#8211;10 atribu&#237;da pela IA (GPT-4o) com base no parecer gerado<br>Reflete adequa&#231;&#227;o &#224; vaga e pontua&#231;&#227;o narrativa</p>
+  </div>
+</div>
+<p style="font-size:.88rem;background:#F3F4F6;border-radius:8px;padding:.75rem 1rem;font-family:monospace">Score Total = (Testes &#215; 0,40) + (Experi&#234;ncia &#215; 0,35) + (Recrutador &#215; 0,25)</p>
+<ol class="steps">
+  <li><div class="sn">1</div><div class="sbody"><strong>Abra o perfil do candidato</strong><span>Clique no card do candidato no Kanban ou acesse pela lista de candidatos</span></div></li>
+  <li><div class="sn">2</div><div class="sbody"><strong>V&#225; at&#233; a aba "Review"</strong><span>Localizada no menu de abas dentro do modal de detalhes</span></div></li>
+  <li><div class="sn">3</div><div class="sbody"><strong>Clique em "Gerar Parecer IA"</strong><span>O sistema envia o perfil do candidato ao GPT-4o e gera uma an&#225;lise narrativa completa</span></div></li>
+  <li><div class="sn">4</div><div class="sbody"><strong>Visualize o Score e o Parecer</strong><span>O score (0&#8211;100) e o parecer t&#233;cnico s&#227;o exibidos imediatamente e salvos no hist&#243;rico</span></div></li>
+  <li><div class="sn">5</div><div class="sbody"><strong>Adicione uma nota do recrutador</strong><span>Complemente o parecer da IA com suas pr&#243;prias observa&#231;&#245;es (opcional)</span></div></li>
+</ol>
+<div class="callout info"><div class="cb"><strong>Sobre a IA utilizada</strong><p>O Parecer T&#233;cnico utiliza o modelo <strong>GPT-4o</strong> (OpenAI). O prompt enviado &#224; IA inclui o perfil comportamental (DISC/Cores/PI), experi&#234;ncia profissional, forma&#231;&#227;o e as notas do recrutador. A resposta inclui pontos fortes, pontos de aten&#231;&#227;o e uma nota num&#233;rica de 0 a 10.</p></div></div>
+</div>
+
+<!-- 2.8 PDF Completo -->
+<div class="ss"><div class="ss-t"><div class="sdot"></div>2.8 Relat&#243;rio PDF Completo do Candidato</div>
+<p>O <strong>Relat&#243;rio PDF Completo</strong> gera um documento profissional com todas as informa&#231;&#245;es do candidato em at&#233; tr&#234;s p&#225;ginas, pronto para compartilhar com clientes, gestores ou arquivar nos processos seletivos.</p>
+<div class="g3">
+  <div class="card" style="padding:1rem">
+    <h4 style="margin-top:0">P&#225;gina 1 &#8212; Curr&#237;culo</h4>
+    <ul style="font-size:.82rem;margin-top:.3rem">
+      <li>Foto circular em alta resolu&#231;&#227;o</li>
+      <li>Dados de contato e localiza&#231;&#227;o</li>
+      <li>Resumo profissional e experi&#234;ncias</li>
+      <li>Form&#226;o acad&#234;mica e habilidades</li>
+    </ul>
+  </div>
+  <div class="card" style="padding:1rem">
+    <h4 style="margin-top:0">P&#225;gina 2 &#8212; Assessments e Score</h4>
+    <ul style="font-size:.82rem;margin-top:.3rem">
+      <li>Gr&#225;ficos DISC, Cores e PI Assessment</li>
+      <li>Score TalentForge (0&#8211;100) com barra visual</li>
+      <li>Detalhamento de cada componente do score</li>
+    </ul>
+  </div>
+  <div class="card" style="padding:1rem">
+    <h4 style="margin-top:0">P&#225;gina 3 &#8212; Parecer e Notas</h4>
+    <ul style="font-size:.82rem;margin-top:.3rem">
+      <li>Parecer t&#233;cnico completo gerado pela IA</li>
+      <li>Notas do recrutador (privadas ou para compartilhar)</li>
+      <li>Data, modelo de IA e assinatura do recrutador</li>
+    </ul>
+  </div>
+</div>
+<ol class="steps">
+  <li><div class="sn">1</div><div class="sbody"><strong>Abra o perfil do candidato</strong><span>Acesse o modal de detalhes pelo Kanban ou pela lista</span></div></li>
+  <li><div class="sn">2</div><div class="sbody"><strong>Clique em "Baixar PDF Completo"</strong><span>Bot&#227;o dispon&#237;vel no topo do modal de detalhes do candidato</span></div></li>
+  <li><div class="sn">3</div><div class="sbody"><strong>Aguarde a gera&#231;&#227;o</strong><span>O PDF &#233; gerado no pr&#243;prio navegador (client-side) e o download inicia automaticamente</span></div></li>
+</ol>
+<div class="callout tip"><div class="cb"><strong>Dica</strong><p>Para incluir o Parecer IA na p&#225;gina 3 do PDF, certifique-se de ter gerado o Parecer T&#233;cnico antes de baixar o relat&#243;rio (se&#231;&#227;o 2.7). Caso contr&#225;rio, a p&#225;gina 3 ser&#225; omitida e o PDF ter&#225; 2 p&#225;ginas.</p></div></div>
+</div>
+
+<!-- 2.9 Configurações de IA -->
+<div class="ss"><div class="ss-t"><div class="sdot"></div>2.9 Configura&#231;&#245;es de Prompt de IA do Recrutador</div>
+<p>Cada recrutador pode personalizar o <strong>prompt enviado &#224; IA</strong> ao gerar pareceres t&#233;cnicos. Isso permite adaptar o tom, o foco e os crit&#233;rios de avalia&#231;&#227;o de acordo com o perfil de cada vaga ou a cultura da empresa. As configura&#231;&#245;es s&#227;o pessoais e n&#227;o afetam outros recrutadores da organiza&#231;&#227;o.</p>
+<ol class="steps">
+  <li><div class="sn">1</div><div class="sbody"><strong>Acesse Configura&#231;&#245;es</strong><span>No menu lateral, clique no seu avatar ou nome e selecione "Configura&#231;&#245;es"</span></div></li>
+  <li><div class="sn">2</div><div class="sbody"><strong>V&#225; at&#233; "Prompt de IA"</strong><span>Localize a se&#231;&#227;o de personaliza&#231;&#227;o do prompt de avalia&#231;&#227;o</span></div></li>
+  <li><div class="sn">3</div><div class="sbody"><strong>Edite o prompt</strong><span>Descreva os crit&#233;rios e o foco que deseja que a IA utilize ao avaliar candidatos</span></div></li>
+  <li><div class="sn">4</div><div class="sbody"><strong>Salve</strong><span>O prompt personalizado ser&#225; usado em todos os pareceres gerados por voc&#234; a partir de agora</span></div></li>
+</ol>
+<div class="callout info"><div class="cb"><strong>Prompt padr&#227;o</strong><p>Se nenhum prompt personalizado for configurado, o sistema utiliza o prompt padr&#227;o da plataforma, otimizado para avalia&#231;&#245;es gerais de adequa&#231;&#227;o ao cargo. Deixe o campo em branco para retornar ao padr&#227;o.</p></div></div>
 </div>
 </div>
 
@@ -976,7 +1067,7 @@ code{background:#F3F4F6;padding:1px 5px;border-radius:4px;font-size:.82rem;font-
     <h4>Exporta&#231;&#227;o PDF</h4>
     <ul style="font-size:.87rem">
       <li><strong>Relat&#243;rio NR-1 Compliance</strong> &#8212; documento oficial com status por colaborador, pronto para auditoria do MTE</li>
-      <li><strong>Relat&#243;rio Completo do Candidato</strong> &#8212; perfil + assessments + hist&#243;rico de candidaturas</li>
+      <li><strong>Relat&#243;rio Completo do Candidato</strong> &#8212; curr&#237;culo + DISC/Cores/PI + Score TalentForge + Parecer IA + notas do recrutador (at&#233; 3 p&#225;ginas, gerado no browser via jsPDF)</li>
       <li><strong>Relat&#243;rio de Vaga</strong> &#8212; pipeline completo com todos os candidatos e estagios</li>
       <li><strong>Score PHP Executivo</strong> &#8212; resumo do score integrado formatado para apresenta&#231;&#245;es</li>
     </ul>
@@ -1097,7 +1188,7 @@ code{background:#F3F4F6;padding:1px 5px;border-radius:4px;font-size:.82rem;font-
 <!-- FOOTER -->
 <div class="footer">
   <div style="margin-bottom:.5rem">
-    <strong style="color:#141042">TalentForge</strong> &nbsp;|&nbsp; Manual de Onboarding &nbsp;|&nbsp; v1.0 &nbsp;|&nbsp; Mar&#231;o 2026
+    <strong style="color:#141042">TalentForge</strong> &nbsp;|&nbsp; Manual de Onboarding &nbsp;|&nbsp; v1.1 &nbsp;|&nbsp; Mar&#231;o 2026
   </div>
   <div style="color:#9CA3AF">ATS + People Health Performance &mdash; Plataforma de Recrutamento e Gest&#227;o de Pessoas</div>
   <div style="margin-top:.5rem;color:#9CA3AF">suporte@talentforge.com.br &nbsp;|&nbsp; docs.talentforge.com.br</div>
