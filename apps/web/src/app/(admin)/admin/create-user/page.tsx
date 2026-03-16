@@ -1,14 +1,13 @@
 'use client';
 
 import { useState } from 'react';
-import { UserPlus, Mail, User, Lock, Building2, Phone, Save, AlertCircle, CheckCircle, HelpCircle, X, ArrowRight, Database, Shield, Briefcase } from 'lucide-react';
+import { UserPlus, Mail, User, Lock, Building2, Phone, Save, AlertCircle, CheckCircle, HelpCircle, X, ArrowRight, Database, Shield, Briefcase, Copy, SendHorizonal } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 
 type UserType = 'admin' | 'recruiter' | 'candidate';
 
 interface FormData {
   email: string;
-  password: string;
   fullName: string;
   userType: UserType;
   phone: string;
@@ -16,14 +15,23 @@ interface FormData {
   position: string;
 }
 
+interface SuccessData {
+  userId: string;
+  email: string;
+  userType: string;
+  emailSent: boolean;
+  tempPassword?: string;
+}
+
 export default function CreateUserPage() {
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [successData, setSuccessData] = useState<SuccessData | null>(null);
   const [helpOpen, setHelpOpen] = useState(false);
+  const [copied, setCopied] = useState(false);
   
   const [formData, setFormData] = useState<FormData>({
     email: '',
-    password: '',
     fullName: '',
     userType: 'recruiter',
     phone: '',
@@ -31,10 +39,17 @@ export default function CreateUserPage() {
     position: '',
   });
 
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setMessage(null);
+    setErrorMsg(null);
+    setSuccessData(null);
 
     try {
       const supabase = createClient();
@@ -54,15 +69,17 @@ export default function CreateUserPage() {
         throw new Error(data.error || 'Erro ao criar usuário');
       }
 
-      setMessage({
-        type: 'success',
-        text: `Usuário ${formData.email} criado com sucesso! ID: ${data.userId}`,
+      setSuccessData({
+        userId: data.userId,
+        email: data.email,
+        userType: data.userType,
+        emailSent: data.emailSent,
+        tempPassword: data.tempPassword,
       });
 
       // Limpar formulário
       setFormData({
         email: '',
-        password: '',
         fullName: '',
         userType: 'recruiter',
         phone: '',
@@ -70,10 +87,7 @@ export default function CreateUserPage() {
         position: '',
       });
     } catch (error: any) {
-      setMessage({
-        type: 'error',
-        text: error.message || 'Erro ao criar usuário',
-      });
+      setErrorMsg(error.message || 'Erro ao criar usuário');
     } finally {
       setLoading(false);
     }
@@ -123,8 +137,8 @@ export default function CreateUserPage() {
                       <div><span className="font-medium text-[#141042]">Email *</span> — será o login do recrutador. Deve ser único no sistema.</div>
                     </div>
                     <div className="flex items-start gap-2">
-                      <Lock className="w-4 h-4 text-[#141042] mt-0.5 shrink-0" />
-                      <div><span className="font-medium text-[#141042]">Senha *</span> — mínimo 6 caracteres. O recrutador pode alterar após o primeiro login.</div>
+                      <SendHorizonal className="w-4 h-4 text-[#10B981] mt-0.5 shrink-0" />
+                      <div><span className="font-medium text-[#141042]">Senha</span> — gerada automaticamente e enviada por e-mail ao usuário.</div>
                     </div>
                     <div className="flex items-start gap-2">
                       <User className="w-4 h-4 text-[#141042] mt-0.5 shrink-0" />
@@ -247,21 +261,48 @@ export default function CreateUserPage() {
         </button>
       </div>
 
-      {/* Mensagem de Feedback */}
-      {message && (
-        <div
-          className={`p-4 rounded-lg border flex items-start space-x-3 ${
-            message.type === 'success'
-              ? 'bg-[#10B981]/10 border-[#10B981] text-[#10B981]'
-              : 'bg-[#EF4444]/10 border-[#EF4444] text-[#EF4444]'
-          }`}
-        >
-          {message.type === 'success' ? (
-            <CheckCircle className="w-5 h-5 shrink-0 mt-0.5" />
+      {/* Feedback de erro */}
+      {errorMsg && (
+        <div className="p-4 rounded-lg border flex items-start space-x-3 bg-[#EF4444]/10 border-[#EF4444] text-[#EF4444]">
+          <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
+          <p className="text-sm font-medium">{errorMsg}</p>
+        </div>
+      )}
+
+      {/* Feedback de sucesso */}
+      {successData && (
+        <div className="p-4 rounded-xl border bg-[#10B981]/10 border-[#10B981] space-y-3">
+          <div className="flex items-center gap-2 text-[#10B981]">
+            <CheckCircle className="w-5 h-5 shrink-0" />
+            <p className="text-sm font-semibold">
+              Usuário <span className="font-bold">{successData.email}</span> criado com sucesso!
+            </p>
+          </div>
+
+          {successData.emailSent ? (
+            <div className="flex items-start gap-2 text-sm text-[#047857]">
+              <Mail className="w-4 h-4 shrink-0 mt-0.5" />
+              <span>E-mail com as credenciais de acesso enviado para <strong>{successData.email}</strong>. O usuário pode fazer login imediatamente.</span>
+            </div>
           ) : (
-            <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
+            <div className="bg-amber-50 border border-amber-300 rounded-lg p-3 space-y-2">
+              <p className="text-sm font-semibold text-amber-800">⚠️ E-mail não enviado — compartilhe a senha manualmente:</p>
+              <div className="flex items-center gap-2">
+                <code className="flex-1 bg-white border border-amber-200 rounded px-3 py-1.5 text-sm font-mono font-bold text-[#141042] tracking-widest">
+                  {successData.tempPassword}
+                </code>
+                <button
+                  type="button"
+                  onClick={() => copyToClipboard(successData.tempPassword!)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-100 border border-amber-300 rounded text-xs font-medium text-amber-800 hover:bg-amber-200 transition-colors"
+                >
+                  <Copy className="w-3.5 h-3.5" />
+                  {copied ? 'Copiado!' : 'Copiar'}
+                </button>
+              </div>
+              <p className="text-xs text-amber-700">Configure a variável <code className="bg-amber-100 px-1 rounded">BREVO_SMTP_PASS</code> no Vercel para habilitar o envio automático.</p>
+            </div>
           )}
-          <p className="text-sm font-medium">{message.text}</p>
         </div>
       )}
 
@@ -300,39 +341,24 @@ export default function CreateUserPage() {
             </div>
           </div>
 
-          {/* Informações Básicas */}
-          <div className="grid sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-semibold text-[#141042] mb-2">
-                <Mail className="w-4 h-4 inline mr-1" />
-                Email *
-              </label>
-              <input
-                type="email"
-                required
-                value={formData.email}
-                onChange={(e) => handleChange('email', e.target.value)}
-                placeholder="usuario@exemplo.com"
-                className="w-full px-4 py-2 border border-[#E5E5DC] rounded-lg focus:outline-none focus:border-[#141042]"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-semibold text-[#141042] mb-2">
-                <Lock className="w-4 h-4 inline mr-1" />
-                Senha *
-              </label>
-              <input
-                type="password"
-                required
-                value={formData.password}
-                onChange={(e) => handleChange('password', e.target.value)}
-                placeholder="Mínimo 6 caracteres"
-                minLength={6}
-                className="w-full px-4 py-2 border border-[#E5E5DC] rounded-lg focus:outline-none focus:border-[#141042]"
-              />
-              <p className="text-xs text-[#666666] mt-1">Mínimo de 6 caracteres</p>
-            </div>
+          {/* Email */}
+          <div>
+            <label className="block text-sm font-semibold text-[#141042] mb-2">
+              <Mail className="w-4 h-4 inline mr-1" />
+              Email *
+            </label>
+            <input
+              type="email"
+              required
+              value={formData.email}
+              onChange={(e) => handleChange('email', e.target.value)}
+              placeholder="usuario@exemplo.com"
+              className="w-full px-4 py-2 border border-[#E5E5DC] rounded-lg focus:outline-none focus:border-[#141042]"
+            />
+            <p className="text-xs text-[#666666] mt-1 flex items-center gap-1">
+              <Lock className="w-3 h-3" />
+              Uma senha segura será gerada automaticamente e enviada por e-mail ao usuário.
+            </p>
           </div>
 
           {/* Nome Completo */}
@@ -438,14 +464,14 @@ export default function CreateUserPage() {
               onClick={() => {
                 setFormData({
                   email: '',
-                  password: '',
                   fullName: '',
                   userType: 'recruiter',
                   phone: '',
                   company: '',
                   position: '',
                 });
-                setMessage(null);
+                setErrorMsg(null);
+                setSuccessData(null);
               }}
               className="px-6 py-2 border border-[#E5E5DC] text-[#666666] rounded-lg hover:bg-[#FAFAF8] transition-colors"
             >
@@ -480,7 +506,8 @@ export default function CreateUserPage() {
         </h4>
         <ul className="text-sm text-[#666666] space-y-1">
           <li>• O usuário será criado diretamente no Supabase Auth</li>
-          <li>• Um email de confirmação será enviado automaticamente</li>
+          <li>• Uma senha segura é gerada automaticamente (sem necessidade de informar)</li>
+          <li>• A senha e as credenciais são enviadas por e-mail ao usuário via Brevo</li>
           <li>• A senha pode ser alterada pelo usuário após o primeiro login</li>
           <li>• O perfil será criado automaticamente em user_profiles</li>
         </ul>
