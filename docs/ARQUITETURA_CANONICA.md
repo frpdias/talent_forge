@@ -1,6 +1,6 @@
 # Arquitetura Canônica — TalentForge
 
-**Última atualização**: 2026-03-16 | **Score de Conformidade**: ✅ 100% (Sprint 47 — Parecer Técnico com IA + Prompt Customizável + Fix orgId) | **Sprints planejados**: Sprint 41 (AI Assistant) + Sprint 44 (Gate Recrutamento)
+**Última atualização**: 2026-03-16 | **Score de Conformidade**: ✅ 100% (Sprint 47 — Fix Assessments DISC/PI/Color via service_role) | **Sprints planejados**: Sprint 41 (AI Assistant) + Sprint 44 (Gate Recrutamento)
 
 ## 📜 FONTE DA VERDADE — PRINCÍPIO FUNDAMENTAL
 
@@ -7458,6 +7458,14 @@ Adicionar card "Módulo de Recrutamento" seguindo o mesmo padrão visual do card
 - ✅ **Botão PDF**: "Baixar Relatório Completo (PDF)" exibido no bloco `currentReview` da aba Revisão — reutiliza ícone `Download` do Lucide
 - ✅ **Rodapé dinâmico**: `drawAllFooters()` percorre todas as páginas e aplica paginação "X / Y" + branding TalentForge
 - ✅ **Commits**: `e296a14` → `origin/main`
+
+### v5.13 (2026-03-16)
+- ✅ **Score de Conformidade**: 100% mantido (Sprint 47 — Fix Assessments display)
+- ✅ **Bug fix DISC 0%**: query `assessments` client-side não filtrava por `assessment_type = 'disc'` — todos os registros eram marcados como DISC independente do tipo real, resultando em traits zerados
+- ✅ **Bug fix PI/Color "Não realizado"**: queries client-side via JWT do recrutador sujeitas a RLS; blocos pulados quando `candidate.user_id = NULL`
+- ✅ **API Route `GET /api/recruiter/candidates/[id]/assessments`**: nova rota com `service_role` (bypass RLS) — valida token + membership antes de buscar; DISC filtrado por `assessment_type = 'disc'`; Color/PI por `candidate_user_id`; fallback via `candidate_profiles.email` quando `user_id` é nulo; retorna `{ disc: [], color: [], pi: [] }`
+- ✅ **`loadCandidateDetails` refatorado**: 3 queries client-side substituídas por única chamada `fetch('/api/recruiter/candidates/[id]/assessments')` com headers `Authorization` + `x-org-id`; usa `resolvedOrgId ?? localStorage('selected_org_id')` para orgId
+- ✅ **Commits**: `9f8d716` → `origin/main`
 
 ### v5.12 (2026-03-16)
 - ✅ **Score de Conformidade**: 100% mantido (Sprint 47 — Fix geração de parecer)
