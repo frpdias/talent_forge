@@ -2,7 +2,7 @@
 
 import { useMemo, useState, useEffect } from 'react';
 import Link from 'next/link';
-import { 
+import {
   Users, 
   Search,
   Mail,
@@ -20,7 +20,10 @@ import {
   User,
   X,
   Download,
-  ExternalLink
+  ExternalLink,
+  Sparkles,
+  Star,
+  RefreshCw
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -56,8 +59,25 @@ export default function CandidatesPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterAssessment, setFilterAssessment] = useState<string>('all');
   const [selectedCandidate, setSelectedCandidate] = useState<Candidate | null>(null);
-  const [activeTab, setActiveTab] = useState<'profile' | 'resume' | 'assessments'>('profile');
+  const [activeTab, setActiveTab] = useState<'profile' | 'resume' | 'assessments' | 'review'>('profile');
   const [showNotesPanel, setShowNotesPanel] = useState(false);
+  const [reviewRating, setReviewRating] = useState(7);
+  const [reviewNote, setReviewNote] = useState('');
+  const [reviewLoading, setReviewLoading] = useState(false);
+  const [currentReview, setCurrentReview] = useState<{
+    id: string;
+    score_total: number;
+    score_testes: number;
+    score_experiencia: number;
+    score_recrutador: number;
+    recruiter_rating: number;
+    recruiter_note: string;
+    ai_review: string;
+    ai_model: string;
+    created_at: string;
+  } | null>(null);
+  const [reviewHistory, setReviewHistory] = useState<typeof currentReview[]>([]);
+  const [showReviewHistory, setShowReviewHistory] = useState(false);
   const [candidateDetails, setCandidateDetails] = useState<{
     profile: any;
     experiences: any[];
@@ -76,9 +96,65 @@ export default function CandidatesPage() {
   useEffect(() => {
     if (selectedCandidate) {
       setResumeViewerUrl(null);
+      setCurrentReview(null);
+      setReviewHistory([]);
+      setActiveTab('profile');
       loadCandidateDetails(selectedCandidate);
+      loadReviews(selectedCandidate.id);
     }
   }, [selectedCandidate]);
+
+  async function loadReviews(candidateId: string) {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+      const orgId = localStorage.getItem('selected_org_id');
+      if (!orgId) return;
+      const res = await fetch(`/api/recruiter/candidates/${candidateId}/technical-review`, {
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'x-org-id': orgId,
+        },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.reviews?.length > 0) {
+          setCurrentReview(data.reviews[0]);
+          setReviewHistory(data.reviews);
+        }
+      }
+    } catch (err) {
+      console.error('loadReviews error:', err);
+    }
+  }
+
+  async function handleGenerateReview() {
+    if (!selectedCandidate || reviewLoading) return;
+    try {
+      setReviewLoading(true);
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+      const orgId = localStorage.getItem('selected_org_id');
+      if (!orgId) return;
+      const res = await fetch(`/api/recruiter/candidates/${selectedCandidate.id}/technical-review`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+          'x-org-id': orgId,
+        },
+        body: JSON.stringify({ recruiter_rating: reviewRating, recruiter_note: reviewNote }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Erro ao gerar parecer');
+      setCurrentReview(data);
+      setReviewHistory(prev => [data, ...(prev || [])]);
+    } catch (err: any) {
+      alert(err.message || 'Erro ao gerar parecer');
+    } finally {
+      setReviewLoading(false);
+    }
+  }
 
   async function loadCandidateDetails(candidate: Candidate) {
     try {
@@ -824,6 +900,25 @@ export default function CandidatesPage() {
                       <Badge className="bg-[var(--tf-success)] text-white ml-1 px-1.5 py-0 text-xs">✓</Badge>
                     )}
                   </button>
+                  <button
+                    onClick={() => setActiveTab('review')}
+                    className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
+                      activeTab === 'review'
+                        ? 'border-[var(--tf-primary)] text-[var(--tf-primary)]'
+                        : 'border-transparent text-[var(--foreground-muted)] hover:text-[var(--foreground)]'
+                    }`}
+                  >
+                    <Sparkles className="h-4 w-4" />
+                    Parecer Técnico
+                    {currentReview && (
+                      <Badge className={`ml-1 px-1.5 py-0 text-xs ${
+                        currentReview.score_total >= 80 ? 'bg-green-100 text-green-700' :
+                        currentReview.score_total >= 60 ? 'bg-blue-100 text-blue-700' :
+                        currentReview.score_total >= 40 ? 'bg-yellow-100 text-yellow-700' :
+                        'bg-red-100 text-red-700'
+                      }`}>{Math.round(currentReview.score_total)}</Badge>
+                    )}
+                  </button>
                 </div>
               </div>
 
@@ -1324,6 +1419,113 @@ export default function CandidatesPage() {
                     )}
                   </div>
 
+                    {activeTab === 'review' && (
+                      <div className="space-y-5">
+                        {/* Avaliação do recrutador */}
+                        <div className="rounded-2xl border border-[#E5E5DC] bg-white/90 p-5 shadow-sm">
+                          <h3 className="font-semibold text-[#141042] mb-4 flex items-center gap-2">
+                            <Sparkles className="h-5 w-5 text-purple-600" />
+                            Gerar Novo Parecer Técnico
+                          </h3>
+                          <div className="mb-4">
+                            <p className="text-sm font-medium text-gray-700 mb-2">Nota do Recrutador (0–10)</p>
+                            <div className="flex gap-1.5 flex-wrap">
+                              {[1,2,3,4,5,6,7,8,9,10].map(n => (
+                                <button
+                                  key={n}
+                                  onClick={() => setReviewRating(n)}
+                                  className={`w-9 h-9 rounded-lg text-sm font-bold transition-all ${
+                                    n <= reviewRating
+                                      ? 'bg-[#141042] text-white shadow-md'
+                                      : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                                  }`}
+                                >
+                                  {n}
+                                </button>
+                              ))}
+                            </div>
+                            <span className={`mt-2 inline-block text-xs px-2 py-0.5 rounded-full font-semibold ${
+                              reviewRating >= 8 ? 'bg-green-100 text-green-700' :
+                              reviewRating >= 6 ? 'bg-blue-100 text-blue-700' :
+                              reviewRating >= 4 ? 'bg-yellow-100 text-yellow-700' :
+                              'bg-red-100 text-red-700'
+                            }`}>
+                              {reviewRating >= 8 ? 'Excelente' : reviewRating >= 6 ? 'Bom' : reviewRating >= 4 ? 'Regular' : 'Fraco'}
+                            </span>
+                          </div>
+                          <textarea
+                            value={reviewNote}
+                            onChange={e => setReviewNote(e.target.value)}
+                            placeholder="Observações do recrutador (opcional)..."
+                            rows={3}
+                            className="w-full rounded-lg border border-gray-200 p-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-[#141042]/20"
+                          />
+                          <button
+                            onClick={handleGenerateReview}
+                            disabled={reviewLoading}
+                            className="mt-3 w-full flex items-center justify-center gap-2 bg-[#141042] text-white rounded-xl py-2.5 font-medium text-sm hover:bg-[#1a1660] transition-colors disabled:opacity-60"
+                          >
+                            {reviewLoading ? (
+                              <><RefreshCw className="h-4 w-4 animate-spin" /> Gerando...</>
+                            ) : (
+                              <><Sparkles className="h-4 w-4" /> Gerar Parecer com IA</>
+                            )}
+                          </button>
+                        </div>
+
+                        {/* Score e parecer atual */}
+                        {currentReview && (
+                          <div className="rounded-2xl border border-[#E5E5DC] bg-white/90 p-5 shadow-sm space-y-4">
+                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                              {[
+                                { label: 'Score Total', value: currentReview.score_total, color: 'bg-[#141042] text-white' },
+                                { label: 'Testes (40%)', value: currentReview.score_testes, color: 'bg-purple-50 text-purple-700' },
+                                { label: 'Experiência (35%)', value: currentReview.score_experiencia, color: 'bg-blue-50 text-blue-700' },
+                                { label: 'Recrutador (25%)', value: currentReview.score_recrutador, color: 'bg-green-50 text-green-700' },
+                              ].map(item => (
+                                <div key={item.label} className={`rounded-xl p-3 text-center ${item.color}`}>
+                                  <p className="text-2xl font-bold">{Math.round(item.value)}</p>
+                                  <p className="text-xs mt-0.5 opacity-80">{item.label}</p>
+                                </div>
+                              ))}
+                            </div>
+                            <div className="h-2 rounded-full bg-gray-100 overflow-hidden">
+                              <div
+                                className={`h-full rounded-full transition-all ${
+                                  currentReview.score_total >= 80 ? 'bg-green-500' :
+                                  currentReview.score_total >= 60 ? 'bg-blue-500' :
+                                  currentReview.score_total >= 40 ? 'bg-yellow-500' : 'bg-red-500'
+                                }`}
+                                style={{ width: `${Math.min(currentReview.score_total, 100)}%` }}
+                              />
+                            </div>
+                            <div className="rounded-xl bg-[#FAFAF8] p-4 text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">
+                              {currentReview.ai_review}
+                            </div>
+                            <p className="text-xs text-gray-400">
+                              Gerado em {new Date(currentReview.created_at).toLocaleString('pt-BR')} • {currentReview.ai_model}
+                            </p>
+                            {reviewHistory.length > 1 && (
+                              <button
+                                onClick={() => setShowReviewHistory(p => !p)}
+                                className="text-xs text-purple-600 hover:underline"
+                              >
+                                {showReviewHistory ? 'Ocultar' : `Ver ${reviewHistory.length - 1} parecer(es) anterior(es)`}
+                              </button>
+                            )}
+                            {showReviewHistory && reviewHistory.slice(1).map((r, i) => r && (
+                              <div key={i} className="rounded-xl border border-gray-100 p-3 text-xs text-gray-500 space-y-1">
+                                <p>Score: <strong>{Math.round(r.score_total)}</strong> • Nota recrutador: {r.recruiter_rating}/10</p>
+                                <p className="whitespace-pre-wrap">{r.ai_review?.slice(0, 300)}...</p>
+                                <p className="text-gray-400">{new Date(r.created_at).toLocaleString('pt-BR')}</p>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+
                   {/* Painel de Anotações (1/3) */}
                   <div className="lg:col-span-1">
                     <Card>
@@ -1347,10 +1549,11 @@ export default function CandidatesPage() {
                           <div className="mt-4">
                             <NotesPanel
                               candidateId={selectedCandidate.id}
-                              context={activeTab}
+                              context={activeTab === 'review' ? 'assessments' : activeTab}
                               placeholder={`Anotações sobre ${
                                 activeTab === 'profile' ? 'o perfil' :
                                 activeTab === 'resume' ? 'o currículo' :
+                                activeTab === 'review' ? 'o parecer técnico' :
                                 'os testes'
                               } do candidato...`}
                             />
