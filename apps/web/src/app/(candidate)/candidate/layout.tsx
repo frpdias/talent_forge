@@ -354,7 +354,7 @@ export default function CandidateLayout({ children }: { children: React.ReactNod
               <div>
                 <p>Ver currículo</p>
                 <p className="text-[11px] text-[#999]">
-                  {resumeName || 'Abrir arquivo enviado'}
+                  {resumeUrl ? 'Currículo em PDF disponível' : 'Nenhum currículo enviado'}
                 </p>
               </div>
             </div>
