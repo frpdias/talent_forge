@@ -28,6 +28,7 @@ import {
   Lock,
 } from 'lucide-react';
 import { NotificationCenter } from '@/components/notifications/NotificationCenter';
+import { OnboardingManualModal } from '@/components/onboarding/OnboardingManualModal';
 import { AgendaModal } from '@/components/calendar/AgendaModal';
 
 // Itens de Recrutamento
@@ -67,6 +68,7 @@ export default function RecruiterLayout({ children }: { children: React.ReactNod
   const [orgDropdownOpen, setOrgDropdownOpen] = useState(false);
   const [agendaOpen, setAgendaOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [manualOpen, setManualOpen] = useState(false);
   const [recruitmentActive, setRecruitmentActive] = useState<boolean | null>(null);
 
   // Fecha drawer ao navegar
@@ -363,7 +365,7 @@ export default function RecruiterLayout({ children }: { children: React.ReactNod
         <div className="pt-4 mt-4 border-t border-white/10">
           <button
             type="button"
-            onClick={() => window.open('/manual_onboarding.html', '_blank')}
+            onClick={() => setManualOpen(true)}
             className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-white/60 hover:bg-white/10 hover:text-white transition-all duration-200"
           >
             <HelpCircle className="w-4 h-4 shrink-0" />
@@ -500,7 +502,7 @@ export default function RecruiterLayout({ children }: { children: React.ReactNod
               </div>
               <div className="flex items-center gap-2">
                 <button
-                  onClick={() => window.open('/manual_onboarding.html', '_blank')}
+                  onClick={() => setManualOpen(true)}
                   title="Manual da Plataforma"
                   className="p-2 text-[#94A3B8] hover:text-[#141042] hover:bg-[#FAFAF8] rounded-lg transition-colors"
                 >
@@ -539,6 +541,7 @@ export default function RecruiterLayout({ children }: { children: React.ReactNod
       </div>
 
       {agendaOpen && <AgendaModal onClose={() => setAgendaOpen(false)} />}
+      <OnboardingManualModal isOpen={manualOpen} onClose={() => setManualOpen(false)} />
     </div>
   );
 }
