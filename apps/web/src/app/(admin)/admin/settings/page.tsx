@@ -195,7 +195,7 @@ export default function AdminSettingsPage() {
                 onChange={(e) => setSettings({ ...settings, emailNotifications: e.target.checked })}
                 className="sr-only peer"
               />
-              <div className="w-11 h-6 bg-[#E5E5DC] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#10B981]"></div>
+              <div className="w-11 h-6 bg-[#E5E5DC] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#10B981]"></div>
             </label>
           </div>
 
@@ -211,7 +211,7 @@ export default function AdminSettingsPage() {
                 onChange={(e) => setSettings({ ...settings, securityAlerts: e.target.checked })}
                 className="sr-only peer"
               />
-              <div className="w-11 h-6 bg-[#E5E5DC] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#10B981]"></div>
+              <div className="w-11 h-6 bg-[#E5E5DC] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#10B981]"></div>
             </label>
           </div>
 
@@ -227,7 +227,7 @@ export default function AdminSettingsPage() {
                 onChange={(e) => setSettings({ ...settings, systemUpdates: e.target.checked })}
                 className="sr-only peer"
               />
-              <div className="w-11 h-6 bg-[#E5E5DC] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#10B981]"></div>
+              <div className="w-11 h-6 bg-[#E5E5DC] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#10B981]"></div>
             </label>
           </div>
         </div>
@@ -280,7 +280,7 @@ export default function AdminSettingsPage() {
                   onChange={(e) => setSettings({ ...settings, mfaRequired: e.target.checked })}
                   className="sr-only peer"
                 />
-                <div className="w-11 h-6 bg-[#E5E5DC] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#10B981]"></div>
+                <div className="w-11 h-6 bg-[#E5E5DC] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#10B981]"></div>
               </label>
             </div>
           </div>
@@ -307,7 +307,7 @@ export default function AdminSettingsPage() {
                 onChange={(e) => setSettings({ ...settings, maintenanceMode: e.target.checked })}
                 className="sr-only peer"
               />
-              <div className="w-11 h-6 bg-[#E5E5DC] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#F59E0B]"></div>
+              <div className="w-11 h-6 bg-[#E5E5DC] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#F59E0B]"></div>
             </label>
           </div>
 
@@ -323,7 +323,7 @@ export default function AdminSettingsPage() {
                 onChange={(e) => setSettings({ ...settings, debugMode: e.target.checked })}
                 className="sr-only peer"
               />
-              <div className="w-11 h-6 bg-[#E5E5DC] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#EF4444]"></div>
+              <div className="w-11 h-6 bg-[#E5E5DC] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#EF4444]"></div>
             </label>
           </div>
 

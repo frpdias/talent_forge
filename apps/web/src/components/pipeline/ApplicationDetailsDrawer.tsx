@@ -228,7 +228,7 @@ export function ApplicationDetailsDrawer({ application, isOpen, onClose, onStatu
     <>
       {/* Overlay */}
       <div
-        className="fixed inset-0 bg-black/40 z-[60]"
+        className="fixed inset-0 bg-black/40 z-60"
         onClick={() => {
           if (resumeViewerUrl) {
             setResumeViewerUrl(null);
@@ -241,9 +241,9 @@ export function ApplicationDetailsDrawer({ application, isOpen, onClose, onStatu
       {/* Doc Viewer Panel */}
       {docViewerUrl && (
         <>
-          <div className="fixed inset-0 bg-black/60 z-[80]" onClick={() => setDocViewerUrl(null)} />
-          <div className="fixed right-0 top-0 bottom-0 w-full max-w-[800px] bg-white z-[81] flex flex-col shadow-2xl">
-            <div className="flex items-center justify-between px-5 py-4 flex-shrink-0" style={{ backgroundColor: '#141042' }}>
+          <div className="fixed inset-0 bg-black/60 z-80" onClick={() => setDocViewerUrl(null)} />
+          <div className="fixed right-0 top-0 bottom-0 w-full max-w-200 bg-white z-81 flex flex-col shadow-2xl">
+            <div className="flex items-center justify-between px-5 py-4 shrink-0" style={{ backgroundColor: '#141042' }}>
               <div className="flex items-center gap-3">
                 <FolderOpen className="h-5 w-5 text-white/80" />
                 <span className="text-white font-semibold text-sm">{docViewerLabel}</span>
@@ -265,10 +265,10 @@ export function ApplicationDetailsDrawer({ application, isOpen, onClose, onStatu
       {/* Resume Viewer Panel (z higher than drawer) */}
       {resumeViewerUrl && (
         <>
-          <div className="fixed inset-0 bg-black/60 z-[80]" onClick={() => setResumeViewerUrl(null)} />
-          <div className="fixed right-0 top-0 bottom-0 w-full max-w-[800px] bg-white z-[81] flex flex-col shadow-2xl">
+          <div className="fixed inset-0 bg-black/60 z-80" onClick={() => setResumeViewerUrl(null)} />
+          <div className="fixed right-0 top-0 bottom-0 w-full max-w-200 bg-white z-81 flex flex-col shadow-2xl">
             <div
-              className="flex items-center justify-between px-5 py-4 flex-shrink-0"
+              className="flex items-center justify-between px-5 py-4 shrink-0"
               style={{ backgroundColor: '#141042' }}
             >
               <div className="flex items-center gap-3">
@@ -304,7 +304,7 @@ export function ApplicationDetailsDrawer({ application, isOpen, onClose, onStatu
       {/* Drawer Panel */}
       <div className="fixed right-0 top-0 bottom-0 w-full max-w-[500px] bg-white z-[61] flex flex-col shadow-2xl animate-in slide-in-from-right duration-250">
         {/* Header */}
-        <div className="flex-shrink-0" style={{ backgroundColor: '#141042' }}>
+        <div className="shrink-0" style={{ backgroundColor: '#141042' }}>
           <div className="px-5 pt-5 pb-4">
             <div className="flex items-start justify-between mb-4">
               <span className="text-white/60 text-xs font-medium uppercase tracking-wider">
@@ -320,7 +320,7 @@ export function ApplicationDetailsDrawer({ application, isOpen, onClose, onStatu
 
             {application && (
               <div className="flex items-center gap-4">
-                <Avatar className="h-14 w-14 ring-2 ring-white/20 flex-shrink-0">
+                <Avatar className="h-14 w-14 ring-2 ring-white/20 shrink-0">
                   <AvatarFallback className="bg-white/15 text-white text-lg font-semibold">
                     {initials(application.candidate_name)}
                   </AvatarFallback>
@@ -330,7 +330,7 @@ export function ApplicationDetailsDrawer({ application, isOpen, onClose, onStatu
                     {application.candidate_name}
                   </h2>
                   <div className="flex items-center gap-1.5 mt-1">
-                    <Mail className="h-3.5 w-3.5 text-white/60 flex-shrink-0" />
+                    <Mail className="h-3.5 w-3.5 text-white/60 shrink-0" />
                     <span className="text-sm text-white/70 truncate">{application.candidate_email}</span>
                   </div>
                   {profile?.current_title && (
@@ -355,7 +355,7 @@ export function ApplicationDetailsDrawer({ application, isOpen, onClose, onStatu
                 </h3>
                 <div className="space-y-3">
                   <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-[rgba(20,16,66,0.06)] flex items-center justify-center flex-shrink-0">
+                    <div className="w-8 h-8 rounded-lg bg-[rgba(20,16,66,0.06)] flex items-center justify-center shrink-0">
                       <Briefcase className="h-4 w-4 text-[#666666]" />
                     </div>
                     <div className="min-w-0">
@@ -365,7 +365,7 @@ export function ApplicationDetailsDrawer({ application, isOpen, onClose, onStatu
                   </div>
 
                   <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-[rgba(20,16,66,0.06)] flex items-center justify-center flex-shrink-0">
+                    <div className="w-8 h-8 rounded-lg bg-[rgba(20,16,66,0.06)] flex items-center justify-center shrink-0">
                       <Clock className="h-4 w-4 text-[#666666]" />
                     </div>
                     <div>
@@ -380,7 +380,7 @@ export function ApplicationDetailsDrawer({ application, isOpen, onClose, onStatu
 
                   {application.current_stage && (
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-lg bg-[rgba(20,16,66,0.06)] flex items-center justify-center flex-shrink-0">
+                      <div className="w-8 h-8 rounded-lg bg-[rgba(20,16,66,0.06)] flex items-center justify-center shrink-0">
                         <ArrowRight className="h-4 w-4 text-[#666666]" />
                       </div>
                       <div>
@@ -391,7 +391,7 @@ export function ApplicationDetailsDrawer({ application, isOpen, onClose, onStatu
                   )}
 
                   <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-[rgba(20,16,66,0.06)] flex items-center justify-center flex-shrink-0">
+                    <div className="w-8 h-8 rounded-lg bg-[rgba(20,16,66,0.06)] flex items-center justify-center shrink-0">
                       <Calendar className="h-4 w-4 text-[#666666]" />
                     </div>
                     <div>
@@ -403,7 +403,7 @@ export function ApplicationDetailsDrawer({ application, isOpen, onClose, onStatu
                   {/* Rating */}
                   {application.rating !== undefined && application.rating > 0 && (
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-lg bg-[rgba(20,16,66,0.06)] flex items-center justify-center flex-shrink-0">
+                      <div className="w-8 h-8 rounded-lg bg-[rgba(20,16,66,0.06)] flex items-center justify-center shrink-0">
                         <Star className="h-4 w-4 text-[#666666]" />
                       </div>
                       <div>
@@ -454,7 +454,7 @@ export function ApplicationDetailsDrawer({ application, isOpen, onClose, onStatu
                               : 'bg-white border-[#E5E5DC] hover:border-[#141042]/30 hover:bg-[#FAFAF8] cursor-pointer'
                           }`}
                         >
-                          <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
+                          <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center shrink-0 ${
                             isCurrent ? 'border-current bg-current/10' : 'border-[#E5E5DC]'
                           }`}>
                             {isCurrent ? (
@@ -463,10 +463,10 @@ export function ApplicationDetailsDrawer({ application, isOpen, onClose, onStatu
                               <span className="text-[9px] font-bold text-[#94A3B8]">{index + 1}</span>
                             )}
                           </div>
-                          <Icon className={`h-3.5 w-3.5 flex-shrink-0 ${isCurrent ? '' : 'text-[#94A3B8]'}`} />
+                          <Icon className={`h-3.5 w-3.5 shrink-0 ${isCurrent ? '' : 'text-[#94A3B8]'}`} />
                           <span className="text-sm flex-1">{stage.label}</span>
                           {!isCurrent && (
-                            <ChevronRight className="h-3.5 w-3.5 text-[#94A3B8] flex-shrink-0" />
+                            <ChevronRight className="h-3.5 w-3.5 text-[#94A3B8] shrink-0" />
                           )}
                         </button>
                       );
@@ -490,7 +490,7 @@ export function ApplicationDetailsDrawer({ application, isOpen, onClose, onStatu
                   <div className="space-y-3">
                     {profile.phone && (
                       <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-lg bg-[rgba(20,16,66,0.06)] flex items-center justify-center flex-shrink-0">
+                        <div className="w-8 h-8 rounded-lg bg-[rgba(20,16,66,0.06)] flex items-center justify-center shrink-0">
                           <Phone className="h-4 w-4 text-[#666666]" />
                         </div>
                         <div>
@@ -501,7 +501,7 @@ export function ApplicationDetailsDrawer({ application, isOpen, onClose, onStatu
                     )}
                     {(profile.city || profile.state) && (
                       <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-lg bg-[rgba(20,16,66,0.06)] flex items-center justify-center flex-shrink-0">
+                        <div className="w-8 h-8 rounded-lg bg-[rgba(20,16,66,0.06)] flex items-center justify-center shrink-0">
                           <MapPin className="h-4 w-4 text-[#666666]" />
                         </div>
                         <div>
@@ -512,7 +512,7 @@ export function ApplicationDetailsDrawer({ application, isOpen, onClose, onStatu
                     )}
                     {profile.experience_years != null && profile.experience_years > 0 && (
                       <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-lg bg-[rgba(20,16,66,0.06)] flex items-center justify-center flex-shrink-0">
+                        <div className="w-8 h-8 rounded-lg bg-[rgba(20,16,66,0.06)] flex items-center justify-center shrink-0">
                           <Briefcase className="h-4 w-4 text-[#666666]" />
                         </div>
                         <div>
@@ -525,7 +525,7 @@ export function ApplicationDetailsDrawer({ application, isOpen, onClose, onStatu
                     )}
                     {profile.linkedin_url && (
                       <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-lg bg-[rgba(20,16,66,0.06)] flex items-center justify-center flex-shrink-0">
+                        <div className="w-8 h-8 rounded-lg bg-[rgba(20,16,66,0.06)] flex items-center justify-center shrink-0">
                           <Linkedin className="h-4 w-4 text-[#666666]" />
                         </div>
                         <div className="min-w-0">
@@ -582,14 +582,14 @@ export function ApplicationDetailsDrawer({ application, isOpen, onClose, onStatu
                     </div>
                   ) : admissionDocs.length === 0 ? (
                     <div className="flex items-center gap-3 p-3 bg-violet-50 rounded-lg border border-violet-100">
-                      <FolderOpen className="h-4 w-4 text-violet-400 flex-shrink-0" />
+                      <FolderOpen className="h-4 w-4 text-violet-400 shrink-0" />
                       <p className="text-xs text-violet-600">Aguardando o candidato enviar os documentos de admissão.</p>
                     </div>
                   ) : (
                     <div className="space-y-2">
                       {admissionDocs.map((doc) => (
                         <div key={doc.id} className="flex items-center gap-3 p-3 bg-[#FAFAF8] rounded-lg border border-[#E5E5DC] hover:border-[#141042]/20 transition-colors">
-                          <div className="w-7 h-7 rounded-md bg-emerald-100 flex items-center justify-center flex-shrink-0">
+                          <div className="w-7 h-7 rounded-md bg-emerald-100 flex items-center justify-center shrink-0">
                             <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
                           </div>
                           <div className="flex-1 min-w-0">
@@ -598,7 +598,7 @@ export function ApplicationDetailsDrawer({ application, isOpen, onClose, onStatu
                             </p>
                             <p className="text-xs text-[#94A3B8] truncate">{doc.file_name}</p>
                           </div>
-                          <div className="flex items-center gap-1.5 flex-shrink-0">
+                          <div className="flex items-center gap-1.5 shrink-0">
                             <span className="text-xs text-[#94A3B8]">
                               {new Date(doc.uploaded_at).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })}
                             </span>
@@ -629,7 +629,7 @@ export function ApplicationDetailsDrawer({ application, isOpen, onClose, onStatu
                     Currículo
                   </h3>
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-lg bg-[rgba(59,130,246,0.08)] flex items-center justify-center flex-shrink-0">
+                    <div className="w-10 h-10 rounded-lg bg-[rgba(59,130,246,0.08)] flex items-center justify-center shrink-0">
                       <FileText className="h-5 w-5 text-[#3B82F6]" />
                     </div>
                     <div className="flex-1 min-w-0">
@@ -668,7 +668,7 @@ export function ApplicationDetailsDrawer({ application, isOpen, onClose, onStatu
         </div>
 
         {/* Footer */}
-        <div className="flex-shrink-0 px-5 py-4 border-t border-[#E5E5DC] bg-[#FAFAF8] space-y-2">
+        <div className="shrink-0 px-5 py-4 border-t border-[#E5E5DC] bg-[#FAFAF8] space-y-2">
           {application && (
             <CandidateReportPDF
               data={{

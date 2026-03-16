@@ -915,7 +915,7 @@ export default function CandidatesPage() {
           {selectedCandidate && (
             <div className="relative flex flex-col h-full">
               {/* Header */}
-              <div className="bg-[#141042] text-white p-6 flex-shrink-0">
+              <div className="bg-[#141042] text-white p-6 shrink-0">
                 <div className="flex items-center justify-between gap-4">
                   <div className="flex items-center gap-4">
                     <Avatar className="h-16 w-16 border-2 border-white">
@@ -957,7 +957,7 @@ export default function CandidatesPage() {
                     </Button>
                     <Button
                       variant="outline"
-                      className="bg-white text-[var(--tf-primary)] border-white hover:bg-white/90"
+                      className="bg-white text-tf-primary border-white hover:bg-white/90"
                       onClick={() => setSelectedCandidate(null)}
                     >
                       Voltar
@@ -967,14 +967,14 @@ export default function CandidatesPage() {
               </div>
 
               {/* Tabs */}
-              <div className="border-b border-[var(--border)] bg-[var(--tf-gray-50)] flex-shrink-0">
+              <div className="border-b border-border bg-gray-50 shrink-0">
                 <div className="flex gap-1 px-6">
                   <button
                     onClick={() => setActiveTab('profile')}
                     className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
                       activeTab === 'profile'
-                        ? 'border-[var(--tf-primary)] text-[var(--tf-primary)]'
-                        : 'border-transparent text-[var(--foreground-muted)] hover:text-[var(--foreground)]'
+                        ? 'border-tf-primary text-tf-primary'
+                        : 'border-transparent text-foreground-muted hover:text-foreground'
                     }`}
                   >
                     <User className="h-4 w-4" />
@@ -984,8 +984,8 @@ export default function CandidatesPage() {
                     onClick={() => setActiveTab('resume')}
                     className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
                       activeTab === 'resume'
-                        ? 'border-[var(--tf-primary)] text-[var(--tf-primary)]'
-                        : 'border-transparent text-[var(--foreground-muted)] hover:text-[var(--foreground)]'
+                        ? 'border-tf-primary text-tf-primary'
+                        : 'border-transparent text-foreground-muted hover:text-foreground'
                     }`}
                   >
                     <FileText className="h-4 w-4" />
@@ -995,22 +995,22 @@ export default function CandidatesPage() {
                     onClick={() => setActiveTab('assessments')}
                     className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
                       activeTab === 'assessments'
-                        ? 'border-[var(--tf-primary)] text-[var(--tf-primary)]'
-                        : 'border-transparent text-[var(--foreground-muted)] hover:text-[var(--foreground)]'
+                        ? 'border-tf-primary text-tf-primary'
+                        : 'border-transparent text-foreground-muted hover:text-foreground'
                     }`}
                   >
                     <BarChart3 className="h-4 w-4" />
                     Testes
                     {selectedCandidate.assessment_completed && (
-                      <Badge className="bg-[var(--tf-success)] text-white ml-1 px-1.5 py-0 text-xs">✓</Badge>
+                      <Badge className="bg-tf-success text-white ml-1 px-1.5 py-0 text-xs">✓</Badge>
                     )}
                   </button>
                   <button
                     onClick={() => setActiveTab('review')}
                     className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
                       activeTab === 'review'
-                        ? 'border-[var(--tf-primary)] text-[var(--tf-primary)]'
-                        : 'border-transparent text-[var(--foreground-muted)] hover:text-[var(--foreground)]'
+                        ? 'border-tf-primary text-tf-primary'
+                        : 'border-transparent text-foreground-muted hover:text-foreground'
                     }`}
                   >
                     <Sparkles className="h-4 w-4" />
@@ -1037,16 +1037,16 @@ export default function CandidatesPage() {
                         <Card>
                           <CardContent className="p-6 space-y-4">
                             <div>
-                              <h2 className="text-xl font-semibold text-[var(--tf-primary)]">
+                              <h2 className="text-xl font-semibold text-tf-primary">
                                 {selectedCandidate.full_name || selectedCandidate.email || 'Candidato'}
                               </h2>
                               {selectedCandidate.headline && (
-                                <p className="text-sm text-[var(--foreground-muted)] mt-1">
+                                <p className="text-sm text-foreground-muted mt-1">
                                   {selectedCandidate.headline}
                                 </p>
                               )}
                               {candidateDetails?.profile?.salary_expectation && (
-                                <p className="text-sm text-[var(--foreground-muted)] mt-1">
+                                <p className="text-sm text-foreground-muted mt-1">
                                   Pretensão salarial: {formatCurrency(candidateDetails.profile.salary_expectation)}
                                 </p>
                               )}
@@ -1055,14 +1055,14 @@ export default function CandidatesPage() {
                           
                           <div className="space-y-3">
                             <div className="flex items-center gap-3 text-sm">
-                              <Mail className="h-4 w-4 text-[var(--foreground-muted)]" />
+                              <Mail className="h-4 w-4 text-foreground-muted" />
                               <span className="font-medium">Email:</span>
                               <span>{selectedCandidate.email}</span>
                             </div>
                             
                             {selectedCandidate.phone && (
                               <div className="flex items-center gap-3 text-sm">
-                                <Phone className="h-4 w-4 text-[var(--foreground-muted)]" />
+                                <Phone className="h-4 w-4 text-foreground-muted" />
                                 <span className="font-medium">Telefone:</span>
                                 <span>{selectedCandidate.phone}</span>
                               </div>
@@ -1070,7 +1070,7 @@ export default function CandidatesPage() {
                             
                             {selectedCandidate.location && (
                               <div className="flex items-center gap-3 text-sm">
-                                <MapPin className="h-4 w-4 text-[var(--foreground-muted)]" />
+                                <MapPin className="h-4 w-4 text-foreground-muted" />
                                 <span className="font-medium">Localização:</span>
                                 <span>{selectedCandidate.location}</span>
                               </div>
@@ -1078,7 +1078,7 @@ export default function CandidatesPage() {
                             
                             {selectedCandidate.cpf && (
                               <div className="flex items-center gap-3 text-sm">
-                                <IdCard className="h-4 w-4 text-[var(--foreground-muted)]" />
+                                <IdCard className="h-4 w-4 text-foreground-muted" />
                                 <span className="font-medium">CPF:</span>
                                 <span>{formatCpf(selectedCandidate.cpf)}</span>
                               </div>
@@ -1086,7 +1086,7 @@ export default function CandidatesPage() {
                             
                             {selectedCandidate.degree_level && (
                               <div className="flex items-center gap-3 text-sm">
-                                <GraduationCap className="h-4 w-4 text-[var(--foreground-muted)]" />
+                                <GraduationCap className="h-4 w-4 text-foreground-muted" />
                                 <span className="font-medium">Escolaridade:</span>
                                 <span>{degreeLabels[selectedCandidate.degree_level] || selectedCandidate.degree_level}</span>
                               </div>
@@ -1095,7 +1095,7 @@ export default function CandidatesPage() {
                             {(candidateDetails?.education?.length ?? 0) > 0 && (
                               <div className="pt-2">
                                 <div className="flex items-center gap-3 text-sm mb-2">
-                                  <GraduationCap className="h-4 w-4 text-[var(--foreground-muted)]" />
+                                  <GraduationCap className="h-4 w-4 text-foreground-muted" />
                                   <span className="font-medium">Formação:</span>
                                 </div>
                                 <div className="space-y-2">
@@ -1104,7 +1104,7 @@ export default function CandidatesPage() {
                                       <div className="font-medium">
                                         {degreeLabels[edu.degree_level] || edu.degree_level}
                                       </div>
-                                      <div className="text-[var(--foreground-muted)]">
+                                      <div className="text-foreground-muted">
                                         {edu.course_name} · {edu.institution}
                                       </div>
                                     </div>
@@ -1115,7 +1115,7 @@ export default function CandidatesPage() {
                             
                             {selectedCandidate.salary_expectation && (
                               <div className="flex items-center gap-3 text-sm">
-                                <Banknote className="h-4 w-4 text-[var(--foreground-muted)]" />
+                                <Banknote className="h-4 w-4 text-foreground-muted" />
                                 <span className="font-medium">Pretensão Salarial:</span>
                                 <span>{formatCurrency(selectedCandidate.salary_expectation)}</span>
                               </div>
@@ -1123,12 +1123,12 @@ export default function CandidatesPage() {
 
                             {candidateDetails?.profile?.birth_date && (
                               <div className="flex items-center gap-3 text-sm">
-                                <Calendar className="h-4 w-4 text-[var(--foreground-muted)]" />
+                                <Calendar className="h-4 w-4 text-foreground-muted" />
                                 <span className="font-medium">Nascimento:</span>
                                 <span>
                                   {formatBirthDate(candidateDetails.profile.birth_date)}
                                   {calculateAge(candidateDetails.profile.birth_date) !== null && (
-                                    <span className="text-[var(--foreground-muted)]">{' '}({calculateAge(candidateDetails.profile.birth_date)} anos)</span>
+                                    <span className="text-foreground-muted">{' '}({calculateAge(candidateDetails.profile.birth_date)} anos)</span>
                                   )}
                                 </span>
                               </div>
@@ -1136,7 +1136,7 @@ export default function CandidatesPage() {
                             
                             {selectedCandidate.availability_date && (
                               <div className="flex items-center gap-3 text-sm">
-                                <Calendar className="h-4 w-4 text-[var(--foreground-muted)]" />
+                                <Calendar className="h-4 w-4 text-foreground-muted" />
                                 <span className="font-medium">Disponibilidade:</span>
                                 <span>{formatDate(selectedCandidate.availability_date)}</span>
                               </div>
@@ -1144,13 +1144,13 @@ export default function CandidatesPage() {
                             
                             {selectedCandidate.linkedin_url && (
                               <div className="flex items-center gap-3 text-sm">
-                                <Link2 className="h-4 w-4 text-[var(--foreground-muted)]" />
+                                <Link2 className="h-4 w-4 text-foreground-muted" />
                                 <span className="font-medium">LinkedIn:</span>
                                 <a
                                   href={selectedCandidate.linkedin_url}
                                   target="_blank"
                                   rel="noreferrer"
-                                  className="text-[var(--tf-accent)] hover:underline"
+                                  className="text-tf-accent hover:underline"
                                 >
                                   Ver perfil
                                 </a>
@@ -1159,7 +1159,7 @@ export default function CandidatesPage() {
                           </div>
                           
                           {selectedCandidate.tags && selectedCandidate.tags.length > 0 && (
-                            <div className="pt-4 border-t border-[var(--border)]">
+                            <div className="pt-4 border-t border-border">
                               <span className="font-medium text-sm mb-2 block">Tags:</span>
                               <div className="flex flex-wrap gap-2">
                                 {selectedCandidate.tags.map((tag) => (
@@ -1176,15 +1176,15 @@ export default function CandidatesPage() {
                         <Card>
                           <CardContent className="p-6">
                             <h3 className="font-semibold text-lg mb-4">Resumo Profissional</h3>
-                            <div className="space-y-2 text-sm text-[var(--foreground-muted)]">
+                            <div className="space-y-2 text-sm text-foreground-muted">
                               {candidateDetails?.profile?.current_title && (
-                                <p><span className="font-medium text-[var(--foreground)]">Cargo:</span> {candidateDetails.profile.current_title}</p>
+                                <p><span className="font-medium text-foreground">Cargo:</span> {candidateDetails.profile.current_title}</p>
                               )}
                               {candidateDetails?.profile?.area_of_expertise && (
-                                <p><span className="font-medium text-[var(--foreground)]">Área:</span> {candidateDetails.profile.area_of_expertise}</p>
+                                <p><span className="font-medium text-foreground">Área:</span> {candidateDetails.profile.area_of_expertise}</p>
                               )}
                               {candidateDetails?.profile?.seniority_level && (
-                                <p><span className="font-medium text-[var(--foreground)]">Senioridade:</span> {candidateDetails.profile.seniority_level}</p>
+                                <p><span className="font-medium text-foreground">Senioridade:</span> {candidateDetails.profile.seniority_level}</p>
                               )}
                               {!candidateDetails?.profile?.current_title &&
                                 !candidateDetails?.profile?.area_of_expertise &&
@@ -1202,7 +1202,7 @@ export default function CandidatesPage() {
                         {detailsLoading ? (
                           <Card>
                             <CardContent className="p-6">
-                              <p className="text-sm text-[var(--foreground-muted)]">Carregando currículo...</p>
+                              <p className="text-sm text-foreground-muted">Carregando currículo...</p>
                             </CardContent>
                           </Card>
                         ) : candidateDetails?.profile ? (
@@ -1213,10 +1213,10 @@ export default function CandidatesPage() {
                                 <CardContent className="p-6">
                                   <h3 className="font-semibold text-lg mb-4">Documento</h3>
                                   <div className="flex items-center gap-3">
-                                    <FileText className="h-8 w-8 text-[var(--tf-primary)]" />
+                                    <FileText className="h-8 w-8 text-tf-primary" />
                                     <div className="flex-1">
                                       <p className="font-medium">{candidateDetails.profile.resume_filename || 'Currículo'}</p>
-                                      <p className="text-sm text-[var(--foreground-muted)]">PDF</p>
+                                      <p className="text-sm text-foreground-muted">PDF</p>
                                     </div>
                                     <div className="flex items-center gap-2">
                                       <Button
@@ -1256,10 +1256,10 @@ export default function CandidatesPage() {
                                   <h3 className="font-semibold text-lg mb-4">Experiência Profissional</h3>
                                   <div className="space-y-4">
                                     {candidateDetails.experiences.map((exp: any, idx: number) => (
-                                      <div key={idx} className="border-l-2 border-[var(--tf-primary)] pl-4">
+                                      <div key={idx} className="border-l-2 border-tf-primary pl-4">
                                         <h4 className="font-semibold">{exp.job_title}</h4>
-                                        <p className="text-sm text-[var(--foreground-muted)]">{exp.company_name}</p>
-                                        <p className="text-xs text-[var(--foreground-muted)] mt-1">
+                                        <p className="text-sm text-foreground-muted">{exp.company_name}</p>
+                                        <p className="text-xs text-foreground-muted mt-1">
                                           {formatDate(exp.start_date)} - {exp.is_current ? 'Atual' : formatDate(exp.end_date)}
                                         </p>
                                         {exp.description && (
@@ -1277,7 +1277,7 @@ export default function CandidatesPage() {
                         ) : (
                           <Card>
                             <CardContent className="p-6">
-                              <p className="text-sm text-[var(--foreground-muted)]">
+                              <p className="text-sm text-foreground-muted">
                                 Nenhuma informação de currículo encontrada
                               </p>
                             </CardContent>
@@ -1291,7 +1291,7 @@ export default function CandidatesPage() {
                         {detailsLoading ? (
                           <Card>
                             <CardContent className="p-6">
-                              <p className="text-sm text-[var(--foreground-muted)]">Carregando testes...</p>
+                              <p className="text-sm text-foreground-muted">Carregando testes...</p>
                             </CardContent>
                           </Card>
                         ) : (
@@ -1617,7 +1617,7 @@ export default function CandidatesPage() {
                         <div className="flex items-center justify-between">
                           <div>
                             <h3 className="font-semibold text-lg">Anotações</h3>
-                            <p className="text-sm text-[var(--foreground-muted)]">
+                            <p className="text-sm text-foreground-muted">
                               Clique para abrir quando precisar.
                             </p>
                           </div>
@@ -1663,10 +1663,10 @@ export default function CandidatesPage() {
       {resumeViewerUrl && (
         <>
           <div
-            className="fixed inset-0 bg-black/60 z-[70]"
+            className="fixed inset-0 bg-black/60 z-70"
             onClick={() => setResumeViewerUrl(null)}
           />
-          <div className="fixed right-0 top-0 bottom-0 w-full max-w-[800px] bg-white z-[71] flex flex-col shadow-2xl">
+          <div className="fixed right-0 top-0 bottom-0 w-full max-w-200 bg-white z-71 flex flex-col shadow-2xl">
             {/* Header */}
             <div className="flex items-center justify-between px-5 py-3 border-b border-gray-200 bg-[#141042] shrink-0">
               <div className="flex items-center gap-2">

@@ -441,7 +441,7 @@ export default function PipelinePage() {
         {/* Stats Bar */}
         <div className="px-6 pb-4">
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-            <div className="bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl p-4 text-white">
+            <div className="bg-linear-to-r from-blue-500 to-blue-600 rounded-xl p-4 text-white">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-white/80 text-xs font-medium uppercase tracking-wider">Total</p>
@@ -452,7 +452,7 @@ export default function PipelinePage() {
                 </div>
               </div>
             </div>
-            <div className="bg-gradient-to-r from-amber-500 to-amber-600 rounded-xl p-4 text-white">
+            <div className="bg-linear-to-r from-amber-500 to-amber-600 rounded-xl p-4 text-white">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-white/80 text-xs font-medium uppercase tracking-wider">Em Avaliação</p>
@@ -463,7 +463,7 @@ export default function PipelinePage() {
                 </div>
               </div>
             </div>
-            <div className="bg-gradient-to-r from-violet-500 to-violet-600 rounded-xl p-4 text-white">
+            <div className="bg-linear-to-r from-violet-500 to-violet-600 rounded-xl p-4 text-white">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-white/80 text-xs font-medium uppercase tracking-wider">Em Documentação</p>
@@ -474,7 +474,7 @@ export default function PipelinePage() {
                 </div>
               </div>
             </div>
-            <div className="bg-gradient-to-r from-emerald-500 to-emerald-600 rounded-xl p-4 text-white">
+            <div className="bg-linear-to-r from-emerald-500 to-emerald-600 rounded-xl p-4 text-white">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-white/80 text-xs font-medium uppercase tracking-wider">Contratados</p>
@@ -485,7 +485,7 @@ export default function PipelinePage() {
                 </div>
               </div>
             </div>
-            <div className="bg-gradient-to-r from-[#141042] to-[#1a164f] rounded-xl p-4 text-white">
+            <div className="bg-linear-to-r from-[#141042] to-[#1a164f] rounded-xl p-4 text-white">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-white text-xs font-medium uppercase tracking-wider">Conversão</p>
@@ -604,14 +604,14 @@ export default function PipelinePage() {
                       <div
                         ref={provided.innerRef}
                         {...provided.droppableProps}
-                        className={`flex-shrink-0 w-80 rounded-xl border-2 transition-all duration-200 ${
+                        className={`shrink-0 w-80 rounded-xl border-2 transition-all duration-200 ${
                           snapshot.isDraggingOver
                             ? 'ring-2 ring-[#141042] ring-offset-2 border-[#141042] shadow-lg'
                             : `${columnConfig.borderColor} border-opacity-50`
-                        } bg-white shadow-[var(--shadow-sm)]`}
+                        } bg-white shadow-(--shadow-sm)`}
                       >
                         {/* Column Header */}
-                        <div className={`bg-gradient-to-r ${columnConfig.color} rounded-t-lg p-4`}>
+                        <div className={`bg-linear-to-r ${columnConfig.color} rounded-t-lg p-4`}>
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-3">
                               <div className="bg-white/20 rounded-lg p-2">
@@ -633,7 +633,7 @@ export default function PipelinePage() {
                         </div>
 
                         {/* Column Content */}
-                        <div className="p-3 space-y-3 min-h-[400px] max-h-[calc(100vh-400px)] overflow-y-auto">
+                        <div className="p-3 space-y-3 min-h-100 max-h-[calc(100vh-400px)] overflow-y-auto">
                           {column.applications.length === 0 ? (
                             <div className={`${columnConfig.bgColor} rounded-lg border-2 border-dashed ${columnConfig.borderColor} p-6 text-center`}>
                               <div className={`inline-flex items-center justify-center w-12 h-12 rounded-full ${columnConfig.bgColor} mb-3`}>
@@ -658,13 +658,13 @@ export default function PipelinePage() {
                                     className={`bg-white rounded-xl border border-[#E5E5DC] p-4 transition-all duration-300 cursor-grab active:cursor-grabbing group ${
                                       snapshot.isDragging
                                         ? 'shadow-xl ring-2 ring-[#141042] rotate-2 scale-105'
-                                        : 'hover:shadow-[var(--shadow-md)] hover:-translate-y-px hover:border-[#141042]/20'
+                                        : 'hover:shadow-(--shadow-md) hover:-translate-y-px hover:border-[#141042]/20'
                                     }`}
                                   >
                                     {/* Card Header */}
                                     <div className="flex items-start gap-3">
                                       <Avatar className="h-10 w-10 ring-2 ring-[#E5E5DC]">
-                                        <AvatarFallback className="bg-gradient-to-br from-[#1F4ED8] to-[#3b82f6] text-white text-sm font-medium">
+                                        <AvatarFallback className="bg-linear-to-br from-[#1F4ED8] to-[#3b82f6] text-white text-sm font-medium">
                                           {app.candidate_name
                                             .split(' ')
                                             .map((n: string) => n[0])
@@ -688,7 +688,7 @@ export default function PipelinePage() {
                                     <div className="mt-3">
                                       <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-[rgba(20,16,66,0.05)] rounded-full">
                                         <Briefcase className="h-3 w-3 text-[#666666]" />
-                                        <span className="text-xs font-medium text-[#444444] truncate max-w-[180px]">
+                                        <span className="text-xs font-medium text-[#444444] truncate max-w-45">
                                           {app.job_title}
                                         </span>
                                       </div>

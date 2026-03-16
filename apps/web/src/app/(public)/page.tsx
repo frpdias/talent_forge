@@ -144,7 +144,7 @@ export default function LandingPage() {
               </div>
 
               {/* Mockup Content */}
-              <div className="grid grid-cols-1 sm:grid-cols-[200px_1fr] min-h-[360px]">
+              <div className="grid grid-cols-1 sm:grid-cols-[200px_1fr] min-h-90">
                 {/* Sidebar */}
                 <div className="hidden sm:block bg-[#0D0B2E] px-3 py-4 border-r border-white/10">
                   <div className="flex items-center gap-2 mb-6 px-2">
@@ -237,7 +237,7 @@ export default function LandingPage() {
                         <div key={stage} className="bg-[#FAFAF8] rounded border border-[#E5E5DC] p-2">
                           {/* Column header */}
                           <div className="flex items-center gap-1 mb-2">
-                            <div className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: color }} />
+                            <div className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: color }} />
                             <p className="text-[9px] font-semibold text-[#444]">{stage}</p>
                             <span className="ml-auto text-[8px] font-medium text-[#999] bg-[#E5E5DC] rounded-full px-1.5">{count}</span>
                           </div>
@@ -245,7 +245,7 @@ export default function LandingPage() {
                           {cards.map((c) => (
                             <div key={c.name} className="bg-white border border-[#E5E5DC] rounded p-1.5 mb-1 last:mb-0" style={{ borderLeft: `2px solid ${color}` }}>
                               <div className="flex items-center gap-1">
-                                <div className="w-4 h-4 rounded-full flex-shrink-0 flex items-center justify-center text-white font-bold" style={{ fontSize: '5px', background: color + 'CC' }}>
+                                <div className="w-4 h-4 rounded-full shrink-0 flex items-center justify-center text-white font-bold" style={{ fontSize: '5px', background: color + 'CC' }}>
                                   {c.initials}
                                 </div>
                                 <span className="text-[8px] font-medium text-[#333] truncate flex-1">{c.name}</span>
@@ -382,7 +382,7 @@ export default function LandingPage() {
 
           {/* PHP Score Mockup */}
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 mb-12">
-            <div className="lg:col-span-1 bg-gradient-to-br from-[#1F4ED8] to-[#1845B8] rounded-xl p-6 text-white">
+            <div className="lg:col-span-1 bg-linear-to-br from-[#1F4ED8] to-[#1845B8] rounded-xl p-6 text-white">
               <p className="text-sm font-semibold opacity-80 mb-2">Score PHP Total</p>
               <p className="text-5xl font-bold mb-1">76.4</p>
               <div className="flex items-center gap-1 text-green-300 text-sm">

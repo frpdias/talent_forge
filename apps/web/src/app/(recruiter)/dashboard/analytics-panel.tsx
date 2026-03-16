@@ -389,7 +389,7 @@ export default function AnalyticsPanel({ orgId }: AnalyticsPanelProps) {
                     <Tooltip content={<PieTooltip />} />
                   </PieChart>
                 </ResponsiveContainer>
-                <div className="space-y-1.5 mt-0 sm:mt-3 min-w-[110px] sm:min-w-0 w-full sm:w-auto">
+                <div className="space-y-1.5 mt-0 sm:mt-3 min-w-27.5 sm:min-w-0 w-full sm:w-auto">
                   {pipeline.map(p => (
                     <div key={p.status} className="flex items-center justify-between text-xs">
                       <span className="flex items-center gap-1.5 text-[#374151]">

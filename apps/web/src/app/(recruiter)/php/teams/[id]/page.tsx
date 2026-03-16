@@ -328,7 +328,7 @@ export default function TeamDetailsPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
+      <div className="flex items-center justify-center min-h-100">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#1F4ED8]"></div>
       </div>
     );

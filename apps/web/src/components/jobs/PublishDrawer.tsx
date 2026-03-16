@@ -170,12 +170,12 @@ export function PublishDrawer({ jobId, orgId, jobTitle, isOpen, onClose }: Publi
     <>
       {/* Overlay */}
       <div
-        className="fixed inset-0 z-[60] bg-[#141042]/30 backdrop-blur-[2px]"
+        className="fixed inset-0 z-60 bg-[#141042]/30 backdrop-blur-[2px]"
         onClick={onClose}
       />
 
       {/* Drawer */}
-      <div className="fixed right-0 top-0 bottom-0 z-[61] w-full max-w-[600px] bg-white shadow-2xl flex flex-col animate-in slide-in-from-right duration-250">
+      <div className="fixed right-0 top-0 bottom-0 z-61 w-full max-w-150 bg-white shadow-2xl flex flex-col animate-in slide-in-from-right duration-250">
 
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 shrink-0">

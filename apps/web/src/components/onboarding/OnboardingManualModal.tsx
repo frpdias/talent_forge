@@ -149,7 +149,7 @@ export function OnboardingManualModal({ isOpen, onClose }: Props) {
         <div className="relative flex w-full max-w-6xl h-[90vh] bg-[#FAFAF8] rounded-2xl shadow-2xl overflow-hidden">
 
           {/* ── Sidebar esquerda ── */}
-          <aside className="hidden lg:flex w-64 flex-shrink-0 flex-col bg-[#141042] overflow-y-auto">
+          <aside className="hidden lg:flex w-64 shrink-0 flex-col bg-[#141042] overflow-y-auto">
             {/* Header sidebar */}
             <div className="px-5 py-5 border-b border-white/10">
               <div className="flex items-center gap-3 mb-3">
@@ -195,7 +195,7 @@ export function OnboardingManualModal({ isOpen, onClose }: Props) {
                       }`}
                     >
                       <div
-                        className="w-7 h-7 rounded-lg flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
+                        className="w-7 h-7 rounded-lg flex items-center justify-center text-white text-xs font-bold shrink-0"
                         style={{ background: isActive ? sec.color : `${sec.color}80` }}
                       >
                         {sec.number}
@@ -204,10 +204,10 @@ export function OnboardingManualModal({ isOpen, onClose }: Props) {
                         {sec.title}
                       </span>
                       {isRead
-                        ? <CheckCircle className="w-3.5 h-3.5 text-[#10B981] flex-shrink-0" />
+                        ? <CheckCircle className="w-3.5 h-3.5 text-[#10B981] shrink-0" />
                         : hasSubs
-                          ? <ChevronDown className={`w-3.5 h-3.5 text-white/30 flex-shrink-0 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
-                          : <Circle className="w-3.5 h-3.5 text-white/20 flex-shrink-0" />
+                          ? <ChevronDown className={`w-3.5 h-3.5 text-white/30 shrink-0 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+                          : <Circle className="w-3.5 h-3.5 text-white/20 shrink-0" />
                       }
                     </button>
 
@@ -238,7 +238,7 @@ export function OnboardingManualModal({ isOpen, onClose }: Props) {
             <div className="flex items-center justify-between px-6 py-4 border-b border-[#E5E5DC] bg-white shrink-0">
               <div className="flex items-center gap-3 min-w-0">
                 <div
-                  className="w-9 h-9 rounded-xl flex items-center justify-center text-white font-bold text-sm flex-shrink-0"
+                  className="w-9 h-9 rounded-xl flex items-center justify-center text-white font-bold text-sm shrink-0"
                   style={{ background: current?.color }}
                 >
                   {current?.number}
@@ -248,7 +248,7 @@ export function OnboardingManualModal({ isOpen, onClose }: Props) {
                   <p className="text-xs text-[#6B7280] truncate hidden sm:block">{current?.subtitle}</p>
                 </div>
               </div>
-              <div className="flex items-center gap-2 flex-shrink-0">
+              <div className="flex items-center gap-2 shrink-0">
                 <span className="lg:hidden text-xs text-[#6B7280] mr-2">
                   {currentIdx + 1}/{sections.length}
                 </span>

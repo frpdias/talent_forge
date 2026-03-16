@@ -141,17 +141,17 @@ export function EditJobDrawer({ jobId, isOpen, onClose, onSaved }: EditJobDrawer
     <>
       {/* Overlay */}
       <div
-        className="fixed inset-0 bg-black/40 z-[60]"
+        className="fixed inset-0 bg-black/40 z-60"
         onClick={onClose}
       />
 
       {/* Drawer */}
-      <div className="fixed right-0 top-0 bottom-0 w-full max-w-[640px] bg-white z-[61] flex flex-col shadow-2xl animate-in slide-in-from-right duration-250">
+      <div className="fixed right-0 top-0 bottom-0 w-full max-w-160 bg-white z-61 flex flex-col shadow-2xl animate-in slide-in-from-right duration-250">
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 shrink-0">
           <div>
             <h2 className="text-base font-semibold text-gray-900">Editar Vaga</h2>
-            <p className="text-xs text-gray-500 mt-0.5 truncate max-w-[460px]">{formData.title}</p>
+            <p className="text-xs text-gray-500 mt-0.5 truncate max-w-115">{formData.title}</p>
           </div>
           <button
             onClick={onClose}
@@ -270,7 +270,7 @@ export function EditJobDrawer({ jobId, isOpen, onClose, onSaved }: EditJobDrawer
               <div>
                 <h3 className="text-sm font-semibold text-gray-700 mb-4">Descrição da Vaga</h3>
                 <Textarea
-                  className="min-h-[120px]"
+                  className="min-h-30"
                   value={formData.description}
                   onChange={(e) => handleChange('description', e.target.value)}
                   placeholder="Descreva as responsabilidades e atividades da vaga..."
@@ -281,7 +281,7 @@ export function EditJobDrawer({ jobId, isOpen, onClose, onSaved }: EditJobDrawer
               <div>
                 <h3 className="text-sm font-semibold text-gray-700 mb-4">Requisitos</h3>
                 <Textarea
-                  className="min-h-[120px]"
+                  className="min-h-30"
                   value={formData.requirements}
                   onChange={(e) => handleChange('requirements', e.target.value)}
                   placeholder="Liste os requisitos necessários para a vaga..."
@@ -292,7 +292,7 @@ export function EditJobDrawer({ jobId, isOpen, onClose, onSaved }: EditJobDrawer
               <div>
                 <h3 className="text-sm font-semibold text-gray-700 mb-4">Benefícios</h3>
                 <Textarea
-                  className="min-h-[100px]"
+                  className="min-h-25"
                   value={formData.benefits}
                   onChange={(e) => handleChange('benefits', e.target.value)}
                   placeholder="Liste os benefícios oferecidos..."
