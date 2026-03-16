@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, useTransition } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { 
@@ -48,6 +48,7 @@ export default function CandidateLayout({ children }: { children: React.ReactNod
   const [resumeError, setResumeError] = useState<string | null>(null);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [exportingPDF, setExportingPDF] = useState(false);
+  const [, startTransition] = useTransition();
   const [resumeExplode, setResumeExplode] = useState(false);
   const [resumePreviewOpen, setResumePreviewOpen] = useState(false);
   const [profile, setProfile] = useState<any>(null);
@@ -207,6 +208,12 @@ export default function CandidateLayout({ children }: { children: React.ReactNod
     setShowAllExperience(false);
     setShowAllEducation(false);
     setResumePreviewOpen(true);
+  };
+
+  const closeResume = () => {
+    startTransition(() => {
+      setResumePreviewOpen(false);
+    });
   };
 
   const handleResumeDownload = () => {
@@ -622,14 +629,14 @@ export default function CandidateLayout({ children }: { children: React.ReactNod
       {resumePreviewOpen && (
         <div
           className="fixed inset-0 z-9999 flex items-center justify-center bg-black/40 p-4"
-          onClick={() => setResumePreviewOpen(false)}
+          onClick={closeResume}
         >
           <div
             className="resume-print-area relative w-full max-w-4xl rounded-3xl bg-white p-6 shadow-xl"
             onClick={(event) => event.stopPropagation()}
           >
             <button
-              onClick={() => setResumePreviewOpen(false)}
+              onClick={closeResume}
               type="button"
               className="resume-print-hide absolute right-4 top-4 text-xs font-medium text-[#666666]"
             >
@@ -809,7 +816,7 @@ export default function CandidateLayout({ children }: { children: React.ReactNod
                   {exportingPDF ? 'Gerando PDF…' : 'Exportar currículo PDF'}
                 </button>
                 <button
-                  onClick={() => setResumePreviewOpen(false)}
+                  onClick={closeResume}
                   type="button"
                   className="resume-print-hide inline-flex items-center gap-2 rounded-xl border border-[#E5E5DC] px-4 py-2 text-sm font-medium text-[#666666]"
                 >
