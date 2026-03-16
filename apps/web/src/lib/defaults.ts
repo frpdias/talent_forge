@@ -7,7 +7,7 @@ export const DEFAULT_REVIEW_PROMPT = `Você é um consultor sênior de Recursos 
 
 ## Candidato
 Nome: {{nome}}
-Cargo desejado: {{cargo}}
+Cargo atual / pretendido: {{cargo}}
 Localização: {{localizacao}}
 
 ## Formação Acadêmica
@@ -21,16 +21,16 @@ Localização: {{localizacao}}
 Avaliação de Cores: {{cores}}
 Predictive Index (PI): {{pi}}
 
-## Anotações do Recrutador
+## Anotações e Contexto do Recrutador
 {{anotacoes}}
-Nota do recrutador: {{nota_recrutador}}/10
-{{observacao_recrutador}}
+{{contexto_recrutador}}
 
-## Score Calculado
-- Total: {{score_total}}/100
+## Score Calculado (dados objetivos)
 - Testes comportamentais: {{score_testes}}/100
 - Experiência e formação: {{score_experiencia}}/100
-- Avaliação do recrutador: {{score_recrutador}}/100
+
+## Vagas em que se Candidatou
+{{vagas}}
 
 ---
 
@@ -48,5 +48,13 @@ Liste 2–4 áreas que necessitam atenção ou desenvolvimento.
 ### 4. Análise Comportamental
 Interprete os resultados dos testes (DISC, Cores, PI) e o que indicam sobre o candidato no ambiente de trabalho.
 
-### 5. Recomendação Final
-Conclusão objetiva: Recomendado / Recomendado com ressalvas / Não recomendado. Justifique em 2–3 linhas.`;
+### 5. Avaliação de Aderência à(s) Vaga(s)
+Compare o perfil do candidato com os requisitos das vagas acima. Destaque os pontos de alinhamento e os gaps relevantes. Se não houver vagas específicas, avalie o perfil geral de empregabilidade.
+
+### 6. Recomendação Final
+Conclusão objetiva: **Recomendado** / **Recomendado com ressalvas** / **Não recomendado**. Justifique em 2–3 linhas.
+
+---
+Na última linha da sua resposta, escreva EXATAMENTE neste formato (obrigatório, sem texto adicional após):
+NOTA_RECRUTADOR: [número inteiro de 0 a 10]`;
+

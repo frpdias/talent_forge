@@ -61,7 +61,6 @@ export default function CandidatesPage() {
   const [selectedCandidate, setSelectedCandidate] = useState<Candidate | null>(null);
   const [activeTab, setActiveTab] = useState<'profile' | 'resume' | 'assessments' | 'review'>('profile');
   const [showNotesPanel, setShowNotesPanel] = useState(false);
-  const [reviewRating, setReviewRating] = useState(7);
   const [reviewNote, setReviewNote] = useState('');
   const [reviewLoading, setReviewLoading] = useState(false);
   const [currentReview, setCurrentReview] = useState<{
@@ -154,7 +153,7 @@ export default function CandidatesPage() {
           'Authorization': `Bearer ${session.access_token}`,
           'x-org-id': orgId,
         },
-        body: JSON.stringify({ recruiter_rating: reviewRating, recruiter_note: reviewNote }),
+        body: JSON.stringify({ recruiter_note: reviewNote }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Erro ao gerar parecer');
@@ -1436,52 +1435,32 @@ export default function CandidatesPage() {
 
                     {activeTab === 'review' && (
                       <div className="space-y-5">
-                        {/* Avaliação do recrutador */}
+                        {/* Gerar parecer */}
                         <div className="rounded-2xl border border-[#E5E5DC] bg-white/90 p-5 shadow-sm">
-                          <h3 className="font-semibold text-[#141042] mb-4 flex items-center gap-2">
+                          <h3 className="font-semibold text-[#141042] mb-3 flex items-center gap-2">
                             <Sparkles className="h-5 w-5 text-purple-600" />
                             Gerar Novo Parecer Técnico
                           </h3>
-                          <div className="mb-4">
-                            <p className="text-sm font-medium text-gray-700 mb-2">Nota do Recrutador (0–10)</p>
-                            <div className="flex gap-1.5 flex-wrap">
-                              {[1,2,3,4,5,6,7,8,9,10].map(n => (
-                                <button
-                                  key={n}
-                                  onClick={() => setReviewRating(n)}
-                                  className={`w-9 h-9 rounded-lg text-sm font-bold transition-all ${
-                                    n <= reviewRating
-                                      ? 'bg-[#141042] text-white shadow-md'
-                                      : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
-                                  }`}
-                                >
-                                  {n}
-                                </button>
-                              ))}
-                            </div>
-                            <span className={`mt-2 inline-block text-xs px-2 py-0.5 rounded-full font-semibold ${
-                              reviewRating >= 8 ? 'bg-green-100 text-green-700' :
-                              reviewRating >= 6 ? 'bg-blue-100 text-blue-700' :
-                              reviewRating >= 4 ? 'bg-yellow-100 text-yellow-700' :
-                              'bg-red-100 text-red-700'
-                            }`}>
-                              {reviewRating >= 8 ? 'Excelente' : reviewRating >= 6 ? 'Bom' : reviewRating >= 4 ? 'Regular' : 'Fraco'}
-                            </span>
+                          <div className="mb-3 rounded-xl bg-purple-50 border border-purple-100 p-3 text-xs text-purple-700 leading-relaxed">
+                            A IA irá analisar o perfil do candidato, as anotações salvas, os resultados comportamentais e as vagas em que se candidatou para gerar o parecer e definir automaticamente a nota de avaliação.
                           </div>
-                          <textarea
-                            value={reviewNote}
-                            onChange={e => setReviewNote(e.target.value)}
-                            placeholder="Observações do recrutador (opcional)..."
-                            rows={3}
-                            className="w-full rounded-lg border border-gray-200 p-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-[#141042]/20"
-                          />
+                          <div className="mb-3">
+                            <p className="text-sm font-medium text-gray-700 mb-1.5">Contexto adicional para a IA <span className="text-gray-400 font-normal">(opcional)</span></p>
+                            <textarea
+                              value={reviewNote}
+                              onChange={e => setReviewNote(e.target.value)}
+                              placeholder="Ex: candidato tem perfil ótimo para liderança, mas precisa desenvolver habilidades técnicas em Python..."
+                              rows={3}
+                              className="w-full rounded-lg border border-gray-200 p-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-[#141042]/20"
+                            />
+                          </div>
                           <button
                             onClick={handleGenerateReview}
                             disabled={reviewLoading}
-                            className="mt-3 w-full flex items-center justify-center gap-2 bg-[#141042] text-white rounded-xl py-2.5 font-medium text-sm hover:bg-[#1a1660] transition-colors disabled:opacity-60"
+                            className="w-full flex items-center justify-center gap-2 bg-[#141042] text-white rounded-xl py-2.5 font-medium text-sm hover:bg-[#1a1660] transition-colors disabled:opacity-60"
                           >
                             {reviewLoading ? (
-                              <><RefreshCw className="h-4 w-4 animate-spin" /> Gerando...</>
+                              <><RefreshCw className="h-4 w-4 animate-spin" /> Gerando parecer...</>
                             ) : (
                               <><Sparkles className="h-4 w-4" /> Gerar Parecer com IA</>
                             )}
@@ -1530,7 +1509,7 @@ export default function CandidatesPage() {
                             )}
                             {showReviewHistory && reviewHistory.slice(1).map((r, i) => r && (
                               <div key={i} className="rounded-xl border border-gray-100 p-3 text-xs text-gray-500 space-y-1">
-                                <p>Score: <strong>{Math.round(r.score_total)}</strong> • Nota recrutador: {r.recruiter_rating}/10</p>
+                                <p>Score: <strong>{Math.round(r.score_total)}</strong> • Nota IA: {r.recruiter_rating}/10</p>
                                 <p className="whitespace-pre-wrap">{r.ai_review?.slice(0, 300)}...</p>
                                 <p className="text-gray-400">{new Date(r.created_at).toLocaleString('pt-BR')}</p>
                               </div>

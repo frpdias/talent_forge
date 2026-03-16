@@ -1376,12 +1376,15 @@ function SettingsPageContent() {
                     className="font-mono text-sm resize-y"
                   />
                   <p className="text-xs text-[#999] mt-1">
-                    Use as variáveis: <code className="bg-gray-100 px-1 rounded">&#123;&#123;nome&#125;&#125;</code>,{' '}
+                    Variáveis disponíveis: <code className="bg-gray-100 px-1 rounded">&#123;&#123;nome&#125;&#125;</code>,{' '}
                     <code className="bg-gray-100 px-1 rounded">&#123;&#123;cargo&#125;&#125;</code>,{' '}
                     <code className="bg-gray-100 px-1 rounded">&#123;&#123;disc&#125;&#125;</code>,{' '}
-                    <code className="bg-gray-100 px-1 rounded">&#123;&#123;score_total&#125;&#125;</code>,{' '}
                     <code className="bg-gray-100 px-1 rounded">&#123;&#123;experiencias&#125;&#125;</code>,{' '}
-                    <code className="bg-gray-100 px-1 rounded">&#123;&#123;anotacoes&#125;&#125;</code> e outras.
+                    <code className="bg-gray-100 px-1 rounded">&#123;&#123;anotacoes&#125;&#125;</code>,{' '}
+                    <code className="bg-gray-100 px-1 rounded">&#123;&#123;contexto_recrutador&#125;&#125;</code>,{' '}
+                    <code className="bg-gray-100 px-1 rounded">&#123;&#123;vagas&#125;&#125;</code>,{' '}
+                    <code className="bg-gray-100 px-1 rounded">&#123;&#123;score_testes&#125;&#125;</code>,{' '}
+                    <code className="bg-gray-100 px-1 rounded">&#123;&#123;score_experiencia&#125;&#125;</code> e outras.
                   </p>
                 </div>
 

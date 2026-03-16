@@ -50,6 +50,18 @@ function fillPrompt(template: string, vars: Record<string, string>): string {
   return template.replace(/\{\{(\w+)\}\}/g, (_, key) => vars[key] ?? `{{${key}}}`);
 }
 
+// ─── Parseia NOTA_RECRUTADOR: X da resposta da IA ────────────────────────────
+function parseRecruiterRating(text: string): number {
+  const match = text.match(/NOTA_RECRUTADOR:\s*(\d+(?:\.\d+)?)/i);
+  if (match) return Math.max(0, Math.min(10, parseFloat(match[1])));
+  return 7; // fallback se IA não incluir a linha
+}
+
+// ─── Remove a linha NOTA_RECRUTADOR do texto exibido ─────────────────────────
+function stripRatingLine(text: string): string {
+  return text.replace(/\n*NOTA_RECRUTADOR:\s*\d+(?:\.\d+)?\s*$/i, '').trimEnd();
+}
+
 // ─── Handler ─────────────────────────────────────────────────────────────────
 
 export async function POST(
@@ -93,9 +105,8 @@ export async function POST(
       .maybeSingle();
     const promptTemplate: string = recruiterSettings?.review_prompt?.trim() || DEFAULT_REVIEW_PROMPT;
 
-    // 3. Body
+    // 3. Body — nota_recrutador agora é derivada pela IA; aceita apenas contexto adicional
     const body = await request.json().catch(() => ({}));
-    const recruiterRating: number = Math.max(0, Math.min(10, Number(body.recruiter_rating ?? 7)));
     const recruiterNote: string = body.recruiter_note ?? '';
 
     // 4. Buscar candidato
@@ -115,6 +126,22 @@ export async function POST(
       .eq('candidate_id', candidateId)
       .order('created_at', { ascending: false })
       .limit(10);
+
+    // 5.5 Buscar vagas que o candidato se candidatou nesta organização
+    const { data: appRows } = await supabase
+      .from('applications')
+      .select('job_id')
+      .eq('candidate_id', candidateId);
+    const jobIds = (appRows ?? []).map((a) => a.job_id).filter(Boolean);
+    let jobsData: any[] = [];
+    if (jobIds.length > 0) {
+      const { data: jobRows } = await supabase
+        .from('jobs')
+        .select('id, title, description, seniority, employment_type, salary_min, salary_max')
+        .in('id', jobIds)
+        .eq('org_id', orgId);
+      jobsData = jobRows ?? [];
+    }
 
     // 6. Buscar profile + education + experience
     let profile: any = null;
@@ -225,14 +252,28 @@ export async function POST(
       }
     }
 
-    // 8. Calcular scores
+    // 8. Calcular scores parciais (score_recrutador será calculado após resposta da IA)
     const scoreTestes = calcScoreTestes(discResult, colorResult, piResult);
     const scoreExperiencia = calcScoreExperiencia(experienceYears, topEdu);
-    const scoreRecrutador = calcScoreRecrutador(recruiterRating);
-    const scoreTotal = calcScoreTotal(scoreTestes, scoreExperiencia, scoreRecrutador);
 
-    // 9. Montar snapshot
-    const inputSnapshot = {
+    // 9. Construir resumo das vagas
+    const vagasSummary = jobsData.length > 0
+      ? jobsData.map((j) => {
+          const salario = j.salary_min && j.salary_max
+            ? `R$ ${Number(j.salary_min).toLocaleString('pt-BR')} – R$ ${Number(j.salary_max).toLocaleString('pt-BR')}`
+            : 'Não informada';
+          return [
+            `**${j.title}**`,
+            j.seniority ? `Senioridade: ${j.seniority}` : null,
+            j.employment_type ? `Regime: ${j.employment_type}` : null,
+            `Faixa salarial: ${salario}`,
+            j.description ? `Descrição: ${String(j.description).slice(0, 600)}` : null,
+          ].filter(Boolean).join(' | ');
+        }).join('\n\n')
+      : 'Candidato sem candidatura a vagas específicas nesta organização.';
+
+    // Snapshot inicial (scores finais adicionados após IA)
+    const snapshotBase = {
       candidate: { full_name: candidate.full_name, email: candidate.email, current_title: candidate.current_title, location: candidate.location },
       profile: profile ? { city: profile.city, state: profile.state, area_of_expertise: profile.area_of_expertise, seniority_level: profile.seniority_level } : null,
       educations,
@@ -242,13 +283,13 @@ export async function POST(
       color: colorResult,
       pi: piResult,
       notes: (notes ?? []).map((n: any) => n.note),
-      recruiterRating,
       recruiterNote,
-      scores: { total: scoreTotal, testes: scoreTestes, experiencia: scoreExperiencia, recrutador: scoreRecrutador },
+      jobs: jobsData.map((j) => ({ id: j.id, title: j.title, seniority: j.seniority })),
     };
 
     // 10. Gerar parecer com IA
     let aiReview = '';
+    let recruiterRating = 7; // será sobrescrito pela IA
     const openaiKey = process.env.OPENAI_API_KEY;
 
     if (openaiKey) {
@@ -279,7 +320,6 @@ export async function POST(
         ? (notes ?? []).map((n: any) => `• ${n.note}`).join('\n')
         : 'Sem anotações do recrutador';
 
-      // Preenche o template com os dados do candidato
       const prompt = fillPrompt(promptTemplate, {
         nome: candidate.full_name,
         cargo: candidate.current_title ?? 'Não informado',
@@ -291,25 +331,36 @@ export async function POST(
         cores: colorSummary,
         pi: piSummary,
         anotacoes: notesSummary,
-        nota_recrutador: String(recruiterRating),
-        observacao_recrutador: recruiterNote ? `Observação: ${recruiterNote}` : '',
-        score_total: String(scoreTotal),
+        contexto_recrutador: recruiterNote ? `Contexto adicional do recrutador: ${recruiterNote}` : '',
         score_testes: String(scoreTestes),
         score_experiencia: String(scoreExperiencia),
-        score_recrutador: String(scoreRecrutador),
+        vagas: vagasSummary,
       });
 
       const completion = await openai.chat.completions.create({
         model: 'gpt-4o',
         messages: [{ role: 'user', content: prompt }],
-        max_tokens: 1200,
+        max_tokens: 1500,
         temperature: 0.7,
       });
 
-      aiReview = completion.choices[0]?.message?.content ?? '';
+      const rawText = completion.choices[0]?.message?.content ?? '';
+      recruiterRating = parseRecruiterRating(rawText);
+      aiReview = stripRatingLine(rawText);
     } else {
-      aiReview = `## Parecer Técnico — Gerado sem IA\n\n**Atenção:** OPENAI_API_KEY não configurada. Configure a variável de ambiente para habilitar a geração automática de pareceres.\n\n**Score calculado:** ${scoreTotal}/100\n- Testes: ${scoreTestes}/100\n- Experiência: ${scoreExperiencia}/100\n- Avaliação do recrutador: ${scoreRecrutador}/100`;
+      aiReview = `## Parecer Técnico — Gerado sem IA\n\n**Atenção:** OPENAI_API_KEY não configurada. Configure a variável de ambiente para habilitar a geração automática de pareceres.\n\n**Scores calculados:**\n- Testes: ${scoreTestes}/100\n- Experiência: ${scoreExperiencia}/100`;
+      recruiterRating = 7;
     }
+
+    // Calcular scores finais com a nota derivada pela IA
+    const scoreRecrutador = calcScoreRecrutador(recruiterRating);
+    const scoreTotal = calcScoreTotal(scoreTestes, scoreExperiencia, scoreRecrutador);
+
+    const inputSnapshot = {
+      ...snapshotBase,
+      scores: { total: scoreTotal, testes: scoreTestes, experiencia: scoreExperiencia, recrutador: scoreRecrutador },
+      recruiterRating,
+    };
 
     // 11. Persistir
     const { data: review, error: insertError } = await supabase
