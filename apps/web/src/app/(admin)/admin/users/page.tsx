@@ -232,7 +232,6 @@ export default function UsersPage() {
                 <th className="text-left px-6 py-4 text-sm font-semibold text-[#141042]">Tipo</th>
                 <th className="text-left px-6 py-4 text-sm font-semibold text-[#141042]">Empresa</th>
                 <th className="text-left px-6 py-4 text-sm font-semibold text-[#141042]">Cadastro</th>
-                <th className="px-6 py-4 text-sm font-semibold text-[#141042]">Ações</th>
               </tr>
             </thead>
             <tbody>
@@ -259,7 +258,7 @@ export default function UsersPage() {
                     <tr key={user.id} className="border-b border-[#E5E5DC] hover:bg-[#FAFAF8]">
                       <td className="px-6 py-4">
                         <div className="flex items-center space-x-3">
-                          <div className="w-10 h-10 bg-[#141042] rounded-xl flex items-center justify-center text-white font-medium">
+                          <div className="w-10 h-10 bg-[#141042] rounded-xl flex items-center justify-center text-white font-medium shrink-0">
                             {(user.full_name || user.email)[0].toUpperCase()}
                           </div>
                           <div>
@@ -269,6 +268,17 @@ export default function UsersPage() {
                             {user.location && (
                               <p className="text-xs text-[#999]">{user.location}</p>
                             )}
+                            <button
+                              onClick={() => handleResendEmail(user)}
+                              disabled={sendingId === user.id}
+                              title="Gera nova senha e reenvia as credenciais por e-mail"
+                              className="mt-1 flex items-center gap-1 text-xs font-medium text-[#3B82F6] hover:text-[#2563EB] disabled:opacity-50 transition-colors"
+                            >
+                              {sendingId === user.id
+                                ? <RefreshCw className="w-3 h-3 animate-spin" />
+                                : <SendHorizonal className="w-3 h-3" />}
+                              {sendingId === user.id ? 'Enviando...' : 'Reenviar e-mail'}
+                            </button>
                           </div>
                         </div>
                       </td>
@@ -295,19 +305,6 @@ export default function UsersPage() {
                           <Calendar className="w-4 h-4 text-[#999]" />
                           <span>{new Date(user.created_at).toLocaleDateString('pt-BR')}</span>
                         </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <button
-                          onClick={() => handleResendEmail(user)}
-                          disabled={sendingId === user.id}
-                          title="Gera nova senha e reenvia as credenciais por e-mail"
-                          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-[#3B82F6] border border-[#3B82F6]/30 rounded-lg hover:bg-[#3B82F6]/5 disabled:opacity-50 transition-colors whitespace-nowrap"
-                        >
-                          {sendingId === user.id
-                            ? <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                            : <SendHorizonal className="w-3.5 h-3.5" />}
-                          {sendingId === user.id ? 'Enviando...' : 'Reenviar e-mail'}
-                        </button>
                       </td>
                     </tr>
                   );
