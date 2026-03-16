@@ -21,9 +21,9 @@ const securityHeaders = [
       "default-src 'self'",
       "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://vercel.live",
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-      "img-src 'self' data: blob: https://fjudsjzfnysaztcwlwgm.supabase.co",
-      "font-src 'self' https://fonts.gstatic.com",
-      "connect-src 'self' https://fjudsjzfnysaztcwlwgm.supabase.co wss://fjudsjzfnysaztcwlwgm.supabase.co https://accounts.google.com https://vercel.live",
+      "img-src 'self' data: blob: https://fjudsjzfnysaztcwlwgm.supabase.co https://vercel.com https://vercel.live",
+      "font-src 'self' https://fonts.gstatic.com https://vercel.live",
+      "connect-src 'self' https://fjudsjzfnysaztcwlwgm.supabase.co wss://fjudsjzfnysaztcwlwgm.supabase.co https://accounts.google.com https://vercel.live https://api.brevo.com",
       isDev
         ? "frame-src 'self' http://localhost:8051 https://vercel.live"
         : "frame-src 'self' https://vercel.live",

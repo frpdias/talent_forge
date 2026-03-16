@@ -20,7 +20,6 @@ import {
   Lock,
   Loader2,
   Building,
-  Database,
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import Image from 'next/image';
@@ -53,7 +52,6 @@ const navGroups = [
     label: 'Sistema',
     items: [
       { href: '/admin/api-keys', label: 'API Keys', icon: Key },
-      { href: '/admin/database-schema', label: 'Schema DB', icon: Database },
       { href: '/admin/settings', label: 'Configurações', icon: Settings },
     ],
   },
