@@ -1417,7 +1417,6 @@ export default function CandidatesPage() {
                         )}
                       </div>
                     )}
-                  </div>
 
                     {activeTab === 'review' && (
                       <div className="space-y-5">
