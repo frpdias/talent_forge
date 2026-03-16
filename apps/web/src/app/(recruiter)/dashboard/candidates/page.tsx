@@ -33,6 +33,7 @@ import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { DashboardHeader } from '@/components/DashboardHeader';
 import { NotesPanel } from '@/components/candidates/NotesPanel';
 import { createClient } from '@/lib/supabase/client';
+import { generateCandidateFullReport } from '@/components/reports/CandidateFullReportPDF';
 
 interface Candidate {
   id: string;
@@ -63,6 +64,7 @@ export default function CandidatesPage() {
   const [showNotesPanel, setShowNotesPanel] = useState(false);
   const [reviewNote, setReviewNote] = useState('');
   const [reviewLoading, setReviewLoading] = useState(false);
+  const [pdfLoading, setPdfLoading] = useState(false);
   const [currentReview, setCurrentReview] = useState<{
     id: string;
     score_total: number;
@@ -163,6 +165,58 @@ export default function CandidatesPage() {
       alert(err.message || 'Erro ao gerar parecer');
     } finally {
       setReviewLoading(false);
+    }
+  }
+
+  async function handleGenerateFullReport() {
+    if (!selectedCandidate || !candidateDetails) return;
+    try {
+      setPdfLoading(true);
+      // Busca anotações do candidato
+      const { data: notesData } = await supabase
+        .from('candidate_notes')
+        .select('note, created_at')
+        .eq('candidate_id', selectedCandidate.id)
+        .order('created_at', { ascending: false })
+        .limit(30);
+
+      const loc = selectedCandidate.location ?? '';
+      const [city, ...stateArr] = loc.split(',');
+
+      await generateCandidateFullReport({
+        candidate: {
+          fullName: selectedCandidate.full_name,
+          email: selectedCandidate.email,
+          phone: selectedCandidate.phone ?? null,
+          city: city?.trim() || null,
+          state: stateArr.join(',').trim() || null,
+          currentTitle: candidateDetails.profile?.headline ?? selectedCandidate.headline ?? null,
+          areaOfExpertise: candidateDetails.profile?.area_of_expertise ?? null,
+          seniorityLevel: candidateDetails.profile?.seniority_level ?? null,
+          salaryExpectation: selectedCandidate.salary_expectation ?? null,
+          linkedinUrl: selectedCandidate.linkedin_url ?? null,
+          avatarUrl: candidateDetails.profile?.avatar_url ?? null,
+        },
+        experiences: candidateDetails.experiences ?? [],
+        education: candidateDetails.education ?? [],
+        disc: discResult ? {
+          D: discResult.dominance_score,
+          I: discResult.influence_score,
+          S: discResult.steadiness_score,
+          C: discResult.conscientiousness_score,
+          primary_profile: discResult.primary_profile,
+          secondary_profile: discResult.secondary_profile,
+          description: discResult.description,
+        } : null,
+        colorAssessment: colorResult,
+        piAssessment: piResult,
+        review: currentReview ?? null,
+        notes: (notesData ?? []).map((n: any) => n.note ?? '').filter(Boolean),
+      });
+    } catch (err: any) {
+      alert('Erro ao gerar PDF: ' + (err?.message ?? err));
+    } finally {
+      setPdfLoading(false);
     }
   }
 
@@ -1499,6 +1553,18 @@ export default function CandidatesPage() {
                             <p className="text-xs text-gray-400">
                               Gerado em {new Date(currentReview.created_at).toLocaleString('pt-BR')} • {currentReview.ai_model}
                             </p>
+                            {/* Botão PDF Relatório Completo */}
+                            <button
+                              onClick={handleGenerateFullReport}
+                              disabled={pdfLoading}
+                              className="w-full flex items-center justify-center gap-2 border border-[#141042] text-[#141042] rounded-xl py-2.5 font-medium text-sm hover:bg-[#141042] hover:text-white transition-colors disabled:opacity-50"
+                            >
+                              {pdfLoading ? (
+                                <><RefreshCw className="h-4 w-4 animate-spin" /> Gerando PDF...</>
+                              ) : (
+                                <><Download className="h-4 w-4" /> Baixar Relatório Completo (PDF)</>
+                              )}
+                            </button>
                             {reviewHistory.length > 1 && (
                               <button
                                 onClick={() => setShowReviewHistory(p => !p)}
