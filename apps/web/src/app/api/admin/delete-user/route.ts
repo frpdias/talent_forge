@@ -36,7 +36,14 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: 'Acesso negado — apenas admins' }, { status: 403 });
     }
 
-    const { userId } = await request.json();
+    let userId: string;
+    try {
+      const body = await request.json();
+      userId = body?.userId;
+    } catch {
+      return NextResponse.json({ error: 'Body inválido ou ausente' }, { status: 400 });
+    }
+
     if (!userId) {
       return NextResponse.json({ error: 'userId é obrigatório' }, { status: 400 });
     }
@@ -49,7 +56,7 @@ export async function DELETE(request: NextRequest) {
     // Excluir o usuário do Supabase Auth (cascata remove user_profiles via trigger)
     const { error } = await supabaseAdmin.auth.admin.deleteUser(userId);
     if (error) {
-      console.error('Erro ao excluir usuário:', error);
+      console.error('[delete-user] Erro ao excluir usuário:', error.message, error);
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
@@ -72,6 +79,7 @@ export async function DELETE(request: NextRequest) {
     return NextResponse.json({ success: true });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Erro interno';
+    console.error('[delete-user] Erro inesperado:', err);
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }
