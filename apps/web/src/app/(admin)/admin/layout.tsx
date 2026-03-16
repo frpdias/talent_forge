@@ -130,8 +130,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       )}
 
       {/* Sidebar */}
-      <aside className={`fixed left-0 top-0 h-full bg-[#141042] z-50 transition-transform duration-300 w-70 sm:w-64 shadow-[4px_0_24px_rgba(20,16,66,0.15)] ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
-        <div className="p-4 sm:p-6 flex items-center border-b border-white/10">
+      <aside className={`fixed left-0 top-0 h-full bg-[#141042] z-50 transition-transform duration-300 w-70 sm:w-64 shadow-[4px_0_24px_rgba(20,16,66,0.15)] flex flex-col ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
+        <div className="shrink-0 p-4 sm:p-6 flex items-center border-b border-white/10">
           <div className="flex items-center justify-between w-full">
             <Link href="/admin" className="flex items-center space-x-3">
               <div className="w-9 h-9 rounded-lg bg-white/15 border border-white/20 flex items-center justify-center">
@@ -151,7 +151,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           </div>
         </div>
 
-        <nav className="p-3 sm:p-4 space-y-4 overflow-y-auto">
+        <nav className="flex-1 p-3 sm:p-4 space-y-4 overflow-y-auto">
           {navGroups.map((group, gi) => (
             <div key={gi}>
               {group.label && (
@@ -186,7 +186,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           ))}
         </nav>
 
-        <div className="absolute bottom-0 left-0 right-0 p-3 sm:p-4 space-y-3">
+        <div className="shrink-0 p-3 sm:p-4 space-y-3">
           {/* Logo no rodapé */}
           <div className="flex items-center justify-center px-3 sm:px-4 py-3 border-t border-white/10">
             <Image
