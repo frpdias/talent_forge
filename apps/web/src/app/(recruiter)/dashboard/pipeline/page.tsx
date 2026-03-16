@@ -26,7 +26,6 @@ import {
   Building2,
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
-import { applicationsApi } from '@/lib/api';
 import { useOrgStore } from '@/lib/store';
 
 interface Application {
@@ -77,17 +76,12 @@ export default function PipelinePage() {
   const [useStageColumns, setUseStageColumns] = useState(false);
   const [applicationsCache, setApplicationsCache] = useState<any[]>([]);
   const [stageDefinitions, setStageDefinitions] = useState<any[]>([]);
-  const [sessionToken, setSessionToken] = useState<string | null>(null);
-  const [orgId, setOrgId] = useState<string | null>(null);
   const [jobs, setJobs] = useState<{ id: string; title: string }[]>([]);
   const [selectedApplication, setSelectedApplication] = useState<Application | null>(null);
   const [selectedJob, setSelectedJob] = useState<string>('');
   const [recruiters, setRecruiters] = useState<{ id: string; name: string }[]>([]);
   const [selectedRecruiter, setSelectedRecruiter] = useState<string>('');
   const [showFilters, setShowFilters] = useState(false);
-  const [pendingChanges, setPendingChanges] = useState<
-    Record<string, { type: 'stage' | 'status'; toStageId?: string; status?: string }>
-  >({});
 
   const supabase = createClient();
 
@@ -99,25 +93,42 @@ export default function PipelinePage() {
     buildColumns();
   }, [applicationsCache, stageDefinitions, searchQuery, useStageColumns, selectedJob, selectedRecruiter]);
 
+  // Salva direto no Supabase — sem depender do NestJS
+  async function autoSaveToSupabase(
+    applicationId: string,
+    payload: { type: 'status' | 'stage'; status?: string; toStageId?: string }
+  ) {
+    try {
+      setSaving(true);
+      if (payload.type === 'status' && payload.status) {
+        const { error } = await supabase
+          .from('applications')
+          .update({ status: payload.status, updated_at: new Date().toISOString() })
+          .eq('id', applicationId);
+        if (error) throw error;
+      } else if (payload.type === 'stage' && payload.toStageId) {
+        const { error } = await supabase
+          .from('applications')
+          .update({ current_stage_id: payload.toStageId, updated_at: new Date().toISOString() })
+          .eq('id', applicationId);
+        if (error) throw error;
+      }
+    } catch (error) {
+      console.error('[Pipeline] Erro ao salvar no Supabase:', error);
+    } finally {
+      setSaving(false);
+    }
+  }
+
   async function loadApplications() {
     try {
       setLoading(true);
 
       const { data: { user } } = await supabase.auth.getUser();
-      const { data: sessionData } = await supabase.auth.getSession();
-      let token = sessionData?.session?.access_token || null;
-
-      if (!token && sessionData?.session?.refresh_token) {
-        const { data: refreshed, error: refreshError } = await supabase.auth.refreshSession();
-        if (!refreshError) {
-          token = refreshed?.session?.access_token || null;
-        }
-      }
 
       let resolvedOrgId = currentOrg?.id || null;
 
       // Fallback: derive org from membership if store is not ready
-      // Prioriza org onde usuário é admin (própria org do headhunter/recruiter)
       if (!resolvedOrgId && user?.id) {
         const { data: orgMemberships } = await supabase
           .from('org_members')
@@ -127,20 +138,16 @@ export default function PipelinePage() {
           .order('created_at', { ascending: true });
 
         if (orgMemberships && orgMemberships.length > 0) {
-          // Prefere onde é admin (própria org headhunter) → manager → qualquer
           const adminOrg = orgMemberships.find((m: any) => m.role === 'admin');
           const managerOrg = orgMemberships.find((m: any) => m.role === 'manager');
           resolvedOrgId = adminOrg?.org_id || managerOrg?.org_id || orgMemberships[0].org_id;
         }
       }
       
-      if (!token || !resolvedOrgId) {
-        console.error('❌ [Pipeline] Sem token ou orgId');
+      if (!resolvedOrgId) {
+        console.error('❌ [Pipeline] Sem orgId');
         return;
       }
-
-      setSessionToken(token);
-      setOrgId(resolvedOrgId);
 
       const { data: jobsData } = await supabase
         .from('jobs')
@@ -170,39 +177,42 @@ export default function PipelinePage() {
         setRecruiters([]);
       }
 
-      let applications;
-      try {
-        applications = await applicationsApi.list(token, resolvedOrgId);
-      } catch (error: any) {
-        if (String(error?.message || '').toLowerCase().includes('invalid or expired token')) {
-          const { data: refreshed, error: refreshError } = await supabase.auth.refreshSession();
-          const refreshedToken = refreshed?.session?.access_token || null;
+      // Busca applications direto no Supabase — sem NestJS
+      const { data: appsData, error: appsError } = await supabase
+        .from('applications')
+        .select(`
+          id,
+          job_id,
+          candidate_id,
+          current_stage_id,
+          status,
+          score,
+          created_by,
+          created_at,
+          updated_at,
+          candidates!inner ( id, full_name, email, current_title, linkedin_url ),
+          jobs!inner ( id, title, org_id ),
+          pipeline_stages ( id, name, position )
+        `)
+        .eq('jobs.org_id', resolvedOrgId)
+        .order('updated_at', { ascending: false });
 
-          if (refreshError || !refreshedToken) {
-            throw error;
-          }
+      if (appsError) throw appsError;
 
-          token = refreshedToken;
-          setSessionToken(refreshedToken);
-          applications = await applicationsApi.list(refreshedToken, resolvedOrgId);
-        } else {
-          throw error;
-        }
-      }
-
-
-      const normalizedApplications = (applications as any || []).map((app: any) => ({
+      const normalizedApplications = (appsData || []).map((app: any) => ({
         id: app.id,
-        candidate_name: app.candidate?.fullName || 'Candidato',
-        candidate_email: app.candidate?.email || '-',
-        job_title: app.job?.title || '-',
+        candidate_name: app.candidates?.full_name || 'Candidato',
+        candidate_email: app.candidates?.email || '-',
+        job_title: app.jobs?.title || '-',
         status: app.status,
-        rating: app.score || app.rating,
-        applied_at: app.createdAt,
-        job_id: app.jobId,
-        created_by: app.createdBy,
-        current_stage_id: app.currentStageId || null,
-        current_stage: app.currentStage || null,
+        rating: app.score,
+        applied_at: app.created_at,
+        job_id: app.job_id,
+        created_by: app.created_by,
+        current_stage_id: app.current_stage_id || null,
+        current_stage: app.pipeline_stages
+          ? { id: app.pipeline_stages.id, name: app.pipeline_stages.name, position: app.pipeline_stages.position }
+          : null,
       }));
 
 
@@ -331,7 +341,11 @@ export default function PipelinePage() {
       };
       setColumns(newColumns);
     } else {
-      destApps.splice(destination.index, 0, movedApp);
+      // Atualiza o status do card para refletir a nova coluna
+      const newStatus = useStageColumns ? movedApp.status : destination.droppableId;
+      const updatedApp = { ...movedApp, status: newStatus };
+
+      destApps.splice(destination.index, 0, updatedApp);
       const newColumns = [...columns];
       newColumns[sourceColumnIndex] = {
         ...sourceColumn,
@@ -343,12 +357,24 @@ export default function PipelinePage() {
       };
       setColumns(newColumns);
 
-      setPendingChanges((prev) => ({
-        ...prev,
-        [movedApp.id]: useStageColumns
-          ? { type: 'stage', toStageId: destination.droppableId }
-          : { type: 'status', status: destination.droppableId },
-      }));
+      // Atualiza cache otimisticamente
+      setApplicationsCache(prev =>
+        prev.map(app => app.id === movedApp.id
+          ? {
+              ...app,
+              status: newStatus,
+              current_stage_id: useStageColumns ? destination.droppableId : app.current_stage_id,
+            }
+          : app
+        )
+      );
+
+      // Auto-save imediato no Supabase
+      if (useStageColumns) {
+        autoSaveToSupabase(movedApp.id, { type: 'stage', toStageId: destination.droppableId });
+      } else {
+        autoSaveToSupabase(movedApp.id, { type: 'status', status: destination.droppableId });
+      }
     }
   };
 
@@ -359,63 +385,13 @@ export default function PipelinePage() {
     setSelectedApplication(prev =>
       prev && prev.id === applicationId ? { ...prev, status: newStatus } : prev
     );
-    setPendingChanges(prev => ({
-      ...prev,
-      [applicationId]: { type: 'status', status: newStatus },
-    }));
+    // Auto-save imediato no Supabase (sem NestJS)
+    autoSaveToSupabase(applicationId, { type: 'status', status: newStatus });
   }
 
+  // Reprocessa colunas sem recarregar do servidor
   const handleSaveChanges = async () => {
-    if (!orgId) return;
-    const entries = Object.entries(pendingChanges);
-    if (entries.length === 0) return;
-
-    try {
-      setSaving(true);
-
-      // Sempre busca token fresco para evitar 401 por token expirado
-      let { data: sessionData } = await supabase.auth.getSession();
-      let freshToken = sessionData?.session?.access_token;
-      if (!freshToken) {
-        const { data: refreshed } = await supabase.auth.refreshSession();
-        freshToken = refreshed?.session?.access_token;
-      }
-      if (!freshToken) {
-        console.error('[Pipeline] Sem token de sessão para salvar');
-        return;
-      }
-      setSessionToken(freshToken);
-
-      await Promise.all(
-        entries.map(([applicationId, payload]) => {
-          if (payload.type === 'status' && payload.status) {
-            return applicationsApi.updateStatus(
-              applicationId,
-              { status: payload.status },
-              freshToken!,
-              orgId!
-            );
-          }
-
-          if (payload.type === 'stage' && payload.toStageId) {
-            return applicationsApi.updateStage(
-              applicationId,
-              { toStageId: payload.toStageId },
-              freshToken!,
-              orgId!
-            );
-          }
-
-          return Promise.resolve();
-        })
-      );
-      setPendingChanges({});
-      await loadApplications();
-    } catch (error) {
-      console.error('Erro ao salvar mudanças do pipeline:', error);
-    } finally {
-      setSaving(false);
-    }
+    await loadApplications();
   };
 
   const formatDate = (date: string) => {
@@ -443,10 +419,10 @@ export default function PipelinePage() {
               <p className="text-sm text-[#666666] mt-1">Gerencie e acompanhe o progresso das candidaturas</p>
             </div>
             <div className="flex items-center gap-3">
-              {pendingChanges && Object.keys(pendingChanges).length > 0 && (
-                <Badge className="bg-amber-100 text-amber-800 border border-amber-200">
-                  <Clock className="h-3 w-3 mr-1" />
-                  {Object.keys(pendingChanges).length} alteração(ões) pendente(s)
+              {saving && (
+                <Badge className="bg-emerald-50 text-emerald-700 border border-emerald-200">
+                  <RefreshCw className="h-3 w-3 mr-1 animate-spin" />
+                  Salvando...
                 </Badge>
               )}
               <Button
@@ -457,23 +433,6 @@ export default function PipelinePage() {
               >
                 <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
                 Atualizar
-              </Button>
-              <Button
-                onClick={handleSaveChanges}
-                disabled={saving || !pendingChanges || Object.keys(pendingChanges).length === 0}
-                className="bg-[#141042] hover:bg-[#1a164f]"
-              >
-                {saving ? (
-                  <>
-                    <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                    Salvando...
-                  </>
-                ) : (
-                  <>
-                    <CheckCircle2 className="h-4 w-4 mr-2" />
-                    Salvar Alterações
-                  </>
-                )}
               </Button>
             </div>
           </div>
