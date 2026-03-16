@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { CandidateReportPDF } from '@/components/reports/CandidateReportPDF';
 import {
   X,
   Briefcase,
@@ -667,7 +668,32 @@ export function ApplicationDetailsDrawer({ application, isOpen, onClose, onStatu
         </div>
 
         {/* Footer */}
-        <div className="flex-shrink-0 px-5 py-4 border-t border-[#E5E5DC] bg-[#FAFAF8]">
+        <div className="flex-shrink-0 px-5 py-4 border-t border-[#E5E5DC] bg-[#FAFAF8] space-y-2">
+          {application && (
+            <CandidateReportPDF
+              data={{
+                applicationId: application.id,
+                appliedAt: application.applied_at,
+                status: application.status,
+                rating: application.rating,
+                jobTitle: application.job_title,
+                currentStage: application.current_stage?.name ?? null,
+                candidateName: application.candidate_name,
+                candidateEmail: application.candidate_email,
+                phone: profile?.phone,
+                linkedinUrl: profile?.linkedin_url,
+                city: profile?.city,
+                state: profile?.state,
+                currentTitle: profile?.current_title,
+                experienceYears: profile?.experience_years,
+                profileCompletionPercentage: profile?.profile_completion_percentage,
+                admissionDocs: admissionDocs.map(d => ({
+                  document_type: d.document_type,
+                  file_name: d.file_name,
+                })),
+              }}
+            />
+          )}
           <Button
             variant="outline"
             className="w-full"
