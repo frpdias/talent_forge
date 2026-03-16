@@ -32,6 +32,7 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { DashboardHeader } from '@/components/DashboardHeader';
 import { NotesPanel } from '@/components/candidates/NotesPanel';
+import { generateCurriculumPDF, type CurriculumData } from '@/components/curriculum/CandidateCurriculumPDF';
 import { createClient } from '@/lib/supabase/client';
 
 interface Candidate {
@@ -61,6 +62,7 @@ export default function CandidatesPage() {
   const [selectedCandidate, setSelectedCandidate] = useState<Candidate | null>(null);
   const [activeTab, setActiveTab] = useState<'profile' | 'resume' | 'assessments' | 'review'>('profile');
   const [showNotesPanel, setShowNotesPanel] = useState(false);
+  const [pdfLoading, setPdfLoading] = useState(false);
   const [reviewNote, setReviewNote] = useState('');
   const [reviewLoading, setReviewLoading] = useState(false);
   const [currentReview, setCurrentReview] = useState<{
@@ -274,6 +276,50 @@ export default function CandidatesPage() {
       console.error('Erro ao carregar detalhes:', error);
     } finally {
       setDetailsLoading(false);
+    }
+  }
+
+  async function handleGeneratePDF() {
+    if (!selectedCandidate || !candidateDetails) return;
+    try {
+      setPdfLoading(true);
+      const p = candidateDetails.profile;
+      const data: CurriculumData = {
+        fullName: selectedCandidate.full_name || p?.full_name || selectedCandidate.email || 'Candidato',
+        email: selectedCandidate.email || p?.email || '',
+        phone: p?.phone ?? selectedCandidate.phone,
+        city: p?.city,
+        state: p?.state,
+        currentTitle: p?.current_title ?? selectedCandidate.headline,
+        areaOfExpertise: p?.area_of_expertise,
+        seniorityLevel: p?.seniority_level,
+        salaryExpectation: p?.salary_expectation,
+        employmentType: p?.employment_type,
+        linkedinUrl: p?.linkedin_url,
+        avatarUrl: p?.avatar_url ?? null,
+        experiences: (candidateDetails.experiences ?? []).map((e: any) => ({
+          job_title: e.job_title,
+          company_name: e.company_name,
+          start_date: e.start_date,
+          end_date: e.end_date,
+          is_current: e.is_current,
+          description: e.description,
+        })),
+        education: (candidateDetails.education ?? []).map((e: any) => ({
+          degree_level: e.degree_level,
+          course_name: e.course_name,
+          institution: e.institution,
+          start_year: e.start_year,
+          end_year: e.end_year,
+          is_current: e.is_current,
+        })),
+      };
+      await generateCurriculumPDF(data);
+    } catch (err) {
+      console.error('[PDF] Erro ao gerar currículo:', err);
+      alert('Erro ao gerar o PDF. Tente novamente.');
+    } finally {
+      setPdfLoading(false);
     }
   }
 
@@ -849,13 +895,28 @@ export default function CandidatesPage() {
                       )}
                     </div>
                   </div>
-                  <Button
-                    variant="outline"
-                    className="bg-white text-[var(--tf-primary)] border-white hover:bg-white/90"
-                    onClick={() => setSelectedCandidate(null)}
-                  >
-                    Voltar
-                  </Button>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      className="bg-white/10 text-white border-white/30 hover:bg-white/20"
+                      disabled={pdfLoading || detailsLoading || !candidateDetails}
+                      onClick={handleGeneratePDF}
+                    >
+                      {pdfLoading ? (
+                        <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin mr-1.5" />
+                      ) : (
+                        <Download className="h-3.5 w-3.5 mr-1.5" />
+                      )}
+                      Currículo PDF
+                    </Button>
+                    <Button
+                      variant="outline"
+                      className="bg-white text-[var(--tf-primary)] border-white hover:bg-white/90"
+                      onClick={() => setSelectedCandidate(null)}
+                    >
+                      Voltar
+                    </Button>
+                  </div>
                 </div>
               </div>
 
