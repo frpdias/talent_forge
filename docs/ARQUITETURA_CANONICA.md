@@ -1234,7 +1234,7 @@ Pacote interno de tipos TypeScript compartilhados pelo monorepo. Sem dependênci
 
 **Enums principais exportados:**
 - `UserType`: `recruiter | candidate | admin | headhunter`
-- `ApplicationStatus`: `applied | in_process | in_documentation | hired | rejected`
+- `ApplicationStatus`: `applied | in_process | interview_hr | interview_manager | in_documentation | hired | rejected`
 - `JobStatus`: `draft | active | paused | closed`
 - `OrgMemberRole`: `admin | manager | member | viewer`
 
@@ -5956,6 +5956,11 @@ Próxima revisão: Sprint 12 (Action Plans + Settings)
 - ✅ **Migration `20260303_application_status_in_documentation.sql`** aplicada em produção
   - `ALTER TYPE application_status ADD VALUE IF NOT EXISTS 'in_documentation' AFTER 'in_process'`
   - Fluxo completo: `applied → in_process → in_documentation → hired | rejected`
+- ✅ **Migration `20260316_add_interview_status.sql`** aplicada em produção
+  - `ALTER TYPE application_status ADD VALUE IF NOT EXISTS 'interview_hr' AFTER 'in_process'`
+  - `ALTER TYPE application_status ADD VALUE IF NOT EXISTS 'interview_manager' AFTER 'interview_hr'`
+  - Sub-statuses exibidos como badge dentro da coluna **Em Avaliação** do Kanban
+  - Fluxo completo: `applied → in_process → [interview_hr → interview_manager →] in_documentation → hired | rejected`
 - ✅ **Pipeline Kanban:** coluna `in_documentation` (violeta) entre "Em Avaliação" e "Contratados"
 - ✅ **`packages/types/enums.ts`:** `ApplicationStatus.IN_DOCUMENTATION = 'in_documentation'`
 - ✅ **E2E:** teste `GET /api/v1/applications returns 401` adicionado em `03-api-auth.spec.ts`
@@ -5965,11 +5970,15 @@ Próxima revisão: Sprint 12 (Action Plans + Settings)
 CREATE TYPE application_status AS ENUM (
   'applied',          -- Novas Candidaturas
   'in_process',       -- Em Avaliação
-  'in_documentation', -- Em Documentação ✨ NOVO Sprint 26
+  'interview_hr',     -- Entrevista com o RH (sub-status de in_process) ✨ Sprint 45
+  'interview_manager',-- Entrevista com o Gestor (sub-status de in_process) ✨ Sprint 45
+  'in_documentation', -- Em Documentação ✨ Sprint 26
   'hired',            -- Contratados
   'rejected'          -- Não Aprovados
 );
 ```
+
+> **Nota:** `interview_hr` e `interview_manager` são sub-statuses que residem visualmente na coluna **Em Avaliação** do Kanban. O badge indicador aparece no card do candidato mas a coluna não muda. O campo `pipeline_stages.name` continua sendo a fonte de verdade para labels de etapas customizadas.
 
 ### Resultados
 - Build: ✅ 103 páginas (+1 nova rota), exit code 0
@@ -8070,6 +8079,7 @@ O `ReportsService.getDashboard()` usa `applications.source` com fallback para `c
 | **Sprint 38** | **2026-03-11** | **Career Page v4 — `work_modality` + `salary_range` em `jobs`, `ModalityBadge`, `SeniorityBadge`, grid 2-col com `isLastOdd`, seção Banco de Talentos, headline editável 2 linhas, `max-w-7xl`; PHP mobile fixes: `grid-cols-*` responsivos no TFCI/ActionPlans + card view mobile em Employees** | ✅ |
 | **Sprint 39** | **2026-03-11** | **Depoimentos editáveis — tabela `org_testimonials` com RLS, CRUD no settings (formulário inline, estrelas clicáveis, paleta de cores), career page busca do DB e renderiza condicionalmente; ícones SVG reais das redes sociais na seção #vagas** | ✅ |
 | **Sprint 40** | **2026-03-11** | **Dicas de carreira — tabela `org_career_tips` com RLS + trigger updated_at, CRUD no settings (card Lightbulb, formulário inline title/summary/content), career page renderiza seção condicionalmente** | ✅ |
+| **Sprint 45** | **2026-03-16** | **Pipeline auto-save Supabase direto (remove dependência NestJS) + enum `interview_hr`/`interview_manager`, badge no card Kanban, migration `20260316_add_interview_status.sql`** | ✅ |
 | **Sprint 41** | **PLANEJADO** | **AI Assistant PHP Module — 7 endpoints `/api/php/ai/*`, tabela `php_ai_usage`, correção `orgId` no frontend, integração com provedor AI (Anthropic/OpenAI)** | 🔲 |
 | **Sprint 43** | **2026-03-12** | **Landing Polish + Avatar Candidato — título hero com `clamp()`, badge MÓDULO PREMIUM ampliado, avatar upload com modal de recorte (`react-easy-crop`), bucket `candidate-avatars`, migration `avatar_url`** | ✅ |
 | **Hotfix** | **2026-03-13** | **Botão Analytics Dashboard — removida guarda `isLocalhost` em `(recruiter)/dashboard/page.tsx`; botão "Analytics" e `AnalyticsPanel` (recharts) agora visíveis em produção para todos os usuários** | ✅ |

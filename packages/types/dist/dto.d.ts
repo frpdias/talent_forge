@@ -14,6 +14,7 @@ export interface CreateJobDto {
     salaryMax?: number;
     employmentType?: EmploymentType;
     seniority?: SeniorityLevel;
+    workModality?: 'presencial' | 'hibrido' | 'remoto';
     status?: JobStatus;
 }
 export interface UpdateJobDto {
@@ -24,6 +25,7 @@ export interface UpdateJobDto {
     salaryMax?: number;
     employmentType?: EmploymentType;
     seniority?: SeniorityLevel;
+    workModality?: 'presencial' | 'hibrido' | 'remoto';
     status?: JobStatus;
 }
 export interface CreatePipelineStageDto {
