@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { UserPlus, Mail, User, Lock, Building2, Phone, Save, AlertCircle, CheckCircle, HelpCircle, X, ArrowRight, Database, Shield, Briefcase, Copy, SendHorizonal } from 'lucide-react';
+import { UserPlus, Mail, User, Lock, Building2, Phone, Save, AlertCircle, CheckCircle, HelpCircle, X, ArrowRight, Database, Shield, Briefcase, Copy, SendHorizonal, RefreshCw } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 
 type UserType = 'admin' | 'recruiter' | 'candidate';
@@ -29,6 +29,7 @@ export default function CreateUserPage() {
   const [successData, setSuccessData] = useState<SuccessData | null>(null);
   const [helpOpen, setHelpOpen] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [resending, setResending] = useState(false);
   
   const [formData, setFormData] = useState<FormData>({
     email: '',
@@ -43,6 +44,39 @@ export default function CreateUserPage() {
     navigator.clipboard.writeText(text);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleResend = async () => {
+    if (!successData) return;
+    setResending(true);
+    try {
+      const supabase = createClient();
+      const { data: { session } } = await supabase.auth.getSession();
+      const res = await fetch('/api/admin/resend-welcome-email', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session?.access_token ?? ''}`,
+        },
+        body: JSON.stringify({
+          userId: successData.userId,
+          email: successData.email,
+          fullName: successData.email,
+          userType: successData.userType,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      setSuccessData(prev => prev ? {
+        ...prev,
+        emailSent: data.emailSent,
+        tempPassword: data.tempPassword,
+      } : prev);
+    } catch (err: any) {
+      setErrorMsg(err.message || 'Erro ao reenviar');
+    } finally {
+      setResending(false);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -299,8 +333,19 @@ export default function CreateUserPage() {
                   <Copy className="w-3.5 h-3.5" />
                   {copied ? 'Copiado!' : 'Copiar'}
                 </button>
+                <button
+                  type="button"
+                  onClick={handleResend}
+                  disabled={resending}
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-[#3B82F6] text-white rounded text-xs font-medium hover:bg-[#2563EB] disabled:opacity-60 transition-colors whitespace-nowrap"
+                >
+                  {resending
+                    ? <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                    : <SendHorizonal className="w-3.5 h-3.5" />}
+                  {resending ? 'Enviando...' : 'Tentar reenviar'}
+                </button>
               </div>
-              <p className="text-xs text-amber-700">Configure a variável <code className="bg-amber-100 px-1 rounded">BREVO_SMTP_PASS</code> no Vercel para habilitar o envio automático.</p>
+              <p className="text-xs text-amber-700">Verifique se <code className="bg-amber-100 px-1 rounded">BREVO_SMTP_PASS</code> está configurada no Vercel e tente reenviar.</p>
             </div>
           )}
         </div>

@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Users, Search, UserCheck, Briefcase, Mail, Calendar, Loader2, Shield, UserPlus } from 'lucide-react';
+import { Users, Search, UserCheck, Briefcase, Mail, Calendar, Loader2, Shield, UserPlus, SendHorizonal, CheckCircle, AlertCircle, RefreshCw } from 'lucide-react';
+import { createClient } from '@/lib/supabase/client';
 
 interface User {
   id: string;
@@ -19,11 +20,58 @@ interface User {
 
 type TabType = 'all' | 'recruiter' | 'candidate' | 'admin';
 
+interface ResendFeedback {
+  userId: string;
+  success: boolean;
+  msg: string;
+  tempPassword?: string;
+}
+
 export default function UsersPage() {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [activeTab, setActiveTab] = useState<TabType>('all');
+  const [sendingId, setSendingId] = useState<string | null>(null);
+  const [feedback, setFeedback] = useState<ResendFeedback | null>(null);
+
+  async function handleResendEmail(user: User) {
+    setSendingId(user.id);
+    setFeedback(null);
+    try {
+      const supabase = createClient();
+      const { data: { session } } = await supabase.auth.getSession();
+      const res = await fetch('/api/admin/resend-welcome-email', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session?.access_token ?? ''}`,
+        },
+        body: JSON.stringify({
+          userId: user.id,
+          email: user.email,
+          fullName: user.full_name || user.email,
+          userType: user.user_type,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      setFeedback({
+        userId: user.id,
+        success: true,
+        msg: data.emailSent
+          ? `E-mail enviado para ${user.email}`
+          : `E-mail não enviado — copie a senha temporária`,
+        tempPassword: data.tempPassword,
+      });
+    } catch (err: any) {
+      setFeedback({ userId: user.id, success: false, msg: err.message || 'Erro ao reenviar' });
+    } finally {
+      setSendingId(null);
+      // Auto-limpa toast após 8s
+      setTimeout(() => setFeedback(null), 8000);
+    }
+  }
 
   useEffect(() => {
     fetchUsers();
@@ -72,6 +120,37 @@ export default function UsersPage() {
 
   return (
     <div className="space-y-6 pb-20 lg:pb-0">
+
+      {/* Toast de feedback */}
+      {feedback && (
+        <div className={`fixed bottom-6 right-6 z-50 max-w-sm w-full shadow-xl rounded-xl border p-4 transition-all ${
+          feedback.success ? 'bg-white border-[#10B981]' : 'bg-white border-[#EF4444]'
+        }`}>
+          <div className="flex items-start gap-3">
+            {feedback.success
+              ? <CheckCircle className="w-5 h-5 text-[#10B981] shrink-0 mt-0.5" />
+              : <AlertCircle className="w-5 h-5 text-[#EF4444] shrink-0 mt-0.5" />}
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-[#141042]">{feedback.msg}</p>
+              {feedback.tempPassword && (
+                <div className="mt-2 flex items-center gap-2">
+                  <code className="bg-[#FAFAF8] border border-[#E5E5DC] rounded px-2 py-1 text-xs font-mono font-bold text-[#141042] tracking-widest">
+                    {feedback.tempPassword}
+                  </code>
+                  <button
+                    onClick={() => navigator.clipboard.writeText(feedback.tempPassword!)}
+                    className="text-xs text-[#3B82F6] hover:underline shrink-0"
+                  >Copiar</button>
+                </div>
+              )}
+            </div>
+            <button onClick={() => setFeedback(null)} className="text-[#999] hover:text-[#141042] shrink-0">
+              <span className="text-lg leading-none">×</span>
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex items-start justify-between gap-4">
         <div>
@@ -153,6 +232,7 @@ export default function UsersPage() {
                 <th className="text-left px-6 py-4 text-sm font-semibold text-[#141042]">Tipo</th>
                 <th className="text-left px-6 py-4 text-sm font-semibold text-[#141042]">Empresa</th>
                 <th className="text-left px-6 py-4 text-sm font-semibold text-[#141042]">Cadastro</th>
+                <th className="px-6 py-4 text-sm font-semibold text-[#141042]">Ações</th>
               </tr>
             </thead>
             <tbody>
@@ -215,6 +295,19 @@ export default function UsersPage() {
                           <Calendar className="w-4 h-4 text-[#999]" />
                           <span>{new Date(user.created_at).toLocaleDateString('pt-BR')}</span>
                         </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <button
+                          onClick={() => handleResendEmail(user)}
+                          disabled={sendingId === user.id}
+                          title="Gera nova senha e reenvia as credenciais por e-mail"
+                          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-[#3B82F6] border border-[#3B82F6]/30 rounded-lg hover:bg-[#3B82F6]/5 disabled:opacity-50 transition-colors whitespace-nowrap"
+                        >
+                          {sendingId === user.id
+                            ? <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                            : <SendHorizonal className="w-3.5 h-3.5" />}
+                          {sendingId === user.id ? 'Enviando...' : 'Reenviar e-mail'}
+                        </button>
                       </td>
                     </tr>
                   );
