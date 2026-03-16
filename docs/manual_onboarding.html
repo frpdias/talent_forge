@@ -1,0 +1,956 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>TalentForge — Manual de Onboarding v1.0</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--p:#141042;--s:#10B981;--a:#3B82F6;--o:#F97316;--bg:#FAFAF8;--w:#FFFFFF;--b:#E5E5DC;--t:#1A1A2E;--m:#6B7280}
+body{font-family:Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--t);font-size:14px;line-height:1.7}
+h2{font-size:1.55rem;font-weight:700;color:var(--p);margin-bottom:.75rem}
+h3{font-size:1.1rem;font-weight:600;color:var(--p);margin-bottom:.45rem;margin-top:1.4rem}
+h4{font-size:.96rem;font-weight:600;color:var(--a);margin-bottom:.3rem;margin-top:.9rem}
+p{margin-bottom:.85rem;color:#374151}ul,ol{margin:.4rem 0 .9rem 1.4rem}li{margin-bottom:.3rem;color:#374151}
+a{color:var(--a);text-decoration:none}
+.page{max-width:900px;margin:0 auto;padding:0 2rem}
+.cover{min-height:100vh;background:linear-gradient(135deg,#0D0B2E 0%,#141042 45%,#1a1560 75%,#0f3460 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:4rem 2rem;position:relative;overflow:hidden}
+.cover::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 30% 20%,rgba(59,130,246,.15) 0%,transparent 60%),radial-gradient(ellipse at 70% 80%,rgba(16,185,129,.12) 0%,transparent 50%)}
+.ci{position:relative;z-index:1}
+.csub{font-size:1.2rem;color:rgba(255,255,255,.85);margin:1rem 0 .5rem;font-weight:300;letter-spacing:.05em}
+.cver{display:inline-block;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:rgba(255,255,255,.9);padding:.4rem 1.2rem;border-radius:999px;font-size:.85rem;margin-top:1.5rem}
+.ctag{color:rgba(255,255,255,.55);font-size:.8rem;margin-top:2.5rem;letter-spacing:.18em;text-transform:uppercase}
+.dots{display:flex;gap:.5rem;justify-content:center;margin-top:1rem}
+.dot{width:8px;height:8px;border-radius:50%}
+.toc-sec{padding:4rem 0}.toc-h{font-size:1.7rem;font-weight:800;color:var(--p);margin-bottom:1.75rem;padding-bottom:1rem;border-bottom:3px solid var(--s)}
+.toc-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+.toc-item{display:flex;align-items:flex-start;gap:1rem;padding:1rem 1.25rem;background:var(--w);border:1px solid var(--b);border-radius:12px;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+.tn{width:36px;height:36px;border-radius:10px;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.85rem;flex-shrink:0}
+.ti strong{display:block;font-size:.93rem;color:var(--p);margin-bottom:.15rem}.ti span{font-size:.78rem;color:var(--m)}
+.sec{padding:3.5rem 0;border-top:1px solid var(--b)}
+.sh{display:flex;align-items:center;gap:1rem;margin-bottom:1.75rem}
+.sb{width:52px;height:52px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:1.3rem;font-weight:800;color:#fff;flex-shrink:0}
+.st h2{margin-bottom:.2rem}.st p{margin:0;color:var(--m);font-size:.88rem}
+.card{background:var(--w);border:1px solid var(--b);border-radius:14px;padding:1.4rem;box-shadow:0 1px 4px rgba(0,0,0,.06);margin-bottom:1.2rem}
+.ch{display:flex;align-items:center;gap:.75rem;margin-bottom:.85rem}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:1.25rem;margin-bottom:1.5rem}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;margin-bottom:1.5rem}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:.85rem;margin-bottom:1.5rem}
+.callout{border-radius:4px;padding:.85rem 1.1rem;margin:1.25rem 0;border-left:4px solid transparent}
+.tip{background:#F0FDF4;border-left-color:#16A34A}.warn{background:#FFFBEB;border-left-color:#D97706}.info{background:#EFF6FF;border-left-color:#3B82F6}
+.ck{display:none}
+.cb strong{display:block;font-size:.78rem;text-transform:uppercase;letter-spacing:.06em;margin-bottom:.2rem}
+.tip .cb strong{color:#15803D}.warn .cb strong{color:#B45309}.info .cb strong{color:#1D4ED8}
+.cb p{margin:0;font-size:.87rem;color:#374151}
+.steps{list-style:none;margin:.75rem 0;padding:0}.steps li{display:flex;gap:.85rem;align-items:flex-start;margin-bottom:.85rem}
+.sn{width:26px;height:26px;border-radius:50%;background:var(--p);color:#fff;display:flex;align-items:center;justify-content:center;font-size:.74rem;font-weight:700;flex-shrink:0;margin-top:.1rem}
+.sbody strong{display:block;font-size:.9rem;color:var(--p)}.sbody span{font-size:.83rem;color:var(--m)}
+.badge{display:inline-block;padding:.18rem .6rem;border-radius:999px;font-size:.73rem;font-weight:600}
+.bg{background:#D1FAE5;color:#065F46}.bb{background:#DBEAFE;color:#1E40AF}.bo{background:#FED7AA;color:#92400E}
+.br{background:#FEE2E2;color:#991B1B}.bgr{background:#F3F4F6;color:#374151}.bp{background:#EDE9FE;color:#5B21B6}
+.srow{display:flex;flex-wrap:wrap;gap:.5rem;margin:.6rem 0}
+table{width:100%;border-collapse:collapse;margin:1rem 0 1.5rem;background:#fff;border-radius:10px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+th{background:var(--p);color:#fff;padding:.7rem 1rem;text-align:left;font-size:.8rem;font-weight:600;letter-spacing:.03em}
+td{padding:.65rem 1rem;border-bottom:1px solid var(--b);font-size:.84rem}tr:last-child td{border-bottom:none}tr:hover td{background:#F9FAFB}
+.dw{background:#fff;border:1px solid var(--b);border-radius:14px;padding:1.75rem;margin:1.5rem 0;text-align:center;box-shadow:0 1px 4px rgba(0,0,0,.06);overflow-x:auto}
+.dc{font-size:.78rem;color:var(--m);margin-top:.75rem;font-style:italic}
+.footer{text-align:center;padding:2rem;color:var(--m);font-size:.75rem;border-top:1px solid var(--b);margin-top:3rem}
+.ss{margin:1.75rem 0;padding-top:1.4rem;border-top:1px dashed var(--b)}
+.ss-t{font-size:1rem;font-weight:700;color:var(--p);margin-bottom:.65rem;display:flex;align-items:center;gap:.5rem}
+.sdot{width:10px;height:10px;border-radius:50%;background:var(--s);flex-shrink:0}
+.metric{background:#fff;border:1px solid var(--b);border-radius:12px;padding:1.25rem;text-align:center;box-shadow:0 1px 4px rgba(0,0,0,.05)}
+.mv{font-size:1.8rem;font-weight:800;margin-bottom:.2rem}.ml{font-size:.78rem;color:var(--m);font-weight:500}
+code{background:#F3F4F6;padding:1px 5px;border-radius:4px;font-size:.82rem;font-family:monospace}
+@media print{body{background:#fff;font-size:12px}.cover{min-height:auto;padding:3rem 2rem;page-break-after:always}.sec{page-break-before:always}.toc-sec{page-break-after:always}.card,.dw{box-shadow:none;border:1px solid #ddd}}
+@page{margin:1.5cm}
+</style>
+</head>
+<body>
+<!-- COVER -->
+<div class="cover" id="capa">
+<div class="ci">
+<svg width="340" height="72" viewBox="0 0 340 72" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin-bottom:1.5rem">
+  <rect x="0" y="10" width="46" height="46" rx="11" fill="#1F4ED8" opacity=".9"/>
+  <text x="23" y="40" text-anchor="middle" fill="white" font-family="-apple-system,sans-serif" font-weight="800" font-size="19">TF</text>
+  <text x="58" y="50" fill="#60A5FA" font-family="-apple-system,sans-serif" font-weight="800" font-size="34" letter-spacing="-1">TALENT</text>
+  <text x="242" y="50" fill="#F97316" font-family="-apple-system,sans-serif" font-weight="800" font-size="34" letter-spacing="-1">FORGE</text>
+</svg>
+<div class="csub">Manual de Onboarding &#8212; Guia Completo da Plataforma</div>
+<div style="height:1px;width:180px;background:rgba(255,255,255,.2);margin:1.25rem auto"></div>
+<div style="color:rgba(255,255,255,.7);font-size:.9rem;max-width:460px;line-height:1.8;margin:0 auto">
+  Plataforma integrada de <strong style="color:#60A5FA">Rastreamento de Candidatos (ATS)</strong> e
+  <strong style="color:#34D399">People Health Performance (PHP)</strong> &#8212;
+  tudo que sua equipe de RH precisa para recrutar com efici&#234;ncia e gerir pessoas com sa&#250;de.
+</div>
+<div class="cver">v1.0 &nbsp;|&nbsp; Mar&#231;o 2026 &nbsp;|&nbsp; pt-BR</div>
+<div class="dots" style="margin-top:2rem">
+  <div class="dot" style="background:#60A5FA"></div>
+  <div class="dot" style="background:#34D399"></div>
+  <div class="dot" style="background:#F97316"></div>
+  <div class="dot" style="background:#A78BFA"></div>
+</div>
+<div class="ctag">ATS &middot; Assessments Comportamentais &middot; People Health Performance &middot; IA</div>
+</div>
+</div>
+
+<div class="page">
+<!-- TOC -->
+<div class="toc-sec" id="sumario">
+<div class="toc-h">Sum&#225;rio</div>
+<div class="toc-grid">
+  <a href="#sec1"><div class="toc-item"><div class="tn" style="background:#141042">1</div><div class="ti"><strong>Vis&#227;o Geral da Plataforma</strong><span>Arquitetura, personas e m&#233;tricas principais</span></div></div></a>
+  <a href="#sec2"><div class="toc-item"><div class="tn" style="background:#3B82F6">2</div><div class="ti"><strong>M&#243;dulo de Recrutamento (ATS)</strong><span>Dashboard, vagas, kanban, candidatos, entrevistas</span></div></div></a>
+  <a href="#sec3"><div class="toc-item"><div class="tn" style="background:#6366F1">3</div><div class="ti"><strong>Assessments Comportamentais</strong><span>DISC, Cores, PI Assessment e compara&#231;&#227;o</span></div></div></a>
+  <a href="#sec4"><div class="toc-item"><div class="tn" style="background:#0891B2">4</div><div class="ti"><strong>P&#225;gina de Carreira</strong><span>Career page p&#250;blica, personaliza&#231;&#227;o e candidaturas</span></div></div></a>
+  <a href="#sec5"><div class="toc-item"><div class="tn" style="background:#10B981">5</div><div class="ti"><strong>M&#243;dulo PHP &#8212; People Health Performance</strong><span>TFCI, NR-1, COPC, Planos de A&#231;&#227;o e IA</span></div></div></a>
+  <a href="#sec6"><div class="toc-item"><div class="tn" style="background:#E11D48">6</div><div class="ti"><strong>Painel Administrativo</strong><span>Usu&#225;rios, organiza&#231;&#245;es, m&#243;dulos e auditoria</span></div></div></a>
+  <a href="#sec7"><div class="toc-item"><div class="tn" style="background:#D97706">7</div><div class="ti"><strong>Portal do Candidato</strong><span>Cadastro, perfil, candidaturas e assessments</span></div></div></a>
+  <a href="#sec8"><div class="toc-item"><div class="tn" style="background:#7C3AED">8</div><div class="ti"><strong>Relat&#243;rios e Exporta&#231;&#245;es</strong><span>Analytics, PDF, CSV e KPIs</span></div></div></a>
+</div>
+</div>
+<!-- SEC 1: VISAO GERAL -->
+<div class="sec" id="sec1">
+<div class="sh">
+  <div class="sb" style="background:#141042">1</div>
+  <div class="st"><h2>Vis&#227;o Geral da Plataforma</h2><p>O que &#233; o TalentForge, personas e arquitetura multi-tenant</p></div>
+</div>
+<p>O <strong>TalentForge</strong> &#233; uma plataforma SaaS B2B que unifica dois mundos cr&#237;ticos de RH: o <strong>Applicant Tracking System (ATS)</strong>, respons&#225;vel por todo o ciclo de recrutamento e sele&#231;&#227;o, e o m&#243;dulo <strong>People Health Performance (PHP)</strong>, que monitora a sa&#250;de organizacional e o desempenho das equipes. A plataforma opera em modelo multi-tenant &#8212; cada empresa possui dados completamente isolados via Row-Level Security (RLS) no banco Supabase Postgres.</p>
+<div class="g2">
+  <div class="card">
+    <div class="ch">
+      <div style="width:10px;height:10px;border-radius:50%;background:#3B82F6;flex-shrink:0"></div>
+      <h3 style="margin:0">Persona: Recrutador</h3>
+    </div>
+    <p style="font-size:.87rem">Profissional de RH respons&#225;vel por criar vagas, gerenciar o pipeline de candidatos, conduzir entrevistas e publicar oportunidades em m&#250;ltiplos canais. Acessa o painel via login corporativo vinculado &#224; organiza&#231;&#227;o.</p>
+    <div class="srow"><span class="badge bb">Gest&#227;o de Vagas</span><span class="badge bg">Pipeline Kanban</span><span class="badge bp">Assessments</span><span class="badge bo">Relat&#243;rios</span></div>
+  </div>
+  <div class="card">
+    <div class="ch">
+      <div style="width:10px;height:10px;border-radius:50%;background:#10B981;flex-shrink:0"></div>
+      <h3 style="margin:0">Persona: Candidato</h3>
+    </div>
+    <p style="font-size:.87rem">Profissional que busca oportunidades de emprego. Pode se candidatar pela p&#225;gina de carreira p&#250;blica da empresa, acompanhar o status das candidaturas e completar assessments comportamentais enviados pelo recrutador.</p>
+    <div class="srow"><span class="badge bg">Candidaturas</span><span class="badge bb">Assessments</span><span class="badge bgr">Perfil</span><span class="badge bp">Portal Pr&#243;prio</span></div>
+  </div>
+</div>
+<div class="ss"><div class="ss-t"><div class="sdot"></div>Arquitetura Multi-Tenant</div>
+<p>Cada empresa cliente &#233; uma <strong>Organiza&#231;&#227;o</strong> no TalentForge. Todos os dados (vagas, candidatos, pipelines) pertencem a uma organiza&#231;&#227;o espec&#237;fica e n&#227;o podem ser acessados por outras. Usu&#225;rios s&#227;o membros de organiza&#231;&#245;es atrav&#233;s da tabela <code>org_members</code>. Cada requisi&#231;&#227;o &#224; API precisa incluir o header <code>x-org-id</code> com o UUID da organiza&#231;&#227;o.</p>
+</div>
+<!-- SVG Arquitetura -->
+<div class="dw">
+<svg width="700" height="230" viewBox="0 0 700 230" xmlns="http://www.w3.org/2000/svg">
+  <defs><marker id="ar" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#94A3B8"/></marker></defs>
+  <rect x="10" y="75" width="130" height="80" rx="12" fill="#141042"/>
+  <text x="75" y="108" text-anchor="middle" fill="white" font-family="-apple-system,sans-serif" font-weight="700" font-size="12">Organiza&#231;&#245;es</text>
+  <text x="75" y="125" text-anchor="middle" fill="rgba(255,255,255,.7)" font-family="-apple-system,sans-serif" font-size="10">Multi-tenant</text>
+  <text x="75" y="141" text-anchor="middle" fill="rgba(255,255,255,.55)" font-family="-apple-system,sans-serif" font-size="9">org_members + RLS</text>
+  <path d="M140 100 L184 55" stroke="#94A3B8" stroke-width="1.5" stroke-dasharray="4,3"/>
+  <path d="M140 140 L184 175" stroke="#94A3B8" stroke-width="1.5" stroke-dasharray="4,3"/>
+  <rect x="186" y="18" width="138" height="68" rx="11" fill="#3B82F6" opacity=".9"/>
+  <text x="255" y="46" text-anchor="middle" fill="white" font-family="-apple-system,sans-serif" font-weight="700" font-size="12">M&#243;dulo ATS</text>
+  <text x="255" y="63" text-anchor="middle" fill="rgba(255,255,255,.85)" font-family="-apple-system,sans-serif" font-size="10">Vagas &#183; Candidatos</text>
+  <text x="255" y="77" text-anchor="middle" fill="rgba(255,255,255,.7)" font-family="-apple-system,sans-serif" font-size="9">Pipeline &#183; Entrevistas</text>
+  <rect x="186" y="144" width="138" height="68" rx="11" fill="#10B981" opacity=".9"/>
+  <text x="255" y="172" text-anchor="middle" fill="white" font-family="-apple-system,sans-serif" font-weight="700" font-size="12">M&#243;dulo PHP</text>
+  <text x="255" y="189" text-anchor="middle" fill="rgba(255,255,255,.85)" font-family="-apple-system,sans-serif" font-size="10">TFCI &#183; NR-1 &#183; COPC</text>
+  <text x="255" y="203" text-anchor="middle" fill="rgba(255,255,255,.7)" font-family="-apple-system,sans-serif" font-size="9">People Health Score</text>
+  <path d="M324 52 L368 52" stroke="#94A3B8" stroke-width="2" marker-end="url(#ar)"/>
+  <path d="M324 178 L368 178" stroke="#94A3B8" stroke-width="2" marker-end="url(#ar)"/>
+  <rect x="370" y="18" width="122" height="68" rx="11" fill="#6366F1" opacity=".9"/>
+  <text x="431" y="46" text-anchor="middle" fill="white" font-family="-apple-system,sans-serif" font-weight="700" font-size="12">Recrutadores</text>
+  <text x="431" y="63" text-anchor="middle" fill="rgba(255,255,255,.85)" font-family="-apple-system,sans-serif" font-size="10">Dashboard &#183; Vagas</text>
+  <text x="431" y="77" text-anchor="middle" fill="rgba(255,255,255,.7)" font-family="-apple-system,sans-serif" font-size="9">Kanban &#183; Relat&#243;rios</text>
+  <rect x="370" y="144" width="122" height="68" rx="11" fill="#F97316" opacity=".9"/>
+  <text x="431" y="172" text-anchor="middle" fill="white" font-family="-apple-system,sans-serif" font-weight="700" font-size="12">Candidatos</text>
+  <text x="431" y="189" text-anchor="middle" fill="rgba(255,255,255,.85)" font-family="-apple-system,sans-serif" font-size="10">Portal &#183; Candidaturas</text>
+  <text x="431" y="203" text-anchor="middle" fill="rgba(255,255,255,.7)" font-family="-apple-system,sans-serif" font-size="9">Assessments</text>
+  <path d="M492 52 L536 96" stroke="#94A3B8" stroke-width="1.5" stroke-dasharray="4,3"/>
+  <path d="M492 178 L536 164" stroke="#94A3B8" stroke-width="1.5" stroke-dasharray="4,3"/>
+  <rect x="538" y="75" width="148" height="80" rx="12" fill="#0F172A"/>
+  <text x="612" y="106" text-anchor="middle" fill="#34D399" font-family="-apple-system,sans-serif" font-weight="700" font-size="12">Supabase</text>
+  <text x="612" y="123" text-anchor="middle" fill="rgba(255,255,255,.7)" font-family="-apple-system,sans-serif" font-size="10">Postgres + RLS</text>
+  <text x="612" y="140" text-anchor="middle" fill="rgba(255,255,255,.55)" font-family="-apple-system,sans-serif" font-size="9">Auth &#183; Storage &#183; Edge Fn</text>
+</svg>
+<div class="dc">Figura 1 &#8212; Arquitetura TalentForge: organiza&#231;&#245;es, m&#243;dulos, usu&#225;rios e banco de dados</div>
+</div>
+<div class="g3">
+  <div class="metric"><div class="mv" style="color:#3B82F6">ATS</div><div class="ml">M&#243;dulo de Recrutamento com pipeline Kanban e publica&#231;&#227;o multi-canal</div></div>
+  <div class="metric"><div class="mv" style="color:#10B981">PHP</div><div class="ml">People Health: TFCI 30% + NR-1 40% + COPC 30% = Score integrado</div></div>
+  <div class="metric"><div class="mv" style="color:#F97316">IA</div><div class="ml">Insights, predi&#231;&#227;o de reten&#231;&#227;o e chat assistido por intelig&#234;ncia artificial</div></div>
+</div>
+<div class="callout tip"><span class="ck">&#128161;</span><div class="cb"><strong>Dica de In&#237;cio</strong><p>O administrador da empresa deve criar a organiza&#231;&#227;o no Painel Admin e convidar os recrutadores por e-mail. Cada convite gera um link de acesso com prazo de 48 horas.</p></div></div>
+</div>
+
+<!-- SEC 2: ATS -->
+<div class="sec" id="sec2">
+<div class="sh">
+  <div class="sb" style="background:#3B82F6">2</div>
+  <div class="st"><h2>M&#243;dulo de Recrutamento (ATS)</h2><p>Dashboard, gest&#227;o de vagas, pipeline kanban, candidatos e entrevistas</p></div>
+</div>
+<p>O m&#243;dulo ATS &#233; o cora&#231;&#227;o do TalentForge para equipes de recrutamento. Ele oferece um painel centralizado para gerenciar todo o ciclo de contrata&#231;&#227;o &#8212; da cria&#231;&#227;o da vaga at&#233; a oferta final ao candidato &#8212; com colabora&#231;&#227;o em tempo real entre todos os recrutadores da organiza&#231;&#227;o.</p>
+
+<!-- 2.1 Dashboard -->
+<div class="ss"><div class="ss-t"><div class="sdot"></div>2.1 Dashboard do Recrutador</div>
+<p>Ao fazer login, o recrutador &#233; direcionado ao <strong>Dashboard</strong>, que exibe um resumo em tempo real da atividade de recrutamento. No topo h&#225; o <strong>seletor de organiza&#231;&#227;o</strong> &#8212; &#250;til para recrutadores que pertencem a mais de uma empresa.</p>
+<div class="g3">
+  <div class="card" style="padding:1rem">
+    <strong style="font-size:.9rem;color:#141042">Vis&#227;o Geral</strong>
+    <p style="font-size:.82rem;margin:.3rem 0 0">Total de vagas abertas, candidatos em pipeline e entrevistas agendadas</p>
+  </div>
+  <div class="card" style="padding:1rem">
+    <strong style="font-size:.9rem;color:#141042">Vagas Recentes</strong>
+    <p style="font-size:.82rem;margin:.3rem 0 0">Lista das vagas mais recentes com status e contagem de candidatos por estagio</p>
+  </div>
+  <div class="card" style="padding:1rem">
+    <strong style="font-size:.9rem;color:#141042">Pr&#243;ximas Entrevistas</strong>
+    <p style="font-size:.82rem;margin:.3rem 0 0">Agenda das entrevistas da semana com links de videoconfer&#234;ncia</p>
+  </div>
+</div>
+<p>O menu lateral de navega&#231;&#227;o inclui: <strong>Dashboard</strong>, <strong>Vagas</strong>, <strong>Candidatos</strong>, <strong>Entrevistas</strong>, <strong>Assessments</strong>, <strong>Publica&#231;&#245;es</strong>, <strong>P&#225;gina de Carreira</strong> e <strong>Relat&#243;rios</strong>.</p>
+</div>
+
+<!-- 2.2 Gestao de Vagas -->
+<div class="ss"><div class="ss-t"><div class="sdot"></div>2.2 Gest&#227;o de Vagas</div>
+<p>Vagas s&#227;o o n&#250;cleo do ATS. Cada vaga pertence a uma organiza&#231;&#227;o e pode ter v&#225;rios candidatos em diferentes est&#225;gios do pipeline. Para criar uma nova vaga acesse <strong>Vagas &gt; Nova Vaga</strong>.</p>
+<table>
+<tr><th>Campo</th><th>Descri&#231;&#227;o</th><th>Obrigat&#243;rio</th></tr>
+<tr><td>T&#237;tulo</td><td>Nome do cargo (ex: Desenvolvedor Full Stack S&#234;nior)</td><td><span class="badge bg">Sim</span></td></tr>
+<tr><td>Descri&#231;&#227;o</td><td>Responsabilidades, requisitos e benef&#237;cios (editor rich text)</td><td><span class="badge bg">Sim</span></td></tr>
+<tr><td>Tipo de Emprego</td><td>CLT, PJ, Est&#225;gio, Tempor&#225;rio, Freelancer</td><td><span class="badge bg">Sim</span></td></tr>
+<tr><td>Localiza&#231;&#227;o</td><td>Cidade/estado ou Remoto</td><td><span class="badge bgr">N&#227;o</span></td></tr>
+<tr><td>Faixa Salarial</td><td>Remunera&#231;&#227;o m&#237;nima e m&#225;xima</td><td><span class="badge bgr">N&#227;o</span></td></tr>
+<tr><td>Status</td><td>Rascunho, Aberta, Em Pausa ou Encerrada</td><td><span class="badge bg">Sim</span></td></tr>
+<tr><td>Departamento</td><td>&#193;rea da empresa respons&#225;vel pela vaga</td><td><span class="badge bgr">N&#227;o</span></td></tr>
+</table>
+<!-- SVG Job Lifecycle -->
+<div class="dw">
+<svg width="660" height="108" viewBox="0 0 660 108" xmlns="http://www.w3.org/2000/svg">
+  <defs><marker id="ar2" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#94A3B8"/></marker></defs>
+  <rect x="8" y="24" width="120" height="52" rx="10" fill="#F3F4F6" stroke="#D1D5DB" stroke-width="1.5"/>
+  <text x="68" y="46" text-anchor="middle" fill="#374151" font-family="-apple-system,sans-serif" font-weight="600" font-size="12">Rascunho</text>
+  <text x="68" y="63" text-anchor="middle" fill="#6B7280" font-family="-apple-system,sans-serif" font-size="10">Em elabora&#231;&#227;o</text>
+  <path d="M128 50 L158 50" stroke="#94A3B8" stroke-width="2" marker-end="url(#ar2)"/>
+  <rect x="160" y="24" width="120" height="52" rx="10" fill="#D1FAE5" stroke="#6EE7B7" stroke-width="1.5"/>
+  <text x="220" y="46" text-anchor="middle" fill="#065F46" font-family="-apple-system,sans-serif" font-weight="600" font-size="12">Aberta</text>
+  <text x="220" y="63" text-anchor="middle" fill="#047857" font-family="-apple-system,sans-serif" font-size="10">Recebendo candidatos</text>
+  <path d="M280 50 L310 50" stroke="#94A3B8" stroke-width="2" marker-end="url(#ar2)"/>
+  <rect x="312" y="24" width="130" height="52" rx="10" fill="#FEF3C7" stroke="#FCD34D" stroke-width="1.5"/>
+  <text x="377" y="46" text-anchor="middle" fill="#92400E" font-family="-apple-system,sans-serif" font-weight="600" font-size="12">Em Pausa</text>
+  <text x="377" y="63" text-anchor="middle" fill="#92400E" font-family="-apple-system,sans-serif" font-size="10">Temporariamente suspensa</text>
+  <path d="M442 50 L472 50" stroke="#94A3B8" stroke-width="2" marker-end="url(#ar2)"/>
+  <rect x="474" y="24" width="128" height="52" rx="10" fill="#FEE2E2" stroke="#FCA5A5" stroke-width="1.5"/>
+  <text x="538" y="46" text-anchor="middle" fill="#991B1B" font-family="-apple-system,sans-serif" font-weight="600" font-size="12">Encerrada</text>
+  <text x="538" y="63" text-anchor="middle" fill="#991B1B" font-family="-apple-system,sans-serif" font-size="10">Vaga preenchida/cancelada</text>
+  <path d="M220 24 Q220 8 377 8 Q442 8 442 22" stroke="#10B981" stroke-width="1.5" fill="none" stroke-dasharray="4,3" marker-end="url(#ar2)"/>
+  <text x="310" y="7" text-anchor="middle" fill="#059669" font-family="-apple-system,sans-serif" font-size="9">Pode retomar</text>
+</svg>
+<div class="dc">Figura 2 &#8212; Ciclo de vida de uma vaga no TalentForge</div>
+</div>
+<div class="callout warn"><span class="ck">&#9888;&#65039;</span><div class="cb"><strong>Aten&#231;&#227;o</strong><p>Vagas com status <strong>Encerrada</strong> n&#227;o aparecem na p&#225;gina de carreira p&#250;blica. Novas inscri&#231;&#245;es s&#227;o bloqueadas automaticamente, mas candidatos j&#225; inscritos ainda acompanham seu status.</p></div></div>
+</div>
+
+<!-- 2.3 Kanban -->
+<div class="ss"><div class="ss-t"><div class="sdot"></div>2.3 Pipeline Kanban</div>
+<p>O <strong>Pipeline Kanban</strong> &#233; a vis&#227;o principal de gest&#227;o de candidatos para uma vaga espec&#237;fica. Cada coluna representa um est&#225;gio do processo seletivo. Cards de candidatos podem ser arrastados entre colunas (drag-and-drop) para atualizar o est&#225;gio em tempo real.</p>
+<div class="dw">
+<svg width="660" height="200" viewBox="0 0 660 200" xmlns="http://www.w3.org/2000/svg">
+  <!-- col 1 Triagem -->
+  <rect x="5" y="10" width="118" height="182" rx="10" fill="#F8FAFC" stroke="#E2E8F0" stroke-width="1.5"/>
+  <text x="64" y="30" text-anchor="middle" fill="#475569" font-family="-apple-system,sans-serif" font-weight="700" font-size="10">TRIAGEM</text>
+  <rect x="13" y="38" width="102" height="48" rx="8" fill="white" stroke="#E2E8F0" stroke-width="1"/>
+  <circle cx="27" cy="54" r="10" fill="#DBEAFE"/><text x="27" y="58" text-anchor="middle" fill="#1E40AF" font-family="-apple-system,sans-serif" font-size="8" font-weight="700">JS</text>
+  <text x="44" y="53" fill="#1E3A5F" font-family="-apple-system,sans-serif" font-size="9" font-weight="600">Jo&#227;o Silva</text>
+  <text x="44" y="67" fill="#94A3B8" font-family="-apple-system,sans-serif" font-size="8">Dev Frontend</text>
+  <rect x="13" y="94" width="102" height="48" rx="8" fill="white" stroke="#E2E8F0" stroke-width="1"/>
+  <circle cx="27" cy="110" r="10" fill="#FCE7F3"/><text x="27" y="114" text-anchor="middle" fill="#9D174D" font-family="-apple-system,sans-serif" font-size="8" font-weight="700">MC</text>
+  <text x="44" y="109" fill="#1E3A5F" font-family="-apple-system,sans-serif" font-size="9" font-weight="600">Maria Costa</text>
+  <text x="44" y="123" fill="#94A3B8" font-family="-apple-system,sans-serif" font-size="8">Dev Backend</text>
+  <!-- col 2 Entrevista -->
+  <rect x="131" y="10" width="118" height="182" rx="10" fill="#F8FAFC" stroke="#E2E8F0" stroke-width="1.5"/>
+  <text x="190" y="30" text-anchor="middle" fill="#475569" font-family="-apple-system,sans-serif" font-weight="700" font-size="10">ENTREVISTA</text>
+  <rect x="139" y="38" width="102" height="48" rx="8" fill="white" stroke="#BFDBFE" stroke-width="1.5"/>
+  <circle cx="153" cy="54" r="10" fill="#EDE9FE"/><text x="153" y="58" text-anchor="middle" fill="#5B21B6" font-family="-apple-system,sans-serif" font-size="8" font-weight="700">RP</text>
+  <text x="170" y="53" fill="#1E3A5F" font-family="-apple-system,sans-serif" font-size="9" font-weight="600">Rafael P.</text>
+  <text x="170" y="67" fill="#94A3B8" font-family="-apple-system,sans-serif" font-size="8">Dev Fullstack</text>
+  <!-- col 3 Cliente -->
+  <rect x="257" y="10" width="118" height="182" rx="10" fill="#F8FAFC" stroke="#E2E8F0" stroke-width="1.5"/>
+  <text x="316" y="30" text-anchor="middle" fill="#475569" font-family="-apple-system,sans-serif" font-weight="700" font-size="10">CLIENTE</text>
+  <rect x="265" y="38" width="102" height="48" rx="8" fill="white" stroke="#E2E8F0" stroke-width="1"/>
+  <circle cx="279" cy="54" r="10" fill="#D1FAE5"/><text x="279" y="58" text-anchor="middle" fill="#065F46" font-family="-apple-system,sans-serif" font-size="8" font-weight="700">AL</text>
+  <text x="296" y="53" fill="#1E3A5F" font-family="-apple-system,sans-serif" font-size="9" font-weight="600">Ana Lima</text>
+  <text x="296" y="67" fill="#94A3B8" font-family="-apple-system,sans-serif" font-size="8">UX Designer</text>
+  <!-- col 4 Oferta -->
+  <rect x="383" y="10" width="118" height="182" rx="10" fill="#F8FAFC" stroke="#E2E8F0" stroke-width="1.5"/>
+  <text x="442" y="30" text-anchor="middle" fill="#475569" font-family="-apple-system,sans-serif" font-weight="700" font-size="10">OFERTA</text>
+  <rect x="391" y="38" width="102" height="48" rx="8" fill="white" stroke="#FEF3C7" stroke-width="1.5"/>
+  <circle cx="405" cy="54" r="10" fill="#FEF3C7"/><text x="405" y="58" text-anchor="middle" fill="#92400E" font-family="-apple-system,sans-serif" font-size="8" font-weight="700">BM</text>
+  <text x="422" y="53" fill="#1E3A5F" font-family="-apple-system,sans-serif" font-size="9" font-weight="600">Bruno M.</text>
+  <text x="422" y="67" fill="#94A3B8" font-family="-apple-system,sans-serif" font-size="8">PM Produto</text>
+  <!-- col 5 Contratado -->
+  <rect x="509" y="10" width="146" height="182" rx="10" fill="#ECFDF5" stroke="#6EE7B7" stroke-width="1.5"/>
+  <text x="582" y="30" text-anchor="middle" fill="#065F46" font-family="-apple-system,sans-serif" font-weight="700" font-size="10">CONTRATADO</text>
+  <rect x="517" y="38" width="130" height="48" rx="8" fill="white" stroke="#6EE7B7" stroke-width="1.5"/>
+  <circle cx="531" cy="54" r="10" fill="#D1FAE5"/><text x="531" y="58" text-anchor="middle" fill="#065F46" font-family="-apple-system,sans-serif" font-size="8" font-weight="700">CF</text>
+  <text x="548" y="53" fill="#1E3A5F" font-family="-apple-system,sans-serif" font-size="9" font-weight="600">Carla F.</text>
+  <text x="548" y="67" fill="#94A3B8" font-family="-apple-system,sans-serif" font-size="8">Data Analyst</text>
+  <text x="582" y="165" text-anchor="middle" fill="#10B981" font-family="-apple-system,sans-serif" font-size="26">&#10003;</text>
+</svg>
+<div class="dc">Figura 3 &#8212; Pipeline Kanban: candidatos organizados por est&#225;gio do processo seletivo</div>
+</div>
+<div class="callout tip"><span class="ck">&#128161;</span><div class="cb"><strong>Dica</strong><p>Clique em qualquer card de candidato no Kanban para ver o perfil completo, adicionar notas, agendar entrevistas e visualizar resultados de assessments sem sair da tela.</p></div></div>
+</div>
+
+<!-- 2.4 Candidatos -->
+<div class="ss"><div class="ss-t"><div class="sdot"></div>2.4 Gest&#227;o de Candidatos</div>
+<p>Candidatos podem entrar no sistema de tr&#234;s formas: (1) via candidatura pela p&#225;gina de carreira p&#250;blica, (2) cadastro manual pelo recrutador, ou (3) importa&#231;&#227;o via CSV. O perfil armazena informa&#231;&#245;es completas e hist&#243;rico de todas as intera&#231;&#245;es.</p>
+<ul>
+  <li><strong>Dados b&#225;sicos:</strong> nome completo, e-mail, telefone, LinkedIn, localiza&#231;&#227;o</li>
+  <li><strong>Curr&#237;culo:</strong> upload de PDF/DOC armazenado no Supabase Storage (m&#225;x. 10 MB)</li>
+  <li><strong>Tags:</strong> etiquetas customiz&#225;veis para facilitar buscas e filtros</li>
+  <li><strong>Notas:</strong> anota&#231;&#245;es privadas dos recrutadores vinculadas ao candidato</li>
+  <li><strong>Hist&#243;rico:</strong> log de todas as a&#231;&#245;es &#8212; movimenta&#231;&#245;es, e-mails enviados, assessments</li>
+  <li><strong>Foto de perfil:</strong> avatar edit&#225;vel com ferramenta de recorte e centraliza&#231;&#227;o</li>
+</ul>
+<ol class="steps">
+  <li><div class="sn">1</div><div class="sbody"><strong>Novo Candidato</strong><span>Clique em "Candidatos" no menu lateral e depois em "+ Novo Candidato"</span></div></li>
+  <li><div class="sn">2</div><div class="sbody"><strong>Preencha os dados</strong><span>Nome, e-mail e telefone s&#227;o obrigat&#243;rios; demais campos s&#227;o opcionais</span></div></li>
+  <li><div class="sn">3</div><div class="sbody"><strong>Anexe o curr&#237;culo</strong><span>Arraste o arquivo PDF ou DOC para a &#225;rea de upload (m&#225;x. 10 MB)</span></div></li>
+  <li><div class="sn">4</div><div class="sbody"><strong>Vincule a uma vaga</strong><span>Selecione a vaga e o est&#225;gio inicial do pipeline (padr&#227;o: Triagem)</span></div></li>
+  <li><div class="sn">5</div><div class="sbody"><strong>Salve</strong><span>O candidato aparece automaticamente no Kanban da vaga selecionada</span></div></li>
+</ol>
+</div>
+
+<!-- 2.5 Publisher -->
+<div class="ss"><div class="ss-t"><div class="sdot"></div>2.5 Publica&#231;&#227;o de Vagas (Publisher Engine)</div>
+<p>O <strong>Publisher Engine</strong> permite publicar vagas abertas em m&#250;ltiplos canais com um &#250;nico clique. O sistema rastreia o status de cada publica&#231;&#227;o e o hist&#243;rico de candidaturas por fonte de origem.</p>
+<div class="g3">
+  <div class="card" style="padding:1rem;text-align:center">
+    <strong style="font-size:.9rem;color:#141042">Gupy</strong>
+    <p style="font-size:.8rem;margin:.25rem 0 0;color:#6B7280">Integra&#231;&#227;o via API Gupy com sincroniza&#231;&#227;o bidirecional de candidatos</p>
+  </div>
+  <div class="card" style="padding:1rem;text-align:center">
+    <strong style="font-size:.9rem;color:#141042">Vagas.com</strong>
+    <p style="font-size:.8rem;margin:.25rem 0 0;color:#6B7280">Publica&#231;&#227;o autom&#225;tica com rastreamento UTM de candidatos vindos da plataforma</p>
+  </div>
+  <div class="card" style="padding:1rem;text-align:center">
+    <strong style="font-size:.9rem;color:#141042">LinkedIn</strong>
+    <p style="font-size:.8rem;margin:.25rem 0 0;color:#6B7280">Publica&#231;&#227;o direta com rastreamento de cliques e convers&#245;es por campanha</p>
+  </div>
+</div>
+<p>A aba <strong>Hist&#243;rico de Publica&#231;&#245;es</strong> exibe uma linha do tempo com data/hora de cada publica&#231;&#227;o, canal utilizado, n&#250;mero de visualiza&#231;&#245;es e candidaturas recebidas por fonte.</p>
+</div>
+
+<!-- 2.6 Entrevistas -->
+<div class="ss"><div class="ss-t"><div class="sdot"></div>2.6 Entrevistas</div>
+<p>O m&#243;dulo de entrevistas permite agendar, gerenciar e acompanhar todas as entrevistas do processo seletivo. Ao criar uma entrevista, o sistema envia automaticamente um e-mail de confirma&#231;&#227;o ao candidato via <strong>Brevo SMTP</strong>.</p>
+<ol class="steps">
+  <li><div class="sn">1</div><div class="sbody"><strong>Agendar Entrevista</strong><span>No perfil do candidato ou no Kanban, clique em "Agendar Entrevista"</span></div></li>
+  <li><div class="sn">2</div><div class="sbody"><strong>Definir Data e Hora</strong><span>Escolha data, hor&#225;rio e dura&#231;&#227;o estimada da entrevista</span></div></li>
+  <li><div class="sn">3</div><div class="sbody"><strong>Selecionar Formato</strong><span>Presencial, videoconfer&#234;ncia (com link) ou por telefone</span></div></li>
+  <li><div class="sn">4</div><div class="sbody"><strong>Adicionar Entrevistadores</strong><span>Selecione outros membros da organiza&#231;&#227;o que participar&#227;o</span></div></li>
+  <li><div class="sn">5</div><div class="sbody"><strong>Confirmar</strong><span>O sistema envia e-mail autom&#225;tico ao candidato e adiciona evento na agenda</span></div></li>
+</ol>
+<div class="callout info"><span class="ck">&#8505;&#65039;</span><div class="cb"><strong>Informa&#231;&#227;o</strong><p>O e-mail de confirma&#231;&#227;o inclui: data/hora, formato, link de videoconfer&#234;ncia (se aplic&#225;vel), nome do entrevistador e instru&#231;&#245;es para cancelamento ou reagendamento.</p></div></div>
+</div>
+</div>
+
+<!-- SEC 3: ASSESSMENTS -->
+<div class="sec" id="sec3">
+<div class="sh">
+  <div class="sb" style="background:#6366F1">3</div>
+  <div class="st"><h2>Assessments Comportamentais</h2><p>DISC, Assessment de Cores, PI Assessment e compara&#231;&#227;o de candidatos</p></div>
+</div>
+<p>Os <strong>Assessments Comportamentais</strong> do TalentForge s&#227;o ferramentas cientificamente validadas que ajudam recrutadores a entender o perfil comportamental dos candidatos, prever adequa&#231;&#227;o cultural e tomar decis&#245;es de contrata&#231;&#227;o mais precisas. Os assessments s&#227;o enviados por link para o candidato e preenchidos de forma aut&#244;noma, sem interven&#231;&#227;o do recrutador.</p>
+
+<!-- 3.1 DISC -->
+<div class="ss"><div class="ss-t"><div class="sdot"></div>3.1 DISC Assessment</div>
+<p>O modelo <strong>DISC</strong> &#233; uma das ferramentas de avalia&#231;&#227;o comportamental mais utilizadas no mundo. Ele classifica o comportamento humano em quatro dimens&#245;es complementares, ajudando a entender como o candidato se comporta no trabalho, lida com desafios, influencia pessoas e segue regras e processos.</p>
+<div class="dw">
+<svg width="360" height="360" viewBox="0 0 360 360" xmlns="http://www.w3.org/2000/svg">
+  <rect x="8" y="8" width="165" height="165" rx="16" fill="#FEE2E2" stroke="#FCA5A5" stroke-width="2"/>
+  <text x="90" y="56" text-anchor="middle" fill="#991B1B" font-family="-apple-system,sans-serif" font-weight="800" font-size="46">D</text>
+  <text x="90" y="88" text-anchor="middle" fill="#991B1B" font-family="-apple-system,sans-serif" font-weight="700" font-size="14">Domin&#226;ncia</text>
+  <text x="90" y="108" text-anchor="middle" fill="#DC2626" font-family="-apple-system,sans-serif" font-size="11">Resultados &middot; Decis&#227;o</text>
+  <text x="90" y="126" text-anchor="middle" fill="#DC2626" font-family="-apple-system,sans-serif" font-size="11">Competitividade</text>
+  <text x="90" y="154" text-anchor="middle" fill="#991B1B" font-family="-apple-system,sans-serif" font-size="10">Direto &middot; Assertivo &middot; Exigente</text>
+  <rect x="187" y="8" width="165" height="165" rx="16" fill="#FEF9C3" stroke="#FDE047" stroke-width="2"/>
+  <text x="270" y="56" text-anchor="middle" fill="#713F12" font-family="-apple-system,sans-serif" font-weight="800" font-size="46">I</text>
+  <text x="270" y="88" text-anchor="middle" fill="#713F12" font-family="-apple-system,sans-serif" font-weight="700" font-size="14">Influ&#234;ncia</text>
+  <text x="270" y="108" text-anchor="middle" fill="#92400E" font-family="-apple-system,sans-serif" font-size="11">Pessoas &middot; Comunica&#231;&#227;o</text>
+  <text x="270" y="126" text-anchor="middle" fill="#92400E" font-family="-apple-system,sans-serif" font-size="11">Entusiasmo</text>
+  <text x="270" y="154" text-anchor="middle" fill="#713F12" font-family="-apple-system,sans-serif" font-size="10">Otimista &middot; Social &middot; Persuasivo</text>
+  <rect x="8" y="187" width="165" height="165" rx="16" fill="#D1FAE5" stroke="#6EE7B7" stroke-width="2"/>
+  <text x="90" y="235" text-anchor="middle" fill="#065F46" font-family="-apple-system,sans-serif" font-weight="800" font-size="46">S</text>
+  <text x="90" y="267" text-anchor="middle" fill="#065F46" font-family="-apple-system,sans-serif" font-weight="700" font-size="14">Estabilidade</text>
+  <text x="90" y="287" text-anchor="middle" fill="#047857" font-family="-apple-system,sans-serif" font-size="11">Consist&#234;ncia &middot; Lealdade</text>
+  <text x="90" y="305" text-anchor="middle" fill="#047857" font-family="-apple-system,sans-serif" font-size="11">Paci&#234;ncia</text>
+  <text x="90" y="333" text-anchor="middle" fill="#065F46" font-family="-apple-system,sans-serif" font-size="10">Calmo &middot; Confi&#225;vel &middot; Previs&#237;vel</text>
+  <rect x="187" y="187" width="165" height="165" rx="16" fill="#DBEAFE" stroke="#93C5FD" stroke-width="2"/>
+  <text x="270" y="235" text-anchor="middle" fill="#1E40AF" font-family="-apple-system,sans-serif" font-weight="800" font-size="46">C</text>
+  <text x="270" y="267" text-anchor="middle" fill="#1E40AF" font-family="-apple-system,sans-serif" font-weight="700" font-size="14">Conformidade</text>
+  <text x="270" y="287" text-anchor="middle" fill="#1D4ED8" font-family="-apple-system,sans-serif" font-size="11">Qualidade &middot; Precis&#227;o</text>
+  <text x="270" y="305" text-anchor="middle" fill="#1D4ED8" font-family="-apple-system,sans-serif" font-size="11">An&#225;lise</text>
+  <text x="270" y="333" text-anchor="middle" fill="#1E40AF" font-family="-apple-system,sans-serif" font-size="10">Anal&#237;tico &middot; Preciso &middot; Sistem&#225;tico</text>
+  <line x1="180" y1="8" x2="180" y2="352" stroke="white" stroke-width="4"/>
+  <line x1="8" y1="180" x2="352" y2="180" stroke="white" stroke-width="4"/>
+</svg>
+<div class="dc">Figura 4 &#8212; Quadrante DISC: as quatro dimens&#245;es comportamentais</div>
+</div>
+<p>Para enviar um assessment DISC ao candidato, acesse seu perfil e clique em <strong>Assessments &gt; Enviar DISC</strong>. O candidato receber&#225; um link por e-mail com prazo de 72 horas. O resultado &#233; exibido automaticamente no perfil ap&#243;s a conclus&#227;o, com gr&#225;fico de barras e descri&#231;&#227;o do perfil predominante.</p>
+</div>
+
+<!-- 3.2 Cores -->
+<div class="ss"><div class="ss-t"><div class="sdot"></div>3.2 Assessment de Cores</div>
+<p>O <strong>Assessment de Cores</strong> &#233; um modelo comportamental simplificado que classifica o perfil do candidato em uma de quatro cores, cada uma representando um estilo natural de comportamento e comunica&#231;&#227;o.</p>
+<div class="g4">
+  <div class="card" style="padding:1rem;text-align:center;border-top:4px solid #EF4444">
+    <div style="width:24px;height:24px;border-radius:50%;background:#EF4444;margin:0 auto .5rem"></div>
+    <strong style="font-size:.9rem;color:#991B1B">Vermelho</strong>
+    <p style="font-size:.8rem;margin:.3rem 0 0;color:#6B7280">L&#237;der, direto, orientado a resultados e altamente competitivo</p>
+  </div>
+  <div class="card" style="padding:1rem;text-align:center;border-top:4px solid #F59E0B">
+    <div style="width:24px;height:24px;border-radius:50%;background:#F59E0B;margin:0 auto .5rem"></div>
+    <strong style="font-size:.9rem;color:#92400E">Amarelo</strong>
+    <p style="font-size:.8rem;margin:.3rem 0 0;color:#6B7280">Entusiasmado, social, criativo e motivador de pessoas</p>
+  </div>
+  <div class="card" style="padding:1rem;text-align:center;border-top:4px solid #10B981">
+    <div style="width:24px;height:24px;border-radius:50%;background:#10B981;margin:0 auto .5rem"></div>
+    <strong style="font-size:.9rem;color:#065F46">Verde</strong>
+    <p style="font-size:.8rem;margin:.3rem 0 0;color:#6B7280">Emp&#225;tico, paciente, colaborativo e confi&#225;vel</p>
+  </div>
+  <div class="card" style="padding:1rem;text-align:center;border-top:4px solid #3B82F6">
+    <div style="width:24px;height:24px;border-radius:50%;background:#3B82F6;margin:0 auto .5rem"></div>
+    <strong style="font-size:.9rem;color:#1E40AF">Azul</strong>
+    <p style="font-size:.8rem;margin:.3rem 0 0;color:#6B7280">Anal&#237;tico, preciso, sistem&#225;tico e orientado &#224; qualidade</p>
+  </div>
+</div>
+</div>
+
+<!-- 3.3 PI -->
+<div class="ss"><div class="ss-t"><div class="sdot"></div>3.3 PI Assessment (Predictive Index)</div>
+<p>O <strong>Predictive Index (PI)</strong> &#233; um assessment psicom&#233;trico que mede quatro drives comportamentais fundamentais. O resultado gera um <strong>Padr&#227;o de Refer&#234;ncia</strong> que pode ser comparado com o perfil ideal para a vaga, aumentando a assertividade das contrata&#231;&#245;es.</p>
+<table>
+<tr><th>Drive</th><th>Alta Intensidade</th><th>Baixa Intensidade</th></tr>
+<tr><td><strong>Domin&#226;ncia</strong></td><td>Assertivo, independente, autoconfiante</td><td>Cooperativo, consensual, emp&#225;tico</td></tr>
+<tr><td><strong>Extrovers&#227;o</strong></td><td>Soci&#225;vel, persuasivo, expressivo</td><td>Reservado, anal&#237;tico, reflexivo</td></tr>
+<tr><td><strong>Paci&#234;ncia</strong></td><td>Consistente, leal, previs&#237;vel</td><td>Flex&#237;vel, din&#226;mico, adapt&#225;vel</td></tr>
+<tr><td><strong>Formalidade</strong></td><td>Preciso, sistem&#225;tico, orientado a regras</td><td>Informal, espont&#226;neo, flex&#237;vel</td></tr>
+</table>
+</div>
+
+<!-- 3.4 Comparacao -->
+<div class="ss"><div class="ss-t"><div class="sdot"></div>3.4 Compara&#231;&#227;o de Candidatos</div>
+<p>A funcionalidade de <strong>Compara&#231;&#227;o</strong> permite selecionar at&#233; 4 candidatos e visualizar seus resultados de assessments lado a lado, facilitando a decis&#227;o final. Al&#233;m da compara&#231;&#227;o individual, o sistema exibe uma an&#225;lise de <strong>Fit de Time</strong>, mostrando como o candidato complementaria a equipe atual com base nos perfis comportamentais dos colaboradores j&#225; cadastrados.</p>
+<div class="callout tip"><span class="ck">&#128161;</span><div class="cb"><strong>Dica</strong><p>Use o Fit de Time para montar equipes equilibradas. Um time com perfis DISC variados tende a ser mais inovador e resiliente do que equipes com perfis muito homog&#234;neos.</p></div></div>
+</div>
+</div>
+
+<!-- SEC 4: PAGINA DE CARREIRA -->
+<div class="sec" id="sec4">
+<div class="sh">
+  <div class="sb" style="background:#0891B2">4</div>
+  <div class="st"><h2>P&#225;gina de Carreira</h2><p>Career page p&#250;blica, personaliza&#231;&#227;o e gest&#227;o de candidaturas</p></div>
+</div>
+<p>Cada organiza&#231;&#227;o no TalentForge possui uma <strong>P&#225;gina de Carreira p&#250;blica</strong> &#8212; uma landing page profissional onde candidatos podem conhecer a empresa e se candidatar &#224;s vagas abertas. A URL segue o padr&#227;o <code>/careers/[slug-da-empresa]</code> e n&#227;o requer login para acesso.</p>
+<div class="g2">
+  <div class="card">
+    <h3>Elementos da P&#225;gina</h3>
+    <ul style="font-size:.87rem">
+      <li><strong>Banner personalizado</strong> &#8212; imagem de capa da empresa (recomendado: 1440&#215;400 px)</li>
+      <li><strong>Logo e nome</strong> &#8212; identidade visual da organiza&#231;&#227;o</li>
+      <li><strong>Sobre a empresa</strong> &#8212; texto descritivo com miss&#227;o e valores</li>
+      <li><strong>Links sociais</strong> &#8212; LinkedIn, Instagram, site oficial</li>
+      <li><strong>Vagas abertas</strong> &#8212; listagem filtr&#225;vel por &#225;rea e tipo de contrato</li>
+      <li><strong>Formul&#225;rio de candidatura</strong> &#8212; integrado diretamente ao ATS</li>
+    </ul>
+  </div>
+  <div class="card">
+    <h3>Personaliza&#231;&#227;o</h3>
+    <ul style="font-size:.87rem">
+      <li><strong>Cor prim&#225;ria</strong> &#8212; cor de destaque da p&#225;gina (bot&#245;es, links)</li>
+      <li><strong>Banner</strong> &#8212; upload de imagem de cabe&#231;alho</li>
+      <li><strong>Texto &#8220;Sobre&#8221;</strong> &#8212; editor de texto com formata&#231;&#227;o b&#225;sica</li>
+      <li><strong>Redes sociais</strong> &#8212; links para perfis da empresa</li>
+      <li><strong>Visibilidade</strong> &#8212; p&#250;blica, privada ou restrita por senha</li>
+      <li><strong>SEO</strong> &#8212; meta title e description personaliz&#225;veis</li>
+    </ul>
+  </div>
+</div>
+
+<div class="ss"><div class="ss-t"><div class="sdot"></div>Como Candidatos se Inscrevem</div>
+<ol class="steps">
+  <li><div class="sn">1</div><div class="sbody"><strong>Acesso &#224; p&#225;gina</strong><span>Candidato acessa a URL p&#250;blica da empresa (compartilhada por e-mail ou redes sociais)</span></div></li>
+  <li><div class="sn">2</div><div class="sbody"><strong>Navega pelas vagas</strong><span>Filtra por &#225;rea, tipo de contrato ou localidade; visualiza descri&#231;&#227;o completa de cada vaga</span></div></li>
+  <li><div class="sn">3</div><div class="sbody"><strong>Clica em &#8220;Candidatar-se&#8221;</strong><span>Formul&#225;rio de candidatura abre na mesma p&#225;gina, sem redirecionamentos externos</span></div></li>
+  <li><div class="sn">4</div><div class="sbody"><strong>Preenche os dados</strong><span>Nome, e-mail, telefone e upload de curr&#237;culo (obrigat&#243;rio); LinkedIn e outros campos s&#227;o opcionais</span></div></li>
+  <li><div class="sn">5</div><div class="sbody"><strong>Confirma&#231;&#227;o</strong><span>Candidato recebe e-mail autom&#225;tico com n&#250;mero de protocolo e link para acompanhar status</span></div></li>
+</ol>
+</div>
+
+<div class="ss"><div class="ss-t"><div class="sdot"></div>Rastreamento de Fontes (UTM)</div>
+<p>O TalentForge rastreia automaticamente a origem dos candidatos por meio de par&#226;metros UTM. Quando uma vaga &#233; compartilhada com links gerados pelo sistema, ele registra de qual canal veio cada candidatura, possibilitando an&#225;lise de ROI por canal de aquisi&#231;&#227;o.</p>
+<table>
+<tr><th>Canal</th><th>utm_source</th><th>utm_medium</th></tr>
+<tr><td>LinkedIn</td><td>linkedin</td><td>social</td></tr>
+<tr><td>WhatsApp</td><td>whatsapp</td><td>social</td></tr>
+<tr><td>E-mail Marketing</td><td>email</td><td>email</td></tr>
+<tr><td>Gupy</td><td>gupy</td><td>job_board</td></tr>
+<tr><td>Vagas.com</td><td>vagas_com</td><td>job_board</td></tr>
+<tr><td>Direto (organic)</td><td>direct</td><td>organic</td></tr>
+</table>
+<div class="callout tip"><span class="ck">&#128161;</span><div class="cb"><strong>Dica</strong><p>Use o bot&#227;o "Compartilhar Vaga" e selecione o canal desejado. O sistema gera automaticamente a URL com UTM correto para cada canal selecionado.</p></div></div>
+</div>
+</div>
+
+<!-- SEC 5: PHP -->
+<div class="sec" id="sec5">
+<div class="sh">
+  <div class="sb" style="background:#10B981">5</div>
+  <div class="st"><h2>M&#243;dulo PHP &#8212; People Health Performance</h2><p>TFCI, NR-1 Digital, COPC, Planos de A&#231;&#227;o e IA para sa&#250;de organizacional</p></div>
+</div>
+<p>O m&#243;dulo <strong>People Health Performance (PHP)</strong> &#233; uma solu&#231;&#227;o premium exclusiva do TalentForge, dispon&#237;vel para organiza&#231;&#245;es com o m&#243;dulo ativado pelo administrador. Ele integra tr&#234;s pilares de avalia&#231;&#227;o organizacional em um <strong>Score Integrado</strong> que reflete a sa&#250;de real da equipe.</p>
+
+<div class="card" style="background:linear-gradient(135deg,#141042,#1a1a6e);color:white;margin-bottom:1.5rem">
+  <h3 style="color:white;margin-top:0">Score Integrado PHP</h3>
+  <p style="color:rgba(255,255,255,.8);font-size:.9rem">O score vai de 0 a 100 e &#233; calculado pela m&#233;dia ponderada de tr&#234;s componentes:</p>
+  <div class="g3">
+    <div style="text-align:center;padding:.75rem;background:rgba(255,255,255,.1);border-radius:10px">
+      <div style="font-size:1.6rem;font-weight:800;color:#60A5FA">30%</div>
+      <div style="font-size:.85rem;font-weight:600;color:rgba(255,255,255,.9)">TFCI</div>
+      <div style="font-size:.75rem;color:rgba(255,255,255,.6)">&#205;ndice Comportamental</div>
+    </div>
+    <div style="text-align:center;padding:.75rem;background:rgba(255,255,255,.1);border-radius:10px">
+      <div style="font-size:1.6rem;font-weight:800;color:#34D399">40%</div>
+      <div style="font-size:.85rem;font-weight:600;color:rgba(255,255,255,.9)">NR-1</div>
+      <div style="font-size:.75rem;color:rgba(255,255,255,.6)">Conformidade Legal</div>
+    </div>
+    <div style="text-align:center;padding:.75rem;background:rgba(255,255,255,.1);border-radius:10px">
+      <div style="font-size:1.6rem;font-weight:800;color:#F97316">30%</div>
+      <div style="font-size:.85rem;font-weight:600;color:rgba(255,255,255,.9)">COPC</div>
+      <div style="font-size:.75rem;color:rgba(255,255,255,.6)">Desempenho Operacional</div>
+    </div>
+  </div>
+</div>
+
+<!-- SVG Donut -->
+<div class="dw">
+<svg width="420" height="270" viewBox="0 0 420 270" xmlns="http://www.w3.org/2000/svg">
+  <!-- circumference of r=80 = 502.65 -->
+  <!-- TFCI 30% = 150.8; NR-1 40% = 201.1; COPC 30% = 150.8 -->
+  <circle cx="210" cy="148" r="80" fill="none" stroke="#3B82F6" stroke-width="30" stroke-dasharray="150.8 351.8" stroke-dashoffset="0" transform="rotate(-90 210 148)"/>
+  <circle cx="210" cy="148" r="80" fill="none" stroke="#10B981" stroke-width="30" stroke-dasharray="201.1 301.5" stroke-dashoffset="-150.8" transform="rotate(-90 210 148)"/>
+  <circle cx="210" cy="148" r="80" fill="none" stroke="#F97316" stroke-width="30" stroke-dasharray="150.7 352" stroke-dashoffset="-351.9" transform="rotate(-90 210 148)"/>
+  <circle cx="210" cy="148" r="54" fill="white" stroke="#F3F4F6" stroke-width="1"/>
+  <text x="210" y="141" text-anchor="middle" fill="#141042" font-family="-apple-system,sans-serif" font-weight="800" font-size="26">78</text>
+  <text x="210" y="158" text-anchor="middle" fill="#6B7280" font-family="-apple-system,sans-serif" font-size="11">Score PHP</text>
+  <!-- labels on arcs -->
+  <text x="148" y="80" text-anchor="middle" fill="#1E40AF" font-family="-apple-system,sans-serif" font-weight="700" font-size="11">TFCI 30%</text>
+  <text x="292" y="80" text-anchor="middle" fill="#059669" font-family="-apple-system,sans-serif" font-weight="700" font-size="11">NR-1 40%</text>
+  <text x="210" y="248" text-anchor="middle" fill="#C2410C" font-family="-apple-system,sans-serif" font-weight="700" font-size="11">COPC 30%</text>
+  <!-- interpretation bar -->
+  <rect x="20" y="12" width="110" height="28" rx="7" fill="#DCFCE7"/>
+  <text x="75" y="30" text-anchor="middle" fill="#166534" font-family="-apple-system,sans-serif" font-weight="600" font-size="11">&#9679; &gt;80 Saud&#225;vel</text>
+  <rect x="145" y="12" width="110" height="28" rx="7" fill="#FEF9C3"/>
+  <text x="200" y="30" text-anchor="middle" fill="#713F12" font-family="-apple-system,sans-serif" font-weight="600" font-size="11">&#9679; 60&#8211;80 Aten&#231;&#227;o</text>
+  <rect x="270" y="12" width="110" height="28" rx="7" fill="#FEE2E2"/>
+  <text x="325" y="30" text-anchor="middle" fill="#991B1B" font-family="-apple-system,sans-serif" font-weight="600" font-size="11">&#9679; &lt;60 Cr&#237;tico</text>
+</svg>
+<div class="dc">Figura 5 &#8212; Score PHP: composi&#231;&#227;o percentual e interpreta&#231;&#227;o de n&#237;veis</div>
+</div>
+
+<!-- 5.2 TFCI -->
+<div class="ss"><div class="ss-t"><div class="sdot"></div>5.2 TFCI &#8212; TalentForge Comportamental Index</div>
+<p>O <strong>TFCI</strong> mede o n&#237;vel de maturidade comportamental da equipe por meio de ciclos de avalia&#231;&#227;o 360 graus. Cada colaborador &#233; avaliado por pares, l&#237;der e subordinados em compet&#234;ncias como comunica&#231;&#227;o, colabora&#231;&#227;o, autonomia e intelig&#234;ncia emocional.</p>
+<ol class="steps">
+  <li><div class="sn">1</div><div class="sbody"><strong>Cria&#231;&#227;o do Ciclo</strong><span>RH cria um novo ciclo com nome, per&#237;odo e colaboradores participantes</span></div></li>
+  <li><div class="sn">2</div><div class="sbody"><strong>Sele&#231;&#227;o de Avaliadores</strong><span>Cada participante indica seus pares para avalia&#231;&#227;o (validados pelo gestor)</span></div></li>
+  <li><div class="sn">3</div><div class="sbody"><strong>Aplica&#231;&#227;o</strong><span>Avaliadores recebem link por e-mail e respondem o question&#225;rio anonimamente</span></div></li>
+  <li><div class="sn">4</div><div class="sbody"><strong>Consolida&#231;&#227;o</strong><span>Sistema calcula score m&#233;dio por compet&#234;ncia e gera relat&#243;rio autom&#225;tico</span></div></li>
+  <li><div class="sn">5</div><div class="sbody"><strong>Devolutiva</strong><span>Gestor apresenta resultados ao colaborador com base no relat&#243;rio PDF gerado</span></div></li>
+</ol>
+</div>
+
+<!-- 5.3 NR-1 -->
+<div class="ss"><div class="ss-t"><div class="sdot"></div>5.3 NR-1 Digital (Compliance)</div>
+<p>A <strong>NR-1</strong> (Norma Regulamentadora n&#176; 1 do MTE, atualizada 2025) exige que empresas identifiquem e gerenciem riscos psicossociais no ambiente de trabalho. O TalentForge digitaliza e automatiza todo esse processo.</p>
+<div class="g2">
+  <div class="card">
+    <h4>N&#237;veis de Risco NR-1</h4>
+    <div style="display:flex;flex-direction:column;gap:.5rem;margin-top:.5rem">
+      <div style="display:flex;align-items:center;gap:.6rem"><span style="width:14px;height:14px;border-radius:50%;background:#EF4444;flex-shrink:0"></span><span style="font-size:.87rem"><strong>Cr&#237;tico:</strong> A&#231;&#227;o imediata necess&#225;ria (PPRA obrigat&#243;rio)</span></div>
+      <div style="display:flex;align-items:center;gap:.6rem"><span style="width:14px;height:14px;border-radius:50%;background:#F97316;flex-shrink:0"></span><span style="font-size:.87rem"><strong>Alto:</strong> Plano de a&#231;&#227;o em 30 dias</span></div>
+      <div style="display:flex;align-items:center;gap:.6rem"><span style="width:14px;height:14px;border-radius:50%;background:#EAB308;flex-shrink:0"></span><span style="font-size:.87rem"><strong>M&#233;dio:</strong> Monitoramento trimestral</span></div>
+      <div style="display:flex;align-items:center;gap:.6rem"><span style="width:14px;height:14px;border-radius:50%;background:#10B981;flex-shrink:0"></span><span style="font-size:.87rem"><strong>Baixo:</strong> Revis&#227;o anual</span></div>
+    </div>
+  </div>
+  <div class="card">
+    <h4>Fluxo de Aplica&#231;&#227;o</h4>
+    <ol class="steps" style="margin:0">
+      <li><div class="sn">1</div><div class="sbody"><strong>Envio do link</strong><span>RH envia link de autoavalia&#231;&#227;o para colaboradores por e-mail</span></div></li>
+      <li><div class="sn">2</div><div class="sbody"><strong>Preenchimento</strong><span>Colaborador responde question&#225;rio sobre riscos psicossociais (an&#244;nimo)</span></div></li>
+      <li><div class="sn">3</div><div class="sbody"><strong>An&#225;lise</strong><span>Sistema classifica risco por &#225;rea e colaborador automaticamente</span></div></li>
+      <li><div class="sn">4</div><div class="sbody"><strong>Relat&#243;rio PDF</strong><span>Documento de conformidade gerado automaticamente para auditoria do MTE</span></div></li>
+    </ol>
+  </div>
+</div>
+<div class="callout warn"><span class="ck">&#9888;&#65039;</span><div class="cb"><strong>Aten&#231;&#227;o Legal</strong><p>A NR-1 atualizada exige mapeamento de riscos psicossociais anualmente. O relat&#243;rio PDF gerado pelo TalentForge serve como evid&#234;ncia de conformidade em fiscaliza&#231;&#245;es do MTE.</p></div></div>
+</div>
+
+<!-- 5.4 COPC -->
+<div class="ss"><div class="ss-t"><div class="sdot"></div>5.4 COPC &#8212; Customer Operations Performance Center</div>
+<p>O pilar <strong>COPC</strong> avalia o desempenho operacional das equipes de atendimento ao cliente com base nos padr&#245;es internacionais do Customer Operations Performance Center. Os dados s&#227;o inseridos periodicamente pelo gestor e consolidados em um dashboard interativo.</p>
+<table>
+<tr><th>Dimens&#227;o</th><th>Peso</th><th>O que mede</th></tr>
+<tr><td>Qualidade</td><td><strong>35%</strong></td><td>Ader&#234;ncia a processos, erros, retrabalho e satisfa&#231;&#227;o do cliente</td></tr>
+<tr><td>Efici&#234;ncia</td><td><strong>20%</strong></td><td>Produtividade, tempo de atendimento e utiliza&#231;&#227;o da capacidade</td></tr>
+<tr><td>Efetividade</td><td><strong>20%</strong></td><td>Resolu&#231;&#227;o no primeiro contato (FCR) e taxa de reincid&#234;ncia</td></tr>
+<tr><td>Experi&#234;ncia do Cliente</td><td><strong>15%</strong></td><td>NPS, CSAT e outros indicadores de satisfa&#231;&#227;o</td></tr>
+<tr><td>Pessoas</td><td><strong>10%</strong></td><td>Absenteismo, turnover e engajamento da equipe</td></tr>
+</table>
+</div>
+
+<!-- 5.5 Planos de Acao -->
+<div class="ss"><div class="ss-t"><div class="sdot"></div>5.5 Planos de A&#231;&#227;o</div>
+<p>Com base nos resultados do TFCI, NR-1 e COPC, o TalentForge gera automaticamente <strong>Planos de A&#231;&#227;o</strong> com recomenda&#231;&#245;es espec&#237;ficas para cada &#225;rea de melhoria identificada. Os planos podem ser gerados por IA ou criados manualmente pelo gestor.</p>
+<ul>
+  <li>Cada plano cont&#233;m: descri&#231;&#227;o do problema, a&#231;&#245;es recomendadas, respons&#225;vel, prazo e indicador de sucesso</li>
+  <li>A&#231;&#245;es podem ser atribu&#237;das a membros da equipe com notifica&#231;&#227;o autom&#225;tica por e-mail</li>
+  <li>Progresso monitorado com status: <span class="badge bgr">Pendente</span> <span class="badge bb">Em Andamento</span> <span class="badge bg">Conclu&#237;do</span> <span class="badge br">Cancelado</span></li>
+  <li>Dashboard de acompanhamento com percentual de conclus&#227;o e prazo estimado de entrega</li>
+</ul>
+</div>
+
+<!-- 5.6 AI -->
+<div class="ss"><div class="ss-t"><div class="sdot"></div>5.6 AI Insights e Chat</div>
+<p>O m&#243;dulo PHP inclui um <strong>Assistente de IA</strong> que analisa os dados coletados e gera insights acion&#225;veis para gestores. A IA utiliza hist&#243;ricos de TFCI, NR-1, COPC e dados de recrutamento para identificar padr&#245;es e prever riscos.</p>
+<div class="g2">
+  <div class="card">
+    <h4>Insights Autom&#225;ticos</h4>
+    <ul style="font-size:.87rem">
+      <li>Predi&#231;&#227;o de risco de turnover por colaborador</li>
+      <li>Identifica&#231;&#227;o de times com baixo engajamento</li>
+      <li>Correla&#231;&#227;o entre perfil DISC e desempenho COPC</li>
+      <li>Alertas de deteriora&#231;&#227;o de score em tempo real</li>
+      <li>Benchmark com m&#233;dias do setor por porte de empresa</li>
+    </ul>
+  </div>
+  <div class="card">
+    <h4>Chat com IA</h4>
+    <ul style="font-size:.87rem">
+      <li>Interface de chat para consultas em linguagem natural</li>
+      <li>Exemplo: &#8220;Quais colaboradores t&#234;m maior risco de sa&#237;da?&#8221;</li>
+      <li>Exemplo: &#8220;Como est&#225; o score NR-1 da equipe de suporte?&#8221;</li>
+      <li>Exporta&#231;&#227;o das respostas em PDF ou envio por e-mail</li>
+      <li>Hist&#243;rico de conversas salvo por organiza&#231;&#227;o</li>
+    </ul>
+  </div>
+</div>
+</div>
+</div>
+
+<!-- SEC 6: ADMIN -->
+<div class="sec" id="sec6">
+<div class="sh">
+  <div class="sb" style="background:#E11D48">6</div>
+  <div class="st"><h2>Painel Administrativo</h2><p>Gest&#227;o de usu&#225;rios, organiza&#231;&#245;es, m&#243;dulos e seguran&#231;a</p></div>
+</div>
+<p>O <strong>Painel Administrativo</strong> &#233; acess&#237;vel apenas por usu&#225;rios com perfil <strong>admin</strong> no TalentForge. Ele oferece visibilidade e controle total sobre todas as organiza&#231;&#245;es, usu&#225;rios e configura&#231;&#245;es globais da plataforma. O acesso &#233; feito pelo caminho <code>/admin</code> ap&#243;s login com conta de administrador.</p>
+
+<div class="g2">
+  <div class="card">
+    <div class="ch">
+      <div style="width:10px;height:10px;border-radius:50%;background:#E11D48;flex-shrink:0"></div>
+      <h3 style="margin:0">Gest&#227;o de Usu&#225;rios</h3>
+    </div>
+    <ul style="font-size:.87rem">
+      <li>Listar todos os usu&#225;rios da plataforma com filtros</li>
+      <li>Pesquisar por e-mail, nome ou organiza&#231;&#227;o</li>
+      <li>Alterar perfil: <span class="badge bb">recruiter</span> <span class="badge br">admin</span> <span class="badge bgr">viewer</span></li>
+      <li>Desativar ou reativar contas de usu&#225;rio</li>
+      <li>Redefinir senha via e-mail de recupera&#231;&#227;o</li>
+      <li>Visualizar log de acesso e &#250;ltimo login</li>
+    </ul>
+  </div>
+  <div class="card">
+    <div class="ch">
+      <div style="width:10px;height:10px;border-radius:50%;background:#10B981;flex-shrink:0"></div>
+      <h3 style="margin:0">Gest&#227;o de Organiza&#231;&#245;es</h3>
+    </div>
+    <ul style="font-size:.87rem">
+      <li>Criar nova organiza&#231;&#227;o (empresa cliente)</li>
+      <li>Editar nome, logo e configura&#231;&#245;es da organiza&#231;&#227;o</li>
+      <li>Ativar ou desativar o m&#243;dulo PHP por organiza&#231;&#227;o</li>
+      <li>Definir limites de usu&#225;rios e vagas ativas</li>
+      <li>Visualizar uso de storage (arquivos e avatares)</li>
+      <li>Exportar dados da organiza&#231;&#227;o em JSON ou CSV</li>
+    </ul>
+  </div>
+</div>
+
+<!-- SVG Admin Hierarchy -->
+<div class="dw">
+<svg width="620" height="210" viewBox="0 0 620 210" xmlns="http://www.w3.org/2000/svg">
+  <defs><marker id="ar3" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#94A3B8"/></marker></defs>
+  <rect x="230" y="10" width="160" height="52" rx="10" fill="#E11D48" opacity=".9"/>
+  <text x="310" y="32" text-anchor="middle" fill="white" font-family="-apple-system,sans-serif" font-weight="700" font-size="13">Administrador</text>
+  <text x="310" y="50" text-anchor="middle" fill="rgba(255,255,255,.8)" font-family="-apple-system,sans-serif" font-size="10">Acesso total &#224; plataforma</text>
+  <line x1="280" y1="62" x2="140" y2="102" stroke="#94A3B8" stroke-width="1.5"/>
+  <line x1="310" y1="62" x2="310" y2="102" stroke="#94A3B8" stroke-width="1.5"/>
+  <line x1="340" y1="62" x2="480" y2="102" stroke="#94A3B8" stroke-width="1.5"/>
+  <rect x="60" y="104" width="158" height="52" rx="10" fill="#141042" opacity=".85"/>
+  <text x="139" y="126" text-anchor="middle" fill="white" font-family="-apple-system,sans-serif" font-weight="700" font-size="12">Organiza&#231;&#245;es</text>
+  <text x="139" y="144" text-anchor="middle" fill="rgba(255,255,255,.7)" font-family="-apple-system,sans-serif" font-size="10">Cria&#231;&#227;o &#183; M&#243;dulos &#183; Limites</text>
+  <rect x="231" y="104" width="158" height="52" rx="10" fill="#3B82F6" opacity=".9"/>
+  <text x="310" y="126" text-anchor="middle" fill="white" font-family="-apple-system,sans-serif" font-weight="700" font-size="12">Usu&#225;rios</text>
+  <text x="310" y="144" text-anchor="middle" fill="rgba(255,255,255,.7)" font-family="-apple-system,sans-serif" font-size="10">Perfis &#183; Permiss&#245;es &#183; Acesso</text>
+  <rect x="402" y="104" width="158" height="52" rx="10" fill="#7C3AED" opacity=".9"/>
+  <text x="481" y="126" text-anchor="middle" fill="white" font-family="-apple-system,sans-serif" font-weight="700" font-size="12">Seguran&#231;a</text>
+  <text x="481" y="144" text-anchor="middle" fill="rgba(255,255,255,.7)" font-family="-apple-system,sans-serif" font-size="10">API Keys &#183; Auditoria &#183; Logs</text>
+  <line x1="139" y1="156" x2="139" y2="178" stroke="#94A3B8" stroke-width="1.5"/>
+  <line x1="310" y1="156" x2="310" y2="178" stroke="#94A3B8" stroke-width="1.5"/>
+  <line x1="481" y1="156" x2="481" y2="178" stroke="#94A3B8" stroke-width="1.5"/>
+  <rect x="60" y="180" width="158" height="22" rx="6" fill="#F3F4F6"/>
+  <text x="139" y="195" text-anchor="middle" fill="#374151" font-family="-apple-system,sans-serif" font-size="10">ATS + PHP ativado por org</text>
+  <rect x="231" y="180" width="158" height="22" rx="6" fill="#F3F4F6"/>
+  <text x="310" y="195" text-anchor="middle" fill="#374151" font-family="-apple-system,sans-serif" font-size="10">Recruiter &#183; Admin &#183; Viewer</text>
+  <rect x="402" y="180" width="158" height="22" rx="6" fill="#F3F4F6"/>
+  <text x="481" y="195" text-anchor="middle" fill="#374151" font-family="-apple-system,sans-serif" font-size="10">OIDC &#183; JWT &#183; RLS Postgres</text>
+</svg>
+<div class="dc">Figura 6 &#8212; Hierarquia de acesso no Painel Administrativo TalentForge</div>
+</div>
+
+<div class="g2">
+  <div class="card">
+    <h3>Chaves de API</h3>
+    <p style="font-size:.87rem">O admin pode gerar e revogar <strong>API Keys</strong> para integra&#231;&#227;o com sistemas externos (HRIS, ERPs, plataformas de emprego). Cada chave tem escopo definido, data de expira&#231;&#227;o e log de uso.</p>
+    <div class="callout warn" style="margin:.75rem 0 0"><span class="ck">&#9888;&#65039;</span><div class="cb"><strong>Seguran&#231;a</strong><p>Nunca compartilhe API Keys em reposit&#243;rios p&#250;blicos. Revogue imediatamente chaves comprometidas acessando <code>/admin/api-keys</code>.</p></div></div>
+  </div>
+  <div class="card">
+    <h3>Logs de Auditoria</h3>
+    <p style="font-size:.87rem">Todos os eventos cr&#237;ticos s&#227;o registrados automaticamente: logins, altera&#231;&#245;es de permiss&#227;o, exclus&#245;es de dados, gera&#231;&#245;es de relat&#243;rio e acessos administrativos. Os logs s&#227;o imut&#225;veis e ficam dispon&#237;veis por 90 dias.</p>
+    <ul style="font-size:.84rem;margin-top:.5rem">
+      <li>Filtro por tipo de evento, usu&#225;rio e data</li>
+      <li>Exporta&#231;&#227;o em CSV para auditoria externa</li>
+      <li>Alertas de seguran&#231;a por e-mail em tempo real</li>
+    </ul>
+  </div>
+</div>
+
+<div class="ss"><div class="ss-t"><div class="sdot"></div>Ativa&#231;&#227;o do M&#243;dulo PHP</div>
+<p>O m&#243;dulo PHP &#233; ativado individualmente por organiza&#231;&#227;o. Para ativar, acesse <strong>Admin &gt; Organiza&#231;&#245;es &gt; [Nome da Org] &gt; M&#243;dulos</strong> e clique no toggle ao lado de "People Health Performance". Ap&#243;s a ativa&#231;&#227;o, o menu PHP aparece automaticamente para todos os recrutadores daquela organiza&#231;&#227;o.</p>
+<div class="callout info"><span class="ck">&#8505;&#65039;</span><div class="cb"><strong>Informa&#231;&#227;o</strong><p>O m&#243;dulo PHP &#233; exclusivo da <strong>Fartech</strong> no plano atual. Apenas organiza&#231;&#245;es com contrato PHP ativo devem ter o m&#243;dulo habilitado. Entre em contato com o suporte para solicitar ativa&#231;&#227;o.</p></div></div>
+</div>
+</div>
+
+<!-- SEC 7: PORTAL DO CANDIDATO -->
+<div class="sec" id="sec7">
+<div class="sh">
+  <div class="sb" style="background:#D97706">7</div>
+  <div class="st"><h2>Portal do Candidato</h2><p>Cadastro, perfil completo, candidaturas, assessments e foto de perfil</p></div>
+</div>
+<p>O <strong>Portal do Candidato</strong> &#233; uma &#225;rea exclusiva acess&#237;vel pelos pr&#243;prios candidatos ap&#243;s o cadastro. Diferente do painel do recrutador, o portal &#233; focado na experi&#234;ncia do profissional em busca de emprego: ele gerencia seu perfil, acompanha candidaturas ativas e completa assessments comportamentais.</p>
+
+<!-- 7.1 Cadastro -->
+<div class="ss"><div class="ss-t"><div class="sdot"></div>7.1 Cadastro e Onboarding</div>
+<ol class="steps">
+  <li><div class="sn">1</div><div class="sbody"><strong>Cadastro inicial</strong><span>E-mail, nome completo e senha &#8212; ou via link de convite enviado pelo recrutador</span></div></li>
+  <li><div class="sn">2</div><div class="sbody"><strong>Confirma&#231;&#227;o de e-mail</strong><span>Candidato clica no link enviado para verificar o endere&#231;o e ativar a conta</span></div></li>
+  <li><div class="sn">3</div><div class="sbody"><strong>Completar perfil</strong><span>Informa&#231;&#245;es pessoais, forma&#231;&#227;o acad&#234;mica e experi&#234;ncias profissionais</span></div></li>
+  <li><div class="sn">4</div><div class="sbody"><strong>Upload de curr&#237;culo</strong><span>PDF ou DOC (m&#225;x. 10 MB) armazenado com seguran&#231;a no Supabase Storage</span></div></li>
+  <li><div class="sn">5</div><div class="sbody"><strong>Foto de perfil</strong><span>Upload com ferramenta de recorte e centraliza&#231;&#227;o do avatar (modal integrado)</span></div></li>
+</ol>
+<div class="callout tip"><span class="ck">&#128161;</span><div class="cb"><strong>Dica</strong><p>Um perfil completo aumenta significativamente as chances de ser selecionado. Candidatos com foto, curr&#237;culo e LinkedIn preenchidos recebem prioridade nos filtros dos recrutadores.</p></div></div>
+</div>
+
+<!-- 7.2 Perfil -->
+<div class="ss"><div class="ss-t"><div class="sdot"></div>7.2 Perfil do Candidato</div>
+<div class="g2">
+  <div class="card">
+    <h4>Dados Pessoais</h4>
+    <ul style="font-size:.87rem">
+      <li>Nome completo, e-mail, telefone e localiza&#231;&#227;o</li>
+      <li>LinkedIn e portf&#243;lio / site pessoal</li>
+      <li>Foto de perfil com editor de recorte circular</li>
+      <li>Objetivo profissional e resumo (at&#233; 500 caracteres)</li>
+      <li>Pretens&#227;o salarial e disponibilidade de in&#237;cio</li>
+    </ul>
+  </div>
+  <div class="card">
+    <h4>Forma&#231;&#227;o e Experi&#234;ncia</h4>
+    <ul style="font-size:.87rem">
+      <li>Forma&#231;&#227;o acad&#234;mica (gradua&#231;&#227;o, p&#243;s, cursos)</li>
+      <li>Experi&#234;ncias profissionais com per&#237;odo e descri&#231;&#227;o</li>
+      <li>Idiomas e n&#237;vel de profici&#234;ncia (B&#225;sico a Nativo)</li>
+      <li>Habilidades t&#233;cnicas e comportamentais (tags livres)</li>
+      <li>Certifica&#231;&#245;es e cursos complementares</li>
+    </ul>
+  </div>
+</div>
+
+<!-- Ilustracao perfil -->
+<div class="dw">
+<svg width="560" height="180" viewBox="0 0 560 180" xmlns="http://www.w3.org/2000/svg">
+  <!-- card container -->
+  <rect x="10" y="10" width="540" height="160" rx="14" fill="white" stroke="#E5E5DC" stroke-width="1.5"/>
+  <!-- banner -->
+  <rect x="10" y="10" width="540" height="52" rx="14" fill="linear-gradient(90deg,#141042,#3B82F6)"/>
+  <defs><linearGradient id="bn" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#141042"/><stop offset="100%" stop-color="#3B82F6"/></linearGradient></defs>
+  <rect x="10" y="10" width="540" height="52" rx="14" fill="url(#bn)" clip-path="inset(0 0 0 0 round 14px 14px 0 0)"/>
+  <!-- avatar -->
+  <circle cx="70" cy="75" r="32" fill="white" stroke="white" stroke-width="3"/>
+  <circle cx="70" cy="75" r="28" fill="#DBEAFE"/>
+  <text x="70" y="83" text-anchor="middle" fill="#1E40AF" font-family="-apple-system,sans-serif" font-weight="800" font-size="22">JS</text>
+  <!-- name block -->
+  <text x="116" y="80" fill="#141042" font-family="-apple-system,sans-serif" font-weight="700" font-size="15">Jo&#227;o Silva</text>
+  <text x="116" y="97" fill="#6B7280" font-family="-apple-system,sans-serif" font-size="11">Desenvolvedor Full Stack &#183; S&#227;o Paulo, SP</text>
+  <text x="116" y="113" fill="#6B7280" font-family="-apple-system,sans-serif" font-size="10">linkedin.com/in/joaosilva</text>
+  <!-- completion bar -->
+  <text x="390" y="76" fill="#6B7280" font-family="-apple-system,sans-serif" font-size="10">Perfil completo</text>
+  <rect x="390" y="82" width="140" height="8" rx="4" fill="#F3F4F6"/>
+  <rect x="390" y="82" width="112" height="8" rx="4" fill="#10B981"/>
+  <text x="540" y="91" text-anchor="end" fill="#065F46" font-family="-apple-system,sans-serif" font-size="10" font-weight="600">80%</text>
+  <!-- skills -->
+  <rect x="20" y="132" width="60" height="20" rx="10" fill="#DBEAFE"/>
+  <text x="50" y="146" text-anchor="middle" fill="#1E40AF" font-family="-apple-system,sans-serif" font-size="9" font-weight="600">React</text>
+  <rect x="86" y="132" width="70" height="20" rx="10" fill="#DBEAFE"/>
+  <text x="121" y="146" text-anchor="middle" fill="#1E40AF" font-family="-apple-system,sans-serif" font-size="9" font-weight="600">TypeScript</text>
+  <rect x="162" y="132" width="65" height="20" rx="10" fill="#DBEAFE"/>
+  <text x="194" y="146" text-anchor="middle" fill="#1E40AF" font-family="-apple-system,sans-serif" font-size="9" font-weight="600">Node.js</text>
+  <rect x="233" y="132" width="65" height="20" rx="10" fill="#EDE9FE"/>
+  <text x="265" y="146" text-anchor="middle" fill="#5B21B6" font-family="-apple-system,sans-serif" font-size="9" font-weight="600">Postgres</text>
+  <rect x="304" y="132" width="55" height="20" rx="10" fill="#D1FAE5"/>
+  <text x="331" y="146" text-anchor="middle" fill="#065F46" font-family="-apple-system,sans-serif" font-size="9" font-weight="600">Docker</text>
+</svg>
+<div class="dc">Figura 7 &#8212; Exemplo de perfil de candidato no Portal TalentForge</div>
+</div>
+</div>
+
+<!-- 7.3 Candidaturas -->
+<div class="ss"><div class="ss-t"><div class="sdot"></div>7.3 Candidaturas e Busca de Vagas</div>
+<p>No portal, o candidato pode navegar pelas vagas abertas das empresas que utilizam o TalentForge, salvar vagas de interesse e acompanhar o status de cada candidatura ativa em tempo real.</p>
+<table>
+<tr><th>Status da Candidatura</th><th>Significado para o Candidato</th></tr>
+<tr><td><span class="badge bgr">Em Triagem</span></td><td>Candidatura recebida, aguardando an&#225;lise inicial do recrutador</td></tr>
+<tr><td><span class="badge bb">Em Entrevista</span></td><td>Aprovado na triagem &#8212; processo de entrevistas em andamento</td></tr>
+<tr><td><span class="badge bo">Avalia&#231;&#227;o Final</span></td><td>Candidatura em fase de decis&#227;o final pelo cliente ou gestor</td></tr>
+<tr><td><span class="badge bg">Aprovado</span></td><td>Candidato selecionado &#8212; proposta em elabora&#231;&#227;o</td></tr>
+<tr><td><span class="badge br">N&#227;o Selecionado</span></td><td>Candidatura encerrada neste processo seletivo</td></tr>
+</table>
+</div>
+
+<!-- 7.4 Assessments -->
+<div class="ss"><div class="ss-t"><div class="sdot"></div>7.4 Completar Assessments</div>
+<p>Quando um recrutador envia um assessment (DISC, Cores ou PI), o candidato recebe notifica&#231;&#227;o por e-mail com link direto. O assessment pode ser completado diretamente no portal, sem instalar nada. Resultados ficam vis&#237;veis tanto para o candidato quanto para o recrutador ap&#243;s a conclus&#227;o.</p>
+<div class="callout tip"><span class="ck">&#128161;</span><div class="cb"><strong>Dica para o Candidato</strong><p>Responda os assessments em ambiente tranquilo e sem pressa. N&#227;o existe resposta certa ou errada &#8212; o objetivo &#233; mapear seu estilo natural de comportamento, n&#227;o avaliar conhecimento.</p></div></div>
+</div>
+</div>
+
+<!-- SEC 8: RELATORIOS -->
+<div class="sec" id="sec8">
+<div class="sh">
+  <div class="sb" style="background:#7C3AED">8</div>
+  <div class="st"><h2>Relat&#243;rios e Exporta&#231;&#245;es</h2><p>Analytics avan&#231;ado, relat&#243;rios PDF, exporta&#231;&#227;o CSV e KPIs</p></div>
+</div>
+<p>O TalentForge oferece um conjunto robusto de <strong>relat&#243;rios e dashboards anal&#237;ticos</strong> para apoiar decis&#245;es estrat&#233;gicas de RH. Os dados s&#227;o apresentados em visualiza&#231;&#245;es interativas e podem ser exportados em PDF ou CSV para compartilhamento externo.</p>
+
+<!-- 8.1 Views -->
+<div class="ss"><div class="ss-t"><div class="sdot"></div>8.1 Views Anal&#237;ticas Dispon&#237;veis</div>
+<table>
+<tr><th>View</th><th>O que mostra</th><th>Acesso</th></tr>
+<tr><td><code>v_recruitment_funnel</code></td><td>Funil completo por vaga: candidatos em cada est&#225;gio com taxas de convers&#227;o</td><td>Recrutador, Admin</td></tr>
+<tr><td><code>v_recruiter_performance</code></td><td>Produ&#231;&#227;o por recrutador: vagas criadas, candidatos processados, tempo m&#233;dio de fechamento</td><td>Admin</td></tr>
+<tr><td><code>v_candidate_source</code></td><td>Origem das candidaturas por canal (carreira, Gupy, LinkedIn etc.)</td><td>Recrutador, Admin</td></tr>
+<tr><td><code>v_php_org_score</code></td><td>Score PHP consolidado por organiza&#231;&#227;o ao longo do tempo</td><td>Admin, PHP</td></tr>
+<tr><td><code>v_nr1_compliance</code></td><td>Status de conformidade NR-1 por colaborador e &#225;rea</td><td>Admin, PHP</td></tr>
+<tr><td><code>v_copc_metrics</code></td><td>M&#233;tricas COPC por dimens&#227;o e per&#237;odo</td><td>Admin, PHP</td></tr>
+</table>
+</div>
+
+<!-- 8.2 Funil -->
+<div class="ss"><div class="ss-t"><div class="sdot"></div>8.2 Funil de Recrutamento</div>
+<p>O <strong>Funil de Recrutamento</strong> &#233; a visualiza&#231;&#227;o mais importante para acompanhar a efici&#234;ncia do processo seletivo. Ele mostra quantos candidatos est&#227;o em cada est&#225;gio e qual a taxa de convers&#227;o entre etapas.</p>
+<div class="dw">
+<svg width="520" height="300" viewBox="0 0 520 300" xmlns="http://www.w3.org/2000/svg">
+  <!-- Inscricoes -->
+  <polygon points="55,8 465,8 443,55 77,55" fill="#3B82F6" opacity=".9"/>
+  <text x="260" y="36" text-anchor="middle" fill="white" font-family="-apple-system,sans-serif" font-weight="700" font-size="13">Inscri&#231;&#245;es</text>
+  <text x="478" y="38" fill="#374151" font-family="-apple-system,sans-serif" font-size="12" font-weight="600">248</text>
+  <text x="28" y="38" text-anchor="middle" fill="#6B7280" font-family="-apple-system,sans-serif" font-size="10">100%</text>
+  <!-- Triagem -->
+  <polygon points="77,59 443,59 418,106 102,106" fill="#6366F1" opacity=".9"/>
+  <text x="260" y="87" text-anchor="middle" fill="white" font-family="-apple-system,sans-serif" font-weight="700" font-size="13">Triagem</text>
+  <text x="478" y="87" fill="#374151" font-family="-apple-system,sans-serif" font-size="12" font-weight="600">148</text>
+  <text x="28" y="87" text-anchor="middle" fill="#6B7280" font-family="-apple-system,sans-serif" font-size="10">60%</text>
+  <!-- Entrevista -->
+  <polygon points="102,110 418,110 392,157 128,157" fill="#8B5CF6" opacity=".9"/>
+  <text x="260" y="138" text-anchor="middle" fill="white" font-family="-apple-system,sans-serif" font-weight="700" font-size="13">Entrevista</text>
+  <text x="478" y="138" fill="#374151" font-family="-apple-system,sans-serif" font-size="12" font-weight="600">72</text>
+  <text x="28" y="138" text-anchor="middle" fill="#6B7280" font-family="-apple-system,sans-serif" font-size="10">29%</text>
+  <!-- Cliente -->
+  <polygon points="128,161 392,161 362,208 158,208" fill="#A78BFA" opacity=".9"/>
+  <text x="260" y="189" text-anchor="middle" fill="white" font-family="-apple-system,sans-serif" font-weight="700" font-size="13">Cliente / Final</text>
+  <text x="478" y="189" fill="#374151" font-family="-apple-system,sans-serif" font-size="12" font-weight="600">28</text>
+  <text x="28" y="189" text-anchor="middle" fill="#6B7280" font-family="-apple-system,sans-serif" font-size="10">11%</text>
+  <!-- Oferta -->
+  <polygon points="158,212 362,212 334,254 186,254" fill="#C4B5FD" opacity=".9"/>
+  <text x="260" y="237" text-anchor="middle" fill="#4C1D95" font-family="-apple-system,sans-serif" font-weight="700" font-size="12">Oferta</text>
+  <text x="478" y="237" fill="#374151" font-family="-apple-system,sans-serif" font-size="12" font-weight="600">12</text>
+  <text x="28" y="237" text-anchor="middle" fill="#6B7280" font-family="-apple-system,sans-serif" font-size="10">5%</text>
+  <!-- Contratado -->
+  <polygon points="186,258 334,258 316,290 204,290" fill="#10B981" opacity=".95"/>
+  <text x="260" y="278" text-anchor="middle" fill="white" font-family="-apple-system,sans-serif" font-weight="700" font-size="12">Contratado</text>
+  <text x="478" y="278" fill="#374151" font-family="-apple-system,sans-serif" font-size="12" font-weight="600">7</text>
+  <text x="28" y="278" text-anchor="middle" fill="#6B7280" font-family="-apple-system,sans-serif" font-size="10">3%</text>
+</svg>
+<div class="dc">Figura 8 &#8212; Funil de Recrutamento: visualiza&#231;&#227;o do pipeline com taxas de convers&#227;o por est&#225;gio</div>
+</div>
+</div>
+
+<!-- 8.3 Exportacoes -->
+<div class="ss"><div class="ss-t"><div class="sdot"></div>8.3 Exporta&#231;&#245;es</div>
+<div class="g2">
+  <div class="card">
+    <h4>Exporta&#231;&#227;o PDF</h4>
+    <ul style="font-size:.87rem">
+      <li><strong>Relat&#243;rio NR-1 Compliance</strong> &#8212; documento oficial com status por colaborador, pronto para auditoria do MTE</li>
+      <li><strong>Relat&#243;rio Completo do Candidato</strong> &#8212; perfil + assessments + hist&#243;rico de candidaturas</li>
+      <li><strong>Relat&#243;rio de Vaga</strong> &#8212; pipeline completo com todos os candidatos e estagios</li>
+      <li><strong>Score PHP Executivo</strong> &#8212; resumo do score integrado formatado para apresenta&#231;&#245;es</li>
+    </ul>
+  </div>
+  <div class="card">
+    <h4>Exporta&#231;&#227;o CSV</h4>
+    <ul style="font-size:.87rem">
+      <li><strong>Lista de Candidatos</strong> &#8212; todos os campos do perfil em formato tabular para planilhas</li>
+      <li><strong>Funil por Vaga</strong> &#8212; candidatos e est&#225;gios exportados por vaga selecionada</li>
+      <li><strong>Dados COPC</strong> &#8212; m&#233;tricas operacionais para an&#225;lise em BI externo (Power BI, Tableau)</li>
+      <li><strong>Log de Auditoria</strong> &#8212; eventos de seguran&#231;a em CSV para compliance interno</li>
+    </ul>
+  </div>
+</div>
+</div>
+
+<!-- 8.4 KPIs -->
+<div class="ss"><div class="ss-t"><div class="sdot"></div>8.4 KPI Dashboard</div>
+<div class="g4">
+  <div class="metric"><div class="mv" style="color:#3B82F6">18d</div><div class="ml">Tempo m&#233;dio de contrata&#231;&#227;o (Time to Hire)</div></div>
+  <div class="metric"><div class="mv" style="color:#10B981">3,2%</div><div class="ml">Taxa de convers&#227;o &#8212; candidatos para contratados</div></div>
+  <div class="metric"><div class="mv" style="color:#F97316">4,8</div><div class="ml">NPS m&#233;dio dos candidatos sobre o processo seletivo</div></div>
+  <div class="metric"><div class="mv" style="color:#7C3AED">78</div><div class="ml">Score PHP m&#233;dio da organiza&#231;&#227;o no &#250;ltimo ciclo</div></div>
+</div>
+<div class="callout info"><span class="ck">&#8505;&#65039;</span><div class="cb"><strong>Integra&#231;&#227;o BI</strong><p>Os dados do TalentForge podem ser conectados a ferramentas de Business Intelligence (Power BI, Looker, Tableau) via API REST com autentica&#231;&#227;o Bearer Token. Documentacao dispon&#237;vel em <code>/admin/api-docs</code>.</p></div></div>
+</div>
+</div>
+
+<!-- FOOTER -->
+<div class="footer">
+  <div style="margin-bottom:.5rem">
+    <strong style="color:#141042">TalentForge</strong> &nbsp;|&nbsp; Manual de Onboarding &nbsp;|&nbsp; v1.0 &nbsp;|&nbsp; Mar&#231;o 2026
+  </div>
+  <div style="color:#9CA3AF">ATS + People Health Performance &mdash; Plataforma de Recrutamento e Gest&#227;o de Pessoas</div>
+  <div style="margin-top:.5rem;color:#9CA3AF">suporte@talentforge.com.br &nbsp;|&nbsp; docs.talentforge.com.br</div>
+</div>
+
+</div><!-- /page -->
+</body>
+</html>

@@ -359,6 +359,17 @@ export default function RecruiterLayout({ children }: { children: React.ReactNod
             </Link>
           );
         })}
+        {/* Manual da Plataforma */}
+        <div className="pt-4 mt-4 border-t border-white/10">
+          <button
+            type="button"
+            onClick={() => window.open('/manual_onboarding.html', '_blank')}
+            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-white/60 hover:bg-white/10 hover:text-white transition-all duration-200"
+          >
+            <HelpCircle className="w-4 h-4 shrink-0" />
+            <span>Manual da Plataforma</span>
+          </button>
+        </div>
       </nav>
 
       {/* User Section */}
@@ -488,7 +499,11 @@ export default function RecruiterLayout({ children }: { children: React.ReactNod
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                <button className="p-2 text-[#94A3B8] hover:text-[#141042] hover:bg-[#FAFAF8] rounded-lg transition-colors">
+                <button
+                  onClick={() => window.open('/manual_onboarding.html', '_blank')}
+                  title="Manual da Plataforma"
+                  className="p-2 text-[#94A3B8] hover:text-[#141042] hover:bg-[#FAFAF8] rounded-lg transition-colors"
+                >
                   <HelpCircle className="w-5 h-5" />
                 </button>
                 <NotificationCenter />
