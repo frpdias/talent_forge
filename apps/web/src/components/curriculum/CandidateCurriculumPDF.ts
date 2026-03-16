@@ -108,9 +108,9 @@ async function buildCurriculumPDF(data: CurriculumData): Promise<{ doc: jsPDF; s
   const ml = 14;   // margem esquerda
   const mr = 14;   // margem direita
   const bodyW = pageW - ml - mr;   // 182
-  const leftW = 58;                // coluna esquerda
-  const rightX = ml + leftW + 6;  // início coluna direita
-  const rightW = bodyW - leftW - 6; // coluna direita
+  const leftW = 60;                // coluna esquerda
+  const rightX = ml + leftW + 8;  // início coluna direita
+  const rightW = bodyW - leftW - 8; // coluna direita
 
   // ══════════════════════════════════════════════════════════════════════
   // HEADER  (fundo roxo escuro, altura 52mm)
@@ -222,28 +222,28 @@ async function buildCurriculumPDF(data: CurriculumData): Promise<{ doc: jsPDF; s
   // ══════════════════════════════════════════════════════════════════════
   // CORPO
   // ══════════════════════════════════════════════════════════════════════
-  let yLeft  = hdrH + 7;
-  let yRight = hdrH + 7;
+  let yLeft  = hdrH + 11;
+  let yRight = hdrH + 11;
 
   // ── Helpers de seção ───────────────────────────────────────────────────
   function sectionLabelLeft(label: string) {
     doc.setFillColor(...primary);
-    doc.rect(ml, yLeft, leftW, 5.5, 'F');
+    doc.rect(ml, yLeft, leftW, 6.5, 'F');
     doc.setTextColor(...white);
     doc.setFontSize(7);
     doc.setFont('helvetica', 'bold');
-    doc.text(label, ml + 2.5, yLeft + 3.8);
-    yLeft += 7;
+    doc.text(label, ml + 3, yLeft + 4.5);
+    yLeft += 10;
   }
 
   function sectionLabelRight(label: string) {
     doc.setFillColor(...primary);
-    doc.rect(rightX, yRight, rightW, 5.5, 'F');
+    doc.rect(rightX, yRight, rightW, 6.5, 'F');
     doc.setTextColor(...white);
     doc.setFontSize(7);
     doc.setFont('helvetica', 'bold');
-    doc.text(label, rightX + 2.5, yRight + 3.8);
-    yRight += 7;
+    doc.text(label, rightX + 3, yRight + 4.5);
+    yRight += 10;
   }
 
   function rowLeft(label: string, value: string) {
@@ -252,20 +252,20 @@ async function buildCurriculumPDF(data: CurriculumData): Promise<{ doc: jsPDF; s
     doc.setFont('helvetica', 'normal');
     doc.setTextColor(...textGray);
     doc.text(label.toUpperCase(), ml, yLeft);
-    yLeft += 3.5;
-    doc.setFontSize(8);
+    yLeft += 4;
+    doc.setFontSize(8.5);
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(...textDark);
     const lines = doc.splitTextToSize(value, leftW - 1) as string[];
     doc.text(lines, ml, yLeft);
-    yLeft += lines.length * 4.2 + 1.5;
+    yLeft += lines.length * 4.8 + 4;
   }
 
   // ── COLUNA ESQUERDA: plano de fundo cinza claro ───────────────────────
   // (desenhado depois para não cobrir conteúdo — usamos fillRect antes de tudo)
   // na prática desenhamos agora com alpha=1 e posicionarmos conteúdo sobre
   doc.setFillColor(...bgLight);
-  doc.rect(0, hdrH + 1.5, ml + leftW + 3, pageH - hdrH - 1.5, 'F');
+  doc.rect(0, hdrH + 1.5, ml + leftW + 5, pageH - hdrH - 1.5, 'F');
 
   // ── COLUNA ESQUERDA: Contato ──────────────────────────────────────────
   sectionLabelLeft('CONTATO');
@@ -275,7 +275,7 @@ async function buildCurriculumPDF(data: CurriculumData): Promise<{ doc: jsPDF; s
   if (data.linkedinUrl) {
     rowLeft('LinkedIn', data.linkedinUrl.replace(/^https?:\/\/(www\.)?linkedin\.com\/in\//, ''));
   }
-  yLeft += 3;
+  yLeft += 6;
 
   // ── COLUNA ESQUERDA: Formação ─────────────────────────────────────────
   if (data.education.length > 0) {
@@ -285,26 +285,26 @@ async function buildCurriculumPDF(data: CurriculumData): Promise<{ doc: jsPDF; s
         ? `${edu.start_year || '—'} – Atual`
         : `${edu.start_year || '—'} – ${edu.end_year || '—'}`;
 
-      doc.setFontSize(8);
+      doc.setFontSize(8.5);
       doc.setFont('helvetica', 'bold');
       doc.setTextColor(...textDark);
       const courseLines = doc.splitTextToSize(edu.course_name, leftW - 1) as string[];
       doc.text(courseLines, ml, yLeft);
-      yLeft += courseLines.length * 4;
+      yLeft += courseLines.length * 4.5;
 
-      doc.setFontSize(7);
+      doc.setFontSize(7.5);
       doc.setFont('helvetica', 'normal');
       doc.setTextColor(...textGray);
       doc.text(edu.institution, ml, yLeft);
-      yLeft += 3.8;
+      yLeft += 4.5;
 
-      doc.setFontSize(6.5);
+      doc.setFontSize(7);
       doc.setTextColor(...accent);
       doc.text(`${DEGREE_PT[edu.degree_level] || edu.degree_level}  ·  ${period}`, ml, yLeft);
-      yLeft += 5;
+      yLeft += 8;
     }
   }
-  yLeft += 2;
+  yLeft += 5;
 
   // ── COLUNA ESQUERDA: Diferenciais / Tags ─────────────────────────────
   const tags: string[] = [];
@@ -315,14 +315,14 @@ async function buildCurriculumPDF(data: CurriculumData): Promise<{ doc: jsPDF; s
   if (tags.length > 0) {
     sectionLabelLeft('DIFERENCIAIS');
     for (const tag of tags) {
-      const tagW = Math.min(doc.getTextWidth(tag) + 4, leftW);
+      const tagW = Math.min(doc.getTextWidth(tag) + 6, leftW);
       doc.setFillColor(230, 230, 245);
-      doc.roundedRect(ml, yLeft, tagW, 5, 2, 2, 'F');
-      doc.setFontSize(7);
+      doc.roundedRect(ml, yLeft, tagW, 6, 2.5, 2.5, 'F');
+      doc.setFontSize(7.5);
       doc.setFont('helvetica', 'bold');
       doc.setTextColor(...primary);
-      doc.text(tag, ml + 2, yLeft + 3.5);
-      yLeft += 7;
+      doc.text(tag, ml + 3, yLeft + 4.2);
+      yLeft += 9;
     }
   }
 
@@ -343,12 +343,12 @@ async function buildCurriculumPDF(data: CurriculumData): Promise<{ doc: jsPDF; s
       ? ` Experiência em ${data.experiences.slice(0, 3).map((e) => e.company_name).join(', ')}.`
       : '');
 
-  doc.setFontSize(8.5);
+  doc.setFontSize(9);
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(...textDark);
   const sumLines = doc.splitTextToSize(summaryText, rightW) as string[];
   doc.text(sumLines, rightX, yRight);
-  yRight += sumLines.length * 4.5 + 4;
+  yRight += sumLines.length * 5.2 + 7;
 
   // ── Experiência Profissional ──────────────────────────────────────────
   if (data.experiences.length > 0) {
@@ -374,50 +374,50 @@ async function buildCurriculumPDF(data: CurriculumData): Promise<{ doc: jsPDF; s
         : `${fmtDate(exp.start_date)}${exp.end_date ? ` – ${fmtDate(exp.end_date)}` : ''}`.trim();
 
       // Cargo
-      doc.setFontSize(9);
+      doc.setFontSize(10);
       doc.setFont('helvetica', 'bold');
       doc.setTextColor(...primary);
-      doc.text(exp.job_title, rightX, yRight + 3);
+      doc.text(exp.job_title, rightX, yRight + 4);
 
       // Período no canto direito
-      doc.setFontSize(7.5);
+      doc.setFontSize(8);
       doc.setFont('helvetica', 'normal');
       doc.setTextColor(...accent);
       const periodW = doc.getTextWidth(period);
-      doc.text(period, rightX + rightW - periodW, yRight + 3);
+      doc.text(period, rightX + rightW - periodW, yRight + 4);
 
-      yRight += 5.5;
+      yRight += 7;
 
       // Empresa
-      doc.setFontSize(8);
+      doc.setFontSize(8.5);
       doc.setFont('helvetica', 'bold');
       doc.setTextColor(...blue);
       doc.text(exp.company_name, rightX, yRight);
-      yRight += 5;
+      yRight += 6;
 
-      // Descrição (limitada a 250 chars)
+      // Descrição (limitada a 280 chars)
       if (exp.description) {
         const desc = exp.description.trim().substring(0, 280);
-        doc.setFontSize(8);
+        doc.setFontSize(8.5);
         doc.setFont('helvetica', 'normal');
         doc.setTextColor(...textGray);
         const descLines = doc.splitTextToSize(desc + (exp.description.length > 280 ? '…' : ''), rightW) as string[];
         doc.text(descLines, rightX, yRight);
-        yRight += descLines.length * 4.2;
+        yRight += descLines.length * 5;
       }
 
       // Badge "Atual" se em curso
       if (exp.is_current) {
         doc.setFillColor(...accent);
-        doc.roundedRect(rightX, yRight + 1, 14, 4, 1.5, 1.5, 'F');
-        doc.setFontSize(6.5);
+        doc.roundedRect(rightX, yRight + 2, 16, 5, 2, 2, 'F');
+        doc.setFontSize(7);
         doc.setFont('helvetica', 'bold');
         doc.setTextColor(...white);
-        doc.text('ATUAL', rightX + 2, yRight + 4);
-        yRight += 6;
+        doc.text('ATUAL', rightX + 2.5, yRight + 5.5);
+        yRight += 9;
       }
 
-      yRight += 5;
+      yRight += 8;
     }
   }
 
