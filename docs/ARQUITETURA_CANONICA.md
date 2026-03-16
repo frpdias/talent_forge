@@ -1,6 +1,6 @@
 # Arquitetura Canônica — TalentForge
 
-**Última atualização**: 2026-03-15 | **Score de Conformidade**: ✅ 100% (Delete user + audit log + anti-spam email) | **Sprints planejados**: Sprint 41 (AI Assistant) + Sprint 44 (Gate Recrutamento)
+**Última atualização**: 2026-03-16 | **Score de Conformidade**: ✅ 97% (3 bugs corrigidos: VALID_STATUSES, NR-1 IDOR, TFCI org isolation) | **Sprints planejados**: Sprint 41 (AI Assistant) + Sprint 44 (Gate Recrutamento)
 
 ## 📜 FONTE DA VERDADE — PRINCÍPIO FUNDAMENTAL
 
@@ -253,6 +253,8 @@ PROJETO_TALENT_FORGE/
 │   │   ├── 20260311_org_testimonials.sql ✅ tabela org_testimonials (depoimentos editáveis) + RLS público + escrita via is_org_member
 │   │   ├── 20260311_org_career_tips.sql ✅ tabela org_career_tips (dicas de carreira editáveis) + RLS público + escrita via is_org_member
 │   │   ├── 20260302_job_publication_engine.sql ✅ job_publication_channels + job_publications + job_publication_logs + RLS + triggers
+│   │   ├── 20260315_fix_fk_on_delete_auth_users.sql ✅ FKs auth.users: ON DELETE SET NULL/CASCADE em 15 tabelas (fix delete-user 500)
+│   │   ├── 20260315_admin_delete_user_fn.sql ✅ função admin_cleanup_user_references() SECURITY DEFINER (pré-limpeza antes de deleteUser)
 │   │   └── 20260316_add_interview_status.sql ✅ enum application_status + 'interview_hr' + 'interview_manager' (pipeline sub-status)
 │   ├── VALIDATE_IMPROVEMENTS.sql  # Script de validação
 │   └── README.md                  # Instruções de migrations
