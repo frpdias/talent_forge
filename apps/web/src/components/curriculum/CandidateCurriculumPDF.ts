@@ -463,3 +463,485 @@ export async function previewCurriculumPDF(data: CurriculumData): Promise<void> 
   const blobUrl = doc.output('bloburl');
   window.open(blobUrl, '_blank', 'noopener,noreferrer');
 }
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// RELATÓRIO COMPLETO (Currículo + Testes + Scores + Parecer IA + Anotações)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+export interface FullReportData extends CurriculumData {
+  report?: {
+    disc?: {
+      D: number; I: number; S: number; C: number;
+      primary?: string | null;
+      secondary?: string | null;
+      description?: string | null;
+    } | null;
+    color?: {
+      primary_color?: string | null;
+      secondary_color?: string | null;
+      scores?: Record<string, number> | null;
+    } | null;
+    pi?: {
+      scores_natural?: Record<string, number> | null;
+      scores_adapted?: Record<string, number> | null;
+    } | null;
+    scores?: {
+      total: number;
+      testes: number;
+      experiencia: number;
+      recrutador: number;
+      rating: number;
+    } | null;
+    recruiterNote?: string | null;
+    aiReview?: string | null;
+    reviewDate?: string | null;
+    jobApplied?: string | null;
+  };
+}
+
+// ── Paleta de cores para os perfis DISC ──────────────────────────────────────
+const DISC_COLORS: Record<string, [number, number, number]> = {
+  D: [239, 68, 68],   // vermelho
+  I: [234, 179, 8],   // amarelo
+  S: [34, 197, 94],   // verde
+  C: [59, 130, 246],  // azul
+};
+
+// ── Paleta de cores para o teste de cores ─────────────────────────────────────
+const COLOR_MAP: Record<string, [number, number, number]> = {
+  red:    [239, 68, 68],
+  yellow: [234, 179, 8],
+  green:  [34, 197, 94],
+  blue:   [59, 130, 246],
+  vermelho: [239, 68, 68],
+  amarelo:  [234, 179, 8],
+  verde:    [34, 197, 94],
+  azul:     [59, 130, 246],
+};
+
+function colorForName(name?: string | null): [number, number, number] {
+  if (!name) return [150, 150, 160];
+  return COLOR_MAP[name.toLowerCase()] ?? [150, 150, 160];
+}
+
+function scoreColor(score: number): [number, number, number] {
+  if (score >= 75) return [16, 185, 129];   // verde
+  if (score >= 50) return [234, 179, 8];    // amarelo
+  return [239, 68, 68];                     // vermelho
+}
+
+// ── Página de Relatório ────────────────────────────────────────────────────────
+async function appendReportPages(doc: jsPDF, data: FullReportData): Promise<void> {
+  const report = data.report;
+  const pageW = 210;
+  const pageH = 297;
+  const primary: [number, number, number]  = [20, 16, 66];
+  const accent: [number, number, number]   = [16, 185, 129];
+  const white: [number, number, number]    = [255, 255, 255];
+  const textDark: [number, number, number] = [25, 25, 45];
+  const textGray: [number, number, number] = [100, 100, 120];
+  const bgLight: [number, number, number]  = [248, 248, 252];
+
+  const ml = 14;
+  const mr = 14;
+  const contentW = pageW - ml - mr;
+  const emitDate = new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' });
+
+  function footer() {
+    const fy = pageH - 8;
+    doc.setFillColor(...primary);
+    doc.rect(0, fy - 4, pageW, 12, 'F');
+    doc.setFillColor(...accent);
+    doc.rect(0, fy - 4, pageW, 1, 'F');
+    doc.setFontSize(7);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(180, 178, 220);
+    doc.text('TALENT', ml, fy + 1);
+    doc.setTextColor(...accent);
+    doc.text('FORGE', ml + doc.getTextWidth('TALENT') + 1, fy + 1);
+    doc.setTextColor(180, 178, 220);
+    doc.text(`  ·  Relatório gerado em ${emitDate}`, ml + doc.getTextWidth('TALENTFORGE') + 2, fy + 1);
+    const totalPages = (doc as any).getNumberOfPages?.() ?? 1;
+    const pgText = `${totalPages} / ${totalPages}`;
+    doc.text(pgText, pageW - mr - doc.getTextWidth(pgText), fy + 1);
+  }
+
+  function sectionHeader(y: number, label: string): number {
+    doc.setFillColor(...primary);
+    doc.rect(ml, y, contentW, 7.5, 'F');
+    doc.setFillColor(...accent);
+    doc.rect(ml, y + 7.5 - 1.5, contentW, 1.5, 'F');
+    doc.setTextColor(...white);
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'bold');
+    doc.text(label.toUpperCase(), ml + 4, y + 5);
+    return y + 13;
+  }
+
+  // ══════════════════════════════════════════════════════════════════════
+  // PÁGINA: SCORE + TESTES
+  // ══════════════════════════════════════════════════════════════════════
+  doc.addPage();
+  let y = 0;
+
+  // ── Header roxo com nome ──────────────────────────────────────────────
+  doc.setFillColor(...primary);
+  doc.rect(0, 0, pageW, 26, 'F');
+  doc.setFillColor(...accent);
+  doc.rect(0, 24.5, pageW, 1.5, 'F');
+
+  doc.setTextColor(...white);
+  doc.setFontSize(15);
+  doc.setFont('helvetica', 'bold');
+  doc.text('RELATÓRIO DO CANDIDATO', ml, 11);
+
+  doc.setFontSize(9);
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(200, 198, 230);
+  let subLine = data.fullName;
+  if (report?.jobApplied) subLine += `  ·  Vaga: ${report.jobApplied}`;
+  doc.text(subLine, ml, 19);
+
+  y = 32;
+
+  // ══ Scores ════════════════════════════════════════════════════════════
+  if (report?.scores) {
+    y = sectionHeader(y, 'Score TalentForge');
+    const s = report.scores;
+    const cols = [
+      { label: 'Score Total', value: Math.round(s.total), sub: 'de 100' },
+      { label: 'Testes Comportamentais', value: Math.round(s.testes), sub: 'peso 40%' },
+      { label: 'Experiência', value: Math.round(s.experiencia), sub: 'peso 35%' },
+      { label: 'Avaliação Recrutador', value: Math.round(s.recrutador), sub: `nota ${s.rating}/10 · peso 25%` },
+    ];
+    const colW = contentW / cols.length;
+    cols.forEach((col, i) => {
+      const cx = ml + i * colW;
+      const color = scoreColor(col.value);
+      // Card bg
+      doc.setFillColor(...bgLight);
+      doc.roundedRect(cx + 1, y - 2, colW - 2, 22, 2, 2, 'F');
+      // Valor
+      doc.setFontSize(22);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(...color);
+      const valStr = String(col.value);
+      const valW = doc.getTextWidth(valStr);
+      doc.text(valStr, cx + (colW - valW) / 2, y + 12);
+      // Label
+      doc.setFontSize(6.5);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(...textDark);
+      const lblLines = doc.splitTextToSize(col.label, colW - 4) as string[];
+      const lblW = Math.max(...lblLines.map((l) => doc.getTextWidth(l)));
+      doc.text(lblLines, cx + (colW - lblW) / 2, y + 15.5);
+      // Sub
+      doc.setFontSize(6);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(...textGray);
+      const subW = doc.getTextWidth(col.sub);
+      doc.text(col.sub, cx + (colW - subW) / 2, y + 19.5);
+    });
+    y += 28;
+  }
+
+  // ══ DISC ══════════════════════════════════════════════════════════════
+  if (report?.disc) {
+    y = sectionHeader(y, 'Perfil DISC');
+    const d = report.disc;
+    const barW = (contentW - 60) / 4 - 4;
+
+    (['D', 'I', 'S', 'C'] as const).forEach((key, i) => {
+      const score = d[key] ?? 0;
+      const barX = ml + 60 + i * ((contentW - 60) / 4);
+      const barColor = DISC_COLORS[key];
+      const barMaxH = 30;
+      const barH = Math.max(2, (score / 100) * barMaxH);
+      const barY = y + barMaxH - barH;
+
+      // Barra
+      doc.setFillColor(230, 230, 245);
+      doc.roundedRect(barX, y, barW, barMaxH, 2, 2, 'F');
+      doc.setFillColor(...barColor);
+      doc.roundedRect(barX, barY, barW, barH, 2, 2, 'F');
+
+      // Letter
+      doc.setFontSize(11);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(...barColor);
+      const kW = doc.getTextWidth(key);
+      doc.text(key, barX + (barW - kW) / 2, y + barMaxH + 6);
+
+      // Percentual
+      doc.setFontSize(8);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(...textDark);
+      const pct = `${Math.round(score)}%`;
+      const pctW = doc.getTextWidth(pct);
+      doc.text(pct, barX + (barW - pctW) / 2, y + barMaxH + 11);
+    });
+
+    // Perfil à esquerda dos gráficos
+    const leftX = ml;
+    const leftAvailW = 56;
+    let ly = y + 2;
+
+    if (d.primary) {
+      doc.setFontSize(7);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(...textGray);
+      doc.text('PERFIL PRIMÁRIO', leftX, ly);
+      ly += 5;
+      doc.setFontSize(11);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(...primary);
+      const pLines = doc.splitTextToSize(d.primary, leftAvailW) as string[];
+      doc.text(pLines, leftX, ly);
+      ly += pLines.length * 5.5 + 3;
+    }
+    if (d.secondary) {
+      doc.setFontSize(7);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(...textGray);
+      doc.text('PERFIL SECUNDÁRIO', leftX, ly);
+      ly += 5;
+      doc.setFontSize(9);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(...accent);
+      doc.text(d.secondary, leftX, ly);
+      ly += 8;
+    }
+    if (d.description) {
+      doc.setFontSize(7.5);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(...textGray);
+      const dLines = doc.splitTextToSize(d.description.substring(0, 200), leftAvailW) as string[];
+      doc.text(dLines, leftX, ly);
+    }
+
+    y += 50;
+  }
+
+  // ══ Teste de Cores ════════════════════════════════════════════════════
+  if (report?.color) {
+    y = sectionHeader(y, 'Perfil de Cores');
+    const c = report.color;
+    const colorNames = ['Vermelho', 'Amarelo', 'Verde', 'Azul'];
+    const colorKeys = ['red', 'yellow', 'green', 'blue'];
+
+    // Swatches de cor primária/secundária
+    if (c.primary_color) {
+      const pColor = colorForName(c.primary_color);
+      doc.setFillColor(...pColor);
+      doc.roundedRect(ml, y, 20, 12, 3, 3, 'F');
+      doc.setFontSize(6.5);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(...white);
+      doc.text('PRIMÁRIA', ml + 2, y + 5);
+      doc.setFontSize(8);
+      doc.text(c.primary_color.charAt(0).toUpperCase() + c.primary_color.slice(1), ml + 2, y + 10);
+    }
+    if (c.secondary_color) {
+      const sColor = colorForName(c.secondary_color);
+      doc.setFillColor(...sColor);
+      doc.roundedRect(ml + 24, y, 20, 12, 3, 3, 'F');
+      doc.setFontSize(6.5);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(...white);
+      doc.text('SECUNDÁRIA', ml + 26, y + 5);
+      doc.setFontSize(8);
+      doc.text(c.secondary_color.charAt(0).toUpperCase() + c.secondary_color.slice(1), ml + 26, y + 10);
+    }
+
+    // Barras de scores por cor
+    if (c.scores && Object.keys(c.scores).length > 0) {
+      const scoreBarX = ml + 52;
+      const scoreBarW = contentW - 52;
+      colorKeys.forEach((key, i) => {
+        const val = c.scores?.[key] ?? c.scores?.[colorNames[i].toLowerCase()] ?? 0;
+        const bX = scoreBarX;
+        const bY = y + i * 8;
+        const bColor = DISC_COLORS[['D', 'I', 'S', 'C'][i]] ?? [150, 150, 160];
+        // Label cor
+        doc.setFontSize(7.5);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(colorForName(key)[0], colorForName(key)[1], colorForName(key)[2]);
+        doc.text(colorNames[i], bX, bY + 4.5);
+        // Bar bg
+        doc.setFillColor(230, 230, 245);
+        doc.roundedRect(bX + 22, bY + 1, scoreBarW - 30, 5, 2, 2, 'F');
+        // Bar fill
+        doc.setFillColor(...colorForName(key));
+        const fillW = Math.max(2, (Number(val) / 100) * (scoreBarW - 30));
+        doc.roundedRect(bX + 22, bY + 1, fillW, 5, 2, 2, 'F');
+        // Pct
+        doc.setFontSize(7);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(...textDark);
+        doc.text(`${Math.round(Number(val))}%`, bX + 22 + (scoreBarW - 30) + 2, bY + 5.5);
+      });
+    }
+    y += 22;
+  }
+
+  // ══ PI ════════════════════════════════════════════════════════════════
+  if (report?.pi && (report.pi.scores_natural || report.pi.scores_adapted)) {
+    y = sectionHeader(y, 'Predictive Index (PI)');
+    const pi = report.pi;
+    const piColW = contentW / 2 - 4;
+
+    const renderPiScores = (scores: Record<string, number> | null | undefined, label: string, startX: number) => {
+      if (!scores) return;
+      doc.setFontSize(7.5);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(...primary);
+      doc.text(label.toUpperCase(), startX, y);
+      let piY = y + 6;
+      Object.entries(scores).slice(0, 6).forEach(([k, v]) => {
+        doc.setFontSize(7);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(...textDark);
+        doc.text(k, startX, piY);
+        doc.setFillColor(230, 230, 245);
+        doc.roundedRect(startX + 30, piY - 4, piColW - 40, 6, 1.5, 1.5, 'F');
+        doc.setFillColor(...accent);
+        const fw = Math.max(2, (Number(v) / 100) * (piColW - 40));
+        doc.roundedRect(startX + 30, piY - 4, fw, 6, 1.5, 1.5, 'F');
+        doc.setFontSize(6.5);
+        doc.setTextColor(...textGray);
+        doc.text(`${Math.round(Number(v))}`, startX + piColW - 8, piY);
+        piY += 8;
+      });
+    };
+
+    renderPiScores(pi.scores_natural as Record<string, number>, 'Natural', ml);
+    renderPiScores(pi.scores_adapted as Record<string, number>, 'Adaptado', ml + piColW + 8);
+    y += 14 + Math.max(
+      Object.keys(pi.scores_natural ?? {}).slice(0, 6).length,
+      Object.keys(pi.scores_adapted ?? {}).slice(0, 6).length,
+    ) * 8;
+  }
+
+  // ══ Rodapé desta página ═══════════════════════════════════════════════
+  footer();
+
+  // ══════════════════════════════════════════════════════════════════════
+  // PÁGINA: PARECER TÉCNICO + ANOTAÇÕES
+  // ══════════════════════════════════════════════════════════════════════
+  doc.addPage();
+  y = 0;
+
+  // Header
+  doc.setFillColor(...primary);
+  doc.rect(0, 0, pageW, 26, 'F');
+  doc.setFillColor(...accent);
+  doc.rect(0, 24.5, pageW, 1.5, 'F');
+  doc.setTextColor(...white);
+  doc.setFontSize(15);
+  doc.setFont('helvetica', 'bold');
+  doc.text('PARECER TÉCNICO', ml, 11);
+  doc.setFontSize(9);
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(200, 198, 230);
+  doc.text(data.fullName, ml, 19);
+
+  y = 32;
+
+  // ══ Anotações do Recrutador ═══════════════════════════════════════════
+  if (report?.recruiterNote) {
+    y = sectionHeader(y, 'Anotações do Recrutador');
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(...textDark);
+    const noteLines = doc.splitTextToSize(report.recruiterNote, contentW) as string[];
+    doc.text(noteLines, ml, y);
+    y += noteLines.length * 5.5 + 10;
+  }
+
+  // ══ Parecer com IA ════════════════════════════════════════════════════
+  if (report?.aiReview) {
+    y = sectionHeader(y, 'Parecer Técnico com IA (GPT-4o)');
+    if (report.reviewDate) {
+      doc.setFontSize(7);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(...textGray);
+      doc.text(`Gerado em: ${new Date(report.reviewDate).toLocaleDateString('pt-BR')}`, ml, y);
+      y += 6;
+    }
+
+    doc.setFontSize(8.5);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(...textDark);
+
+    // Dividir em parágrafos separados por \n\n
+    const paragraphs = report.aiReview.split(/\n{2,}/);
+    for (const para of paragraphs) {
+      if (!para.trim()) continue;
+      if (y > pageH - 35) {
+        footer();
+        doc.addPage();
+        y = 14;
+      }
+      const paraLines = doc.splitTextToSize(para.trim(), contentW) as string[];
+      doc.text(paraLines, ml, y);
+      y += paraLines.length * 5.2 + 5;
+    }
+    y += 8;
+  }
+
+  // ══ Linhas para Anotações ═════════════════════════════════════════════
+  if (y > pageH - 70) {
+    footer();
+    doc.addPage();
+    y = 14;
+  }
+
+  y = sectionHeader(y, 'Anotações');
+  const lineSpacing = 10;
+  const numLines = Math.floor((pageH - y - 20) / lineSpacing);
+  for (let i = 0; i < numLines; i++) {
+    const lineY = y + i * lineSpacing;
+    doc.setDrawColor(200, 200, 210);
+    doc.setLineWidth(0.3);
+    doc.line(ml, lineY, pageW - mr, lineY);
+  }
+
+  footer();
+}
+
+// ── Gera o PDF completo (currículo + relatório) ────────────────────────────────
+export async function generateFullReportPDF(data: FullReportData): Promise<void> {
+  const { doc, safeName } = await buildCurriculumPDF(data);
+  await appendReportPages(doc, data);
+
+  // Corrigir rodapé de todas as páginas do currículo com numeração total final
+  const totalPages = (doc as any).getNumberOfPages?.() ?? 1;
+  const pageH = 297;
+  const pageW = 210;
+  const primary: [number, number, number] = [20, 16, 66];
+  const accent: [number, number, number]  = [16, 185, 129];
+  const ml = 14;
+  const mr = 14;
+  const emitDate = new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' });
+
+  for (let p = 1; p <= totalPages; p++) {
+    doc.setPage(p);
+    const fY = pageH - 8;
+    doc.setFillColor(...primary);
+    doc.rect(0, fY - 4, pageW, 12, 'F');
+    doc.setFillColor(...accent);
+    doc.rect(0, fY - 4, pageW, 1, 'F');
+    doc.setFontSize(7);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(180, 178, 220);
+    doc.text('TALENT', ml, fY + 1);
+    doc.setTextColor(...accent);
+    doc.text('FORGE', ml + doc.getTextWidth('TALENT') + 1, fY + 1);
+    doc.setTextColor(180, 178, 220);
+    doc.text(`  ·  Relatório gerado em ${emitDate}`, ml + doc.getTextWidth('TALENTFORGE') + 2, fY + 1);
+    const pgText = `${p} / ${totalPages}`;
+    doc.text(pgText, pageW - mr - doc.getTextWidth(pgText), fY + 1);
+  }
+
+  doc.save(`relatorio_${safeName}.pdf`);
+}

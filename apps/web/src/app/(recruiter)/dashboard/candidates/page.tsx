@@ -32,7 +32,7 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { DashboardHeader } from '@/components/DashboardHeader';
 import { NotesPanel } from '@/components/candidates/NotesPanel';
-import { generateCurriculumPDF, type CurriculumData } from '@/components/curriculum/CandidateCurriculumPDF';
+import { generateFullReportPDF, type FullReportData } from '@/components/curriculum/CandidateCurriculumPDF';
 import { createClient } from '@/lib/supabase/client';
 
 interface Candidate {
@@ -284,7 +284,44 @@ export default function CandidatesPage() {
     try {
       setPdfLoading(true);
       const p = candidateDetails.profile;
-      const data: CurriculumData = {
+
+      // Testes comportamentais derivados (mesma lógica do useMemo abaixo)
+      const assessments: any[] = candidateDetails.assessments ?? [];
+      const discA = assessments.find((a: any) => a.test_type === 'disc' || a.type === 'disc');
+      const colorA = assessments.find((a: any) => a.test_type === 'color' || a.type === 'color');
+      const piA = assessments.find((a: any) => a.test_type === 'pi' || a.type === 'pi');
+
+      const dTraits = discA?.traits?.disc || discA?.traits || {};
+      const discReport = discA ? {
+        D: Number(dTraits.D ?? dTraits.dominance_score ?? 0),
+        I: Number(dTraits.I ?? dTraits.influence_score ?? 0),
+        S: Number(dTraits.S ?? dTraits.steadiness_score ?? 0),
+        C: Number(dTraits.C ?? dTraits.conscientiousness_score ?? 0),
+        primary: dTraits.primary ?? dTraits.primary_profile ?? null,
+        secondary: dTraits.secondary ?? dTraits.secondary_profile ?? null,
+        description: dTraits.description ?? null,
+      } : null;
+
+      const colorReport = colorA ? {
+        primary_color: colorA.primary_color ?? colorA.traits?.primary_color ?? null,
+        secondary_color: colorA.secondary_color ?? colorA.traits?.secondary_color ?? null,
+        scores: colorA.scores ?? colorA.traits?.scores ?? null,
+      } : null;
+
+      const piReport = piA ? {
+        scores_natural: piA.scores_natural ?? piA.traits?.scores_natural ?? null,
+        scores_adapted: piA.scores_adapted ?? piA.traits?.scores_adapted ?? null,
+      } : null;
+
+      const scoresReport = currentReview ? {
+        total: currentReview.score_total,
+        testes: currentReview.score_testes,
+        experiencia: currentReview.score_experiencia,
+        recrutador: currentReview.score_recrutador,
+        rating: currentReview.recruiter_rating,
+      } : null;
+
+      const data: FullReportData = {
         fullName: selectedCandidate.full_name || p?.full_name || selectedCandidate.email || 'Candidato',
         email: selectedCandidate.email || p?.email || '',
         phone: p?.phone ?? selectedCandidate.phone,
@@ -313,10 +350,19 @@ export default function CandidatesPage() {
           end_year: e.end_year,
           is_current: e.is_current,
         })),
+        report: {
+          disc: discReport,
+          color: colorReport,
+          pi: piReport,
+          scores: scoresReport,
+          recruiterNote: currentReview?.recruiter_note || reviewNote || null,
+          aiReview: currentReview?.ai_review || null,
+          reviewDate: currentReview?.created_at || null,
+        },
       };
-      await generateCurriculumPDF(data);
+      await generateFullReportPDF(data);
     } catch (err) {
-      console.error('[PDF] Erro ao gerar currículo:', err);
+      console.error('[PDF] Erro ao gerar relatório:', err);
       alert('Erro ao gerar o PDF. Tente novamente.');
     } finally {
       setPdfLoading(false);
