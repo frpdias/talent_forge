@@ -605,6 +605,13 @@ function CompanyDetailContent() {
           token={authToken}
         />
       )}
+      <ConfirmDialog
+        open={!!confirmDeleteEmployeeId}
+        title="Excluir funcionário"
+        message="Tem certeza que deseja excluir este funcionário? Esta ação não pode ser desfeita."
+        onConfirm={doDeleteEmployee}
+        onCancel={() => setConfirmDeleteEmployeeId(null)}
+      />
     </div>
   );
 }
@@ -1293,13 +1300,6 @@ function CompanyInfoTab({ company, employees, phpModuleActive, phpLoading, toggl
           </div>
         </div>
       </div>
-      <ConfirmDialog
-        open={!!confirmDeleteEmployeeId}
-        title="Excluir funcionário"
-        message="Tem certeza que deseja excluir este funcionário? Esta ação não pode ser desfeita."
-        onConfirm={doDeleteEmployee}
-        onCancel={() => setConfirmDeleteEmployeeId(null)}
-      />
     </div>
   );
 }
