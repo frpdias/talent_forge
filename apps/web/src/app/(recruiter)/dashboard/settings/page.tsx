@@ -68,7 +68,7 @@ function SettingsPageContent() {
 
   // Prompt IA de avaliação
   const [aiPrompt, setAiPrompt] = useState('');
-  const [defaultPrompt, setDefaultPrompt] = useState('');
+  const [defaultPrompt, setDefaultPrompt] = useState(DEFAULT_REVIEW_PROMPT);
   const [savingAiPrompt, setSavingAiPrompt] = useState(false);
   const [aiPromptSaved, setAiPromptSaved] = useState(false);
   const [loadingAiPrompt, setLoadingAiPrompt] = useState(false);
