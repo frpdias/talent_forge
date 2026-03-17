@@ -20,6 +20,7 @@ import {
   Lock,
   Loader2,
   Building,
+  FlaskConical,
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import Image from 'next/image';
@@ -52,6 +53,7 @@ const navGroups = [
     label: 'Sistema',
     items: [
       { href: '/admin/api-keys', label: 'API Keys', icon: Key },
+      { href: '/admin/email-test', label: 'Teste de Emails', icon: FlaskConical },
       { href: '/admin/settings', label: 'Configurações', icon: Settings },
     ],
   },
