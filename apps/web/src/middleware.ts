@@ -121,12 +121,13 @@ export async function middleware(request: NextRequest) {
   }
 
   // Public routes that don't require authentication
-  const publicRoutes = ['/', '/login', '/register', '/auth/callback', '/assessment', '/jobs', '/onboarding', '/invite'];
+  const publicRoutes = ['/', '/login', '/register', '/auth/callback', '/assessment', '/jobs', '/onboarding', '/invite', '/vagas'];
   const isPublicRoute = publicRoutes.some(route =>
     pathname === route ||
     pathname.startsWith('/auth/') ||
     pathname.startsWith('/assessment') ||
     pathname.startsWith('/jobs/') ||
+    pathname.startsWith('/vagas') ||
     pathname.startsWith('/invite')
   );
 
