@@ -517,6 +517,8 @@ const COLOR_MAP: Record<string, [number, number, number]> = {
   amarelo:  [234, 179, 8],
   verde:    [34, 197, 94],
   azul:     [59, 130, 246],
+  rosa:     [236, 72, 153],
+  branco:   [148, 163, 184],
 };
 
 function colorForName(name?: string | null): [number, number, number] {
@@ -726,8 +728,8 @@ async function appendReportPages(doc: jsPDF, data: FullReportData): Promise<void
   if (report?.color) {
     y = sectionHeader(y, 'Perfil de Cores');
     const c = report.color;
-    const colorNames = ['Vermelho', 'Amarelo', 'Verde', 'Azul'];
-    const colorKeys = ['red', 'yellow', 'green', 'blue'];
+    const colorNames = ['Azul', 'Rosa', 'Amarelo', 'Verde', 'Branco'];
+    const colorKeys = ['azul', 'rosa', 'amarelo', 'verde', 'branco'];
     const colorYStart = y;
 
     // Swatches de cor primária/secundária
