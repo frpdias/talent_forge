@@ -98,7 +98,7 @@ export async function GET(
           .order('completed_at', { ascending: false }),
         supabase
           .from('pi_assessments')
-          .select('id, scores_natural, scores_adapted, reference_profile, status, completed_at, created_at')
+          .select('id, scores_natural, scores_adapted, gaps, status, completed_at, created_at')
           .eq('candidate_user_id', resolvedUserId)
           .eq('status', 'completed')
           .order('completed_at', { ascending: false }),
