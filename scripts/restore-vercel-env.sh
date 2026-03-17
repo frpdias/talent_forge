@@ -14,8 +14,8 @@ ROOT="$SCRIPT_DIR/.."
 API_ENV="$ROOT/apps/api/.env"
 ROOT_ENV="$ROOT/.env.local"
 
-# Carrega var de um arquivo .env
-load_var() { grep "^$1=" "$2" 2>/dev/null | cut -d= -f2-; }
+# Carrega var de um arquivo .env — tr -d '\r\n' remove CRLF e newlines finais
+load_var() { grep "^$1=" "$2" 2>/dev/null | cut -d= -f2- | tr -d '\r\n'; }
 
 # ---------------------------------------------------------------------------
 # SMTP Brevo — lido de apps/api/.env
