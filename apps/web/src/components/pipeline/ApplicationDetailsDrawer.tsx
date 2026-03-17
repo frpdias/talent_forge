@@ -28,6 +28,8 @@ import {
   UserCheck,
   Building2,
   ChevronRight,
+  MailCheck,
+  MailX,
 } from 'lucide-react';
 
 interface PipelineApplication {
@@ -120,8 +122,38 @@ export function ApplicationDetailsDrawer({ application, isOpen, onClose, onStatu
   const [docViewerLabel, setDocViewerLabel] = useState('');
   const [docViewerLoading, setDocViewerLoading] = useState(false);
   const [updatingStatus, setUpdatingStatus] = useState(false);
+  const [emailStatus, setEmailStatus] = useState<Record<string, 'idle' | 'sending' | 'sent' | 'error'>>({});
 
   const supabase = createClient();
+
+  async function handleStageChange(stageId: string) {
+    if (!application || !onStatusChange) return;
+    setUpdatingStatus(true);
+    setEmailStatus((s) => ({ ...s, [stageId]: 'sending' }));
+    onStatusChange(application.id, stageId);
+    setTimeout(() => setUpdatingStatus(false), 500);
+    try {
+      const res = await fetch('/api/pipeline/notify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          candidateEmail: application.candidate_email,
+          candidateName: application.candidate_name,
+          jobTitle: application.job_title,
+          newStatus: stageId,
+        }),
+      });
+      const data = await res.json();
+      if (data.ok) {
+        setEmailStatus((s) => ({ ...s, [stageId]: data.skipped ? 'idle' : 'sent' }));
+      } else {
+        setEmailStatus((s) => ({ ...s, [stageId]: 'error' }));
+      }
+    } catch {
+      setEmailStatus((s) => ({ ...s, [stageId]: 'error' }));
+    }
+    setTimeout(() => setEmailStatus((s) => ({ ...s, [stageId]: 'idle' })), 5000);
+  }
 
   useEffect(() => {
     if (!isOpen || !application) {
@@ -441,13 +473,7 @@ export function ApplicationDetailsDrawer({ application, isOpen, onClose, onStatu
                         <button
                           key={stage.id}
                           disabled={isCurrent || updatingStatus}
-                          onClick={() => {
-                            if (!isCurrent && onStatusChange) {
-                              setUpdatingStatus(true);
-                              onStatusChange(application.id, stage.id);
-                              setTimeout(() => setUpdatingStatus(false), 500);
-                            }
-                          }}
+                          onClick={() => { if (!isCurrent) handleStageChange(stage.id); }}
                           className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg border text-left transition-all ${
                             isCurrent
                               ? `${stage.activeClass} font-semibold cursor-default`
@@ -465,7 +491,16 @@ export function ApplicationDetailsDrawer({ application, isOpen, onClose, onStatu
                           </div>
                           <Icon className={`h-3.5 w-3.5 shrink-0 ${isCurrent ? '' : 'text-[#94A3B8]'}`} />
                           <span className="text-sm flex-1">{stage.label}</span>
-                          {!isCurrent && (
+                          {!isCurrent && emailStatus[stage.id] === 'sent' && (
+                            <MailCheck className="h-3.5 w-3.5 text-emerald-500 shrink-0" title="Email enviado" />
+                          )}
+                          {!isCurrent && emailStatus[stage.id] === 'sending' && (
+                            <Loader2 className="h-3.5 w-3.5 text-[#94A3B8] animate-spin shrink-0" />
+                          )}
+                          {!isCurrent && emailStatus[stage.id] === 'error' && (
+                            <MailX className="h-3.5 w-3.5 text-red-400 shrink-0" title="Falha ao enviar email" />
+                          )}
+                          {!isCurrent && (!emailStatus[stage.id] || emailStatus[stage.id] === 'idle') && (
                             <ChevronRight className="h-3.5 w-3.5 text-[#94A3B8] shrink-0" />
                           )}
                         </button>
