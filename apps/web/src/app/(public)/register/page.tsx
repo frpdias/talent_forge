@@ -123,28 +123,34 @@ function RegisterContent() {
         return;
       }
 
-      const supabase = createClient();
-      if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
-        throw new Error('Configuração do Supabase não encontrada. Configure as variáveis de ambiente.');
-      }
-
-      const { data, error: authError } = await supabase.auth.signUp({
-        email: normalizedEmail,
-        password,
-        options: {
-          data: {
-            user_type: userType,
-            full_name: normalizedName,
-          },
-          emailRedirectTo: `${window.location.origin}/auth/callback?type=${userType}`,
-        },
+      // Usa endpoint server-side com service_role — sem necessidade de SMTP do Supabase
+      const res = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: normalizedEmail,
+          password,
+          fullName: normalizedName,
+          userType,
+        }),
       });
-
-
-      if (authError) {
-        console.error('Supabase Auth Error:', authError);
-        throw authError;
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Erro ao criar conta.');
       }
+
+      // Se retornou sessão, faz login automático e redireciona
+      if (data.session) {
+        const supabase = createClient();
+        await supabase.auth.setSession(data.session);
+        const destination =
+          userType === 'recruiter' ? '/dashboard' :
+          userType === 'candidate' ? (redirectParam || '/candidate') :
+          '/dashboard';
+        window.location.href = destination;
+        return;
+      }
+
       setSuccess(true);
     } catch (err: any) {
       console.error('Registration error:', err);
@@ -189,17 +195,10 @@ function RegisterContent() {
             <Check className="w-8 h-8 sm:w-10 sm:h-10 text-green-600" />
           </div>
           <h2 className="text-2xl sm:text-3xl font-semibold text-[#141042] mb-3 sm:mb-4">
-            {inviteToken ? 'Conta criada' : 'Verifique seu email'}
+            Conta criada com sucesso!
           </h2>
           <p className="text-sm sm:text-base text-[#666666] mb-6 sm:mb-8">
-            {inviteToken ? (
-              <>Sua conta foi criada com sucesso. Faça login para continuar.</>
-            ) : (
-              <>
-                Enviamos um link de confirmação para{' '}
-                <strong className="text-[#141042]">{email}</strong>
-              </>
-            )}
+            Sua conta foi criada. Faça login para continuar.
           </p>
           <Link 
             href="/login"
