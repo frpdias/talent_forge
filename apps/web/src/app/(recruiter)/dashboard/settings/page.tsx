@@ -731,7 +731,7 @@ function SettingsPageContent() {
               <div className="flex items-center gap-3">
                 {careerPage.career_page_logo_url && (
                   <div className="relative group shrink-0">
-                    <img src={careerPage.career_page_logo_url} alt="Logo" className="h-10 w-10 object-contain rounded border border-[#E5E5DC]" />
+                    <img src={careerPage.career_page_logo_url} alt="Logo" loading="lazy" className="h-10 w-10 object-contain rounded border border-[#E5E5DC]" />
                     {confirmDelete === 'logo' ? (
                       <div className="absolute -top-1 left-11 z-10 flex items-center gap-1 bg-white border border-[#E5E5DC] rounded-lg shadow-md px-2 py-1 whitespace-nowrap">
                         <span className="text-xs text-[#666] mr-1">Remover?</span>
@@ -780,7 +780,7 @@ function SettingsPageContent() {
               <div className="space-y-2">
                 {careerPage.career_page_banner_url && (
                   <div className="relative group">
-                    <img src={careerPage.career_page_banner_url} alt="Banner" className="w-full h-24 object-cover rounded-lg border border-[#E5E5DC]" />
+                    <img src={careerPage.career_page_banner_url} alt="Banner" loading="lazy" className="w-full h-24 object-cover rounded-lg border border-[#E5E5DC]" />
                     {confirmDelete === 'banner' ? (
                       <div className="absolute top-2 right-2 flex items-center gap-1.5 bg-white border border-[#E5E5DC] rounded-lg shadow-md px-2.5 py-1.5">
                         <span className="text-xs text-[#666]">Remover banner?</span>

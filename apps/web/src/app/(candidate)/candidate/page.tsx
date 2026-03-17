@@ -271,18 +271,13 @@ export default function CandidateDashboard() {
         const { data: { user } } = await supabase.auth.getUser();
         const { data: { session } } = await supabase.auth.getSession();
         
-        console.log('[CandidateDash] User:', user?.id);
-        console.log('[CandidateDash] Session:', !!session);
-        
         if (!session?.access_token) {
-          console.log('[CandidateDash] No access token');
           setColorError('Não autenticado');
           setColorLoading(false);
           return;
         }
         
         if (!user?.id) {
-          console.log('[CandidateDash] No user id');
           setColorError('Usuário não identificado');
           setColorLoading(false);
           return;

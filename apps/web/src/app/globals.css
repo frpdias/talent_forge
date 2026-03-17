@@ -131,7 +131,7 @@
   --color-foreground-muted: var(--foreground-muted);
   --color-border: var(--border);
   
-  --font-sans: 'Inter', var(--font-geist-sans), -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, sans-serif;
+  --font-sans: var(--font-inter), var(--font-geist-sans), -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, sans-serif;
   --font-mono: var(--font-geist-mono), 'SF Mono', Monaco, 'Cascadia Code', monospace;
 }
 

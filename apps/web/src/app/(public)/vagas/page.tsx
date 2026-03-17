@@ -92,7 +92,7 @@ function OrgAvatar({ name, logoUrl, size = 'md' }: { name: string; logoUrl: stri
   if (logoUrl) {
     return (
       <div className={`${sz} rounded-xl overflow-hidden shrink-0 bg-white border border-gray-100 flex items-center justify-center shadow-sm`}>
-        <img src={logoUrl} alt={name} className="w-full h-full object-contain p-1.5" />
+        <img src={logoUrl} alt={name} loading="lazy" className="w-full h-full object-contain p-1.5" />
       </div>
     );
   }

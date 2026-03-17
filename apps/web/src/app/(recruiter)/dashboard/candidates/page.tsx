@@ -172,12 +172,6 @@ export default function CandidatesPage() {
     try {
       setDetailsLoading(true);
       
-      console.log('[loadCandidateDetails] Carregando dados do candidato:', {
-        id: candidate.id,
-        user_id: candidate.user_id,
-        email: candidate.email
-      });
-      
       // Buscar perfil completo - tenta por user_id e email
       let profiles: any[] = [];
       
@@ -188,7 +182,6 @@ export default function CandidatesPage() {
           .eq('user_id', candidate.user_id)
           .order('updated_at', { ascending: false });
         profiles = profilesByUser || [];
-        console.log('[loadCandidateDetails] Profiles por user_id:', profiles.length);
       }
       
       if (profiles.length === 0 && candidate.email) {
@@ -198,12 +191,10 @@ export default function CandidatesPage() {
           .eq('email', candidate.email)
           .order('updated_at', { ascending: false });
         profiles = profilesByEmail || [];
-        console.log('[loadCandidateDetails] Profiles por email:', profiles.length);
       }
       
       const profile = profiles?.[0] || null;
       const profileIds = profiles?.map(p => p.id) || [];
-      console.log('[loadCandidateDetails] Profile selecionado:', profile?.id);
       
       // Buscar experiências
       let experiences: any[] = [];
@@ -214,7 +205,6 @@ export default function CandidatesPage() {
           .in('candidate_profile_id', profileIds)
           .order('start_date', { ascending: false });
         experiences = expData || [];
-        console.log('[loadCandidateDetails] Experiências:', experiences.length);
       }
       
       // Buscar educação
@@ -226,7 +216,6 @@ export default function CandidatesPage() {
           .in('candidate_profile_id', profileIds)
           .order('start_year', { ascending: false });
         education = eduData || [];
-        console.log('[loadCandidateDetails] Educação:', education.length);
       }
       
       // Buscar assessments via API server-side (service_role — sem bloqueio de RLS)
@@ -248,9 +237,7 @@ export default function CandidatesPage() {
           const colorList: any[] = assessData.color ?? [];
           const piList: any[] = assessData.pi ?? [];
           
-          console.log('[loadCandidateDetails] Testes DISC:', discList.length);
-          console.log('[loadCandidateDetails] Testes de Cores:', colorList.length);
-          console.log('[loadCandidateDetails] Testes PI:', piList.length);
+
           
           allAssessments = [
             ...discList.map(a => ({ ...a, test_type: 'disc' })),
@@ -263,8 +250,6 @@ export default function CandidatesPage() {
       } else {
         console.warn('[loadCandidateDetails] Sem sessão ou org_id, assessments não carregados');
       }
-      
-      console.log('[loadCandidateDetails] Total de testes combinados:', allAssessments.length);
       
       setCandidateDetails({
         profile,

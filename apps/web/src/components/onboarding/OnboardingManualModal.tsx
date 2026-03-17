@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { X, ChevronLeft, ChevronRight, CheckCircle, Circle, BookOpen, ChevronDown } from 'lucide-react';
+import DOMPurify from 'dompurify';
 import manualData from '@/data/manual_onboarding_data.json';
 
 type Section = (typeof manualData.sections)[number];
@@ -293,7 +294,7 @@ export function OnboardingManualModal({ isOpen, onClose }: Props) {
             <div ref={contentRef} className="flex-1 overflow-y-auto px-6 py-6">
               <div
                 className="manual-content max-w-3xl mx-auto"
-                dangerouslySetInnerHTML={{ __html: htmlWithAnchors }}
+                dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(htmlWithAnchors) }}
               />
             </div>
 

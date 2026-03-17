@@ -32,8 +32,7 @@ import {
 
 @ApiTags('TFCI - Seleção de Pares')
 @ApiBearerAuth()
-// TODO: Reativar guards após corrigir autenticação
-// @UseGuards(SupabaseAuthGuard, OrgGuard)
+@UseGuards(SupabaseAuthGuard, OrgGuard)
 @Controller('tfci/cycles/:cycleId/peer-selection')
 export class PeerSelectionController {
   constructor(private readonly peerSelectionService: PeerSelectionService) {}
