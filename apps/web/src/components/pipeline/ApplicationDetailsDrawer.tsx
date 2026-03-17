@@ -492,13 +492,13 @@ export function ApplicationDetailsDrawer({ application, isOpen, onClose, onStatu
                           <Icon className={`h-3.5 w-3.5 shrink-0 ${isCurrent ? '' : 'text-[#94A3B8]'}`} />
                           <span className="text-sm flex-1">{stage.label}</span>
                           {!isCurrent && emailStatus[stage.id] === 'sent' && (
-                            <MailCheck className="h-3.5 w-3.5 text-emerald-500 shrink-0" title="Email enviado" />
+                            <MailCheck className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
                           )}
                           {!isCurrent && emailStatus[stage.id] === 'sending' && (
                             <Loader2 className="h-3.5 w-3.5 text-[#94A3B8] animate-spin shrink-0" />
                           )}
                           {!isCurrent && emailStatus[stage.id] === 'error' && (
-                            <MailX className="h-3.5 w-3.5 text-red-400 shrink-0" title="Falha ao enviar email" />
+                            <MailX className="h-3.5 w-3.5 text-red-400 shrink-0" />
                           )}
                           {!isCurrent && (!emailStatus[stage.id] || emailStatus[stage.id] === 'idle') && (
                             <ChevronRight className="h-3.5 w-3.5 text-[#94A3B8] shrink-0" />
