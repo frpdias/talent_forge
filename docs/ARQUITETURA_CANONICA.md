@@ -1,6 +1,6 @@
 # Arquitetura Canônica — TalentForge
 
-**Última atualização**: 2026-03-17 | **Score de Conformidade**: ✅ 100% (Sprint 48 — Job Board Global /vagas) | **Sprints planejados**: Sprint 41 (AI Assistant) + Sprint 44 (Gate Recrutamento)
+**Última atualização**: 2026-03-17 | **Score de Conformidade**: ✅ 100% (Sprint 49 — Fix Middleware /vagas + SMTP Recovery) | **Sprints planejados**: Sprint 41 (AI Assistant) + Sprint 44 (Gate Recrutamento)
 
 ## 📜 FONTE DA VERDADE — PRINCÍPIO FUNDAMENTAL
 
@@ -3119,7 +3119,7 @@ O dashboard admin inclui um **painel de monitoramento em tempo real** com atuali
 - ✅ **Supabase Auth + JWT**: Tokens seguros com validação de assinatura
 - ✅ **RLS (Row Level Security)**: Habilitado em todas as tabelas críticas
 - ✅ **Guards NestJS**: `SupabaseAuthGuard` e `OrgGuard` para proteção de rotas
-- ✅ **Middleware Next.js**: Proteção de rotas frontend por `user_type`
+- ✅ **Middleware Next.js**: Proteção de rotas frontend por `user_type`; **rotas públicas** (sem autenticação): `/`, `/login`, `/register`, `/auth/*`, `/assessment*`, `/jobs/*`, `/invite*`, `/vagas*`
 - ✅ **Multi-tenant**: Isolamento via `org_id` com verificação de membership
 
 #### Banco de Dados
@@ -3556,7 +3556,7 @@ Todos os endpoints da API foram validados localmente com sucesso:
      - Supabase Auth: reset de senha, confirmação de cadastro, magic link, troca de e-mail
    - Templates Supabase Auth versionados em `supabase/email-templates/`
    - Endpoint de teste: `POST /admin/settings/email/test`
-   - **Env vars obrigatórias** (Vercel + Supabase SMTP Settings):
+   - **Env vars obrigatórias** (Vercel **production + preview + development** + Supabase SMTP Settings):
      - `BREVO_SMTP_HOST=smtp-relay.brevo.com`
      - `BREVO_SMTP_PORT=587`
      - `BREVO_SMTP_USER=<login-brevo>`
@@ -3564,6 +3564,7 @@ Todos os endpoints da API foram validados localmente com sucesso:
      - `BREVO_SENDER_NAME=TalentForge`
      - `BREVO_SENDER_EMAIL=noreply@talentforge.com.br`
      - `APP_URL=https://web-eight-rho-84.vercel.app`
+   - ⚠️ **Se o Vercel resetar as vars**, executar: `bash scripts/restore-vercel-env.sh` (lê de `apps/api/.env`)
 
 **Design System:**
 - Container principal: `bg-white`, bordas `border-[#E5E5DC]`
@@ -7461,6 +7462,13 @@ Adicionar card "Módulo de Recrutamento" seguindo o mesmo padrão visual do card
 - ✅ **Botão PDF**: "Baixar Relatório Completo (PDF)" exibido no bloco `currentReview` da aba Revisão — reutiliza ícone `Download` do Lucide
 - ✅ **Rodapé dinâmico**: `drawAllFooters()` percorre todas as páginas e aplica paginação "X / Y" + branding TalentForge
 - ✅ **Commits**: `e296a14` → `origin/main`
+
+### v5.18 (2026-03-17)
+- ✅ **Score de Conformidade**: 100% mantido (Sprint 49 — Fix Middleware /vagas + SMTP Recovery)
+- ✅ **Fix middleware `/vagas` como rota pública**: `/vagas` não estava na lista `publicRoutes` do `apps/web/src/middleware.ts` — rota redirecionava para `/login` em produção; adicionado `'/vagas'` no array e `pathname.startsWith('/vagas')` no guard de rota; cobre sub-rotas futuras (ex: `/vagas/[id]`). Commit `dcd9973`
+- ✅ **Restauração vars SMTP Brevo no Vercel**: todas as 6 variáveis (`BREVO_SMTP_HOST`, `BREVO_SMTP_PORT`, `BREVO_SMTP_USER`, `BREVO_SMTP_PASS`, `BREVO_SENDER_EMAIL`, `BREVO_SENDER_NAME`) haviam sido removidas do Vercel — restauradas nos 3 ambientes (production + preview + development)
+- ✅ **Script `scripts/restore-vercel-env.sh`**: script executável que lê credenciais de `apps/api/.env` (não commitado) e reaplicam todas as vars SMTP Brevo em 1 comando; sem secrets hardcoded; aceito pelo GitHub secret scanning. Commit `6a37fe0`
+- ✅ **Commits**: `dcd9973` (middleware) → `39a3ea3` (redeploy SMTP) → `6a37fe0` (script restauração) → `origin/main`
 
 ### v5.17 (2026-03-17)
 - ✅ **Score de Conformidade**: 100% mantido (Sprint 48 — Job Board Global /vagas)
