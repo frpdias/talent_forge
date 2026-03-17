@@ -1,6 +1,6 @@
 # Arquitetura Canônica — TalentForge
 
-**Última atualização**: 2026-03-16 | **Score de Conformidade**: ✅ 100% (Sprint 47 — Fix PI PDF) | **Sprints planejados**: Sprint 41 (AI Assistant) + Sprint 44 (Gate Recrutamento)
+**Última atualização**: 2026-03-17 | **Score de Conformidade**: ✅ 100% (Sprint 48 — Job Board Global /vagas) | **Sprints planejados**: Sprint 41 (AI Assistant) + Sprint 44 (Gate Recrutamento)
 
 ## 📜 FONTE DA VERDADE — PRINCÍPIO FUNDAMENTAL
 
@@ -6067,7 +6067,7 @@ Somente arquivos existentes são recarregados automaticamente; novos arquivos de
 
 | # | Problema | Impacto |
 |---|---------|--------|
-| 1 | Sem página pública de vagas (career page) | Alto |
+| 1 | ~~Sem página pública de vagas (career page)~~ **✅ RESOLVIDO** — `/vagas` global job board (Sprint 48) | Alto |
 | 2 | Pipeline sem filtro por vaga | Alto |
 | 3 | Sem paginação em candidatos/vagas | Alto |
 | 4 | Reports ainda usa NestJS instável | Médio |
@@ -6076,8 +6076,10 @@ Somente arquivos existentes são recarregados automaticamente; novos arquivos de
 
 ### Roadmap aprovado
 
-#### Sprint A — Career Page Pública
-**Rota:** `(public)/vagas/page.tsx`, `(public)/empresas/[slug]/page.tsx`, `(public)/empresas/[slug]/vagas/[jobId]/page.tsx`
+#### Sprint A — Career Page Pública ✅ ENTREGUE
+**Rota:** `(public)/vagas/page.tsx` (job board global, Sprint 48), `(public)/jobs/[orgSlug]/page.tsx` (career page por org), `(public)/jobs/[orgSlug]/[jobId]/page.tsx` (detalhe + candidatura)
+
+**Job Board Global `/vagas`** (Sprint 48 — 2026-03-17): RPC `get_all_public_jobs()` SECURITY DEFINER, 4 filtros (contrato/modalidade/senioridade/setor), redesign superior à Sólides Vagas, busca por cargo + localidade. Commit `75c3d8e`
 
 **Campos novos em `jobs`:**
 ```sql
@@ -7459,6 +7461,16 @@ Adicionar card "Módulo de Recrutamento" seguindo o mesmo padrão visual do card
 - ✅ **Botão PDF**: "Baixar Relatório Completo (PDF)" exibido no bloco `currentReview` da aba Revisão — reutiliza ícone `Download` do Lucide
 - ✅ **Rodapé dinâmico**: `drawAllFooters()` percorre todas as páginas e aplica paginação "X / Y" + branding TalentForge
 - ✅ **Commits**: `e296a14` → `origin/main`
+
+### v5.17 (2026-03-17)
+- ✅ **Score de Conformidade**: 100% mantido (Sprint 48 — Job Board Global /vagas)
+- ✅ **`/vagas` — Job Board Global público**: nova rota `apps/web/src/app/(public)/vagas/page.tsx` — agrega todas as vagas abertas de todas as organizações sem necessidade de autenticação
+- ✅ **RPC `get_all_public_jobs()`**: função SQL STABLE SECURITY DEFINER que retorna `SETOF v_public_jobs` ordenado por `created_at DESC`; GRANT para `anon` e `authenticated`; migration `supabase/migrations/20260317_get_all_public_jobs.sql`
+- ✅ **Design superior à Sólides Vagas** (engenharia reversa aplicada): hero com busca dupla (cargo + local), sidebar de filtros sticky (contrato/modalidade/nível/setor), barra de atalhos por área com ícones (scroll horizontal), cards com badge "NOVA", OrgAvatar, barra gradiente animada no hover, drawer mobile bottom-sheet, CTA de recrutador na sidebar, stats ao vivo (vagas/empresas/remotas)
+- ✅ **4 filtros**: tipo de contrato (CLT/PJ/Estágio/Meio período), modalidade (Presencial/Híbrido/Remoto), senioridade (Intern→Manager), setor (dinâmico da base)
+- ✅ **Busca por localidade**: campo `locationSearch` separado filtra `job.location`
+- ✅ **Cores canônicas aplicadas**: `#141042` (primary), `#10B981` (green), `#F97316` (orange/FORGE), `#1F4ED8` (blue accent)
+- ✅ **Commits**: `fbea7ae` (código + migration) → `75c3d8e` (redesign v2) → `origin/main`
 
 ### v5.16 (2026-03-16)
 - ✅ **Score de Conformidade**: 100% mantido (Sprint 47 — Fix PI PDF)
