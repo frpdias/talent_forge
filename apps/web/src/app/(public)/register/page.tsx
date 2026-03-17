@@ -368,6 +368,7 @@ function RegisterContent() {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
+                  autoComplete="email"
                   className="w-full pl-10 sm:pl-12 pr-4 py-3 sm:py-3.5 bg-white border border-[#E5E5DC] rounded-xl text-sm sm:text-base text-[#141042] placeholder-[#999] focus:outline-none focus:border-[#141042] focus:ring-2 focus:ring-[#141042]/10 transition-all"
                   placeholder="seu@email.com"
                   required
@@ -383,6 +384,7 @@ function RegisterContent() {
                   type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
+                  autoComplete="new-password"
                   className="w-full pl-10 sm:pl-12 pr-10 sm:pr-12 py-3 sm:py-3.5 bg-white border border-[#E5E5DC] rounded-xl text-sm sm:text-base text-[#141042] placeholder-[#999] focus:outline-none focus:border-[#141042] focus:ring-2 focus:ring-[#141042]/10 transition-all"
                   placeholder="Mínimo 8 caracteres"
                   minLength={8}
