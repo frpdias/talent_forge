@@ -836,7 +836,7 @@ function VagasContent() {
             {/* Texto */}
             <div className="text-center lg:text-left lg:flex-1 mb-8 lg:mb-0">
               <h1 className="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-extrabold text-white leading-[1.1] mb-3 sm:mb-4 tracking-tight">
-                Encontre a vaga ideal
+                <span className="text-white">Encontre a vaga ideal</span>
                 <br />
                 <span className="text-[#F97316]">para o seu perfil</span>
               </h1>
