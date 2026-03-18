@@ -1026,34 +1026,34 @@ function VagasContent() {
 
             {/* Search box — desktop: coluna direita */}
             <div className="lg:flex-1 lg:max-w-xl">
-              <div className="bg-white rounded-2xl shadow-2xl p-2.5 flex flex-col gap-2 border border-white/10">
-                <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-gray-50 border border-transparent focus-within:border-[#1F4ED8]/40 focus-within:bg-white transition-all">
-                  <Search className="h-4 w-4 text-gray-400 shrink-0" />
+              <div className="bg-white/15 backdrop-blur-md rounded-2xl shadow-2xl p-2.5 flex flex-col gap-2 border border-white/20">
+                <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-white/20 border border-transparent focus-within:border-white/50 focus-within:bg-white/30 transition-all">
+                  <Search className="h-4 w-4 text-white/70 shrink-0" />
                   <input
                     type="text"
                     placeholder="Cargo, empresa ou área..."
                     value={search}
                     onChange={e => setSearch(e.target.value)}
-                    className="flex-1 bg-transparent text-base text-gray-800 placeholder:text-gray-400 outline-none min-w-0"
+                    className="flex-1 bg-transparent text-base text-white placeholder:text-white/60 outline-none min-w-0"
                   />
                   {search && (
                     <button onClick={() => setSearch('')}>
-                      <X className="h-3.5 w-3.5 text-gray-400 hover:text-gray-600" />
+                      <X className="h-3.5 w-3.5 text-white/60 hover:text-white" />
                     </button>
                   )}
                 </div>
-                <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-gray-50 border border-transparent focus-within:border-[#1F4ED8]/40 focus-within:bg-white transition-all">
-                  <MapPin className="h-4 w-4 text-gray-400 shrink-0" />
+                <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-white/20 border border-transparent focus-within:border-white/50 focus-within:bg-white/30 transition-all">
+                  <MapPin className="h-4 w-4 text-white/70 shrink-0" />
                   <input
                     type="text"
                     placeholder="Cidade ou estado..."
                     value={locationSearch}
                     onChange={e => setLocationSearch(e.target.value)}
-                    className="flex-1 bg-transparent text-base text-gray-800 placeholder:text-gray-400 outline-none min-w-0"
+                    className="flex-1 bg-transparent text-base text-white placeholder:text-white/60 outline-none min-w-0"
                   />
                   {locationSearch && (
                     <button onClick={() => setLocationSearch('')}>
-                      <X className="h-3.5 w-3.5 text-gray-400 hover:text-gray-600" />
+                      <X className="h-3.5 w-3.5 text-white/60 hover:text-white" />
                     </button>
                   )}
                 </div>
