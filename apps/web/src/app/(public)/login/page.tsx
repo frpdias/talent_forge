@@ -130,10 +130,10 @@ function LoginContent() {
           </Link>
           
           <div className="max-w-md">
-            <h1 className="text-4xl font-semibold text-white leading-tight mb-6">
+            <h1 className="font-semibold leading-tight mb-6" style={{ fontSize: '3.375rem', color: '#ffffff' }}>
               Bem-vindo de volta
             </h1>
-            <p className="text-white/60 text-lg leading-relaxed">
+            <p className="leading-relaxed" style={{ fontSize: '1.6875rem', color: '#ffffff' }}>
               Acesse sua conta para continuar gerenciando talentos e processos seletivos com inteligência.
             </p>
             
@@ -145,7 +145,7 @@ function LoginContent() {
                   </div>
                 ))}
               </div>
-              <p className="text-white/50 text-sm">
+              <p style={{ fontSize: '1.3125rem', color: '#ffffff' }}>
                 +500 empresas confiam
               </p>
             </div>

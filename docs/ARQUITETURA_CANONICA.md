@@ -1,6 +1,6 @@
 # Arquitetura Canônica — TalentForge
 
-**Última atualização**: 2026-03-18 | **Score de Conformidade**: ✅ 100% (Sprint 50 — SMTP Produção Restaurado + Vercel Multi-Conta Resolvido) | **Sprints planejados**: Sprint 41 (AI Assistant) + Sprint 44 (Gate Recrutamento)
+**Última atualização**: 2026-03-18 | **Score de Conformidade**: ✅ 100% (Sprint 52 — Agenda Candidato → Modal + Notificação Realtime) | **Sprints planejados**: Sprint 41 (AI Assistant) + Sprint 44 (Gate Recrutamento)
 
 ## 📜 FONTE DA VERDADE — PRINCÍPIO FUNDAMENTAL
 
@@ -8315,4 +8315,146 @@ O `ReportsService.getDashboard()` usa `applications.source` com fallback para `c
 | **Sprint 43** | **2026-03-12** | **Landing Polish + Avatar Candidato — título hero com `clamp()`, badge MÓDULO PREMIUM ampliado, avatar upload com modal de recorte (`react-easy-crop`), bucket `candidate-avatars`, migration `avatar_url`** | ✅ |
 | **Hotfix** | **2026-03-13** | **Botão Analytics Dashboard — removida guarda `isLocalhost` em `(recruiter)/dashboard/page.tsx`; botão "Analytics" e `AnalyticsPanel` (recharts) agora visíveis em produção para todos os usuários** | ✅ |
 | **Sprint 44** | **PLANEJADO** | **Gate de ativação do módulo Recrutamento — tabela `recruitment_module_activations`, `GET /api/v1/recruitment/status`, endpoints admin, guard no `dashboard/layout.tsx`, card no Admin Panel** | 🔲 |
+| **Sprint 49** | **2026-03-17** | **Middleware `/vagas` + SMTP recovery — configuração vars Supabase + APP_URL no Vercel, script `restore-vercel-env.sh`** | ✅ |
+| **Sprint 50** | **2026-03-18** | **Tabela `job_alerts` + `/api/alerts/subscribe` — alertas de e-mail por filtro, RLS público INSERT + próprio SELECT/UPDATE, migration `20260318_job_alerts.sql`** | ✅ |
+| **Sprint 51** | **2026-03-18** | **Portal de Vagas World-Class — 4 épicos: rewrite `/vagas` (URL state, skeleton, sort, salary filter, preview panel, share, badges), category SSR pages (14 slugs), JobPosting schema.org, sitemap dinâmico** | ⚠️ Deployado — confirmar visual após hard refresh |
 ```
+
+---
+
+## 19) Portal de Vagas World-Class — Épicos 1–4 (Sprint 51, 2026-03-18)
+
+> ⚠️ **Status de produção**: Código deployado no build `aSeFTWwb3cxceMxpF1uKX` (Vercel, alias `talentforge.com.br`). Bundle JS confirmado via curl contendo os novos símbolos (`Alerta`, `filterSalary`, `QUENTE`, `Maior sal`). A aparência pode parecer inalterada até fazer **hard refresh** no browser (`Cmd+Shift+R` / `Ctrl+Shift+R`) ou abrir em aba anônima — causa raiz: cache local do browser servindo bundles antigos.
+
+### Épico 1 — UX Avançada (sem DB)
+
+**Arquivo**: `apps/web/src/app/(public)/vagas/page.tsx` (rewrite completo, ~1140 linhas)
+
+Mudanças principais:
+- **URL State Sync**: todos os filtros (busca, localização, modalidade, tipo, área, senioridade, salary bracket, sort) persistem em query params via `useSearchParams` + `router.replace` com debounce 300ms
+- **Skeleton Loading**: `SkeletonCard` com `animate-pulse` substitui spinner de carregamento
+- **Sort**: Mais recente / Maior salário / Menor salário — ordenação client-side via `parseSalaryMid()`
+- **Salary Bracket Filter**: 5 faixas salariais (`SALARY_BRACKETS`) — parse de string `"R$ 5.000 – R$ 8.000"` para mid-point numérico
+- **Badges dinâmicos**: `🔥 QUENTE` (postado há < 1 dia via `isHot()`), prazo (`daysUntilDeadline()`), salário, modalidade
+- **Share Buttons**: WhatsApp + copiar link em cada card e no painel de preview
+- **Suspense wrapper**: `VagasContent` (que usa `useSearchParams`) envolto em `<Suspense>` — exigência do Next.js 15 para não de-optar SSR
+
+### Épico 2 — Job Preview Panel (LinkedIn-style)
+
+- **Desktop**: painel lateral sticky `max-w-[520px]` que abre ao clicar num card; URL atualiza `?job=[id]`; sidebar de filtros se oculta quando painel está aberto; lista estreita para `max-w-[380px]`
+- **Mobile**: bottom sheet `92vh` fixo com `overflow-y-auto`
+- **AlertModal**: modal de inscrição de alertas com campo de e-mail; chama `/api/alerts/subscribe` e cai no `localStorage` como fallback
+
+**Novo layout**: `apps/web/src/app/(public)/vagas/layout.tsx` (Server Component)
+- Metadata completo: title, description, keywords, OG, Twitter Card, canonical
+- `robots: { index: true, follow: true }`
+
+### Épico 3 — Job Alerts
+
+**Tabela**: `job_alerts` (migration `supabase/migrations/20260318_job_alerts.sql`)
+```sql
+CREATE TABLE job_alerts (
+  id            UUID        DEFAULT gen_random_uuid() PRIMARY KEY,
+  email         TEXT        NOT NULL,
+  search_params JSONB       NOT NULL DEFAULT '{}'::jsonb,
+  is_active     BOOLEAN     NOT NULL DEFAULT TRUE,
+  created_at    TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+-- Índices: email, is_active (partial WHERE is_active=TRUE), created_at DESC
+-- RLS: INSERT anon+authenticated | SELECT/UPDATE own (auth.jwt()->>'email')
+```
+
+**API Route**: `apps/web/src/app/api/alerts/subscribe/route.ts`
+- `POST` — valida email, usa `SUPABASE_SERVICE_ROLE_KEY` (bypassa RLS)
+- Deduplicação: verifica alerta ativo existente com mesmo email+params
+- Retorna `{ ok: true }` para novo e existente (anti-enumeração)
+
+### Épico 4 — SEO World-Class
+
+#### Category SSR Pages
+**Arquivo**: `apps/web/src/app/(public)/vagas/[category]/page.tsx`
+- 14 slugs pré-renderizados via `generateStaticParams`: `tecnologia`, `administrativo`, `saude`, `marketing`, `educacao`, `vendas`, `rh`, `engenharia`, `varejo`, `ti`, `juridico`, `imoveis`, `remoto`, `hibrido`
+- `export const revalidate = 3600` (ISR 1h)
+- `generateMetadata` busca count real do Supabase
+- Schema.org `ItemList` + até 20 `JobPosting` em JSON-LD
+- Breadcrumb nav + cross-links entre categorias
+
+#### JobPosting Schema.org por vaga
+**Arquivo**: `apps/web/src/app/(public)/jobs/[orgSlug]/[jobId]/layout.tsx` (Server Component)
+- `generateMetadata`: title `${job.title} — ${job.org_name} | TalentForge`, OG, Twitter Card, canonical
+- JSON-LD `JobPosting`: title, description (HTML stripped), datePosted, validThrough, hiringOrganization (com logo), jobLocation, employmentType, baseSalary (BRL), TELECOMMUTE para remoto, directApply: true
+- Habilita **Google for Jobs** rich results
+
+#### Sitemap Dinâmico
+**Arquivo**: `apps/web/src/app/sitemap.ts`
+- `export const revalidate = 3600`
+- Entradas: home (1.0 / daily), `/vagas` (0.95 / hourly), 14 categories (0.7 / daily), career pages por org (0.6 / daily), vagas individuais (0.8 / weekly, cap 5000)
+- Disponível em `https://talentforge.com.br/sitemap.xml`
+- **Próximo passo recomendado**: submeter manualmente no Google Search Console para indexação acelerada
+
+### Regras Canônicas do Portal de Vagas
+1. **Filtros em URL**: NUNCA guardar estado de filtros só em `useState` — sempre sincronizar com query params
+2. **Supabase em Server Components**: usar `createClient` de `@supabase/supabase-js` diretamente (não `@supabase/ssr`) para RPCs públicos que não precisam de cookies
+3. **`get_all_public_jobs()`**: RPC SECURITY DEFINER — usa `v_public_jobs` view; não alterar sem migration + testes RLS
+4. **`job_alerts` deduplicação**: sempre verificar duplicata antes de INSERT (mesma email + search_params + is_active=true)
+5. **JSON-LD placement**: `<script type="application/ld+json">` pode ficar no body do Server Component — não precisa estar no `<head>` (válido pelo Google)
+6. **Sitemap cap**: 5000 vagas máximo por performance — ajustar se volume crescer significativamente
+
+---
+
+## 20) Portal Candidato — Agenda Migrada para Modal + Notificação Realtime (Sprint 52, 2026-03-18)
+
+### Mudanças Implementadas
+
+#### 1. Agenda removida do menu de navegação
+- **Arquivo**: `apps/web/src/app/(candidate)/candidate/layout.tsx`
+- Item `{ href: '/candidate/agenda', label: 'Agenda', icon: Calendar }` removido de `navItems`
+- Afeta sidebar desktop + bottom nav mobile — 5 itens no lugar de 6
+
+#### 2. Página `/candidate/agenda` → redirect
+- **Arquivo**: `apps/web/src/app/(candidate)/candidate/agenda/page.tsx`
+- Reescrita para `redirect('/candidate')` — acesso direto à URL redireciona para home do candidato
+
+#### 3. Widget "Agenda do recrutador" na sidebar agora é o ponto de entrada
+- Card clicável por inteiro (`onClick={openAgendaModal}`) com hover visual
+- Ao clicar, abre modal com abas **Próximas / Realizadas** (mesmo design da antiga página)
+
+#### 4. Modal de Entrevistas com abas
+- Estado `agendaTab: 'upcoming' | 'past'` controla qual lista é exibida
+- Header com ícone `Calendar` no estilo do Design System
+- Filtro automático: `upcoming` = `scheduled_at >= now || status === 'scheduled'`; `past` = inverso
+
+#### 5. Notificação de entrevistas não vistas
+- **Mecanismo**: `localStorage['tf_seen_interview_ids']` — array de IDs já vistos
+- **Badge**: contador vermelho com `animate-ping` no ícone do calendário quando há não vistas
+- **Texto do subtítulo**: muda para `"X nova(s) entrevista(s)!"` em estado de alerta
+- **Ao abrir o modal** (`openAgendaModal()`): todos os IDs futuros são marcados como vistos
+- **Supabase Realtime**: subscription na tabela `interviews` — quando recrutador agenda, `loadSidebarInterviews()` re-executa automaticamente, badge aparece em tempo real sem refresh
+
+#### 6. Logo decorativa da sidebar — sem interferir em cliques
+- `pointer-events-none` + `select-none` + `draggable={false}`
+- Opacidade reduzida de 50% → 20%
+
+#### 7. Página de login — textos brancos e maiores
+- **Arquivo**: `apps/web/src/app/(public)/login/page.tsx`
+- Tamanhos via `style` inline (Tailwind v4 não compila classes arbitrárias não-escaneadas):
+  - Título "Bem-vindo de volta": 36px → **54px** (`3.375rem`), `color: '#ffffff'`
+  - Subtítulo: 18px → **27px** (`1.6875rem`), `color: '#ffffff'`
+  - "+500 empresas confiam": 14px → **21px** (`1.3125rem`), `color: '#ffffff'`
+
+#### 8. Rodapé `/vagas` — avatar removido
+- **Arquivo**: `apps/web/src/app/(public)/vagas/page.tsx`
+- Removido o círculo verde com ícone `<Zap>` do rodapé — permanece apenas o texto "TALENT FORGE"
+
+### Histórico Sprint (adições)
+
+| Sprint | Data | Descrição | Status |
+|--------|------|-----------|--------|
+| **Sprint 52** | **2026-03-18** | **Agenda candidato movida para modal com badge realtime; logo sidebar `pointer-events-none`; login textos brancos +50%; avatar rodapé /vagas removido** | ✅ |
+
+### Regras Canônicas — Portal Candidato
+
+1. **Agenda do candidato**: entrada exclusiva via widget "Agenda do recrutador" na sidebar → modal. Não criar nova página de rotas para entrevistas.
+2. **`tf_seen_interview_ids`**: chave do `localStorage` para rastrear entrevistas vistas — não alterar o nome sem migrar dados existentes dos usuários.
+3. **Realtime candidates**: usar channel `'candidate-interviews-rt'` para escutar mudanças em `interviews` — sempre fazer `removeChannel` no cleanup do `useEffect`.
+4. **Tailwind v4 + style inline**: quando classes arbitrárias não funcionarem em produção (problema de scanning CSS-first), usar `style={{ prop: value }}` inline como solução canônica.

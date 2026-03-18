@@ -1536,9 +1536,6 @@ function VagasContent() {
       <footer className="bg-[#141042] mt-10 py-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2.5">
-            <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-[#10B981] to-[#059669] flex items-center justify-center">
-              <Zap className="h-4 w-4 text-white" />
-            </div>
             <div className="flex items-baseline gap-0.5">
               <span className="text-white font-semibold text-lg tracking-tight">TALENT</span>
               <span className="text-[#F97316] font-bold text-lg tracking-wider">FORGE</span>

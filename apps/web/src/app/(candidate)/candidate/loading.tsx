@@ -1,3 +1,4 @@
+
 export default function CandidateAreaLoading() {
   return (
     <div className="flex items-center justify-center min-h-[60vh]">

@@ -30,7 +30,6 @@ const navItems: NavItem[] = [
   { href: '/candidate', label: 'Início', icon: Home },
   { href: '/candidate/jobs', label: 'Buscar Vagas', icon: Briefcase },
   { href: '/candidate/applications', label: 'Candidaturas', icon: FileText },
-  { href: '/candidate/agenda', label: 'Agenda', icon: Calendar },
   { href: '/candidate/saved', label: 'Salvas', icon: Bookmark },
   { href: '/candidate/profile', label: 'Perfil', icon: User },
 ];
@@ -63,11 +62,29 @@ export default function CandidateLayout({ children }: { children: React.ReactNod
   const bellRef = useRef<HTMLDivElement>(null);
   const [sidebarInterviews, setSidebarInterviews] = useState<any[]>([]);
   const [agendaModalOpen, setAgendaModalOpen] = useState(false);
+  const [agendaTab, setAgendaTab] = useState<'upcoming' | 'past'>('upcoming');
   const [allInterviews, setAllInterviews] = useState<any[]>([]);
+  const [unseenInterviewCount, setUnseenInterviewCount] = useState(0);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
     router.push('/login');
+  };
+
+  const openAgendaModal = () => {
+    // Marca todas as entrevistas futuras como vistas
+    try {
+      const now = new Date();
+      const upcomingIds = allInterviews
+        .filter((iv: any) => new Date(iv.scheduled_at) >= now)
+        .map((iv: any) => iv.id);
+      const seenRaw = localStorage.getItem('tf_seen_interview_ids');
+      const seenIds: string[] = seenRaw ? JSON.parse(seenRaw) : [];
+      const merged = Array.from(new Set([...seenIds, ...upcomingIds]));
+      localStorage.setItem('tf_seen_interview_ids', JSON.stringify(merged));
+    } catch { /* ignorar */ }
+    setUnseenInterviewCount(0);
+    setAgendaModalOpen(true);
   };
 
   useEffect(() => {
@@ -187,8 +204,33 @@ export default function CandidateLayout({ children }: { children: React.ReactNod
       const now = new Date();
       const upcoming = all.filter((iv: any) => new Date(iv.scheduled_at) >= now);
       setSidebarInterviews(upcoming.length > 0 ? upcoming.slice(0, 3) : all.slice(-3).reverse());
+      // Calcula entrevistas futuras não vistas (usando localStorage)
+      try {
+        const seenRaw = localStorage.getItem('tf_seen_interview_ids');
+        const seenIds: string[] = seenRaw ? JSON.parse(seenRaw) : [];
+        const unseen = upcoming.filter((iv: any) => !seenIds.includes(iv.id));
+        setUnseenInterviewCount(unseen.length);
+      } catch {
+        setUnseenInterviewCount(0);
+      }
     };
     loadSidebarInterviews();
+
+    // Realtime: re-carrega quando o recrutador cria/atualiza entrevistas
+    let channel: ReturnType<typeof supabase.channel> | null = null;
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (!user) return;
+      channel = supabase
+        .channel('candidate-interviews-rt')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'interviews' }, () => {
+          loadSidebarInterviews();
+        })
+        .subscribe();
+    });
+
+    return () => {
+      if (channel) supabase.removeChannel(channel);
+    };
   }, [supabase]);
 
   // Fechar dropdown ao clicar fora
@@ -443,24 +485,41 @@ export default function CandidateLayout({ children }: { children: React.ReactNod
         </div>
 
         <div className="px-3 sm:px-4 mt-4">
-          <div className="rounded-2xl border border-[#E5E5DC] bg-[#FAFAF8] p-4">
+          <div
+            className={`rounded-2xl border p-4 cursor-pointer transition-all ${
+              unseenInterviewCount > 0
+                ? 'border-[#141042]/40 bg-[#141042]/5 shadow-sm ring-1 ring-[#141042]/10'
+                : 'border-[#E5E5DC] bg-[#FAFAF8] hover:border-[#141042]/30 hover:shadow-sm'
+            }`}
+            onClick={openAgendaModal}
+          >
             <div className="flex items-center justify-between gap-2 text-[#141042]">
               <div className="flex items-center gap-2">
-                <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-white">
+                <div className="relative flex h-8 w-8 items-center justify-center rounded-xl bg-white">
                   <Calendar className="w-4 h-4" />
+                  {unseenInterviewCount > 0 && (
+                    <>
+                      <span className="absolute -top-1 -right-1 min-w-4 h-4 bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center px-1 leading-none">
+                        {unseenInterviewCount}
+                      </span>
+                      <span className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-red-400 animate-ping opacity-60" />
+                    </>
+                  )}
                 </div>
                 <div>
                   <p className="text-sm font-semibold">Agenda do recrutador</p>
-                  <p className="text-[11px] text-[#999]">
-                    {sidebarInterviews.length > 0
-                      ? `${sidebarInterviews.length} próxima${sidebarInterviews.length > 1 ? 's' : ''}`
-                      : 'Nenhuma agendada'}
+                  <p className={`text-[11px] ${unseenInterviewCount > 0 ? 'text-[#141042] font-medium' : 'text-[#999]'}`}>
+                    {unseenInterviewCount > 0
+                      ? `${unseenInterviewCount} nova${unseenInterviewCount > 1 ? 's' : ''} entrevista${unseenInterviewCount > 1 ? 's' : ''}!`
+                      : sidebarInterviews.length > 0
+                        ? `${sidebarInterviews.length} próxima${sidebarInterviews.length > 1 ? 's' : ''}`
+                        : 'Nenhuma agendada'}
                   </p>
                 </div>
               </div>
               <button
                 type="button"
-                onClick={() => setAgendaModalOpen(true)}
+                onClick={openAgendaModal}
                 className="text-[11px] text-[#10B981] hover:underline whitespace-nowrap cursor-pointer"
               >
                 Ver todas
@@ -493,11 +552,12 @@ export default function CandidateLayout({ children }: { children: React.ReactNod
         </div>
 
         <div className="absolute bottom-4 left-3 right-3 sm:left-4 sm:right-4">
-          <div className="mb-3 flex justify-center">
+          <div className="mb-3 flex justify-center pointer-events-none select-none">
             <img
               src="https://fjudsjzfnysaztcwlwgm.supabase.co/storage/v1/object/public/LOGOS/LOGO4.png"
               alt="Talent Forge"
-              className="h-16 w-auto opacity-50"
+              className="h-16 w-auto opacity-20"
+              draggable={false}
             />
           </div>
           <button
@@ -866,79 +926,111 @@ export default function CandidateLayout({ children }: { children: React.ReactNod
       )}
 
       {/* Modal — Todas as Entrevistas */}
-      {agendaModalOpen && (
-        <div className="fixed inset-0 z-200 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/50" onClick={() => setAgendaModalOpen(false)} />
-          <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[80vh] flex flex-col">
-            {/* Header */}
-            <div className="flex items-center justify-between px-5 py-4 border-b border-[#E5E5DC]">
-              <div className="flex items-center gap-2">
-                <Calendar className="w-5 h-5 text-[#141042]" />
-                <h2 className="text-base font-semibold text-[#141042]">Agenda do recrutador</h2>
-              </div>
-              <button
-                type="button"
-                onClick={() => setAgendaModalOpen(false)}
-                className="p-1.5 rounded-lg hover:bg-[#F5F5F0] text-[#666666]"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-            {/* Body */}
-            <div className="overflow-y-auto flex-1 px-5 py-4 space-y-3">
-              {allInterviews.length === 0 ? (
-                <div className="text-center py-10">
-                  <Calendar className="w-10 h-10 text-[#E5E5DC] mx-auto mb-3" />
-                  <p className="text-sm text-[#999]">Nenhuma entrevista agendada ainda.</p>
-                  <p className="text-xs text-[#BBB] mt-1">Quando o recrutador agendar, você verá aqui.</p>
+      {agendaModalOpen && (() => {
+        const now = new Date();
+        const upcomingIvs = allInterviews.filter((iv: any) => new Date(iv.scheduled_at) >= now || iv.status === 'scheduled');
+        const pastIvs = allInterviews.filter((iv: any) => new Date(iv.scheduled_at) < now && iv.status !== 'scheduled');
+        const displayed = agendaTab === 'upcoming' ? upcomingIvs : pastIvs;
+        return (
+          <div className="fixed inset-0 z-200 flex items-center justify-center p-4">
+            <div className="absolute inset-0 bg-black/50" onClick={() => setAgendaModalOpen(false)} />
+            <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[85vh] flex flex-col">
+              {/* Header */}
+              <div className="flex items-center justify-between px-5 py-4 border-b border-[#E5E5DC]">
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-xl bg-[#141042] flex items-center justify-center">
+                    <Calendar className="w-5 h-5 text-white" />
+                  </div>
+                  <div>
+                    <h2 className="text-base font-semibold text-[#141042]">Minhas Entrevistas</h2>
+                    <p className="text-xs text-[#666666]">Agendadas pelo recrutador</p>
+                  </div>
                 </div>
-              ) : (
-                allInterviews.map((iv: any) => {
-                  const dt = new Date(iv.scheduled_at);
-                  const isPast = dt < new Date();
-                  const dateStr = dt.toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' });
-                  const timeStr = dt.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-                  const jobTitle = iv.jobs?.title ?? '';
-                  return (
-                    <div key={iv.id} className={`rounded-xl border p-4 ${isPast ? 'border-[#E5E5DC] bg-[#FAFAF8] opacity-70' : 'border-[#141042]/10 bg-white shadow-sm'}`}>
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-semibold text-[#141042] truncate">{iv.title || jobTitle || 'Entrevista'}</p>
-                          {jobTitle && iv.title && (
-                            <p className="text-xs text-[#666666] truncate">{jobTitle}</p>
-                          )}
-                          <p className="text-xs text-[#666666] mt-1 capitalize">{dateStr} às {timeStr}</p>
-                          {iv.duration_minutes && (
-                            <p className="text-xs text-[#999]">Duração: {iv.duration_minutes} min</p>
-                          )}
-                          {iv.meet_link && (
-                            <a
-                              href={iv.meet_link}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="inline-flex items-center gap-1 text-xs text-[#10B981] hover:underline mt-1"
-                            >
-                              🔗 Entrar na reunião
-                            </a>
-                          )}
-                          {!iv.meet_link && iv.location && (
-                            <p className="text-xs text-[#999] mt-1">📍 {iv.location}</p>
-                          )}
+                <button
+                  type="button"
+                  onClick={() => setAgendaModalOpen(false)}
+                  className="p-1.5 rounded-lg hover:bg-[#F5F5F0] text-[#666666]"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+              {/* Tabs */}
+              <div className="flex mx-5 mt-4 rounded-xl overflow-hidden border border-[#E5E5DC]">
+                {(['upcoming', 'past'] as const).map(t => (
+                  <button
+                    key={t}
+                    onClick={() => setAgendaTab(t)}
+                    className={`flex-1 py-2.5 text-sm font-medium transition-colors ${
+                      agendaTab === t ? 'bg-[#141042] text-white' : 'bg-white text-[#666666] hover:bg-[#FAFAF8]'
+                    }`}
+                  >
+                    {t === 'upcoming' ? `Próximas (${upcomingIvs.length})` : `Realizadas (${pastIvs.length})`}
+                  </button>
+                ))}
+              </div>
+              {/* Body */}
+              <div className="overflow-y-auto flex-1 px-5 py-4 space-y-3">
+                {displayed.length === 0 ? (
+                  <div className="text-center py-12">
+                    <Calendar className="w-10 h-10 text-[#E5E5DC] mx-auto mb-3" />
+                    <p className="text-sm text-[#666666] font-medium">
+                      {agendaTab === 'upcoming' ? 'Nenhuma entrevista agendada' : 'Nenhuma entrevista realizada'}
+                    </p>
+                    <p className="text-xs text-[#999] mt-1">
+                      {agendaTab === 'upcoming' ? 'Quando o recrutador agendar, aparecerá aqui.' : ''}
+                    </p>
+                  </div>
+                ) : (
+                  displayed.map((iv: any) => {
+                    const dt = new Date(iv.scheduled_at);
+                    const past = dt < now && iv.status !== 'scheduled';
+                    const dateStr = dt.toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' });
+                    const timeStr = dt.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+                    const jobTitle = iv.jobs?.title ?? '';
+                    return (
+                      <div key={iv.id} className={`rounded-xl border p-4 hover:shadow-md transition-shadow ${
+                        past ? 'border-[#E5E5DC] bg-[#FAFAF8]' : 'border-[#141042]/10 bg-white shadow-sm'
+                      }`}>
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-semibold text-[#141042] leading-snug">{iv.title || jobTitle || 'Entrevista'}</p>
+                            {jobTitle && iv.title && (
+                              <p className="text-xs text-[#10B981] font-medium mt-0.5 truncate">› {jobTitle}</p>
+                            )}
+                            <p className="text-xs text-[#666666] mt-1 capitalize">{dateStr} às {timeStr}</p>
+                            {iv.duration_minutes && (
+                              <p className="text-xs text-[#999]">Duração: {iv.duration_minutes} min</p>
+                            )}
+                            {iv.meet_link && (
+                              <a
+                                href={iv.meet_link}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                onClick={e => e.stopPropagation()}
+                                className="inline-flex items-center gap-1 text-xs text-[#10B981] hover:underline mt-2"
+                              >
+                                🔗 Entrar na reunião
+                              </a>
+                            )}
+                            {!iv.meet_link && iv.location && (
+                              <p className="text-xs text-[#999] mt-1">📍 {iv.location}</p>
+                            )}
+                          </div>
+                          <span className={`shrink-0 text-[10px] font-semibold px-2 py-0.5 rounded-full ${
+                            past ? 'bg-[#E5E5DC] text-[#999]' : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                          }`}>
+                            {past ? 'Realizada' : 'Agendada'}
+                          </span>
                         </div>
-                        <span className={`shrink-0 text-[10px] font-semibold px-2 py-0.5 rounded-full ${
-                          isPast ? 'bg-[#E5E5DC] text-[#999]' : 'bg-[#10B981]/10 text-[#10B981]'
-                        }`}>
-                          {isPast ? 'Realizada' : 'Agendada'}
-                        </span>
                       </div>
-                    </div>
-                  );
-                })
-              )}
+                    );
+                  })
+                )}
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       <style jsx>{`
         @media print {
