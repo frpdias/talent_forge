@@ -61,20 +61,34 @@ const SENIORITY_LABEL: Record<string, string> = {
   director: 'Diretor', executive: 'Executivo',
 };
 
-const AREA_SHORTCUTS = [
-  { label: 'Tecnologia', value: 'Tecnologia', icon: Code2 },
-  { label: 'Administrativo', value: 'Administrativo', icon: Briefcase },
-  { label: 'Saúde', value: 'Saúde', icon: Heart },
-  { label: 'Marketing', value: 'Marketing', icon: TrendingUp },
-  { label: 'Educação', value: 'Educação', icon: GraduationCap },
-  { label: 'Vendas', value: 'Vendas', icon: BarChart2 },
-  { label: 'RH', value: 'Recursos Humanos', icon: Users },
-  { label: 'Engenharia', value: 'Engenharia', icon: Wrench },
-  { label: 'Varejo', value: 'Varejo', icon: ShoppingBag },
-  { label: 'TI', value: 'TI', icon: Monitor },
-  { label: 'Jurídico', value: 'Jurídico', icon: BookOpen },
-  { label: 'Imóveis', value: 'Imóveis', icon: Home },
-];
+// Mapa de ícones/rótulos para setores conhecidos (busca case-insensitive)
+const AREA_ICON_MAP: Record<string, { label: string; icon: React.ElementType }> = {
+  'tecnologia': { label: 'Tecnologia', icon: Code2 },
+  'administrativo': { label: 'Administrativo', icon: Briefcase },
+  'saúde': { label: 'Saúde', icon: Heart },
+  'saude': { label: 'Saúde', icon: Heart },
+  'marketing': { label: 'Marketing', icon: TrendingUp },
+  'educação': { label: 'Educação', icon: GraduationCap },
+  'educacao': { label: 'Educação', icon: GraduationCap },
+  'vendas': { label: 'Vendas', icon: BarChart2 },
+  'recursos humanos': { label: 'RH', icon: Users },
+  'rh': { label: 'RH', icon: Users },
+  'engenharia': { label: 'Engenharia', icon: Wrench },
+  'varejo': { label: 'Varejo', icon: ShoppingBag },
+  'ti': { label: 'TI', icon: Monitor },
+  'tecnologia da informação': { label: 'TI', icon: Monitor },
+  'jurídico': { label: 'Jurídico', icon: BookOpen },
+  'juridico': { label: 'Jurídico', icon: BookOpen },
+  'imóveis': { label: 'Imóveis', icon: Home },
+  'imoveis': { label: 'Imóveis', icon: Home },
+  'recrutamento': { label: 'Recrutamento', icon: Users },
+  'financeiro': { label: 'Financeiro', icon: BarChart2 },
+  'finanças': { label: 'Finanças', icon: BarChart2 },
+  'logística': { label: 'Logística', icon: Briefcase },
+  'logistica': { label: 'Logística', icon: Briefcase },
+  'construção': { label: 'Construção', icon: Wrench },
+  'construcao': { label: 'Construção', icon: Wrench },
+};
 
 const SALARY_BRACKETS = [
   { label: 'Até R$ 3k', value: 'ate-3k', min: 0, max: 3000 },
@@ -937,7 +951,7 @@ function VagasContent() {
         </div>
       </section>
 
-      {/* ── CATEGORY SHORTCUTS ── */}
+      {/* ── CATEGORY SHORTCUTS — dinâmico a partir dos setores reais dos jobs ── */}
       <section className="bg-white border-b border-gray-100 sticky top-14 sm:top-16 z-20 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
           <div className="flex items-center gap-1.5 overflow-x-auto py-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
@@ -951,20 +965,22 @@ function VagasContent() {
             >
               Todas
             </button>
-            {AREA_SHORTCUTS.map(area => {
-              const active = filterIndustry === area.value;
+            {industries.map(ind => {
+              const meta = AREA_ICON_MAP[ind.toLowerCase()] ?? { label: ind, icon: Briefcase };
+              const Icon = meta.icon;
+              const active = filterIndustry === ind;
               return (
                 <button
-                  key={area.value}
-                  onClick={() => setFilterIndustry(active ? null : area.value)}
+                  key={ind}
+                  onClick={() => setFilterIndustry(active ? null : ind)}
                   className={`flex items-center gap-1.5 shrink-0 px-4 py-2 rounded-full text-base font-medium transition-all border ${
                     active
                       ? 'bg-[#141042] text-white border-[#141042]'
                       : 'bg-white text-gray-600 border-gray-200 hover:border-gray-400'
                   }`}
                 >
-                  <area.icon className={`h-3.5 w-3.5 ${active ? 'text-white' : 'text-gray-500'}`} />
-                  {area.label}
+                  <Icon className={`h-3.5 w-3.5 ${active ? 'text-white' : 'text-gray-500'}`} />
+                  {meta.label}
                 </button>
               );
             })}
