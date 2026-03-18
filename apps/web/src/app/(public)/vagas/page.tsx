@@ -343,8 +343,23 @@ function AlertModal({
 
 // ─── JobModal ─────────────────────────────────────────────────────────────────
 
-function JobModal({ job, onClose }: { job: GlobalJob; onClose: () => void }) {
+type ApplyStatus = 'idle' | 'loading' | 'success' | 'error';
+
+function JobModal({
+  job,
+  onClose,
+  authUser,
+  autoApply = false,
+}: {
+  job: GlobalJob;
+  onClose: () => void;
+  authUser: { id: string; email?: string } | null;
+  autoApply?: boolean;
+}) {
+  const supabase = createClient();
   const daysLeft = daysUntilDeadline(job.application_deadline);
+  const [applyStatus, setApplyStatus] = useState<ApplyStatus>('idle');
+  const [applyError, setApplyError] = useState('');
 
   // Fecha com ESC
   useEffect(() => {
@@ -352,6 +367,31 @@ function JobModal({ job, onClose }: { job: GlobalJob; onClose: () => void }) {
     document.addEventListener('keydown', handler);
     return () => document.removeEventListener('keydown', handler);
   }, [onClose]);
+
+  // Auto-apply quando vem do redirect de login
+  useEffect(() => {
+    if (autoApply && authUser && applyStatus === 'idle') {
+      handleApply();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoApply, authUser]);
+
+  async function handleApply() {
+    if (!authUser) return;
+    setApplyStatus('loading');
+    setApplyError('');
+    try {
+      const { error } = await supabase.rpc('apply_to_job', { p_job_id: job.id });
+      if (error) throw error;
+      setApplyStatus('success');
+    } catch (err: any) {
+      setApplyError(err?.message || 'Erro ao candidatar-se. Tente novamente.');
+      setApplyStatus('error');
+    }
+  }
+
+  // URL de login com redirect de volta para /vagas?apply=<job_id>
+  const loginUrl = `/login?redirect=${encodeURIComponent(`/vagas?apply=${job.id}`)}`;
 
   return (
     <>
@@ -496,12 +536,51 @@ function JobModal({ job, onClose }: { job: GlobalJob; onClose: () => void }) {
 
         {/* Footer CTA */}
         <div className="px-5 py-4 border-t border-gray-100 bg-white shrink-0 space-y-2">
-          <Link
-            href={`/register?redirect=/jobs/${job.org_slug}/${job.id}`}
-            className="block w-full text-center bg-gradient-to-r from-[#141042] to-[#1F4ED8] hover:from-[#1a1565] hover:to-[#1e40af] text-white font-semibold text-base py-3.5 rounded-xl transition-all shadow-md hover:shadow-lg"
-          >
-            Candidatar-se a esta vaga
-          </Link>
+          {/* Candidato logado — candidatura rápida */}
+          {authUser ? (
+            <>
+              {applyStatus === 'success' ? (
+                <div className="flex items-center justify-center gap-2.5 w-full bg-emerald-50 border border-emerald-200 text-emerald-700 font-semibold text-base py-3.5 rounded-xl">
+                  <Check className="h-5 w-5 shrink-0" />
+                  Candidatura enviada com sucesso!
+                </div>
+              ) : (
+                <button
+                  onClick={handleApply}
+                  disabled={applyStatus === 'loading'}
+                  className="flex items-center justify-center gap-2 w-full bg-gradient-to-r from-[#141042] to-[#1F4ED8] hover:from-[#1a1565] hover:to-[#1e40af] disabled:opacity-60 text-white font-semibold text-base py-3.5 rounded-xl transition-all shadow-md hover:shadow-lg"
+                >
+                  {applyStatus === 'loading' ? (
+                    <><Loader2 className="h-4 w-4 animate-spin" /> Enviando candidatura…</>
+                  ) : (
+                    <><Zap className="h-4 w-4" /> Candidatar-me agora</>
+                  )}
+                </button>
+              )}
+              {applyStatus === 'error' && (
+                <p className="text-xs text-red-600 text-center">{applyError}</p>
+              )}
+              <Link
+                href="/candidate/applications"
+                className="block w-full text-center text-sm text-gray-500 hover:text-gray-700 transition-colors"
+              >
+                Ver minhas candidaturas
+              </Link>
+            </>
+          ) : (
+            /* Visitante não logado — redireciona para login */
+            <>
+              <Link
+                href={loginUrl}
+                className="block w-full text-center bg-gradient-to-r from-[#141042] to-[#1F4ED8] hover:from-[#1a1565] hover:to-[#1e40af] text-white font-semibold text-base py-3.5 rounded-xl transition-all shadow-md hover:shadow-lg"
+              >
+                Candidatar-se a esta vaga
+              </Link>
+              <p className="text-xs text-gray-400 text-center">
+                Você será redirecionado para o login. Após entrar, sua candidatura é enviada automaticamente.
+              </p>
+            </>
+          )}
         </div>
       </div>
     </>
@@ -608,6 +687,9 @@ function VagasContent() {
   const [showMobileFilters, setShowMobileFilters] = useState(false);
   const [showAlertModal, setShowAlertModal] = useState(false);
 
+  // Auth state
+  const [authUser, setAuthUser] = useState<{ id: string; email?: string } | null>(null);
+
   // State initialized from URL params
   const [search, setSearch] = useState(() => searchParams.get('q') || '');
   const [locationSearch, setLocationSearch] = useState(() => searchParams.get('loc') || '');
@@ -619,14 +701,26 @@ function VagasContent() {
   const [sortBy, setSortBy] = useState(() => searchParams.get('sort') || 'recent');
   const [selectedJobId, setSelectedJobId] = useState<string | null>(() => searchParams.get('job'));
 
+  // ?apply=<job_id> — vem do redirect pós-login
+  const applyJobId = searchParams.get('apply');
+  const [autoApply, setAutoApply] = useState(false);
+
   const debouncedSearch = useDebounce(search, 300);
   const debouncedLocation = useDebounce(locationSearch, 300);
 
-  // Load jobs on mount
+  // Carregar auth + vagas em paralelo
   useEffect(() => {
-    async function load() {
+    async function loadAll() {
       try {
         setLoading(true);
+
+        // Checar sessão do usuário
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          setAuthUser({ id: user.id, email: user.email });
+        }
+
+        // Carregar vagas
         const { data, error } = await supabase.rpc('get_all_public_jobs');
         if (error) throw error;
         const mapped: GlobalJob[] = (data || []).map((j: any) => ({
@@ -650,13 +744,19 @@ function VagasContent() {
           requirements: j.requirements ?? null,
         }));
         setJobs(mapped);
+
+        // Se veio de ?apply=<id> pós-login: abrir modal + auto-apply
+        if (applyJobId) {
+          setSelectedJobId(applyJobId);
+          if (user) setAutoApply(true);
+        }
       } catch {
         setJobs([]);
       } finally {
         setLoading(false);
       }
     }
-    load();
+    loadAll();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -1273,7 +1373,12 @@ function VagasContent() {
 
       {/* Modal de detalhe da vaga */}
       {selectedJob && (
-        <JobModal job={selectedJob} onClose={() => setSelectedJobId(null)} />
+        <JobModal
+          job={selectedJob}
+          onClose={() => { setSelectedJobId(null); setAutoApply(false); }}
+          authUser={authUser}
+          autoApply={autoApply}
+        />
       )}
 
       {/* ── MOBILE FILTER DRAWER ── */}
