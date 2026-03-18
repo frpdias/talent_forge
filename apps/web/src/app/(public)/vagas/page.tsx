@@ -327,25 +327,33 @@ function AlertModal({
   );
 }
 
-// ─── JobPreviewPanel ───────────────────────────────────────────────────────────
+// ─── JobModal ─────────────────────────────────────────────────────────────────
 
-function JobPreviewPanel({ job, onClose }: { job: GlobalJob; onClose: () => void }) {
+function JobModal({ job, onClose }: { job: GlobalJob; onClose: () => void }) {
   const daysLeft = daysUntilDeadline(job.application_deadline);
+
+  // Fecha com ESC
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    document.addEventListener('keydown', handler);
+    return () => document.removeEventListener('keydown', handler);
+  }, [onClose]);
 
   return (
     <>
-      {/* Mobile backdrop */}
-      <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 lg:hidden" onClick={onClose} />
+      {/* Backdrop */}
+      <div
+        className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50"
+        onClick={onClose}
+      />
 
-      {/* Panel */}
+      {/* Modal */}
       <div className={[
-        'fixed bottom-0 left-0 right-0 z-50',
-        'lg:relative lg:bottom-auto lg:left-auto lg:right-auto lg:z-auto',
-        'bg-white border-t lg:border border-gray-200',
-        'rounded-t-3xl lg:rounded-2xl shadow-2xl lg:shadow-xl',
-        'flex flex-col',
-        'h-[92vh] lg:h-auto lg:max-h-[calc(100vh-140px)]',
-        'lg:sticky lg:top-[128px] overflow-hidden',
+        'fixed z-50 bg-white shadow-2xl flex flex-col overflow-hidden',
+        'bottom-0 left-0 right-0 rounded-t-3xl h-[92vh]',
+        'sm:inset-auto sm:top-1/2 sm:left-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2',
+        'sm:w-full sm:max-w-2xl sm:h-auto sm:max-h-[90vh]',
+        'sm:rounded-2xl sm:border sm:border-gray-200',
       ].join(' ')}>
 
         {/* Header */}
@@ -925,9 +933,8 @@ function VagasContent() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-7">
         <div className="flex gap-6 items-start">
 
-          {/* Sidebar — hidden when preview panel is open */}
-          {!selectedJob && (
-            <aside className="hidden lg:block w-64 shrink-0 sticky top-[128px]">
+          {/* Sidebar */}
+          <aside className="hidden lg:block w-64 shrink-0 sticky top-[128px]">
               <FilterSidebar
                 filterType={filterType} setFilterType={setFilterType}
                 filterModality={filterModality} setFilterModality={setFilterModality}
@@ -954,10 +961,9 @@ function VagasContent() {
                 </Link>
               </div>
             </aside>
-          )}
 
           {/* Job list */}
-          <div className={`flex-1 min-w-0 ${selectedJob ? 'lg:max-w-[380px]' : ''}`}>
+          <div className="flex-1 min-w-0">
 
             {/* List header */}
             <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
@@ -1209,20 +1215,12 @@ function VagasContent() {
             )}
           </div>
 
-          {/* Preview panel — desktop */}
-          {selectedJob && (
-            <div className="hidden lg:block flex-1 min-w-0 max-w-[520px]">
-              <JobPreviewPanel job={selectedJob} onClose={() => setSelectedJobId(null)} />
-            </div>
-          )}
         </div>
       </div>
 
-      {/* Preview panel — mobile */}
+      {/* Modal de detalhe da vaga */}
       {selectedJob && (
-        <div className="lg:hidden">
-          <JobPreviewPanel job={selectedJob} onClose={() => setSelectedJobId(null)} />
-        </div>
+        <JobModal job={selectedJob} onClose={() => setSelectedJobId(null)} />
       )}
 
       {/* ── MOBILE FILTER DRAWER ── */}
