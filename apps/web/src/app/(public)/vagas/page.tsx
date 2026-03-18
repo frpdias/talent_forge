@@ -815,32 +815,40 @@ function VagasContent() {
       </header>
 
       {/* ── HERO ── */}
-      <section className="bg-gradient-to-br from-[#141042] via-[#1a1565] to-[#0d0b2e] pt-12 pb-16 relative overflow-hidden">
-        <div className="absolute top-0 left-1/4 w-96 h-96 bg-[#10B981]/10 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute bottom-0 right-1/4 w-80 h-80 bg-[#3B82F6]/10 rounded-full blur-3xl pointer-events-none" />
+      <section className="bg-[#141042] pt-14 pb-16 relative overflow-hidden">
+        {/* Glow decorativo — azul à esquerda, laranja à direita */}
+        <div className="absolute -top-16 -left-16 w-[480px] h-[480px] bg-[#1F4ED8]/20 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute -bottom-20 -right-10 w-[360px] h-[360px] bg-[#F97316]/15 rounded-full blur-3xl pointer-events-none" />
+        {/* Grade sutil */}
+        <div className="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg width%3D%2240%22 height%3D%2240%22 viewBox%3D%220 0 40 40%22 xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cg fill%3D%22none%22 fill-rule%3D%22evenodd%22%3E%3Cg fill%3D%22%23ffffff%22 fill-opacity%3D%220.03%22%3E%3Cpath d%3D%22M0 40L40 0H20L0 20M40 40V20L20 40%22/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')] pointer-events-none" />
 
         <div className="max-w-4xl mx-auto px-4 sm:px-6 relative">
           <div className="text-center mb-8">
-            <div className="inline-flex items-center gap-2 bg-white/10 border border-white/15 rounded-full px-4 py-1.5 text-xs font-medium text-white/80 mb-5">
+            {/* Badge */}
+            <div className="inline-flex items-center gap-2 bg-[#1F4ED8]/20 border border-[#1F4ED8]/30 rounded-full px-4 py-1.5 text-xs font-semibold text-[#93B8FC] mb-6 backdrop-blur-sm">
               <span className="w-1.5 h-1.5 rounded-full bg-[#10B981] animate-pulse" />
               {loading ? 'Carregando...' : `${jobs.length} vagas abertas agora`}
             </div>
-            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-white leading-tight mb-3">
+
+            {/* Heading */}
+            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-white leading-[1.1] mb-4 tracking-tight">
               Encontre a vaga ideal
               <br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#10B981] to-[#3B82F6]">
+              <span className="text-[#F97316]">
                 para o seu perfil
               </span>
             </h1>
-            <p className="text-white/60 text-base sm:text-lg max-w-xl mx-auto">
+
+            {/* Subheading */}
+            <p className="text-white/50 text-base sm:text-lg max-w-xl mx-auto leading-relaxed">
               Conectamos candidatos às melhores oportunidades de{' '}
-              <span className="text-white/80 font-medium">{loading ? '…' : orgCount} empresas</span> em todo o Brasil.
+              <span className="text-white/80 font-semibold">{loading ? '…' : orgCount} empresas</span> em todo o Brasil.
             </p>
           </div>
 
           {/* Search box */}
-          <div className="bg-white rounded-2xl shadow-2xl p-3 flex flex-col sm:flex-row gap-2 max-w-3xl mx-auto">
-            <div className="flex-1 flex items-center gap-3 px-3 py-2 rounded-xl bg-gray-50 border border-gray-100 focus-within:border-[#141042]/30 focus-within:bg-white transition-all">
+          <div className="bg-white rounded-2xl shadow-2xl p-2.5 flex flex-col sm:flex-row gap-2 max-w-3xl mx-auto border border-white/10">
+            <div className="flex-1 flex items-center gap-3 px-4 py-2.5 rounded-xl bg-gray-50 border border-transparent focus-within:border-[#1F4ED8]/40 focus-within:bg-white transition-all">
               <Search className="h-4 w-4 text-gray-400 shrink-0" />
               <input
                 type="text"
@@ -855,7 +863,7 @@ function VagasContent() {
                 </button>
               )}
             </div>
-            <div className="flex items-center gap-3 px-3 py-2 rounded-xl bg-gray-50 border border-gray-100 focus-within:border-[#141042]/30 focus-within:bg-white transition-all sm:w-52">
+            <div className="flex items-center gap-3 px-4 py-2.5 rounded-xl bg-gray-50 border border-transparent focus-within:border-[#1F4ED8]/40 focus-within:bg-white transition-all sm:w-52">
               <MapPin className="h-4 w-4 text-gray-400 shrink-0" />
               <input
                 type="text"
@@ -870,23 +878,24 @@ function VagasContent() {
                 </button>
               )}
             </div>
-            <button className="bg-gradient-to-r from-[#141042] to-[#1F4ED8] hover:from-[#1a1565] hover:to-[#1e40af] text-white font-semibold text-sm px-6 py-3 rounded-xl transition-all shadow-md hover:shadow-lg whitespace-nowrap">
+            <button className="bg-[#F97316] hover:bg-[#ea6c0a] text-white font-bold text-sm px-7 py-3 rounded-xl transition-all shadow-md hover:shadow-lg whitespace-nowrap tracking-wide">
               Buscar vagas
             </button>
           </div>
 
           {/* Stats strip */}
-          <div className="flex items-center justify-center gap-6 mt-8 flex-wrap">
+          <div className="flex items-center justify-center gap-8 mt-9 flex-wrap">
             {[
               { label: 'vagas abertas', value: `${jobs.length}`, icon: Briefcase },
               { label: 'empresas', value: `${orgCount}`, icon: Building2 },
               { label: 'vagas remotas', value: `${remoteCount}`, icon: Globe2 },
-            ].map(s => (
-              <div key={s.label} className="flex items-center gap-2 text-white/70">
-                <s.icon className="h-4 w-4 text-[#10B981]" />
-                <span>
-                  <span className="font-bold text-white">{loading ? '—' : s.value}</span>{' '}
-                  <span className="text-sm">{s.label}</span>
+            ].map((s, i) => (
+              <div key={s.label} className="flex items-center gap-2.5 text-white/60">
+                {i > 0 && <span className="w-px h-4 bg-white/10 mr-2" />}
+                <s.icon className="h-4 w-4 text-[#F97316]" />
+                <span className="text-sm">
+                  <span className="font-bold text-white text-base">{loading ? '—' : s.value}</span>{' '}
+                  {s.label}
                 </span>
               </div>
             ))}
