@@ -910,14 +910,36 @@ function VagasContent() {
           </nav>
 
           <div className="flex items-center gap-2 shrink-0">
-            <Link href="/login"
-              className="text-base text-white/70 hover:text-white transition-colors hidden sm:block px-3 py-2 rounded-lg hover:bg-white/10">
-              Entrar
-            </Link>
-            <Link href="/register"
-              className="text-sm sm:text-base font-semibold bg-[#10B981] hover:bg-[#059669] text-white px-3.5 sm:px-5 py-2 rounded-lg transition-all shadow-md">
-              Cadastrar-se
-            </Link>
+            {authUser ? (
+              <>
+                <Link
+                  href="/candidate"
+                  className="flex items-center gap-2 text-sm text-white/80 hover:text-white bg-white/10 hover:bg-white/20 px-3 py-2 rounded-lg transition-all"
+                >
+                  <div className="w-7 h-7 rounded-full bg-[#10B981] flex items-center justify-center text-white text-xs font-bold shrink-0">
+                    {(authUser.email?.[0] ?? 'C').toUpperCase()}
+                  </div>
+                  <span className="hidden sm:block max-w-[140px] truncate">{authUser.email}</span>
+                </Link>
+                <button
+                  onClick={async () => { await supabase.auth.signOut(); setAuthUser(null); }}
+                  className="text-xs text-white/50 hover:text-white/80 transition-colors px-2 py-1 rounded-md hover:bg-white/10"
+                >
+                  Sair
+                </button>
+              </>
+            ) : (
+              <>
+                <Link href="/login"
+                  className="text-base text-white/70 hover:text-white transition-colors hidden sm:block px-3 py-2 rounded-lg hover:bg-white/10">
+                  Entrar
+                </Link>
+                <Link href="/register"
+                  className="text-sm sm:text-base font-semibold bg-[#10B981] hover:bg-[#059669] text-white px-3.5 sm:px-5 py-2 rounded-lg transition-all shadow-md">
+                  Cadastrar-se
+                </Link>
+              </>
+            )}
           </div>
         </div>
       </header>
