@@ -976,19 +976,19 @@ function VagasContent() {
       </header>
 
       {/* ── HERO ── */}
-      <section className="bg-[#141042] pt-10 pb-14 sm:pt-14 sm:pb-16 relative overflow-hidden">
-        {/* Camada parallax — move mais devagar que o conteúdo */}
-        <div ref={parallaxRef} className="absolute inset-0 pointer-events-none will-change-transform">
-          <div className="absolute inset-0" style={{
-            backgroundImage: [
-              'radial-gradient(ellipse 90% 90% at 15% 60%, rgba(31,78,216,0.4) 0%, transparent 65%)',
-              'radial-gradient(ellipse 70% 70% at 85% 15%, rgba(249,115,22,0.22) 0%, transparent 60%)',
-              'radial-gradient(ellipse 50% 80% at 50% 110%, rgba(16,185,129,0.12) 0%, transparent 70%)',
-            ].join(', '),
-          }} />
-        </div>
-        {/* Grade sutil */}
-        <div className="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg width%3D%2240%22 height%3D%2240%22 viewBox%3D%220 0 40 40%22 xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cg fill%3D%22none%22 fill-rule%3D%22evenodd%22%3E%3Cg fill%3D%22%23ffffff%22 fill-opacity%3D%220.03%22%3E%3Cpath d%3D%22M0 40L40 0H20L0 20M40 40V20L20 40%22/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')] pointer-events-none" />
+      <section className="pt-10 pb-14 sm:pt-14 sm:pb-16 relative overflow-hidden">
+        {/* Imagem de fundo com parallax */}
+        <div
+          ref={parallaxRef}
+          className="absolute inset-0 will-change-transform pointer-events-none"
+          style={{
+            backgroundImage: `url('https://fjudsjzfnysaztcwlwgm.supabase.co/storage/v1/object/public/LOGOS/Imagem%20pagina%20publica.png')`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center top',
+          }}
+        />
+        {/* Overlay escuro para manter legibilidade do texto */}
+        <div className="absolute inset-0 bg-[#141042]/60 pointer-events-none" />
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 relative">
           {/* Heading — dois layouts: mobile centralizado, desktop two-col */}
