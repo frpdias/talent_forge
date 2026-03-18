@@ -781,14 +781,14 @@ function VagasContent() {
 
       {/* ── HEADER ── */}
       <header className="bg-[#141042] sticky top-0 z-30 shadow-xl">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
-          <Link href="/" className="flex items-center gap-2.5 shrink-0">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#10B981] to-[#059669] flex items-center justify-center shadow-md">
-              <Zap className="h-[18px] w-[18px] text-white" />
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 h-14 sm:h-16 flex items-center justify-between gap-4">
+          <Link href="/" className="flex items-center gap-2 shrink-0">
+            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-gradient-to-br from-[#10B981] to-[#059669] flex items-center justify-center shadow-md">
+              <Zap className="h-4 w-4 sm:h-[18px] sm:w-[18px] text-white" />
             </div>
-            <div className="hidden sm:flex items-baseline gap-0.5">
-              <span className="text-white font-semibold text-lg tracking-tight">TALENT</span>
-              <span className="text-[#F97316] font-bold text-lg tracking-wider">FORGE</span>
+            <div className="flex items-baseline gap-0.5">
+              <span className="text-white font-semibold text-base sm:text-lg tracking-tight">TALENT</span>
+              <span className="text-[#F97316] font-bold text-base sm:text-lg tracking-wider">FORGE</span>
             </div>
             <span className="text-white/40 text-sm hidden md:block">·</span>
             <span className="text-white/60 text-xs font-medium uppercase tracking-wider hidden md:block">Vagas</span>
@@ -807,7 +807,7 @@ function VagasContent() {
               Entrar
             </Link>
             <Link href="/register"
-              className="text-sm font-semibold bg-gradient-to-r from-[#10B981] to-[#059669] hover:from-[#059669] hover:to-[#047857] text-white px-5 py-2 rounded-lg transition-all shadow-md hover:shadow-lg">
+              className="text-xs sm:text-sm font-semibold bg-[#10B981] hover:bg-[#059669] text-white px-3.5 sm:px-5 py-2 rounded-lg transition-all shadow-md">
               Cadastrar-se
             </Link>
           </div>
@@ -815,86 +815,120 @@ function VagasContent() {
       </header>
 
       {/* ── HERO ── */}
-      <section className="bg-[#141042] pt-14 pb-16 relative overflow-hidden">
-        {/* Glow decorativo — azul à esquerda, laranja à direita */}
+      <section className="bg-[#141042] pt-10 pb-14 sm:pt-14 sm:pb-16 relative overflow-hidden">
+        {/* Glow decorativo */}
         <div className="absolute -top-16 -left-16 w-[480px] h-[480px] bg-[#1F4ED8]/20 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute -bottom-20 -right-10 w-[360px] h-[360px] bg-[#F97316]/15 rounded-full blur-3xl pointer-events-none" />
         {/* Grade sutil */}
         <div className="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg width%3D%2240%22 height%3D%2240%22 viewBox%3D%220 0 40 40%22 xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cg fill%3D%22none%22 fill-rule%3D%22evenodd%22%3E%3Cg fill%3D%22%23ffffff%22 fill-opacity%3D%220.03%22%3E%3Cpath d%3D%22M0 40L40 0H20L0 20M40 40V20L20 40%22/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')] pointer-events-none" />
 
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 relative">
-          <div className="text-center mb-8">
-            {/* Badge */}
-            <div className="inline-flex items-center gap-2 bg-[#1F4ED8]/20 border border-[#1F4ED8]/30 rounded-full px-4 py-1.5 text-xs font-semibold text-[#93B8FC] mb-6 backdrop-blur-sm">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#10B981] animate-pulse" />
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 relative">
+          {/* Badge */}
+          <div className="flex justify-center mb-5 sm:mb-6">
+            <div className="inline-flex items-center gap-2 bg-[#1F4ED8]/20 border border-[#1F4ED8]/30 rounded-full px-4 py-1.5 text-xs font-semibold text-[#93B8FC] backdrop-blur-sm">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#10B981] animate-pulse shrink-0" />
               {loading ? 'Carregando...' : `${jobs.length} vagas abertas agora`}
             </div>
-
-            {/* Heading */}
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-white leading-[1.1] mb-4 tracking-tight">
-              Encontre a vaga ideal
-              <br />
-              <span className="text-[#F97316]">
-                para o seu perfil
-              </span>
-            </h1>
-
-            {/* Subheading */}
-            <p className="text-white/50 text-base sm:text-lg max-w-xl mx-auto leading-relaxed">
-              Conectamos candidatos às melhores oportunidades de{' '}
-              <span className="text-white/80 font-semibold">{loading ? '…' : orgCount} empresas</span> em todo o Brasil.
-            </p>
           </div>
 
-          {/* Search box */}
-          <div className="bg-white rounded-2xl shadow-2xl p-2.5 flex flex-col sm:flex-row gap-2 max-w-3xl mx-auto border border-white/10">
-            <div className="flex-1 flex items-center gap-3 px-4 py-2.5 rounded-xl bg-gray-50 border border-transparent focus-within:border-[#1F4ED8]/40 focus-within:bg-white transition-all">
-              <Search className="h-4 w-4 text-gray-400 shrink-0" />
-              <input
-                type="text"
-                placeholder="Cargo, empresa ou área..."
-                value={search}
-                onChange={e => setSearch(e.target.value)}
-                className="flex-1 bg-transparent text-sm text-gray-800 placeholder:text-gray-400 outline-none"
-              />
-              {search && (
-                <button onClick={() => setSearch('')}>
-                  <X className="h-3.5 w-3.5 text-gray-400 hover:text-gray-600" />
-                </button>
-              )}
+          {/* Heading — dois layouts: mobile centralizado, desktop two-col */}
+          <div className="lg:flex lg:items-center lg:gap-16 lg:mb-10">
+            {/* Texto */}
+            <div className="text-center lg:text-left lg:flex-1 mb-8 lg:mb-0">
+              <h1 className="text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-extrabold text-white leading-[1.1] mb-3 sm:mb-4 tracking-tight">
+                Encontre a vaga ideal
+                <br />
+                <span className="text-[#F97316]">para o seu perfil</span>
+              </h1>
+              <p className="text-white/50 text-sm sm:text-base lg:text-lg max-w-sm sm:max-w-md mx-auto lg:mx-0 leading-relaxed">
+                Conectamos candidatos às melhores oportunidades de{' '}
+                <span className="text-white/80 font-semibold">{loading ? '…' : orgCount} empresas</span> em todo o Brasil.
+              </p>
+
+              {/* Stats — desktop: abaixo do texto */}
+              <div className="hidden lg:flex items-center gap-8 mt-8 flex-wrap">
+                {[
+                  { label: 'vagas abertas', value: `${jobs.length}`, icon: Briefcase },
+                  { label: 'empresas', value: `${orgCount}`, icon: Building2 },
+                  { label: 'vagas remotas', value: `${remoteCount}`, icon: Globe2 },
+                ].map((s, i) => (
+                  <div key={s.label} className="flex items-center gap-2.5 text-white/60">
+                    {i > 0 && <span className="w-px h-4 bg-white/15 mr-1" />}
+                    <s.icon className="h-4 w-4 text-[#F97316]" />
+                    <span className="text-sm">
+                      <span className="font-bold text-white text-base">{loading ? '—' : s.value}</span>{' '}
+                      {s.label}
+                    </span>
+                  </div>
+                ))}
+              </div>
             </div>
-            <div className="flex items-center gap-3 px-4 py-2.5 rounded-xl bg-gray-50 border border-transparent focus-within:border-[#1F4ED8]/40 focus-within:bg-white transition-all sm:w-52">
-              <MapPin className="h-4 w-4 text-gray-400 shrink-0" />
-              <input
-                type="text"
-                placeholder="Cidade ou estado..."
-                value={locationSearch}
-                onChange={e => setLocationSearch(e.target.value)}
-                className="flex-1 bg-transparent text-sm text-gray-800 placeholder:text-gray-400 outline-none"
-              />
-              {locationSearch && (
-                <button onClick={() => setLocationSearch('')}>
-                  <X className="h-3.5 w-3.5 text-gray-400 hover:text-gray-600" />
+
+            {/* Search box — desktop: coluna direita */}
+            <div className="lg:flex-1 lg:max-w-xl">
+              <div className="bg-white rounded-2xl shadow-2xl p-2.5 flex flex-col gap-2 border border-white/10">
+                <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-gray-50 border border-transparent focus-within:border-[#1F4ED8]/40 focus-within:bg-white transition-all">
+                  <Search className="h-4 w-4 text-gray-400 shrink-0" />
+                  <input
+                    type="text"
+                    placeholder="Cargo, empresa ou área..."
+                    value={search}
+                    onChange={e => setSearch(e.target.value)}
+                    className="flex-1 bg-transparent text-sm text-gray-800 placeholder:text-gray-400 outline-none min-w-0"
+                  />
+                  {search && (
+                    <button onClick={() => setSearch('')}>
+                      <X className="h-3.5 w-3.5 text-gray-400 hover:text-gray-600" />
+                    </button>
+                  )}
+                </div>
+                <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-gray-50 border border-transparent focus-within:border-[#1F4ED8]/40 focus-within:bg-white transition-all">
+                  <MapPin className="h-4 w-4 text-gray-400 shrink-0" />
+                  <input
+                    type="text"
+                    placeholder="Cidade ou estado..."
+                    value={locationSearch}
+                    onChange={e => setLocationSearch(e.target.value)}
+                    className="flex-1 bg-transparent text-sm text-gray-800 placeholder:text-gray-400 outline-none min-w-0"
+                  />
+                  {locationSearch && (
+                    <button onClick={() => setLocationSearch('')}>
+                      <X className="h-3.5 w-3.5 text-gray-400 hover:text-gray-600" />
+                    </button>
+                  )}
+                </div>
+                <button className="w-full bg-[#F97316] hover:bg-[#ea6c0a] active:bg-[#d96209] text-white font-bold text-sm px-7 py-3.5 rounded-xl transition-all shadow-md hover:shadow-lg tracking-wide">
+                  Buscar vagas
                 </button>
-              )}
+              </div>
+
+              {/* Quick tags mobile */}
+              <div className="flex items-center gap-2 mt-3 flex-wrap lg:hidden justify-center">
+                {['Tecnologia', 'RH', 'Vendas', 'Remoto'].map(tag => (
+                  <button
+                    key={tag}
+                    onClick={() => tag === 'Remoto' ? setFilterModality('remoto') : setFilterIndustry(tag === 'RH' ? 'Recursos Humanos' : tag)}
+                    className="text-[11px] font-medium text-white/60 border border-white/15 rounded-full px-3 py-1 hover:border-white/40 hover:text-white/90 transition-all"
+                  >
+                    {tag}
+                  </button>
+                ))}
+              </div>
             </div>
-            <button className="bg-[#F97316] hover:bg-[#ea6c0a] text-white font-bold text-sm px-7 py-3 rounded-xl transition-all shadow-md hover:shadow-lg whitespace-nowrap tracking-wide">
-              Buscar vagas
-            </button>
           </div>
 
-          {/* Stats strip */}
-          <div className="flex items-center justify-center gap-8 mt-9 flex-wrap">
+          {/* Stats — mobile: abaixo do search */}
+          <div className="flex items-center justify-center gap-5 mt-7 flex-wrap lg:hidden">
             {[
-              { label: 'vagas abertas', value: `${jobs.length}`, icon: Briefcase },
+              { label: 'vagas', value: `${jobs.length}`, icon: Briefcase },
               { label: 'empresas', value: `${orgCount}`, icon: Building2 },
-              { label: 'vagas remotas', value: `${remoteCount}`, icon: Globe2 },
+              { label: 'remotas', value: `${remoteCount}`, icon: Globe2 },
             ].map((s, i) => (
-              <div key={s.label} className="flex items-center gap-2.5 text-white/60">
-                {i > 0 && <span className="w-px h-4 bg-white/10 mr-2" />}
-                <s.icon className="h-4 w-4 text-[#F97316]" />
-                <span className="text-sm">
-                  <span className="font-bold text-white text-base">{loading ? '—' : s.value}</span>{' '}
+              <div key={s.label} className="flex items-center gap-1.5 text-white/60">
+                {i > 0 && <span className="w-px h-3 bg-white/15 mr-1" />}
+                <s.icon className="h-3.5 w-3.5 text-[#F97316]" />
+                <span className="text-xs">
+                  <span className="font-bold text-white">{loading ? '—' : s.value}</span>{' '}
                   {s.label}
                 </span>
               </div>
@@ -904,7 +938,7 @@ function VagasContent() {
       </section>
 
       {/* ── CATEGORY SHORTCUTS ── */}
-      <section className="bg-white border-b border-gray-100 sticky top-16 z-20 shadow-sm">
+      <section className="bg-white border-b border-gray-100 sticky top-14 sm:top-16 z-20 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
           <div className="flex items-center gap-1.5 overflow-x-auto py-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             <button
@@ -943,7 +977,7 @@ function VagasContent() {
         <div className="flex gap-6 items-start">
 
           {/* Sidebar */}
-          <aside className="hidden lg:block w-64 shrink-0 sticky top-[128px]">
+          <aside className="hidden lg:block w-64 shrink-0 sticky top-[112px] sm:top-[128px]">
               <FilterSidebar
                 filterType={filterType} setFilterType={setFilterType}
                 filterModality={filterModality} setFilterModality={setFilterModality}
