@@ -915,6 +915,12 @@ function VagasContent() {
             <span className="text-white/60 text-sm font-medium uppercase tracking-wider hidden md:block">Vagas</span>
           </Link>
 
+          {/* Badge — vagas abertas */}
+          <div className="hidden sm:inline-flex items-center gap-2 bg-[#1F4ED8]/20 border border-[#1F4ED8]/30 rounded-full px-3.5 py-1.5 text-xs font-semibold text-[#93B8FC] backdrop-blur-sm shrink-0">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#10B981] animate-pulse shrink-0" />
+            {loading ? '…' : `${jobs.length} vagas abertas agora`}
+          </div>
+
           <nav className="hidden lg:flex items-center gap-1">
             <Link href="/register?type=recruiter"
               className="text-base text-white/60 hover:text-white hover:bg-white/10 px-3 py-1.5 rounded-lg transition-all">
@@ -966,14 +972,6 @@ function VagasContent() {
         <div className="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg width%3D%2240%22 height%3D%2240%22 viewBox%3D%220 0 40 40%22 xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cg fill%3D%22none%22 fill-rule%3D%22evenodd%22%3E%3Cg fill%3D%22%23ffffff%22 fill-opacity%3D%220.03%22%3E%3Cpath d%3D%22M0 40L40 0H20L0 20M40 40V20L20 40%22/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')] pointer-events-none" />
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 relative">
-          {/* Badge */}
-          <div className="flex justify-center mb-5 sm:mb-6">
-            <div className="inline-flex items-center gap-2 bg-[#1F4ED8]/20 border border-[#1F4ED8]/30 rounded-full px-4 py-1.5 text-sm font-semibold text-[#93B8FC] backdrop-blur-sm">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#10B981] animate-pulse shrink-0" />
-              {loading ? 'Carregando...' : `${jobs.length} vagas abertas agora`}
-            </div>
-          </div>
-
           {/* Heading — dois layouts: mobile centralizado, desktop two-col */}
           <div className="lg:flex lg:items-center lg:gap-16 lg:mb-10">
             {/* Texto */}
