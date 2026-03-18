@@ -366,7 +366,7 @@ function JobModal({ job, onClose }: { job: GlobalJob; onClose: () => void }) {
         'fixed z-50 bg-white shadow-2xl flex flex-col overflow-hidden',
         'bottom-0 left-0 right-0 rounded-t-3xl h-[92vh]',
         'sm:inset-auto sm:top-1/2 sm:left-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2',
-        'sm:w-full sm:max-w-2xl sm:h-auto sm:max-h-[90vh]',
+        'sm:w-full sm:max-w-4xl sm:h-auto sm:max-h-[90vh]',
         'sm:rounded-2xl sm:border sm:border-gray-200',
       ].join(' ')}>
 
@@ -501,12 +501,6 @@ function JobModal({ job, onClose }: { job: GlobalJob; onClose: () => void }) {
             className="block w-full text-center bg-gradient-to-r from-[#141042] to-[#1F4ED8] hover:from-[#1a1565] hover:to-[#1e40af] text-white font-semibold text-base py-3.5 rounded-xl transition-all shadow-md hover:shadow-lg"
           >
             Candidatar-se a esta vaga
-          </Link>
-          <Link
-            href={`/jobs/${job.org_slug}/${job.id}`}
-            className="block w-full text-center border border-gray-200 hover:border-gray-400 text-gray-600 hover:text-gray-900 font-medium text-base py-2.5 rounded-xl transition-all"
-          >
-            Ver página completa
           </Link>
         </div>
       </div>
