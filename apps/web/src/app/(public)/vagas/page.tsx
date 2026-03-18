@@ -907,9 +907,6 @@ function VagasContent() {
       <header className="bg-[#141042] sticky top-0 z-30 shadow-xl">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 h-14 sm:h-16 flex items-center justify-between gap-4">
           <Link href="/" className="flex items-center gap-2 shrink-0">
-            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-gradient-to-br from-[#10B981] to-[#059669] flex items-center justify-center shadow-md">
-              <Zap className="h-4 w-4 sm:h-[18px] sm:w-[18px] text-white" />
-            </div>
             <div className="flex items-baseline gap-0.5">
               <span className="text-white font-semibold text-lg sm:text-xl tracking-tight">TALENT</span>
               <span className="text-[#F97316] font-bold text-lg sm:text-xl tracking-wider">FORGE</span>
