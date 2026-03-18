@@ -978,7 +978,7 @@ function VagasContent() {
           <div className="lg:flex lg:items-center lg:gap-16 lg:mb-10">
             {/* Texto */}
             <div className="text-center lg:text-left lg:flex-1 mb-8 lg:mb-0">
-              <h1 className="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-extrabold text-white leading-[1.1] mb-3 sm:mb-4 tracking-tight">
+              <h1 className="text-[2.9rem] sm:text-[3.9rem] lg:text-[4.875rem] xl:text-[5.85rem] font-extrabold text-white leading-[1.1] mb-3 sm:mb-4 tracking-tight">
                 <span className="text-white">Encontre a vaga ideal</span>
                 <br />
                 <span className="text-[#F97316]">para o seu perfil</span>
