@@ -738,19 +738,31 @@ function VagasContent() {
     filterSalary && SALARY_BRACKETS.find(b => b.value === filterSalary)?.label,
   ].filter(Boolean).join(', ') || 'todas as vagas';
 
-  function handleSaveAlert(email: string) {
+  async function handleSaveAlert(email: string) {
+    const params = {
+      q: debouncedSearch || undefined,
+      loc: debouncedLocation || undefined,
+      type: filterType || undefined,
+      modality: filterModality || undefined,
+      industry: filterIndustry || undefined,
+      seniority: filterSeniority || undefined,
+      salary: filterSalary || undefined,
+    };
+
+    // Persiste no banco via API
     try {
-      const alerts = JSON.parse(localStorage.getItem('tf_alerts') || '[]');
-      alerts.push({
-        email,
-        params: {
-          q: debouncedSearch, loc: debouncedLocation,
-          type: filterType, modality: filterModality,
-          industry: filterIndustry, seniority: filterSeniority, salary: filterSalary,
-        },
-        createdAt: new Date().toISOString(),
+      await fetch('/api/alerts/subscribe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, params }),
       });
-      localStorage.setItem('tf_alerts', JSON.stringify(alerts));
+    } catch { /* silent fail — fallback abaixo */ }
+
+    // Fallback local para UX offline
+    try {
+      const saved = JSON.parse(localStorage.getItem('tf_alerts') || '[]');
+      saved.push({ email, params, createdAt: new Date().toISOString() });
+      localStorage.setItem('tf_alerts', JSON.stringify(saved));
     } catch { /* localStorage may be unavailable */ }
   }
 
