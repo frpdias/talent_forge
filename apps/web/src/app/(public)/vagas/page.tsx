@@ -343,7 +343,7 @@ function AlertModal({
 
 // ─── JobModal ─────────────────────────────────────────────────────────────────
 
-type ApplyStatus = 'idle' | 'loading' | 'success' | 'error';
+type ApplyStatus = 'idle' | 'loading' | 'success' | 'already_applied' | 'error';
 
 function JobModal({
   job,
@@ -368,6 +368,17 @@ function JobModal({
     return () => document.removeEventListener('keydown', handler);
   }, [onClose]);
 
+  // Verificar se já se candidatou a esta vaga
+  useEffect(() => {
+    if (!authUser) return;
+    supabase.rpc('get_my_applications').then(({ data }) => {
+      if (data?.some((a: any) => a.job_id === job.id)) {
+        setApplyStatus('already_applied');
+      }
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [authUser, job.id]);
+
   // Auto-apply quando vem do redirect de login
   useEffect(() => {
     if (autoApply && authUser && applyStatus === 'idle') {
@@ -377,7 +388,7 @@ function JobModal({
   }, [autoApply, authUser]);
 
   async function handleApply() {
-    if (!authUser) return;
+    if (!authUser || applyStatus === 'already_applied') return;
     setApplyStatus('loading');
     setApplyError('');
     try {
@@ -539,7 +550,12 @@ function JobModal({
           {/* Candidato logado — candidatura rápida */}
           {authUser ? (
             <>
-              {applyStatus === 'success' ? (
+              {applyStatus === 'already_applied' ? (
+                <div className="flex items-center justify-center gap-2.5 w-full bg-blue-50 border border-blue-200 text-blue-700 font-semibold text-base py-3.5 rounded-xl">
+                  <Check className="h-5 w-5 shrink-0" />
+                  Você já se candidatou a esta vaga
+                </div>
+              ) : applyStatus === 'success' ? (
                 <div className="flex items-center justify-center gap-2.5 w-full bg-emerald-50 border border-emerald-200 text-emerald-700 font-semibold text-base py-3.5 rounded-xl">
                   <Check className="h-5 w-5 shrink-0" />
                   Candidatura enviada com sucesso!
