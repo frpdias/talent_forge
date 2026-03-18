@@ -1,6 +1,6 @@
 # Arquitetura Canônica — TalentForge
 
-**Última atualização**: 2026-03-17 | **Score de Conformidade**: ✅ 100% (Sprint 49 — Fix Middleware /vagas + SMTP Recovery) | **Sprints planejados**: Sprint 41 (AI Assistant) + Sprint 44 (Gate Recrutamento)
+**Última atualização**: 2026-03-18 | **Score de Conformidade**: ✅ 100% (Sprint 50 — SMTP Produção Restaurado + Vercel Multi-Conta Resolvido) | **Sprints planejados**: Sprint 41 (AI Assistant) + Sprint 44 (Gate Recrutamento)
 
 ## 📜 FONTE DA VERDADE — PRINCÍPIO FUNDAMENTAL
 
@@ -27,7 +27,7 @@
 8. **NUNCA** alterar enums sem migration + validação de dados existentes
 9. **NUNCA** criar componentes fora da estrutura de Design System
 10. **NUNCA** fazer commits direto em `main` sem passar por validação
-11. **NUNCA** usar `vercel --prod` CLI para deploy — o deploy é **exclusivamente via git push**
+11. **NUNCA** usar `vercel --prod` CLI para deploy — o deploy é **exclusivamente via git push** (exceção: rebuild emergencial quando a GitHub integration falha e a conta CLI está corretamente autenticada como `frpdias-5043` no projeto `fernando-dias-projects-e4b4044b/web`)
 12. **NUNCA** committar `.env`, `.env.local` ou qualquer arquivo de segredos
 13. **NUNCA** deixar arquivos do projeto fora do git (todos os arquivos `apps/web/src`, configs, migrations **devem** estar rastreados)
 14. **NUNCA** commitar arquivos duplicados (`* 2.tsx`, `* 2.ts`) — indicam cópia acidental
@@ -391,11 +391,13 @@ const COLORS = {
 
 4. **Deploy automático via CI → Vercel**:
    - Push para `main` → GitHub Actions valida build + tipos → Vercel deploya
-   - **Nunca usar `vercel --prod` CLI** — histórico de deploy fora do git causa inconsistências graves
+   - Deploy aciona automaticamente no projeto `fernando-dias-projects-e4b4044b/web`
+   - **Nunca usar `vercel --prod` CLI** como regra geral — exceto em emergências (ver seção ⚙️ Configuração do Vercel)
 
 5. **Validar deploy no Vercel**:
-   - Acesse https://vercel.com/dashboard e verifique o build
+   - Acesse https://vercel.com/fernando-dias-projects-e4b4044b/web/deployments
    - URL de produção: https://web-eight-rho-84.vercel.app
+   - Domínio customizado: https://talentforge.com.br
 
 ---
 
@@ -433,6 +435,9 @@ Desenvolvedor
      │
      ▼
 https://web-eight-rho-84.vercel.app
+(= https://talentforge.com.br)
+Projeto: fernando-dias-projects-e4b4044b/web
+Conta CLI: frpdias-5043
 ```
 
 ### ✅ Fluxo Git Correto — Do Zero ao Deploy
@@ -503,7 +508,19 @@ docs(arquitetura): adiciona fluxo canônico de Git & Deploy
 | `Logos/` | ❌ NÃO | Assets binários |
 | `*" 2.tsx"` | ❌ NÃO | Cópias acidentais |
 
-### ⚙️ Configuração do Vercel (NÃO ALTERAR)
+### ⚙️ Configuração do Vercel — Projeto Canônico (CRÍTICO)
+
+> **⚠️ ATENÇÃO — Dois projetos Vercel existem, apenas UM serve produção:**
+>
+> | Projeto | Conta Vercel | URL | Serve `talentforge.com.br`? |
+> |---------|-------------|-----|----------------------------|
+> | `web` | `fernando-dias-projects-e4b4044b` | `web-eight-rho-84.vercel.app` | ✅ **SIM — É ESTE** |
+> | `talent_forge` | `fartechs-projects-c64e0af4` | `talentforge-tawny.vercel.app` | ❌ NÃO (projeto auxiliar/legado) |
+>
+> **CLI correto**: `vercel whoami` deve retornar `frpdias-5043` (conta `fernando-dias-projects-e4b4044b`).
+> **Linkagem correta**: `apps/web/.vercel/project.json` deve ter `orgId: team_lwke1raX8NIzKHkR5z2CPFR5` e `projectId: prj_inQzsBof h4jVKptWyi47NuB6Wumu`.
+>
+> Se `vercel link` for executado em `apps/web/`, ele reconecta automaticamente ao projeto correto.
 
 | Configuração | Valor |
 |-------------|-------|
@@ -511,13 +528,40 @@ docs(arquitetura): adiciona fluxo canônico de Git & Deploy
 | Root Directory | `apps/web` |
 | Build Command | `next build` |
 | Output Directory | `.next` |
-| Install Command | `npm install --no-package-lock` |
-| Node.js Version | 20.x |
+| Install Command | `npm install` |
+| Node.js Version | 24.x |
 
-**Variáveis de ambiente obrigatórias no Vercel**:
-- `NEXT_PUBLIC_SUPABASE_URL`
-- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-- `SUPABASE_SERVICE_ROLE_KEY`
+**Variáveis de ambiente obrigatórias no Vercel** (`production + preview + development`):
+
+| Variável | Valor / Descrição |
+|----------|------------------|
+| `NEXT_PUBLIC_SUPABASE_URL` | `https://fjudsjzfnysaztcwlwgm.supabase.co` |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Chave anon do Supabase (JWT, começa com `eyJ`) |
+| `SUPABASE_SERVICE_ROLE_KEY` | Chave service role do Supabase (JWT, começa com `eyJ`) |
+| `NEXT_PUBLIC_API_URL` | `https://api-py-ruddy.vercel.app/api/v1` (produção) |
+| `NEXT_PUBLIC_API_BASE_URL` | `https://web-eight-rho-84.vercel.app` |
+| `NEXT_PUBLIC_APP_URL` | `https://web-eight-rho-84.vercel.app` |
+| `BREVO_SMTP_HOST` | `smtp-relay.brevo.com` |
+| `BREVO_SMTP_PORT` | `587` |
+| `BREVO_SMTP_USER` | `a46374001@smtp-brevo.com` |
+| `BREVO_SMTP_PASS` | SMTP Key do Brevo (ver `apps/api/.env`) — **NÃO commitar** |
+| `BREVO_SENDER_EMAIL` | `noreply@talentforge.com.br` |
+| `BREVO_SENDER_NAME` | `TalentForge` |
+| `BREVO_REPLY_TO` | `contato@talentforge.com.br` |
+| `OPENAI_API_KEY` | Chave OpenAI (ver `apps/api/.env`) |
+| `BREVO_API_KEY` | API Key do Brevo (ver `apps/api/.env`) |
+| `GOOGLE_CLIENT_ID` | OAuth Google |
+| `GOOGLE_CLIENT_SECRET` | OAuth Google |
+| `GOOGLE_CALENDAR_CLIENT_ID` | OAuth Calendar |
+
+> **⚠️ Se as vars SMTP sumissem do Vercel**, adicionar via CLI:
+> ```bash
+> cd apps/web  # importante: pasta com .vercel/project.json correto
+> vercel whoami  # deve retornar frpdias-5043
+> # Adicionar cada var:
+> printf "smtp-relay.brevo.com" | vercel env add BREVO_SMTP_HOST production
+> # ... repetir para preview e development
+> ```
 
 **Variáveis de ambiente para o CI (GitHub Secrets)**:
 - `NEXT_PUBLIC_SUPABASE_URL`
@@ -528,7 +572,7 @@ docs(arquitetura): adiciona fluxo canônico de Git & Deploy
 ```json
 {
   "framework": "nextjs",
-  "installCommand": "npm install --no-package-lock",
+  "installCommand": "npm install",
   "buildCommand": "next build",
   "outputDirectory": ".next",
   "env": {
@@ -620,13 +664,25 @@ npm run dev
 ```
 
 #### ⚠️ Variáveis de Ambiente Críticas (`apps/web/.env.local`)
-| Variável | Obrigatória | Descrição |
-|----------|-------------|----------|
-| `NEXT_PUBLIC_SUPABASE_URL` | ✅ | URL do projeto Supabase |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | ✅ | Chave anon (pública) do Supabase |
-| `SUPABASE_SERVICE_ROLE_KEY` | ✅ | Chave service role (admin ops, NÃO expor no client) |
-| `VERCEL_OIDC_TOKEN` | ❌ **PROIBIDO em dev local** | Causa hang do servidor. Só usar em deploy Vercel |
-| `NEXT_PUBLIC_API_BASE_URL` | 🟡 Opcional | URL base da API NestJS **sem** `/api/v1` (padrão: `http://localhost:3001`) |
+| Variável | Obrigatória | Valor em dev local |
+|----------|-------------|-------------------|
+| `NEXT_PUBLIC_SUPABASE_URL` | ✅ | `https://fjudsjzfnysaztcwlwgm.supabase.co` |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | ✅ | Chave anon do Supabase (JWT) |
+| `SUPABASE_SERVICE_ROLE_KEY` | ✅ | Chave service role do Supabase (JWT) |
+| `NEXT_PUBLIC_API_URL` | 🟡 Opcional | `http://localhost:3001/api/v1` |
+| `NEXT_PUBLIC_API_BASE_URL` | 🟡 Opcional | `http://localhost:3001` |
+| `NEXT_PUBLIC_APP_URL` | 🟡 Opcional | `http://localhost:3000` |
+| `BREVO_SMTP_HOST` | ✅ (para email) | `smtp-relay.brevo.com` |
+| `BREVO_SMTP_PORT` | ✅ (para email) | `587` |
+| `BREVO_SMTP_USER` | ✅ (para email) | `a46374001@smtp-brevo.com` |
+| `BREVO_SMTP_PASS` | ✅ (para email) | SMTP Key do Brevo (ver `apps/api/.env`) |
+| `BREVO_SENDER_EMAIL` | ✅ (para email) | `noreply@talentforge.com.br` |
+| `BREVO_SENDER_NAME` | ✅ (para email) | `TalentForge` |
+| `BREVO_REPLY_TO` | ✅ (para email) | `contato@talentforge.com.br` |
+| `GOOGLE_CLIENT_ID` | 🟡 Opcional | OAuth Google (ver `apps/api/.env`) |
+| `GOOGLE_CLIENT_SECRET` | 🟡 Opcional | OAuth Google (ver `apps/api/.env`) |
+| `GOOGLE_CALENDAR_CLIENT_ID` | 🟡 Opcional | OAuth Calendar (ver `apps/api/.env`) |
+| `VERCEL_OIDC_TOKEN` | ❌ **PROIBIDO em dev local** | Causa hang do servidor. **NUNCA adicionar ao `.env.local`** |
 
 > **🔴 REGRA ABSOLUTA**: A variável `VERCEL_OIDC_TOKEN` **NUNCA** deve estar ativa em `.env.local` para desenvolvimento local. Ela causa interferência no servidor Next.js, fazendo-o aceitar conexões na porta 3000 mas nunca responder às requisições (hang infinito). Se presente, comentar com `#`.
 
@@ -3548,23 +3604,29 @@ Todos os endpoints da API foram validados localmente com sucesso:
 
 5. **Email (SMTP — Brevo):**
    - Servidor SMTP: `smtp-relay.brevo.com` porta `587`
-   - Usuário SMTP: login da conta Brevo
-   - **Senha via env var**: `BREVO_SMTP_PASS` (SMTP Key do painel Brevo)
+   - Usuário SMTP: `a46374001@smtp-brevo.com` (login da conta Brevo)
+   - **Senha via env var**: `BREVO_SMTP_PASS` (SMTP Key do painel Brevo — **não é a senha da conta**)
    - **Substitui** o e-mail nativo do Supabase (limite 2/dia → ilimitado no plano Brevo)
-   - **TODOS os e-mails saem pelo Brevo** — tanto NestJS quanto Supabase Auth:
-     - NestJS `EmailService`: convites, entrevistas, assessments, welcome, NR-1
-     - Supabase Auth: reset de senha, confirmação de cadastro, magic link, troca de e-mail
+   - **Rotas Next.js que usam SMTP** (via nodemailer):
+     - `POST /api/pipeline/notify` — email automático ao mover candidato no pipeline
+     - `GET /api/admin/smtp-status` — monitor de conexão SMTP (retorna JSON com status e latência)
+     - `POST /admin/settings/email/test` — disparo de template de teste
    - Templates Supabase Auth versionados em `supabase/email-templates/`
-   - Endpoint de teste: `POST /admin/settings/email/test`
-   - **Env vars obrigatórias** (Vercel **production + preview + development** + Supabase SMTP Settings):
-     - `BREVO_SMTP_HOST=smtp-relay.brevo.com`
-     - `BREVO_SMTP_PORT=587`
-     - `BREVO_SMTP_USER=<login-brevo>`
-     - `BREVO_SMTP_PASS=<smtp-api-key>`
-     - `BREVO_SENDER_NAME=TalentForge`
-     - `BREVO_SENDER_EMAIL=noreply@talentforge.com.br`
-     - `APP_URL=https://web-eight-rho-84.vercel.app`
-   - ⚠️ **Se o Vercel resetar as vars**, executar: `bash scripts/restore-vercel-env.sh` (lê de `apps/api/.env`)
+   - **Env vars obrigatórias** (Vercel `production + preview + development` + `apps/web/.env.local`):
+
+     | Variável | Valor |
+     |----------|-------|
+     | `BREVO_SMTP_HOST` | `smtp-relay.brevo.com` |
+     | `BREVO_SMTP_PORT` | `587` |
+     | `BREVO_SMTP_USER` | `a46374001@smtp-brevo.com` |
+     | `BREVO_SMTP_PASS` | SMTP Key (ver `apps/api/.env`) — **nunca commitar** |
+     | `BREVO_SENDER_EMAIL` | `noreply@talentforge.com.br` |
+     | `BREVO_SENDER_NAME` | `TalentForge` |
+     | `BREVO_REPLY_TO` | `contato@talentforge.com.br` |
+
+   - ⚠️ **Armadilha crítica identificada em 2026-03-18**: o Vercel possui **duas contas** com projetos distintos. As vars SMTP devem estar no projeto `fernando-dias-projects-e4b4044b/web`. Adicionar ao projeto errado (`fartechs/talent_forge`) **não tem efeito** em `talentforge.com.br`.
+   - ⚠️ **`BREVO_SMTP_PASS` tem duas chaves diferentes** catalogadas em `apps/api/.env`: usar **apenas a chave ativa** (confirmar com `curl https://talentforge.com.br/api/admin/smtp-status` → deve retornar `"status":"online"`).
+   - ⚠️ **`vercel link` em `apps/web/` sobrescreve `.env.local`** com as vars baixadas do Vercel — restaurar manualmente com os valores corretos após executar o comando.
 
 **Design System:**
 - Container principal: `bg-white`, bordas `border-[#E5E5DC]`
@@ -7462,6 +7524,18 @@ Adicionar card "Módulo de Recrutamento" seguindo o mesmo padrão visual do card
 - ✅ **Botão PDF**: "Baixar Relatório Completo (PDF)" exibido no bloco `currentReview` da aba Revisão — reutiliza ícone `Download` do Lucide
 - ✅ **Rodapé dinâmico**: `drawAllFooters()` percorre todas as páginas e aplica paginação "X / Y" + branding TalentForge
 - ✅ **Commits**: `e296a14` → `origin/main`
+
+### v5.19 (2026-03-18)
+- ✅ **Score de Conformidade**: 100% mantido (Sprint 50 — SMTP Produção Restaurado + Vercel Multi-Conta Resolvido)
+- ✅ **Causa raiz identificada — dois projetos Vercel**: `talentforge.com.br` é servido por `fernando-dias-projects-e4b4044b/web` (conta `frpdias-5043`), não pelo projeto `fartechs-projects-c64e0af4/talent_forge`. Confirmado comparando ETag + `x-vercel-id` de `web-eight-rho-84.vercel.app` vs `talentforge.com.br` (idênticos). Todas as tentativas anteriores de adicionar env vars falhavam por apontar para o projeto errado.
+- ✅ **SMTP restaurado em produção**: `BREVO_SMTP_HOST`, `BREVO_SMTP_PORT`, `BREVO_SMTP_USER`, `BREVO_SMTP_PASS`, `BREVO_SENDER_EMAIL`, `BREVO_SENDER_NAME`, `BREVO_REPLY_TO` adicionados ao projeto correto `fernando-dias-projects-e4b4044b/web` para todos os 3 ambientes. `BREVO_SMTP_PASS` corrigido (chave expirada `*yvfg3ma6sQFeD6HA` substituída pela ativa `*a4KXPTycS7rgM6Vz`). Resultado: `{"status":"SMTP OK ✅","latency":"224ms"}`.
+- ✅ **`apps/web/.vercel/project.json` corrigido**: `vercel link` em `apps/web/` re-vincula ao projeto correto automaticamente. `orgId: team_lwke1raX8NIzKHkR5z2CPFR5` (conta Fernando Dias).
+- ✅ **`vercel.json` — fix `--no-package-lock`**: `installCommand` alterado de `npm install --no-package-lock` para `npm install` — builds não-determinísticos causavam Zustand deprecated warning em produção. Commit `d43c82f`.
+- ✅ **`zustand` pinado**: `apps/web/package.json` — versão `^5.0.10` → `5.0.11` (exata) para garantir chave SMTP da build. Commit `d43c82f`.
+- ✅ **`apps/web/.env.local` restaurado**: `vercel link` sobrescreveu o arquivo com vars do Vercel (incluindo `VERCEL_OIDC_TOKEN` e `BREVO_SMTP_PASS` expirado); arquivo reescrito manualmente com todas as vars corretas.
+- ✅ **Pipeline notify SMTP**: rota `POST /api/pipeline/notify` (adicionada commit `0d92eee`) — envia e-mail automático ao candidato quando movido entre etapas do pipeline; usa nodemailer + vars BREVO.
+- ✅ **Script `scripts/add-vercel-env.sh`**: script para adicionar vars ao projeto Vercel (para o projeto `fartechs/talent_forge`; **não** resolve o problema do projeto correto — mantido apenas para referência). Commit `22252ed`.
+- ✅ **Commits**: `d43c82f` (zustand+vercel.json) → `7e14ed0` (.env.example) → `dbbd677` → `5a1e7cc` → `22252ed` (script) → `882db88` → `219698c` → `677c16b` → `aa3abcb` → `origin/main`
 
 ### v5.18 (2026-03-17)
 - ✅ **Score de Conformidade**: 100% mantido (Sprint 49 — Fix Middleware /vagas + SMTP Recovery)
