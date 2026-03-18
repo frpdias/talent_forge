@@ -964,10 +964,20 @@ function VagasContent() {
       </header>
 
       {/* ── HERO ── */}
-      <section className="bg-[#141042] pt-10 pb-14 sm:pt-14 sm:pb-16 relative overflow-hidden">
-        {/* Glow decorativo */}
-        <div className="absolute -top-16 -left-16 w-[480px] h-[480px] bg-[#1F4ED8]/20 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute -bottom-20 -right-10 w-[360px] h-[360px] bg-[#F97316]/15 rounded-full blur-3xl pointer-events-none" />
+      <section
+        className="pt-10 pb-14 sm:pt-14 sm:pb-16 relative"
+        style={{
+          backgroundImage: [
+            'radial-gradient(ellipse 90% 90% at 15% 60%, rgba(31,78,216,0.35) 0%, transparent 65%)',
+            'radial-gradient(ellipse 70% 70% at 85% 15%, rgba(249,115,22,0.18) 0%, transparent 60%)',
+            'radial-gradient(ellipse 50% 80% at 50% 100%, rgba(16,185,129,0.1) 0%, transparent 70%)',
+            'linear-gradient(145deg, #0f0c35 0%, #141042 40%, #160e45 100%)',
+          ].join(', '),
+          backgroundAttachment: 'fixed',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+        }}
+      >
         {/* Grade sutil */}
         <div className="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg width%3D%2240%22 height%3D%2240%22 viewBox%3D%220 0 40 40%22 xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cg fill%3D%22none%22 fill-rule%3D%22evenodd%22%3E%3Cg fill%3D%22%23ffffff%22 fill-opacity%3D%220.03%22%3E%3Cpath d%3D%22M0 40L40 0H20L0 20M40 40V20L20 40%22/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')] pointer-events-none" />
 
