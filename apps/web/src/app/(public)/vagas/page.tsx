@@ -171,7 +171,7 @@ function SkeletonCard() {
 function OrgAvatar({ name, logoUrl, size = 'md' }: {
   name: string; logoUrl: string | null; size?: 'sm' | 'md' | 'lg';
 }) {
-  const sz = size === 'sm' ? 'w-8 h-8 text-xs' : size === 'lg' ? 'w-14 h-14 text-lg' : 'w-11 h-11 text-sm';
+  const sz = size === 'sm' ? 'w-8 h-8 text-sm' : size === 'lg' ? 'w-14 h-14 text-xl' : 'w-11 h-11 text-base';
   if (logoUrl) {
     return (
       <div className={`${sz} rounded-xl overflow-hidden shrink-0 bg-white border border-gray-100 flex items-center justify-center shadow-sm`}>
@@ -199,7 +199,7 @@ function FilterCheckbox({ label, active, onClick }: { label: string; active: boo
   return (
     <button
       onClick={onClick}
-      className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-all ${
+      className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-base transition-all ${
         active ? 'bg-[#141042] text-white font-medium' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
       }`}
     >
@@ -286,7 +286,7 @@ function AlertModal({
               <Check className="h-6 w-6 text-green-600" />
             </div>
             <p className="font-bold text-gray-900">Alerta criado!</p>
-            <p className="text-sm text-gray-500 mt-1">Você será avisado sobre novas vagas.</p>
+            <p className="text-base text-gray-500 mt-1">Você será avisado sobre novas vagas.</p>
           </div>
         ) : (
           <>
@@ -295,8 +295,8 @@ function AlertModal({
                 <Bell className="h-5 w-5 text-[#141042]" />
               </div>
               <div className="min-w-0">
-                <p className="font-bold text-gray-900 text-sm">Criar alerta de vagas</p>
-                <p className="text-xs text-gray-400 mt-0.5 truncate">"{searchLabel}"</p>
+                <p className="font-bold text-gray-900 text-base">Criar alerta de vagas</p>
+                <p className="text-sm text-gray-400 mt-0.5 truncate">"{searchLabel}"</p>
               </div>
             </div>
             <form onSubmit={handleSubmit} className="space-y-3">
@@ -306,18 +306,18 @@ function AlertModal({
                 value={email}
                 onChange={e => setEmail(e.target.value)}
                 autoFocus
-                className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#141042] transition-colors"
+                className="w-full border border-gray-200 rounded-xl px-4 py-3 text-base focus:outline-none focus:border-[#141042] transition-colors"
               />
               <button
                 type="submit"
                 disabled={!email.includes('@')}
-                className="w-full bg-[#141042] hover:bg-[#1a1565] disabled:opacity-40 text-white font-semibold py-3 rounded-xl text-sm transition-colors flex items-center justify-center gap-2"
+                className="w-full bg-[#141042] hover:bg-[#1a1565] disabled:opacity-40 text-white font-semibold py-3 rounded-xl text-base transition-colors flex items-center justify-center gap-2"
               >
                 <Bell className="h-4 w-4" />
                 Criar alerta
               </button>
             </form>
-            <p className="text-[11px] text-gray-400 text-center mt-3">
+            <p className="text-xs text-gray-400 text-center mt-3">
               Receberá um e-mail quando surgirem novas vagas para esta busca.
             </p>
           </>
@@ -360,7 +360,7 @@ function JobModal({ job, onClose }: { job: GlobalJob; onClose: () => void }) {
         <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 shrink-0">
           <div className="flex items-center gap-2.5 min-w-0">
             <OrgAvatar name={job.org_name} logoUrl={job.org_logo_url} size="sm" />
-            <p className="text-xs font-medium text-gray-500 truncate">{job.org_name}</p>
+            <p className="text-sm font-medium text-gray-500 truncate">{job.org_name}</p>
           </div>
           <div className="flex items-center gap-2 shrink-0">
             <ShareButtons job={job} />
@@ -386,22 +386,22 @@ function JobModal({ job, onClose }: { job: GlobalJob; onClose: () => void }) {
           <div className="px-5 pt-5 pb-3">
 
             {/* Title */}
-            <h2 className="text-lg font-bold text-[#141042] leading-snug mb-3">{job.title}</h2>
+            <h2 className="text-xl font-bold text-[#141042] leading-snug mb-3">{job.title}</h2>
 
             {/* Badges */}
             <div className="flex flex-wrap gap-1.5 mb-4">
               {job.employment_type && (
-                <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-semibold border ${TYPE_COLOR[job.employment_type] || 'bg-gray-100 text-gray-600 border-gray-200'}`}>
+                <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold border ${TYPE_COLOR[job.employment_type] || 'bg-gray-100 text-gray-600 border-gray-200'}`}>
                   {TYPE_LABEL[job.employment_type] || job.employment_type}
                 </span>
               )}
               {job.work_modality && (
-                <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-semibold border ${MODALITY_COLOR[job.work_modality] || 'bg-gray-100 text-gray-600 border-gray-200'}`}>
+                <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold border ${MODALITY_COLOR[job.work_modality] || 'bg-gray-100 text-gray-600 border-gray-200'}`}>
                   {MODALITY_LABEL[job.work_modality] || job.work_modality}
                 </span>
               )}
               {job.seniority && (
-                <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-semibold bg-slate-100 text-slate-600 border border-slate-200">
+                <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-600 border border-slate-200">
                   {SENIORITY_LABEL[job.seniority] || job.seniority}
                 </span>
               )}
@@ -410,30 +410,30 @@ function JobModal({ job, onClose }: { job: GlobalJob; onClose: () => void }) {
             {/* Meta */}
             <div className="space-y-2 mb-5 bg-gray-50 rounded-xl p-4">
               {job.location && (
-                <div className="flex items-center gap-2 text-sm text-gray-600">
+                <div className="flex items-center gap-2 text-base text-gray-600">
                   <MapPin className="h-4 w-4 text-gray-400 shrink-0" />
                   <span>{job.location}</span>
                 </div>
               )}
               {job.salary_range ? (
-                <div className="flex items-center gap-2 text-sm font-semibold text-[#10B981]">
+                <div className="flex items-center gap-2 text-base font-semibold text-[#10B981]">
                   <DollarSign className="h-4 w-4 shrink-0" />
                   <span>{job.salary_range}</span>
                 </div>
               ) : (
-                <div className="flex items-center gap-2 text-sm text-gray-400">
+                <div className="flex items-center gap-2 text-base text-gray-400">
                   <DollarSign className="h-4 w-4 shrink-0" />
                   <span>Salário a combinar</span>
                 </div>
               )}
               {job.org_industry && (
-                <div className="flex items-center gap-2 text-sm text-gray-500">
+                <div className="flex items-center gap-2 text-base text-gray-500">
                   <Building2 className="h-4 w-4 text-gray-400 shrink-0" />
                   <span>{job.org_industry}</span>
                 </div>
               )}
               {job.application_deadline && (
-                <div className={`flex items-center gap-2 text-sm ${daysLeft !== null && daysLeft <= 7 ? 'text-amber-600 font-semibold' : 'text-gray-500'}`}>
+                <div className={`flex items-center gap-2 text-base ${daysLeft !== null && daysLeft <= 7 ? 'text-amber-600 font-semibold' : 'text-gray-500'}`}>
                   <Calendar className="h-4 w-4 shrink-0" />
                   <span>
                     Inscrições até {new Date(job.application_deadline).toLocaleDateString('pt-BR')}
@@ -441,7 +441,7 @@ function JobModal({ job, onClose }: { job: GlobalJob; onClose: () => void }) {
                   </span>
                 </div>
               )}
-              <div className="flex items-center gap-2 text-sm text-gray-400">
+              <div className="flex items-center gap-2 text-base text-gray-400">
                 <Clock className="h-4 w-4 shrink-0" />
                 <span>Publicada {daysAgo(job.created_at)}</span>
               </div>
@@ -450,14 +450,14 @@ function JobModal({ job, onClose }: { job: GlobalJob; onClose: () => void }) {
             {/* Description */}
             {(job.description_html || job.description) && (
               <div className="mb-5">
-                <h3 className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-3">Sobre a vaga</h3>
+                <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Sobre a vaga</h3>
                 {job.description_html ? (
                   <div
-                    className="text-sm text-gray-700 leading-relaxed [&_ul]:list-disc [&_ul]:pl-5 [&_ul]:space-y-1 [&_ol]:list-decimal [&_ol]:pl-5 [&_ol]:space-y-1 [&_p]:mb-2 [&_strong]:font-semibold [&_h1]:font-bold [&_h1]:text-gray-900 [&_h2]:font-bold [&_h2]:text-gray-900 [&_h3]:font-semibold [&_h3]:text-gray-800"
+                    className="text-base text-gray-700 leading-relaxed [&_ul]:list-disc [&_ul]:pl-5 [&_ul]:space-y-1 [&_ol]:list-decimal [&_ol]:pl-5 [&_ol]:space-y-1 [&_p]:mb-2 [&_strong]:font-semibold [&_h1]:font-bold [&_h1]:text-gray-900 [&_h2]:font-bold [&_h2]:text-gray-900 [&_h3]:font-semibold [&_h3]:text-gray-800"
                     dangerouslySetInnerHTML={{ __html: job.description_html }}
                   />
                 ) : (
-                  <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-line">{job.description}</p>
+                  <p className="text-base text-gray-700 leading-relaxed whitespace-pre-line">{job.description}</p>
                 )}
               </div>
             )}
@@ -465,16 +465,16 @@ function JobModal({ job, onClose }: { job: GlobalJob; onClose: () => void }) {
             {/* Requirements */}
             {job.requirements && (
               <div className="mb-5">
-                <h3 className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-3">Requisitos</h3>
-                <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-line">{job.requirements}</p>
+                <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Requisitos</h3>
+                <p className="text-base text-gray-700 leading-relaxed whitespace-pre-line">{job.requirements}</p>
               </div>
             )}
 
             {/* Benefits */}
             {job.benefits && (
               <div className="mb-5">
-                <h3 className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-3">Benefícios</h3>
-                <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-line">{job.benefits}</p>
+                <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Benefícios</h3>
+                <p className="text-base text-gray-700 leading-relaxed whitespace-pre-line">{job.benefits}</p>
               </div>
             )}
           </div>
@@ -484,13 +484,13 @@ function JobModal({ job, onClose }: { job: GlobalJob; onClose: () => void }) {
         <div className="px-5 py-4 border-t border-gray-100 bg-white shrink-0 space-y-2">
           <Link
             href={`/register?redirect=/jobs/${job.org_slug}/${job.id}`}
-            className="block w-full text-center bg-gradient-to-r from-[#141042] to-[#1F4ED8] hover:from-[#1a1565] hover:to-[#1e40af] text-white font-semibold text-sm py-3.5 rounded-xl transition-all shadow-md hover:shadow-lg"
+            className="block w-full text-center bg-gradient-to-r from-[#141042] to-[#1F4ED8] hover:from-[#1a1565] hover:to-[#1e40af] text-white font-semibold text-base py-3.5 rounded-xl transition-all shadow-md hover:shadow-lg"
           >
             Candidatar-se a esta vaga
           </Link>
           <Link
             href={`/jobs/${job.org_slug}/${job.id}`}
-            className="block w-full text-center border border-gray-200 hover:border-gray-400 text-gray-600 hover:text-gray-900 font-medium text-sm py-2.5 rounded-xl transition-all"
+            className="block w-full text-center border border-gray-200 hover:border-gray-400 text-gray-600 hover:text-gray-900 font-medium text-base py-2.5 rounded-xl transition-all"
           >
             Ver página completa
           </Link>
@@ -522,10 +522,10 @@ function FilterSidebar({
       <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
         <div className="flex items-center gap-2">
           <SlidersHorizontal className="h-4 w-4 text-[#141042]" />
-          <span className="font-semibold text-gray-900 text-sm">Filtros</span>
+          <span className="font-semibold text-gray-900 text-base">Filtros</span>
         </div>
         {activeFilters > 0 && (
-          <button onClick={clearFilters} className="text-xs text-[#F97316] hover:text-orange-700 font-medium transition-colors">
+          <button onClick={clearFilters} className="text-sm text-[#F97316] hover:text-orange-700 font-medium transition-colors">
             Limpar ({activeFilters})
           </button>
         )}
@@ -533,7 +533,7 @@ function FilterSidebar({
 
       <div className="p-4 space-y-5">
         <div>
-          <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-2 px-1">Tipo de contrato</p>
+          <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 px-1">Tipo de contrato</p>
           <div className="space-y-0.5">
             {(['full_time', 'part_time', 'contract', 'internship'] as const).map(t => (
               <FilterCheckbox key={t} label={TYPE_LABEL[t]} active={filterType === t}
@@ -543,7 +543,7 @@ function FilterSidebar({
         </div>
 
         <div>
-          <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-2 px-1">Modalidade</p>
+          <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 px-1">Modalidade</p>
           <div className="space-y-0.5">
             {(['presencial', 'hibrido', 'remoto'] as const).map(m => (
               <FilterCheckbox key={m} label={MODALITY_LABEL[m]} active={filterModality === m}
@@ -553,7 +553,7 @@ function FilterSidebar({
         </div>
 
         <div>
-          <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-2 px-1">Nível</p>
+          <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 px-1">Nível</p>
           <div className="space-y-0.5">
             {(['intern', 'junior', 'mid', 'senior', 'lead', 'manager'] as const).map(s => (
               <FilterCheckbox key={s} label={SENIORITY_LABEL[s]} active={filterSeniority === s}
@@ -563,7 +563,7 @@ function FilterSidebar({
         </div>
 
         <div>
-          <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-2 px-1">Faixa salarial</p>
+          <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 px-1">Faixa salarial</p>
           <div className="space-y-0.5">
             {SALARY_BRACKETS.map(b => (
               <FilterCheckbox key={b.value} label={b.label} active={filterSalary === b.value}
@@ -574,7 +574,7 @@ function FilterSidebar({
 
         {industries.length > 0 && (
           <div>
-            <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-2 px-1">Setor</p>
+            <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 px-1">Setor</p>
             <div className="space-y-0.5 max-h-48 overflow-y-auto">
               {industries.map(ind => (
                 <FilterCheckbox key={ind} label={ind} active={filterIndustry === ind}
@@ -787,27 +787,27 @@ function VagasContent() {
               <Zap className="h-4 w-4 sm:h-[18px] sm:w-[18px] text-white" />
             </div>
             <div className="flex items-baseline gap-0.5">
-              <span className="text-white font-semibold text-base sm:text-lg tracking-tight">TALENT</span>
-              <span className="text-[#F97316] font-bold text-base sm:text-lg tracking-wider">FORGE</span>
+              <span className="text-white font-semibold text-lg sm:text-xl tracking-tight">TALENT</span>
+              <span className="text-[#F97316] font-bold text-lg sm:text-xl tracking-wider">FORGE</span>
             </div>
-            <span className="text-white/40 text-sm hidden md:block">·</span>
-            <span className="text-white/60 text-xs font-medium uppercase tracking-wider hidden md:block">Vagas</span>
+            <span className="text-white/40 text-base hidden md:block">·</span>
+            <span className="text-white/60 text-sm font-medium uppercase tracking-wider hidden md:block">Vagas</span>
           </Link>
 
           <nav className="hidden lg:flex items-center gap-1">
             <Link href="/register?type=recruiter"
-              className="text-sm text-white/60 hover:text-white hover:bg-white/10 px-3 py-1.5 rounded-lg transition-all">
+              className="text-base text-white/60 hover:text-white hover:bg-white/10 px-3 py-1.5 rounded-lg transition-all">
               Para Recrutadores
             </Link>
           </nav>
 
           <div className="flex items-center gap-2 shrink-0">
             <Link href="/login"
-              className="text-sm text-white/70 hover:text-white transition-colors hidden sm:block px-3 py-2 rounded-lg hover:bg-white/10">
+              className="text-base text-white/70 hover:text-white transition-colors hidden sm:block px-3 py-2 rounded-lg hover:bg-white/10">
               Entrar
             </Link>
             <Link href="/register"
-              className="text-xs sm:text-sm font-semibold bg-[#10B981] hover:bg-[#059669] text-white px-3.5 sm:px-5 py-2 rounded-lg transition-all shadow-md">
+              className="text-sm sm:text-base font-semibold bg-[#10B981] hover:bg-[#059669] text-white px-3.5 sm:px-5 py-2 rounded-lg transition-all shadow-md">
               Cadastrar-se
             </Link>
           </div>
@@ -825,7 +825,7 @@ function VagasContent() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 relative">
           {/* Badge */}
           <div className="flex justify-center mb-5 sm:mb-6">
-            <div className="inline-flex items-center gap-2 bg-[#1F4ED8]/20 border border-[#1F4ED8]/30 rounded-full px-4 py-1.5 text-xs font-semibold text-[#93B8FC] backdrop-blur-sm">
+            <div className="inline-flex items-center gap-2 bg-[#1F4ED8]/20 border border-[#1F4ED8]/30 rounded-full px-4 py-1.5 text-sm font-semibold text-[#93B8FC] backdrop-blur-sm">
               <span className="w-1.5 h-1.5 rounded-full bg-[#10B981] animate-pulse shrink-0" />
               {loading ? 'Carregando...' : `${jobs.length} vagas abertas agora`}
             </div>
@@ -835,12 +835,12 @@ function VagasContent() {
           <div className="lg:flex lg:items-center lg:gap-16 lg:mb-10">
             {/* Texto */}
             <div className="text-center lg:text-left lg:flex-1 mb-8 lg:mb-0">
-              <h1 className="text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-extrabold text-white leading-[1.1] mb-3 sm:mb-4 tracking-tight">
+              <h1 className="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-extrabold text-white leading-[1.1] mb-3 sm:mb-4 tracking-tight">
                 Encontre a vaga ideal
                 <br />
                 <span className="text-[#F97316]">para o seu perfil</span>
               </h1>
-              <p className="text-white/50 text-sm sm:text-base lg:text-lg max-w-sm sm:max-w-md mx-auto lg:mx-0 leading-relaxed">
+              <p className="text-white/50 text-base sm:text-lg lg:text-xl max-w-sm sm:max-w-md mx-auto lg:mx-0 leading-relaxed">
                 Conectamos candidatos às melhores oportunidades de{' '}
                 <span className="text-white/80 font-semibold">{loading ? '…' : orgCount} empresas</span> em todo o Brasil.
               </p>
@@ -855,8 +855,8 @@ function VagasContent() {
                   <div key={s.label} className="flex items-center gap-2.5 text-white/60">
                     {i > 0 && <span className="w-px h-4 bg-white/15 mr-1" />}
                     <s.icon className="h-4 w-4 text-[#F97316]" />
-                    <span className="text-sm">
-                      <span className="font-bold text-white text-base">{loading ? '—' : s.value}</span>{' '}
+                    <span className="text-base">
+                      <span className="font-bold text-white text-lg">{loading ? '—' : s.value}</span>{' '}
                       {s.label}
                     </span>
                   </div>
@@ -874,7 +874,7 @@ function VagasContent() {
                     placeholder="Cargo, empresa ou área..."
                     value={search}
                     onChange={e => setSearch(e.target.value)}
-                    className="flex-1 bg-transparent text-sm text-gray-800 placeholder:text-gray-400 outline-none min-w-0"
+                    className="flex-1 bg-transparent text-base text-gray-800 placeholder:text-gray-400 outline-none min-w-0"
                   />
                   {search && (
                     <button onClick={() => setSearch('')}>
@@ -889,7 +889,7 @@ function VagasContent() {
                     placeholder="Cidade ou estado..."
                     value={locationSearch}
                     onChange={e => setLocationSearch(e.target.value)}
-                    className="flex-1 bg-transparent text-sm text-gray-800 placeholder:text-gray-400 outline-none min-w-0"
+                    className="flex-1 bg-transparent text-base text-gray-800 placeholder:text-gray-400 outline-none min-w-0"
                   />
                   {locationSearch && (
                     <button onClick={() => setLocationSearch('')}>
@@ -897,7 +897,7 @@ function VagasContent() {
                     </button>
                   )}
                 </div>
-                <button className="w-full bg-[#F97316] hover:bg-[#ea6c0a] active:bg-[#d96209] text-white font-bold text-sm px-7 py-3.5 rounded-xl transition-all shadow-md hover:shadow-lg tracking-wide">
+                <button className="w-full bg-[#F97316] hover:bg-[#ea6c0a] active:bg-[#d96209] text-white font-bold text-base px-7 py-3.5 rounded-xl transition-all shadow-md hover:shadow-lg tracking-wide">
                   Buscar vagas
                 </button>
               </div>
@@ -908,7 +908,7 @@ function VagasContent() {
                   <button
                     key={tag}
                     onClick={() => tag === 'Remoto' ? setFilterModality('remoto') : setFilterIndustry(tag === 'RH' ? 'Recursos Humanos' : tag)}
-                    className="text-[11px] font-medium text-white/60 border border-white/15 rounded-full px-3 py-1 hover:border-white/40 hover:text-white/90 transition-all"
+                    className="text-xs font-medium text-white/60 border border-white/15 rounded-full px-3 py-1 hover:border-white/40 hover:text-white/90 transition-all"
                   >
                     {tag}
                   </button>
@@ -927,7 +927,7 @@ function VagasContent() {
               <div key={s.label} className="flex items-center gap-1.5 text-white/60">
                 {i > 0 && <span className="w-px h-3 bg-white/15 mr-1" />}
                 <s.icon className="h-3.5 w-3.5 text-[#F97316]" />
-                <span className="text-xs">
+                <span className="text-sm">
                   <span className="font-bold text-white">{loading ? '—' : s.value}</span>{' '}
                   {s.label}
                 </span>
@@ -943,7 +943,7 @@ function VagasContent() {
           <div className="flex items-center gap-1.5 overflow-x-auto py-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             <button
               onClick={clearFilters}
-              className={`flex items-center gap-1.5 shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-all border ${
+              className={`flex items-center gap-1.5 shrink-0 px-4 py-2 rounded-full text-base font-medium transition-all border ${
                 !filterIndustry
                   ? 'bg-[#141042] text-white border-[#141042]'
                   : 'bg-white text-gray-600 border-gray-200 hover:border-gray-400'
@@ -957,7 +957,7 @@ function VagasContent() {
                 <button
                   key={area.value}
                   onClick={() => setFilterIndustry(active ? null : area.value)}
-                  className={`flex items-center gap-1.5 shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-all border ${
+                  className={`flex items-center gap-1.5 shrink-0 px-4 py-2 rounded-full text-base font-medium transition-all border ${
                     active
                       ? 'bg-[#141042] text-white border-[#141042]'
                       : 'bg-white text-gray-600 border-gray-200 hover:border-gray-400'
@@ -994,12 +994,12 @@ function VagasContent() {
                 <div className="w-9 h-9 rounded-xl bg-white/15 flex items-center justify-center mb-3">
                   <Zap className="h-5 w-5 text-[#10B981]" />
                 </div>
-                <p className="font-bold text-sm mb-1">Você é recrutador?</p>
-                <p className="text-white/60 text-xs leading-relaxed mb-4">
+                <p className="font-bold text-base mb-1">Você é recrutador?</p>
+                <p className="text-white/60 text-sm leading-relaxed mb-4">
                   Publique vagas e encontre os melhores candidatos com IA.
                 </p>
                 <Link href="/register?type=recruiter"
-                  className="block text-center bg-[#10B981] hover:bg-[#059669] text-white text-xs font-semibold py-2.5 rounded-xl transition-colors">
+                  className="block text-center bg-[#10B981] hover:bg-[#059669] text-white text-sm font-semibold py-2.5 rounded-xl transition-colors">
                   Publicar vagas grátis
                 </Link>
               </div>
@@ -1011,7 +1011,7 @@ function VagasContent() {
             {/* List header */}
             <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
               <div className="flex items-center gap-3 flex-wrap">
-                <h2 className="text-base font-semibold text-gray-900">
+                <h2 className="text-lg font-semibold text-gray-900">
                   {loading ? (
                     <span className="text-gray-400">Carregando...</span>
                   ) : (
@@ -1024,31 +1024,31 @@ function VagasContent() {
                 {/* Active filter chips */}
                 <div className="flex items-center gap-1.5 flex-wrap">
                   {filterType && (
-                    <span className="inline-flex items-center gap-1 bg-violet-100 text-violet-700 border border-violet-200 text-xs font-medium px-2.5 py-1 rounded-full">
+                    <span className="inline-flex items-center gap-1 bg-violet-100 text-violet-700 border border-violet-200 text-sm font-medium px-2.5 py-1 rounded-full">
                       {TYPE_LABEL[filterType]}
                       <button onClick={() => setFilterType(null)}><X className="h-3 w-3" /></button>
                     </span>
                   )}
                   {filterModality && (
-                    <span className="inline-flex items-center gap-1 bg-teal-100 text-teal-700 border border-teal-200 text-xs font-medium px-2.5 py-1 rounded-full">
+                    <span className="inline-flex items-center gap-1 bg-teal-100 text-teal-700 border border-teal-200 text-sm font-medium px-2.5 py-1 rounded-full">
                       {MODALITY_LABEL[filterModality]}
                       <button onClick={() => setFilterModality(null)}><X className="h-3 w-3" /></button>
                     </span>
                   )}
                   {filterIndustry && (
-                    <span className="inline-flex items-center gap-1 bg-orange-100 text-orange-700 border border-orange-200 text-xs font-medium px-2.5 py-1 rounded-full">
+                    <span className="inline-flex items-center gap-1 bg-orange-100 text-orange-700 border border-orange-200 text-sm font-medium px-2.5 py-1 rounded-full">
                       {filterIndustry}
                       <button onClick={() => setFilterIndustry(null)}><X className="h-3 w-3" /></button>
                     </span>
                   )}
                   {filterSeniority && (
-                    <span className="inline-flex items-center gap-1 bg-blue-100 text-blue-700 border border-blue-200 text-xs font-medium px-2.5 py-1 rounded-full">
+                    <span className="inline-flex items-center gap-1 bg-blue-100 text-blue-700 border border-blue-200 text-sm font-medium px-2.5 py-1 rounded-full">
                       {SENIORITY_LABEL[filterSeniority]}
                       <button onClick={() => setFilterSeniority(null)}><X className="h-3 w-3" /></button>
                     </span>
                   )}
                   {filterSalary && (
-                    <span className="inline-flex items-center gap-1 bg-green-100 text-green-700 border border-green-200 text-xs font-medium px-2.5 py-1 rounded-full">
+                    <span className="inline-flex items-center gap-1 bg-green-100 text-green-700 border border-green-200 text-sm font-medium px-2.5 py-1 rounded-full">
                       {SALARY_BRACKETS.find(b => b.value === filterSalary)?.label}
                       <button onClick={() => setFilterSalary(null)}><X className="h-3 w-3" /></button>
                     </span>
@@ -1061,7 +1061,7 @@ function VagasContent() {
                 {!loading && (
                   <button
                     onClick={() => setShowAlertModal(true)}
-                    className="flex items-center gap-1.5 text-sm font-medium text-[#141042] border border-[#141042]/25 hover:border-[#141042] px-3.5 py-2 rounded-xl bg-white hover:bg-[#141042]/5 transition-all"
+                    className="flex items-center gap-1.5 text-base font-medium text-[#141042] border border-[#141042]/25 hover:border-[#141042] px-3.5 py-2 rounded-xl bg-white hover:bg-[#141042]/5 transition-all"
                     title="Criar alerta para esta busca"
                   >
                     <Bell className="h-4 w-4" />
@@ -1074,7 +1074,7 @@ function VagasContent() {
                   <select
                     value={sortBy}
                     onChange={e => setSortBy(e.target.value)}
-                    className="appearance-none bg-white border border-gray-200 hover:border-gray-400 text-gray-700 text-sm font-medium px-3.5 py-2 rounded-xl pr-8 cursor-pointer outline-none transition-all"
+                    className="appearance-none bg-white border border-gray-200 hover:border-gray-400 text-gray-700 text-base font-medium px-3.5 py-2 rounded-xl pr-8 cursor-pointer outline-none transition-all"
                   >
                     {SORT_OPTIONS.map(opt => (
                       <option key={opt.value} value={opt.value}>{opt.label}</option>
@@ -1086,12 +1086,12 @@ function VagasContent() {
                 {/* Mobile filter toggle */}
                 <button
                   onClick={() => setShowMobileFilters(true)}
-                  className="lg:hidden flex items-center gap-2 text-sm font-medium text-gray-700 border border-gray-200 px-3.5 py-2 rounded-xl bg-white hover:border-gray-400 transition-all"
+                  className="lg:hidden flex items-center gap-2 text-base font-medium text-gray-700 border border-gray-200 px-3.5 py-2 rounded-xl bg-white hover:border-gray-400 transition-all"
                 >
                   <SlidersHorizontal className="h-4 w-4" />
                   Filtros
                   {activeFilters > 0 && (
-                    <span className="bg-[#141042] text-white text-[10px] font-bold rounded-full flex items-center justify-center" style={{ width: 18, height: 18 }}>
+                    <span className="bg-[#141042] text-white text-xs font-bold rounded-full flex items-center justify-center" style={{ width: 18, height: 18 }}>
                       {activeFilters}
                     </span>
                   )}
@@ -1113,11 +1113,11 @@ function VagasContent() {
                   <Briefcase className="h-8 w-8 text-gray-300" />
                 </div>
                 <div className="text-center">
-                  <p className="text-base font-semibold text-gray-800 mb-1">Nenhuma vaga encontrada</p>
-                  <p className="text-sm text-gray-500">Tente outros termos ou remova os filtros aplicados</p>
+                  <p className="text-lg font-semibold text-gray-800 mb-1">Nenhuma vaga encontrada</p>
+                  <p className="text-base text-gray-500">Tente outros termos ou remova os filtros aplicados</p>
                 </div>
                 {activeFilters > 0 && (
-                  <button onClick={clearFilters} className="text-sm font-medium text-[#F97316] hover:text-orange-700 transition-colors">
+                  <button onClick={clearFilters} className="text-base font-medium text-[#F97316] hover:text-orange-700 transition-colors">
                     Limpar filtros
                   </button>
                 )}
@@ -1152,24 +1152,24 @@ function VagasContent() {
                             <div className="flex items-start justify-between gap-2 mb-1">
                               <div className="min-w-0">
                                 <div className="flex items-center gap-2 mb-0.5 flex-wrap">
-                                  <p className="text-xs font-medium text-gray-400 truncate">{job.org_name}</p>
+                                  <p className="text-sm font-medium text-gray-400 truncate">{job.org_name}</p>
                                   {hot && (
-                                    <span className="inline-flex items-center gap-1 bg-orange-50 text-orange-600 text-[10px] font-bold px-2 py-0.5 rounded-full border border-orange-200 shrink-0">
+                                    <span className="inline-flex items-center gap-1 bg-orange-50 text-orange-600 text-xs font-bold px-2 py-0.5 rounded-full border border-orange-200 shrink-0">
                                       <Flame className="h-2.5 w-2.5" /> QUENTE
                                     </span>
                                   )}
                                   {nova && (
-                                    <span className="inline-flex items-center gap-1 bg-[#10B981]/10 text-[#059669] text-[10px] font-bold px-2 py-0.5 rounded-full border border-[#10B981]/20 shrink-0">
+                                    <span className="inline-flex items-center gap-1 bg-[#10B981]/10 text-[#059669] text-xs font-bold px-2 py-0.5 rounded-full border border-[#10B981]/20 shrink-0">
                                       <span className="w-1 h-1 rounded-full bg-[#10B981]" /> NOVA
                                     </span>
                                   )}
                                   {expiring && (
-                                    <span className="inline-flex items-center gap-1 bg-amber-50 text-amber-700 text-[10px] font-bold px-2 py-0.5 rounded-full border border-amber-200 shrink-0">
+                                    <span className="inline-flex items-center gap-1 bg-amber-50 text-amber-700 text-xs font-bold px-2 py-0.5 rounded-full border border-amber-200 shrink-0">
                                       <AlertCircle className="h-2.5 w-2.5" /> {daysLeft}d restantes
                                     </span>
                                   )}
                                 </div>
-                                <h3 className={`font-bold text-base leading-snug transition-colors line-clamp-2 ${
+                                <h3 className={`font-bold text-lg leading-snug transition-colors line-clamp-2 ${
                                   isSelected ? 'text-[#1F4ED8]' : 'text-[#141042] group-hover:text-[#1F4ED8]'
                                 }`}>
                                   {job.title}
@@ -1186,42 +1186,42 @@ function VagasContent() {
 
                             {/* Description preview */}
                             {preview && (
-                              <p className="text-xs text-gray-400 mt-1.5 mb-2 line-clamp-2 leading-relaxed">
+                              <p className="text-sm text-gray-400 mt-1.5 mb-2 line-clamp-2 leading-relaxed">
                                 {preview}
                               </p>
                             )}
 
                             <div className="flex items-center gap-3 mt-2 mb-3 flex-wrap">
                               {job.location && (
-                                <span className="flex items-center gap-1 text-xs text-gray-500">
+                                <span className="flex items-center gap-1 text-sm text-gray-500">
                                   <MapPin className="h-3 w-3 text-gray-400 shrink-0" />
                                   {job.location}
                                 </span>
                               )}
                               {job.salary_range ? (
-                                <span className="text-xs font-semibold text-[#10B981]">{job.salary_range}</span>
+                                <span className="text-sm font-semibold text-[#10B981]">{job.salary_range}</span>
                               ) : (
-                                <span className="text-xs text-gray-300 italic">A combinar</span>
+                                <span className="text-sm text-gray-300 italic">A combinar</span>
                               )}
                               {job.org_industry && (
-                                <span className="text-xs text-gray-400 hidden sm:inline">{job.org_industry}</span>
+                                <span className="text-sm text-gray-400 hidden sm:inline">{job.org_industry}</span>
                               )}
                             </div>
 
                             <div className="flex items-center justify-between flex-wrap gap-2">
                               <div className="flex flex-wrap gap-1.5">
                                 {job.employment_type && (
-                                  <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-semibold border ${TYPE_COLOR[job.employment_type] || 'bg-gray-100 text-gray-600 border-gray-200'}`}>
+                                  <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold border ${TYPE_COLOR[job.employment_type] || 'bg-gray-100 text-gray-600 border-gray-200'}`}>
                                     {TYPE_LABEL[job.employment_type] || job.employment_type}
                                   </span>
                                 )}
                                 {job.work_modality && (
-                                  <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-semibold border ${MODALITY_COLOR[job.work_modality] || 'bg-gray-100 text-gray-600 border-gray-200'}`}>
+                                  <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold border ${MODALITY_COLOR[job.work_modality] || 'bg-gray-100 text-gray-600 border-gray-200'}`}>
                                     {MODALITY_LABEL[job.work_modality] || job.work_modality}
                                   </span>
                                 )}
                                 {job.seniority && (
-                                  <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-semibold bg-slate-100 text-slate-600 border border-slate-200">
+                                  <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-600 border border-slate-200">
                                     {SENIORITY_LABEL[job.seniority] || job.seniority}
                                   </span>
                                 )}
@@ -1230,7 +1230,7 @@ function VagasContent() {
                                 <div onClick={e => e.stopPropagation()}>
                                   <ShareButtons job={job} stopPropagation />
                                 </div>
-                                <span className="flex items-center gap-1 text-xs text-gray-400 font-medium">
+                                <span className="flex items-center gap-1 text-sm text-gray-400 font-medium">
                                   <Clock className="h-3 w-3" />
                                   {daysAgo(job.created_at)}
                                 </span>
@@ -1249,7 +1249,7 @@ function VagasContent() {
                 })}
 
                 <div className="pt-4 pb-8 text-center">
-                  <p className="text-xs text-gray-400">
+                  <p className="text-sm text-gray-400">
                     Mostrando <span className="font-semibold text-gray-600">{sorted.length}</span> de{' '}
                     <span className="font-semibold text-gray-600">{jobs.length}</span> vagas disponíveis
                   </p>
@@ -1278,7 +1278,7 @@ function VagasContent() {
               </div>
               <div className="flex items-center gap-3">
                 {activeFilters > 0 && (
-                  <button onClick={clearFilters} className="text-sm text-[#F97316] font-medium">Limpar</button>
+                  <button onClick={clearFilters} className="text-base text-[#F97316] font-medium">Limpar</button>
                 )}
                 <button onClick={() => setShowMobileFilters(false)}
                   className="w-8 h-8 rounded-xl bg-gray-100 flex items-center justify-center">
@@ -1319,11 +1319,11 @@ function VagasContent() {
                 },
               ].map(group => (
                 <div key={group.title}>
-                  <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-3">{group.title}</p>
+                  <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">{group.title}</p>
                   <div className="flex flex-wrap gap-2">
                     {group.items.map(item => (
                       <button key={item.key} onClick={item.toggle}
-                        className={`px-4 py-2 rounded-full border text-sm font-medium transition-all ${
+                        className={`px-4 py-2 rounded-full border text-base font-medium transition-all ${
                           item.active ? 'bg-[#141042] text-white border-[#141042]' : 'bg-white text-gray-600 border-gray-200 hover:border-gray-400'
                         }`}>
                         {item.label}
@@ -1334,11 +1334,11 @@ function VagasContent() {
               ))}
               {industries.length > 0 && (
                 <div>
-                  <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-3">Setor</p>
+                  <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Setor</p>
                   <div className="flex flex-wrap gap-2 max-h-40 overflow-y-auto">
                     {industries.map(ind => (
                       <button key={ind} onClick={() => setFilterIndustry(filterIndustry === ind ? null : ind)}
-                        className={`px-4 py-2 rounded-full border text-sm font-medium transition-all ${
+                        className={`px-4 py-2 rounded-full border text-base font-medium transition-all ${
                           filterIndustry === ind ? 'bg-[#141042] text-white border-[#141042]' : 'bg-white text-gray-600 border-gray-200 hover:border-gray-400'
                         }`}>
                         {ind}
@@ -1348,7 +1348,7 @@ function VagasContent() {
                 </div>
               )}
               <button onClick={() => setShowMobileFilters(false)}
-                className="w-full bg-[#141042] text-white font-semibold py-4 rounded-2xl text-sm transition-colors hover:bg-[#1a1565] mt-2">
+                className="w-full bg-[#141042] text-white font-semibold py-4 rounded-2xl text-base transition-colors hover:bg-[#1a1565] mt-2">
                 Ver {sorted.length} {sorted.length === 1 ? 'vaga' : 'vagas'}
               </button>
             </div>
@@ -1373,17 +1373,17 @@ function VagasContent() {
               <Zap className="h-4 w-4 text-white" />
             </div>
             <div className="flex items-baseline gap-0.5">
-              <span className="text-white font-semibold text-base tracking-tight">TALENT</span>
-              <span className="text-[#F97316] font-bold text-base tracking-wider">FORGE</span>
+              <span className="text-white font-semibold text-lg tracking-tight">TALENT</span>
+              <span className="text-[#F97316] font-bold text-lg tracking-wider">FORGE</span>
             </div>
           </div>
-          <p className="text-white/40 text-sm text-center">
+          <p className="text-white/40 text-base text-center">
             © {new Date().getFullYear()} TalentForge · Conectando talentos às melhores oportunidades
           </p>
           <div className="flex items-center gap-4">
-            <Link href="/login" className="text-white/50 hover:text-white/80 text-sm transition-colors">Entrar</Link>
-            <Link href="/register" className="text-white/50 hover:text-white/80 text-sm transition-colors">Cadastrar</Link>
-            <Link href="/register?type=recruiter" className="text-[#10B981] hover:text-[#34D399] text-sm font-medium transition-colors">
+            <Link href="/login" className="text-white/50 hover:text-white/80 text-base transition-colors">Entrar</Link>
+            <Link href="/register" className="text-white/50 hover:text-white/80 text-base transition-colors">Cadastrar</Link>
+            <Link href="/register?type=recruiter" className="text-[#10B981] hover:text-[#34D399] text-base font-medium transition-colors">
               Para empresas
             </Link>
           </div>
