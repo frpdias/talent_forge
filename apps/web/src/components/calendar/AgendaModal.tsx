@@ -638,8 +638,8 @@ export function AgendaModal({ onClose }: AgendaModalProps) {
                         <div className="space-y-1.5">
                           {ivs.map(iv => {
                             const Icon = TYPE_ICONS[iv.type];
-                            return (
-                              <div key={iv.id} className={`flex items-start gap-2.5 px-3 py-2.5 rounded-lg border text-xs ${TYPE_COLORS[iv.type]}`}>
+                            const cardContent = (
+                              <>
                                 <Icon className="h-3.5 w-3.5 mt-0.5 shrink-0" />
                                 <div className="flex-1 min-w-0">
                                   <p className="font-semibold truncate">{iv.title}</p>
@@ -650,10 +650,10 @@ export function AgendaModal({ onClose }: AgendaModalProps) {
                                     </span>
                                     {iv.candidateName && <span className="truncate">{iv.candidateName}</span>}
                                     {iv.meet_link && (
-                                      <a href={iv.meet_link} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 truncate text-blue-600 hover:underline">
+                                      <span className="flex items-center gap-1 truncate text-blue-600">
                                         <Video className="h-2.5 w-2.5" />
                                         Meet
-                                      </a>
+                                      </span>
                                     )}
                                     {iv.location && !iv.meet_link && (
                                       <span className="flex items-center gap-1 truncate">
@@ -663,6 +663,21 @@ export function AgendaModal({ onClose }: AgendaModalProps) {
                                     )}
                                   </div>
                                 </div>
+                              </>
+                            );
+                            return iv.meet_link ? (
+                              <a
+                                key={iv.id}
+                                href={iv.meet_link}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className={`flex items-start gap-2.5 px-3 py-2.5 rounded-lg border text-xs cursor-pointer hover:shadow-md transition-shadow ${TYPE_COLORS[iv.type]}`}
+                              >
+                                {cardContent}
+                              </a>
+                            ) : (
+                              <div key={iv.id} className={`flex items-start gap-2.5 px-3 py-2.5 rounded-lg border text-xs ${TYPE_COLORS[iv.type]}`}>
+                                {cardContent}
                               </div>
                             );
                           })}
