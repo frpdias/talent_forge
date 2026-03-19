@@ -861,6 +861,8 @@ export function AgendaModal({ onClose }: AgendaModalProps) {
                 </div>
               </div>
 
+              {/* Link field — hidden for video when Google Calendar is connected (auto-generated) */}
+              {!(gcConnected && form.type === 'video') && (
               <div>
                 <label className="block text-xs font-medium text-[#666666] mb-1">
                   {form.type === 'video' ? 'Link (Meet, Zoom…)' : form.type === 'phone' ? 'Telefone' : 'Endereço'}
@@ -872,6 +874,7 @@ export function AgendaModal({ onClose }: AgendaModalProps) {
                   className="w-full px-3 py-2 border border-[#E5E5DC] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#141042] text-[#141042]"
                 />
               </div>
+              )}
 
               <div>
                 <label className="block text-xs font-medium text-[#666666] mb-1">Notas</label>
@@ -884,9 +887,14 @@ export function AgendaModal({ onClose }: AgendaModalProps) {
                 />
               </div>
 
-              {gcConnected && (
+              {gcConnected && form.type === 'video' && (
                 <p className="text-xs text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-2">
-                  ✓ O evento será aberto no Google Calendar para confirmação.
+                  ✅ Link do Google Meet será gerado automaticamente.
+                </p>
+              )}
+              {gcConnected && form.type !== 'video' && (
+                <p className="text-xs text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-2">
+                  ✓ Evento será criado no Google Calendar automaticamente.
                 </p>
               )}
 

@@ -1,6 +1,6 @@
 # Arquitetura Canônica — TalentForge
 
-**Última atualização**: 2026-03-18 | **Score de Conformidade**: ✅ 100% (Sprint 52 — Agenda Candidato → Modal + Notificação Realtime) | **Sprints planejados**: Sprint 41 (AI Assistant) + Sprint 44 (Gate Recrutamento)
+**Última atualização**: 2026-03-19 | **Score de Conformidade**: ✅ 100% (Sprint 53 — OAuth Google Login + Calendar Fixes) | **Sprints planejados**: Sprint 41 (AI Assistant) + Sprint 44 (Gate Recrutamento)
 
 ## 📜 FONTE DA VERDADE — PRINCÍPIO FUNDAMENTAL
 
@@ -550,9 +550,11 @@ docs(arquitetura): adiciona fluxo canônico de Git & Deploy
 | `BREVO_REPLY_TO` | `contato@talentforge.com.br` |
 | `OPENAI_API_KEY` | Chave OpenAI (ver `apps/api/.env`) |
 | `BREVO_API_KEY` | API Key do Brevo (ver `apps/api/.env`) |
-| `GOOGLE_CLIENT_ID` | OAuth Google |
-| `GOOGLE_CLIENT_SECRET` | OAuth Google |
-| `GOOGLE_CALENDAR_CLIENT_ID` | OAuth Calendar |
+| `GOOGLE_CLIENT_ID` | OAuth Google Login (Client `331569486144-kbnb...`, projeto `melodic-voice-472713-c0`) |
+| `GOOGLE_CLIENT_SECRET` | OAuth Google Login Secret |
+| `GOOGLE_CALENDAR_CLIENT_ID` | OAuth Calendar (Client `632165529284-1c41...`, projeto `project-7c141104`) |
+| `GOOGLE_CALENDAR_CLIENT_SECRET` | OAuth Calendar Secret — **DEVE ser do mesmo Client ID acima** |
+| `GOOGLE_CALENDAR_REDIRECT_URI` | `https://talentforge.com.br/api/google-calendar/callback` |
 
 > **⚠️ Se as vars SMTP sumissem do Vercel**, adicionar via CLI:
 > ```bash
@@ -679,9 +681,11 @@ npm run dev
 | `BREVO_SENDER_EMAIL` | ✅ (para email) | `noreply@talentforge.com.br` |
 | `BREVO_SENDER_NAME` | ✅ (para email) | `TalentForge` |
 | `BREVO_REPLY_TO` | ✅ (para email) | `contato@talentforge.com.br` |
-| `GOOGLE_CLIENT_ID` | 🟡 Opcional | OAuth Google (ver `apps/api/.env`) |
-| `GOOGLE_CLIENT_SECRET` | 🟡 Opcional | OAuth Google (ver `apps/api/.env`) |
-| `GOOGLE_CALENDAR_CLIENT_ID` | 🟡 Opcional | OAuth Calendar (ver `apps/api/.env`) |
+| `GOOGLE_CLIENT_ID` | ✅ | OAuth Google Login — Client `331569486144` (projeto `melodic-voice-472713-c0`) |
+| `GOOGLE_CLIENT_SECRET` | ✅ | OAuth Google Login Secret |
+| `GOOGLE_CALENDAR_CLIENT_ID` | ✅ | OAuth Calendar — Client `632165529284` (projeto `project-7c141104`) |
+| `GOOGLE_CALENDAR_CLIENT_SECRET` | ✅ | OAuth Calendar Secret — **DEVE ser do mesmo par Client ID** |
+| `GOOGLE_CALENDAR_REDIRECT_URI` | ✅ | `https://talentforge.com.br/api/google-calendar/callback` |
 | `VERCEL_OIDC_TOKEN` | ❌ **PROIBIDO em dev local** | Causa hang do servidor. **NUNCA adicionar ao `.env.local`** |
 
 > **🔴 REGRA ABSOLUTA**: A variável `VERCEL_OIDC_TOKEN` **NUNCA** deve estar ativa em `.env.local` para desenvolvimento local. Ela causa interferência no servidor Next.js, fazendo-o aceitar conexões na porta 3000 mas nunca responder às requisições (hang infinito). Se presente, comentar com `#`.
@@ -6500,10 +6504,23 @@ ALTER TABLE user_profiles
 
 #### Env vars necessárias (`.env.local` + Vercel)
 ```
-GOOGLE_CALENDAR_CLIENT_ID=xxx.apps.googleusercontent.com
-GOOGLE_CALENDAR_CLIENT_SECRET=xxxx
+GOOGLE_CALENDAR_CLIENT_ID=632165529284-1c41rv9d139rktcaro1nn5qrvr0pdjfl.apps.googleusercontent.com
+GOOGLE_CALENDAR_CLIENT_SECRET=<secret do mesmo Client ID acima>
+GOOGLE_CALENDAR_REDIRECT_URI=https://talentforge.com.br/api/google-calendar/callback
 ```
-> Redirect URI no Google Cloud Console: `https://web-eight-rho-84.vercel.app/api/google-calendar/callback`
+> Redirect URIs no Google Cloud Console (projeto `project-7c141104`, org `frpdias2016-org`):
+> - `https://talentforge.com.br/api/google-calendar/callback`
+> - `https://web-eight-rho-84.vercel.app/api/google-calendar/callback`
+> - `http://localhost:3000/api/google-calendar/callback`
+
+> **⚠️ IMPORTANTE**: `GOOGLE_CALENDAR_CLIENT_SECRET` **DEVE** corresponder ao `GOOGLE_CALENDAR_CLIENT_ID`. Login Google e Calendar usam clientes OAuth em projetos Google Cloud distintos:
+> - **Login**: Client `331569486144` → projeto `melodic-voice-472713-c0` (configurado no Supabase Auth)
+> - **Calendar**: Client `632165529284` → projeto `project-7c141104` (configurado em env vars)
+
+#### Correções aplicadas (Sprint 53)
+- `authorize/route.ts`: trocado `upsert` por `.update().eq('id', session.user.id)` — evita INSERT com `full_name` NOT NULL
+- `authorize/route.ts` e `callback/route.ts`: redirect URI agora é dinâmico via `getRedirectUri(request)` — usa `GOOGLE_CALENDAR_REDIRECT_URI` env var ou `origin` da request
+- Login Google: secret no Supabase Auth atualizado para corresponder ao client `331569486144`
 
 ---
 
@@ -7526,7 +7543,7 @@ Adicionar card "Módulo de Recrutamento" seguindo o mesmo padrão visual do card
 - ✅ **Commits**: `e296a14` → `origin/main`
 
 ### v5.19 (2026-03-18)
-- ✅ **Score de Conformidade**: 100% mantido (Sprint 50 — SMTP Produção Restaurado + Vercel Multi-Conta Resolvido)
+- ✅ **Score de Conformidade**: 100% mantido (Sprint 53 — OAuth Google Login + Calendar Fixes)
 - ✅ **Causa raiz identificada — dois projetos Vercel**: `talentforge.com.br` é servido por `fernando-dias-projects-e4b4044b/web` (conta `frpdias-5043`), não pelo projeto `fartechs-projects-c64e0af4/talent_forge`. Confirmado comparando ETag + `x-vercel-id` de `web-eight-rho-84.vercel.app` vs `talentforge.com.br` (idênticos). Todas as tentativas anteriores de adicionar env vars falhavam por apontar para o projeto errado.
 - ✅ **SMTP restaurado em produção**: `BREVO_SMTP_HOST`, `BREVO_SMTP_PORT`, `BREVO_SMTP_USER`, `BREVO_SMTP_PASS`, `BREVO_SENDER_EMAIL`, `BREVO_SENDER_NAME`, `BREVO_REPLY_TO` adicionados ao projeto correto `fernando-dias-projects-e4b4044b/web` para todos os 3 ambientes. `BREVO_SMTP_PASS` corrigido (chave expirada `*yvfg3ma6sQFeD6HA` substituída pela ativa `*a4KXPTycS7rgM6Vz`). Resultado: `{"status":"SMTP OK ✅","latency":"224ms"}`.
 - ✅ **`apps/web/.vercel/project.json` corrigido**: `vercel link` em `apps/web/` re-vincula ao projeto correto automaticamente. `orgId: team_lwke1raX8NIzKHkR5z2CPFR5` (conta Fernando Dias).
@@ -8318,6 +8335,8 @@ O `ReportsService.getDashboard()` usa `applications.source` com fallback para `c
 | **Sprint 49** | **2026-03-17** | **Middleware `/vagas` + SMTP recovery — configuração vars Supabase + APP_URL no Vercel, script `restore-vercel-env.sh`** | ✅ |
 | **Sprint 50** | **2026-03-18** | **Tabela `job_alerts` + `/api/alerts/subscribe` — alertas de e-mail por filtro, RLS público INSERT + próprio SELECT/UPDATE, migration `20260318_job_alerts.sql`** | ✅ |
 | **Sprint 51** | **2026-03-18** | **Portal de Vagas World-Class — 4 épicos: rewrite `/vagas` (URL state, skeleton, sort, salary filter, preview panel, share, badges), category SSR pages (14 slugs), JobPosting schema.org, sitemap dinâmico** | ⚠️ Deployado — confirmar visual após hard refresh |
+| **Sprint 52** | **2026-03-18** | **Agenda candidato movida para modal com badge realtime; logo sidebar `pointer-events-none`; login textos brancos +50%; avatar rodapé /vagas removido** | ✅ |
+| **Sprint 53** | **2026-03-19** | **OAuth Google Login + Calendar fixes: imagem Júlia no login, secret Supabase corrigido, Calendar redirect URI dinâmico, upsert→update fix, client_id/secret pareados, env vars Vercel completas** | ✅ |
 ```
 
 ---
@@ -8451,6 +8470,7 @@ CREATE TABLE job_alerts (
 | Sprint | Data | Descrição | Status |
 |--------|------|-----------|--------|
 | **Sprint 52** | **2026-03-18** | **Agenda candidato movida para modal com badge realtime; logo sidebar `pointer-events-none`; login textos brancos +50%; avatar rodapé /vagas removido** | ✅ |
+| **Sprint 53** | **2026-03-19** | **OAuth Google Login + Calendar fixes: imagem Júlia no login, secret Supabase corrigido, Calendar redirect URI dinâmico, upsert→update fix, client_id/secret pareados, env vars Vercel completas** | ✅ |
 
 ### Regras Canônicas — Portal Candidato
 
@@ -8458,3 +8478,66 @@ CREATE TABLE job_alerts (
 2. **`tf_seen_interview_ids`**: chave do `localStorage` para rastrear entrevistas vistas — não alterar o nome sem migrar dados existentes dos usuários.
 3. **Realtime candidates**: usar channel `'candidate-interviews-rt'` para escutar mudanças em `interviews` — sempre fazer `removeChannel` no cleanup do `useEffect`.
 4. **Tailwind v4 + style inline**: quando classes arbitrárias não funcionarem em produção (problema de scanning CSS-first), usar `style={{ prop: value }}` inline como solução canônica.
+
+---
+
+## 21) OAuth Google Login + Google Calendar — Fixes de Produção (Sprint 53, 2026-03-19)
+
+### Contexto
+
+Login Google e Google Calendar estavam com falhas em produção devido a secrets desatualizados, redirect URIs hardcoded, e um bug de `upsert` vs `update`. Esta sprint corrigiu todos os problemas e consolidou a configuração OAuth.
+
+### Dois Clientes Google OAuth (projetos Cloud distintos)
+
+| Serviço | Client ID | Projeto Google Cloud | Configurado em |
+|---------|-----------|---------------------|----------------|
+| **Login Google** | `331569486144-kbnbhdn6bkh6p5ffgntq097jd97kibec` | `melodic-voice-472713-c0` (sem org) | Supabase Auth → Providers → Google |
+| **Google Calendar** | `632165529284-1c41rv9d139rktcaro1nn5qrvr0pdjfl` | `project-7c141104` (org `frpdias2016-org`) | Env vars Vercel + `.env.local` |
+
+> **⚠️ REGRA CANÔNICA**: `GOOGLE_CALENDAR_CLIENT_SECRET` e `GOOGLE_CALENDAR_CLIENT_ID` **DEVEM** ser do mesmo par OAuth. Misturar IDs/secrets de clientes diferentes causa `invalid_client`.
+
+### Problemas Corrigidos
+
+#### 1. Login Google — `Unable to exchange external code`
+- **Causa**: Secret no Supabase Auth (`GOCSPX-DY11...`) não correspondia a nenhum secret ativo no Google Cloud
+- **Solução**: Criado novo secret no client `331569486144`, atualizado no Supabase Dashboard
+
+#### 2. Google Calendar deslogava ao conectar
+- **Causa**: `authorize/route.ts` usava `web-eight-rho-84.vercel.app` hardcoded como redirect URI; sessão em domínio diferente de `talentforge.com.br`
+- **Solução**: Função `getRedirectUri(request)` que usa `GOOGLE_CALENDAR_REDIRECT_URI` env var ou `origin` dinâmico da request
+
+#### 3. Build falhou — código duplicado fora do escopo
+- **Causa**: 50 linhas duplicadas após `}` de fechamento em `callback/route.ts`
+- **Solução**: Removido código duplicado
+
+#### 4. Google Calendar — `invalid_state`
+- **Causa**: `upsert` em `authorize/route.ts` tentava inserir registro com apenas `id` e `google_calendar_state`, mas `full_name` é NOT NULL
+- **Solução**: Trocado por `.update({ google_calendar_state: state }).eq('id', session.user.id)`
+
+#### 5. Google Calendar — `invalid_client`
+- **Causa**: `GOOGLE_CALENDAR_CLIENT_SECRET` no Vercel era de um client OAuth diferente (`tk10e17j...`) do `GOOGLE_CALENDAR_CLIENT_ID` (`1c41rv9d...`)
+- **Solução**: Criado novo secret no client correto `632165529284-1c41...`
+
+### Mudanças Visuais na Página de Login
+
+- **Imagem da Júlia**: adicionada ao painel esquerdo com `width: 80%`, `mixBlendMode: 'multiply'`, `filter: 'saturate(1.8) brightness(1.3) contrast(1.1)'`
+- **Avatar TF removido** do painel esquerdo
+- **Texto "TALENT FORGE"**: aumentado para `fontSize: '2rem'`
+- **Estado de loading** para botão Google Login + captura de erros OAuth via query params
+
+### Arquivos Modificados
+
+| Arquivo | Mudança |
+|---------|---------|
+| `apps/web/src/app/(public)/login/page.tsx` | Imagem Júlia, remoção avatar TF, font maior, `handleGoogleLogin` com loading/error |
+| `apps/web/src/app/api/auth/callback/route.ts` | Removido código duplicado; captura `error` query param do provider |
+| `apps/web/src/app/api/google-calendar/authorize/route.ts` | `getRedirectUri()` dinâmico, `upsert` → `update`, logging |
+| `apps/web/src/app/api/google-calendar/callback/route.ts` | `getRedirectUri()` dinâmico, logging para state validation |
+
+### Regras Canônicas — OAuth
+
+1. **Dois clientes separados**: Login Google usa client do Supabase Auth; Calendar usa client em env vars. Nunca misturar.
+2. **Par client_id/secret**: sempre do mesmo client OAuth. Validar no Google Cloud Console antes de salvar.
+3. **Redirect URI Calendar**: definido por `GOOGLE_CALENDAR_REDIRECT_URI` env var. Fallback para `origin` da request.
+4. **State CSRF**: salvar via `.update()` (não `upsert`) em `user_profiles` — campo `google_calendar_state`.
+5. **Supabase Auth secret**: gerenciado no Dashboard Supabase → Authentication → Providers → Google. Não confundir com env vars do Calendar.
