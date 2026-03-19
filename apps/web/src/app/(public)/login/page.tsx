@@ -124,12 +124,9 @@ function LoginContent() {
         </div>
         <div className="relative z-10 flex flex-col justify-between p-12 w-full">
           <Link href="/" className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-xl bg-white flex items-center justify-center">
-              <span className="text-tf-primary font-bold text-lg">TF</span>
-            </div>
-            <div className="flex flex-col -space-y-0.5">
-              <span className="text-white/90 font-semibold text-lg tracking-tight">TALENT</span>
-              <span className="text-[#F97316] font-bold text-lg tracking-wide">FORGE</span>
+            <div className="flex flex-col -space-y-1">
+              <span className="text-white/90 font-semibold tracking-tight" style={{ fontSize: '2rem' }}>TALENT</span>
+              <span className="text-[#F97316] font-bold tracking-wide" style={{ fontSize: '2rem' }}>FORGE</span>
             </div>
           </Link>
           
