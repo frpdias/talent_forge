@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { Building2, Plus, Search, MoreVertical, Users, CheckCircle, XCircle, Clock, Briefcase, Eye, Loader2, Brain } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 
@@ -27,6 +28,7 @@ const statusConfig: Record<string, { label: string; color: string; icon: React.E
 };
 
 export default function TenantsPage() {
+  const router = useRouter();
   const [tenants, setTenants] = useState<Tenant[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -187,6 +189,7 @@ export default function TenantsPage() {
               <div 
                 key={tenant.id} 
                 className="bg-white border border-[#E5E5DC] rounded-2xl p-6 hover:shadow-lg transition-shadow cursor-pointer"
+                onClick={() => router.push(`/admin/tenants/${tenant.id}`)}
               >
                 <div className="flex items-start justify-between mb-4">
                   <div className="w-12 h-12 bg-[#141042]/5 rounded-xl flex items-center justify-center">
