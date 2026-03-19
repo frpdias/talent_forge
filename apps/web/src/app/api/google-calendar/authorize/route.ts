@@ -5,19 +5,20 @@ import crypto from 'crypto';
 
 export const dynamic = 'force-dynamic';
 
-// URL fixa registrada no Google Cloud Console.
-// Prioridade: GOOGLE_CALENDAR_REDIRECT_URI > NEXT_PUBLIC_APP_URL > fallback hardcoded.
-// NUNCA usar URL dinâmica do request — o Google valida contra a lista cadastrada.
-function getRedirectUri(): string {
-  const base =
-    process.env.GOOGLE_CALENDAR_REDIRECT_URI ??
-    (process.env.NEXT_PUBLIC_APP_URL
-      ? `${process.env.NEXT_PUBLIC_APP_URL}/api/google-calendar/callback`
-      : 'https://web-eight-rho-84.vercel.app/api/google-calendar/callback');
-  return base;
+// Deriva o redirect_uri a partir do domínio da requisição.
+// Isso garante que talentforge.com.br → talentforge.com.br/api/google-calendar/callback
+// e web-eight-rho-84.vercel.app → web-eight-rho-84.vercel.app/api/google-calendar/callback
+function getRedirectUri(request: Request): string {
+  // Se há uma URI explícita configurada, usar ela
+  if (process.env.GOOGLE_CALENDAR_REDIRECT_URI) {
+    return process.env.GOOGLE_CALENDAR_REDIRECT_URI;
+  }
+  // Derivar do host da requisição
+  const { origin } = new URL(request.url);
+  return `${origin}/api/google-calendar/callback`;
 }
 
-export async function GET(_request: Request) {
+export async function GET(request: Request) {
   try {
     const supabase = await createClient();
     const { data: { session } } = await supabase.auth.getSession();
@@ -36,7 +37,7 @@ export async function GET(_request: Request) {
       .from('user_profiles')
       .upsert({ id: session.user.id, google_calendar_state: state }, { onConflict: 'id' });
 
-    const redirectUri = getRedirectUri();
+    const redirectUri = getRedirectUri(request);
 
     const params = new URLSearchParams({
       client_id: process.env.GOOGLE_CALENDAR_CLIENT_ID!,
