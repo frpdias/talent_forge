@@ -88,7 +88,7 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const { title, startTime, durationMinutes, description, location, attendees } = body;
+    const { title, startTime, durationMinutes, description, location, attendees, includesMeet } = body;
 
     if (!title || !startTime || !durationMinutes) {
       return NextResponse.json(
@@ -146,14 +146,17 @@ export async function POST(request: Request) {
         dateTime: end.toISOString(),
         timeZone: 'America/Sao_Paulo',
       },
-      // Gerar Google Meet automaticamente
-      conferenceData: {
+    };
+
+    // Gerar Google Meet apenas quando solicitado (tipo vídeo)
+    if (includesMeet !== false) {
+      event.conferenceData = {
         createRequest: {
           requestId: `tf-${Date.now()}-${Math.random().toString(36).substring(2, 8)}`,
           conferenceSolutionKey: { type: 'hangoutsMeet' },
         },
-      },
-    };
+      };
+    }
 
     if (description) event.description = description;
     if (location) event.location = location;
@@ -162,8 +165,9 @@ export async function POST(request: Request) {
     }
 
     // Criar evento via Google Calendar API
+    const conferenceParam = includesMeet !== false ? '&conferenceDataVersion=1' : '';
     const calRes = await fetch(
-      'https://www.googleapis.com/calendar/v3/calendars/primary/events?conferenceDataVersion=1&sendUpdates=all',
+      `https://www.googleapis.com/calendar/v3/calendars/primary/events?sendUpdates=all${conferenceParam}`,
       {
         method: 'POST',
         headers: {

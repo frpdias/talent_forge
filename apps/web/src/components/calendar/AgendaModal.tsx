@@ -24,6 +24,8 @@ interface Interview {
   duration_minutes: number;
   type: 'video' | 'presencial' | 'phone';
   location: string | null;
+  meet_link: string | null;
+  google_event_id: string | null;
   notes: string | null;
   status: 'scheduled' | 'completed' | 'cancelled';
   candidate_id: string | null;
@@ -351,8 +353,41 @@ export function AgendaModal({ onClose }: AgendaModalProps) {
     try {
       const { data: ud } = await supabase.auth.getUser();
       const scheduledAt  = new Date(`${form.date}T${form.time}`).toISOString();
-
       const isVideo = form.type === 'video';
+
+      let meetLink: string | null = null;
+      let googleEventId: string | null = null;
+
+      // Se Google Calendar conectado, criar evento via API (com Meet automático para vídeo)
+      if (gcConnected) {
+        try {
+          const calRes = await fetch('/api/google-calendar/create-event', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              title: form.title,
+              startTime: scheduledAt,
+              durationMinutes: form.duration_minutes,
+              description: form.notes || undefined,
+              location: !isVideo ? (form.location || undefined) : undefined,
+              includesMeet: isVideo,
+            }),
+          });
+          if (calRes.ok) {
+            const calData = await calRes.json();
+            meetLink = calData.meetLink || null;
+            googleEventId = calData.eventId || null;
+          } else {
+            const calErr = await calRes.json().catch(() => ({}));
+            console.warn('[AgendaModal] Falha ao criar evento no Calendar:', calErr.error);
+            // Continua salvando a entrevista mesmo sem Calendar
+          }
+        } catch (calError) {
+          console.warn('[AgendaModal] Erro ao chamar API do Calendar:', calError);
+        }
+      }
+
+      // Salvar entrevista no banco
       const { error } = await supabase.from('interviews').insert([{
         org_id:           currentOrg.id,
         title:            form.title,
@@ -360,7 +395,8 @@ export function AgendaModal({ onClose }: AgendaModalProps) {
         duration_minutes: form.duration_minutes,
         type:             form.type,
         location:         isVideo ? null : (form.location || null),
-        meet_link:        isVideo ? (form.location || null) : null,
+        meet_link:        meetLink || (isVideo ? (form.location || null) : null),
+        google_event_id:  googleEventId,
         notes:            form.notes          || null,
         created_by:       ud?.user?.id        || null,
         candidate_id:     form.candidate_id   || null,
@@ -368,19 +404,6 @@ export function AgendaModal({ onClose }: AgendaModalProps) {
         application_id:   form.application_id || null,
       }]);
       if (error) throw error;
-
-      if (gcConnected) {
-        const s   = new Date(`${form.date}T${form.time}`);
-        const end = new Date(s.getTime() + form.duration_minutes * 60_000);
-        const fmt = (d: Date) => d.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
-        const url = new URL('https://calendar.google.com/calendar/render');
-        url.searchParams.set('action', 'TEMPLATE');
-        url.searchParams.set('text',   form.title);
-        url.searchParams.set('dates',  `${fmt(s)}/${fmt(end)}`);
-        if (form.notes)    url.searchParams.set('details',  form.notes);
-        if (form.location) url.searchParams.set('location', form.location);
-        window.open(url.toString(), '_blank');
-      }
 
       setShowForm(false);
       setForm(f => ({ ...f, title: '', time: '', location: '', notes: '', duration_minutes: 60, type: 'video', candidate_id: '', job_id: '', application_id: '', event_type: 'interview' }));
@@ -626,7 +649,13 @@ export function AgendaModal({ onClose }: AgendaModalProps) {
                                       {formatTime(iv.scheduled_at)} · {iv.duration_minutes}min
                                     </span>
                                     {iv.candidateName && <span className="truncate">{iv.candidateName}</span>}
-                                    {iv.location && (
+                                    {iv.meet_link && (
+                                      <a href={iv.meet_link} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 truncate text-blue-600 hover:underline">
+                                        <Video className="h-2.5 w-2.5" />
+                                        Meet
+                                      </a>
+                                    )}
+                                    {iv.location && !iv.meet_link && (
                                       <span className="flex items-center gap-1 truncate">
                                         <MapPin className="h-2.5 w-2.5" />
                                         {iv.location}
