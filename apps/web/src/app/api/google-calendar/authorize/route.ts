@@ -40,7 +40,8 @@ export async function GET(request: Request) {
     );
     const { error: upsertError } = await serviceSupabase
       .from('user_profiles')
-      .upsert({ id: session.user.id, google_calendar_state: state }, { onConflict: 'id' });
+      .update({ google_calendar_state: state })
+      .eq('id', session.user.id);
 
     if (upsertError) {
       console.error('[authorize] Failed to save state:', upsertError.message);
