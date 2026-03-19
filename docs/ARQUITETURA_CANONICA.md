@@ -1,6 +1,6 @@
 # Arquitetura Canônica — TalentForge
 
-**Última atualização**: 2026-03-19 | **Score de Conformidade**: ✅ 100% (Sprint 53 — OAuth Google Login + Calendar Fixes) | **Sprints planejados**: Sprint 41 (AI Assistant) + Sprint 44 (Gate Recrutamento)
+**Última atualização**: 2026-03-19 | **Score de Conformidade**: ✅ 100% (Sprint 54 — Google Meet Auto + Cards Enriquecidos) | **Sprints planejados**: Sprint 41 (AI Assistant) + Sprint 44 (Gate Recrutamento)
 
 ## 📜 FONTE DA VERDADE — PRINCÍPIO FUNDAMENTAL
 
@@ -6483,6 +6483,7 @@ Nenhuma alteração de código foi necessária.
 | `callback/route.ts` | GET | Recebe `?code=&state=`; valida state; troca code por tokens; salva `access_token`, `refresh_token`, `expires_at`, `email`; redireciona para `/dashboard/settings?google=connected` |
 | `status/route.ts` | GET | Retorna `{ connected: boolean, email: string \| null }` |
 | `disconnect/route.ts` | POST | Limpa colunas `google_calendar_*` em `user_profiles` |
+| `create-event/route.ts` | POST | Cria evento no Google Calendar com Meet automático; refresh token auto; retorna `{ eventId, meetLink, htmlLink }` |
 
 #### Colunas adicionadas em `user_profiles` (migration `20260124_google_calendar_integration.sql`)
 
@@ -7543,7 +7544,7 @@ Adicionar card "Módulo de Recrutamento" seguindo o mesmo padrão visual do card
 - ✅ **Commits**: `e296a14` → `origin/main`
 
 ### v5.19 (2026-03-18)
-- ✅ **Score de Conformidade**: 100% mantido (Sprint 53 — OAuth Google Login + Calendar Fixes)
+- ✅ **Score de Conformidade**: 100% mantido (Sprint 54 — Google Meet Auto + Cards Enriquecidos)
 - ✅ **Causa raiz identificada — dois projetos Vercel**: `talentforge.com.br` é servido por `fernando-dias-projects-e4b4044b/web` (conta `frpdias-5043`), não pelo projeto `fartechs-projects-c64e0af4/talent_forge`. Confirmado comparando ETag + `x-vercel-id` de `web-eight-rho-84.vercel.app` vs `talentforge.com.br` (idênticos). Todas as tentativas anteriores de adicionar env vars falhavam por apontar para o projeto errado.
 - ✅ **SMTP restaurado em produção**: `BREVO_SMTP_HOST`, `BREVO_SMTP_PORT`, `BREVO_SMTP_USER`, `BREVO_SMTP_PASS`, `BREVO_SENDER_EMAIL`, `BREVO_SENDER_NAME`, `BREVO_REPLY_TO` adicionados ao projeto correto `fernando-dias-projects-e4b4044b/web` para todos os 3 ambientes. `BREVO_SMTP_PASS` corrigido (chave expirada `*yvfg3ma6sQFeD6HA` substituída pela ativa `*a4KXPTycS7rgM6Vz`). Resultado: `{"status":"SMTP OK ✅","latency":"224ms"}`.
 - ✅ **`apps/web/.vercel/project.json` corrigido**: `vercel link` em `apps/web/` re-vincula ao projeto correto automaticamente. `orgId: team_lwke1raX8NIzKHkR5z2CPFR5` (conta Fernando Dias).
@@ -8337,6 +8338,7 @@ O `ReportsService.getDashboard()` usa `applications.source` com fallback para `c
 | **Sprint 51** | **2026-03-18** | **Portal de Vagas World-Class — 4 épicos: rewrite `/vagas` (URL state, skeleton, sort, salary filter, preview panel, share, badges), category SSR pages (14 slugs), JobPosting schema.org, sitemap dinâmico** | ⚠️ Deployado — confirmar visual após hard refresh |
 | **Sprint 52** | **2026-03-18** | **Agenda candidato movida para modal com badge realtime; logo sidebar `pointer-events-none`; login textos brancos +50%; avatar rodapé /vagas removido** | ✅ |
 | **Sprint 53** | **2026-03-19** | **OAuth Google Login + Calendar fixes: imagem Júlia no login, secret Supabase corrigido, Calendar redirect URI dinâmico, upsert→update fix, client_id/secret pareados, env vars Vercel completas** | ✅ |
+| **Sprint 54** | **2026-03-19** | **Google Meet automático via Calendar API + cards de entrevista enriquecidos (candidato, vaga, notas, link Meet com botão copiar)** | ✅ |
 ```
 
 ---
@@ -8471,6 +8473,7 @@ CREATE TABLE job_alerts (
 |--------|------|-----------|--------|
 | **Sprint 52** | **2026-03-18** | **Agenda candidato movida para modal com badge realtime; logo sidebar `pointer-events-none`; login textos brancos +50%; avatar rodapé /vagas removido** | ✅ |
 | **Sprint 53** | **2026-03-19** | **OAuth Google Login + Calendar fixes: imagem Júlia no login, secret Supabase corrigido, Calendar redirect URI dinâmico, upsert→update fix, client_id/secret pareados, env vars Vercel completas** | ✅ |
+| **Sprint 54** | **2026-03-19** | **Google Meet automático via Calendar API + cards de entrevista enriquecidos (candidato, vaga, notas, link Meet com botão copiar)** | ✅ |
 
 ### Regras Canônicas — Portal Candidato
 
@@ -8541,3 +8544,115 @@ Login Google e Google Calendar estavam com falhas em produção devido a secrets
 3. **Redirect URI Calendar**: definido por `GOOGLE_CALENDAR_REDIRECT_URI` env var. Fallback para `origin` da request.
 4. **State CSRF**: salvar via `.update()` (não `upsert`) em `user_profiles` — campo `google_calendar_state`.
 5. **Supabase Auth secret**: gerenciado no Dashboard Supabase → Authentication → Providers → Google. Não confundir com env vars do Calendar.
+
+---
+
+## 22) Google Meet Automático + Cards Enriquecidos (Sprint 54, 2026-03-19)
+
+### Contexto
+
+Antes, ao agendar uma entrevista, o sistema abria `calendar.google.com/calendar/render` via `window.open`, exigindo ação manual do recrutador. Agora o Meet é gerado automaticamente via API server-side.
+
+### Nova API Route: `create-event/route.ts`
+
+**Arquivo:** `apps/web/src/app/api/google-calendar/create-event/route.ts`
+
+**Método:** `POST`
+
+**Body:**
+```json
+{
+  "title": "Entrevista Técnica",
+  "startTime": "2026-03-20T11:00:00.000Z",
+  "durationMinutes": 60,
+  "description": "Notas opcionais",
+  "location": "Sala 3",
+  "attendees": ["joao@email.com"],
+  "includesMeet": true
+}
+```
+
+**Resposta:**
+```json
+{
+  "eventId": "abc123",
+  "meetLink": "https://meet.google.com/abc-defg-hij",
+  "htmlLink": "https://calendar.google.com/calendar/event?eid=..."
+}
+```
+
+**Lógica principal:**
+1. Autentica via cookies Supabase (`createServerClient`)
+2. Busca tokens do Google Calendar em `user_profiles` via `service_role`
+3. Verifica expiração do `access_token` (margem de 2min); faz refresh automático se necessário
+4. Cria evento no Google Calendar com `conferenceData.createRequest` (`hangoutsMeet`) quando `includesMeet !== false`
+5. Extrai `meetLink` de `hangoutLink` ou `conferenceData.entryPoints`
+6. Retorna `eventId`, `meetLink`, `htmlLink`
+
+**Regra:** `serviceSupabase` tipado como `any` (com `eslint-disable`) para evitar incompatibilidade de tipos `SupabaseClient` entre versões.
+
+### AgendaModal — Mudanças (Sprint 54)
+
+**Arquivo:** `apps/web/src/components/calendar/AgendaModal.tsx`
+
+#### `handleSave` reescrito
+- Removido `window.open(calendar.google.com/render)` — substituído por `fetch('/api/google-calendar/create-event')`
+- Para tipo `video`: `includesMeet: true` → Meet gerado automaticamente
+- Para outros tipos: `includesMeet: false` → evento criado no Calendar sem Meet
+- Fallback gracioso: se API falhar, entrevista é salva sem link Meet
+- `meet_link` e `google_event_id` salvos no insert do Supabase
+
+#### Campo "Link" condicional
+- Quando Calendar conectado + tipo vídeo: campo "Link (Meet, Zoom...)" é escondido
+- Mensagem informativa: "✅ Link do Google Meet será gerado automaticamente"
+- Para outros tipos: "✓ Evento será criado no Google Calendar automaticamente"
+
+#### Cards de entrevista enriquecidos
+
+Layout do card (mesma altura, largura total utilizada):
+
+```
+┌─────────────────────────────────────────────────────────┐
+│ 📹 Entrevista Técnica                    ⏰ 11:00 · 60min │
+│ 👤 João Silva  💼 Dev Frontend  📹 Meet abc-defg 📋  📝 Notas │
+└─────────────────────────────────────────────────────────┘
+```
+
+- **Linha 1:** Ícone tipo + título (esquerda) ↔ horário · duração (direita)
+- **Linha 2:** Candidato (nome ou email) + Vaga + Meet (link + botão copiar) ou Local + Notas (truncadas)
+- **Card clicável**: quando `meet_link` existe, card inteiro é `<a href={meet_link} target="_blank">` com `hover:shadow-md`
+- **Botão copiar**: `navigator.clipboard.writeText(meet_link)` com feedback visual (ícone Copy → Check por 1.5s), `stopPropagation` para não abrir o link
+
+#### Dados exibidos no card
+
+| Dado | Fonte | Ícone |
+|------|-------|-------|
+| Candidato | `candidates(full_name, email)` via join | `User2` |
+| Vaga | `jobs(title)` via join | `Briefcase` |
+| Horário/duração | `scheduled_at` + `duration_minutes` | `Clock` |
+| Meet link | `meet_link` (código após `meet.google.com/`) | `Video` + `Copy` |
+| Local | `location` (quando sem Meet) | `MapPin` |
+| Notas | `notes` (truncado, com tooltip) | `FileText` |
+
+### Ícones adicionados (lucide-react)
+
+`User2`, `Briefcase`, `FileText`, `Copy`, `Check`
+
+### Commits Sprint 54
+
+| Commit | Descrição |
+|--------|----------|
+| (session) | feat(agenda): geração automática de Google Meet via Calendar API |
+| `3b12efd` | fix(agenda): corrigir tipo SupabaseClient no create-event route |
+| `f589374` | fix(agenda): usar API create-event ao invés de window.open para Calendar |
+| `8500ba6` | fix(agenda): tornar card de entrevista clicável para abrir Meet link |
+| `1dba3f6` | feat(agenda): completar card com jobTitle, notes e layout otimizado |
+| `581c117` | feat(agenda): exibir nome ou email do candidato no card |
+| `238a111` | feat(agenda): exibir link Meet com botão copiar no card |
+
+### Regras Canônicas — Google Meet
+
+1. **Geração automática**: Meet é gerado EXCLUSIVAMENTE via `POST /api/google-calendar/create-event` server-side. Nunca usar `window.open` para criar eventos.
+2. **Scope Calendar**: usuários que conectaram o Calendar ANTES do Sprint 54 precisam desconectar/reconectar para obter o scope `calendar` (anteriormente só `calendar.readonly`).
+3. **Token refresh**: `getValidAccessToken()` verifica expiração com margem de 2 minutos e faz refresh automático.
+4. **Fallback gracioso**: se a criação do evento falhar, a entrevista é salva normalmente sem `meet_link` — nunca bloquear o agendamento.
