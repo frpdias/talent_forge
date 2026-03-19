@@ -119,7 +119,7 @@ function LoginContent() {
           <img
             src="https://fjudsjzfnysaztcwlwgm.supabase.co/storage/v1/object/public/LOGOS/Julia%20pagina%20de%20login.jpeg"
             alt="Talent Forge"
-            style={{ width: '65%', height: 'auto', objectFit: 'contain', mixBlendMode: 'multiply' }}
+            style={{ width: '65%', height: 'auto', objectFit: 'contain', mixBlendMode: 'multiply', transform: 'translateX(15%)' }}
           />
         </div>
         <div className="relative z-10 flex flex-col justify-between p-12 w-full">
