@@ -115,11 +115,11 @@ function LoginContent() {
       <div className="hidden lg:flex lg:w-1/2 bg-tf-primary relative overflow-hidden">
         <div className="absolute inset-0 bg-linear-to-br from-tf-primary via-tf-primary-hover to-tf-primary" />
         {/* Imagem centralizada e proporcional */}
-        <div className="absolute inset-0 flex items-center justify-center">
+        <div className="absolute inset-0 flex items-end justify-center">
           <img
             src="https://fjudsjzfnysaztcwlwgm.supabase.co/storage/v1/object/public/LOGOS/Julia%20pagina%20de%20login.jpeg"
             alt="Talent Forge"
-            className="w-full h-full object-cover"
+            style={{ height: '72%', width: 'auto', objectFit: 'contain' }}
           />
         </div>
         <div className="relative z-10 flex flex-col justify-between p-12 w-full">
