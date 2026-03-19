@@ -1,6 +1,6 @@
 # Arquitetura Canônica — TalentForge
 
-**Última atualização**: 2026-03-19 | **Score de Conformidade**: ✅ 100% (Sprint 54 — Google Meet Auto + Cards Enriquecidos) | **Sprints planejados**: Sprint 41 (AI Assistant) + Sprint 44 (Gate Recrutamento)
+**Última atualização**: 2026-03-19 | **Score de Conformidade**: ✅ 100% (Sprint 55 — Email SMTP + Tenant Detail + Lint Fix) | **Sprints planejados**: Sprint 41 (AI Assistant) + Sprint 44 (Gate Recrutamento)
 
 ## 📜 FONTE DA VERDADE — PRINCÍPIO FUNDAMENTAL
 
@@ -7544,7 +7544,7 @@ Adicionar card "Módulo de Recrutamento" seguindo o mesmo padrão visual do card
 - ✅ **Commits**: `e296a14` → `origin/main`
 
 ### v5.19 (2026-03-18)
-- ✅ **Score de Conformidade**: 100% mantido (Sprint 54 — Google Meet Auto + Cards Enriquecidos)
+- ✅ **Score de Conformidade**: 100% mantido (Sprint 55 — Email SMTP + Tenant Detail + Lint Fix)
 - ✅ **Causa raiz identificada — dois projetos Vercel**: `talentforge.com.br` é servido por `fernando-dias-projects-e4b4044b/web` (conta `frpdias-5043`), não pelo projeto `fartechs-projects-c64e0af4/talent_forge`. Confirmado comparando ETag + `x-vercel-id` de `web-eight-rho-84.vercel.app` vs `talentforge.com.br` (idênticos). Todas as tentativas anteriores de adicionar env vars falhavam por apontar para o projeto errado.
 - ✅ **SMTP restaurado em produção**: `BREVO_SMTP_HOST`, `BREVO_SMTP_PORT`, `BREVO_SMTP_USER`, `BREVO_SMTP_PASS`, `BREVO_SENDER_EMAIL`, `BREVO_SENDER_NAME`, `BREVO_REPLY_TO` adicionados ao projeto correto `fernando-dias-projects-e4b4044b/web` para todos os 3 ambientes. `BREVO_SMTP_PASS` corrigido (chave expirada `*yvfg3ma6sQFeD6HA` substituída pela ativa `*a4KXPTycS7rgM6Vz`). Resultado: `{"status":"SMTP OK ✅","latency":"224ms"}`.
 - ✅ **`apps/web/.vercel/project.json` corrigido**: `vercel link` em `apps/web/` re-vincula ao projeto correto automaticamente. `orgId: team_lwke1raX8NIzKHkR5z2CPFR5` (conta Fernando Dias).
@@ -8474,6 +8474,7 @@ CREATE TABLE job_alerts (
 | **Sprint 52** | **2026-03-18** | **Agenda candidato movida para modal com badge realtime; logo sidebar `pointer-events-none`; login textos brancos +50%; avatar rodapé /vagas removido** | ✅ |
 | **Sprint 53** | **2026-03-19** | **OAuth Google Login + Calendar fixes: imagem Júlia no login, secret Supabase corrigido, Calendar redirect URI dinâmico, upsert→update fix, client_id/secret pareados, env vars Vercel completas** | ✅ |
 | **Sprint 54** | **2026-03-19** | **Google Meet automático via Calendar API + cards de entrevista enriquecidos (candidato, vaga, notas, link Meet com botão copiar)** | ✅ |
+| **Sprint 55** | **2026-03-19** | **Email SMTP fix (Brevo REST→nodemailer), página detalhe tenant com ativação de módulos, fix lint `<a>`→`<Link>`** | ✅ |
 
 ### Regras Canônicas — Portal Candidato
 
@@ -8656,3 +8657,57 @@ Layout do card (mesma altura, largura total utilizada):
 2. **Scope Calendar**: usuários que conectaram o Calendar ANTES do Sprint 54 precisam desconectar/reconectar para obter o scope `calendar` (anteriormente só `calendar.readonly`).
 3. **Token refresh**: `getValidAccessToken()` verifica expiração com margem de 2 minutos e faz refresh automático.
 4. **Fallback gracioso**: se a criação do evento falhar, a entrevista é salva normalmente sem `meet_link` — nunca bloquear o agendamento.
+
+---
+
+## 23) Email SMTP Fix + Tenant Detail Page + Lint Fix (Sprint 55, 2026-03-19)
+
+### 1. Email — Migração Brevo REST API → nodemailer SMTP
+
+**Problema**: `create-user/route.ts` e `resend-welcome-email/route.ts` usavam `fetch('https://api.brevo.com/v3/smtp/email')` com chave `xsmtpsib-` (SMTP relay key). A REST API do Brevo requer chave prefixo `xkeysib-`, resultando em 401 Unauthorized.
+
+**Solução**: Reescrita da função `sendWelcomeEmail()` em ambas as rotas para usar `nodemailer.createTransport()` com SMTP (padrão já validado em `smtp-status/route.ts`).
+
+**Arquivos modificados**:
+- `apps/web/src/app/api/admin/create-user/route.ts`
+- `apps/web/src/app/api/admin/resend-welcome-email/route.ts`
+
+**Fix secundário**: URL de login no template do email alterada de `web-eight-rho-84.vercel.app` para `talentforge.com.br`.
+
+### Regra Canônica — Email
+
+1. **SMTP only**: Todos os envios de email devem usar `nodemailer` com SMTP transport (`smtp-relay.brevo.com:587`). **NUNCA** usar a REST API do Brevo (`api.brevo.com/v3/smtp/email`) — a chave disponível (`xsmtpsib-`) é incompatível.
+2. **Vars obrigatórias**: `BREVO_SMTP_HOST`, `BREVO_SMTP_PORT`, `BREVO_SMTP_USER`, `BREVO_SMTP_PASS`, `BREVO_SENDER_EMAIL`, `BREVO_SENDER_NAME`.
+3. **URL de login**: sempre `https://talentforge.com.br/login` — nunca usar o alias Vercel.
+
+### 2. Página Detalhe do Tenant — Ativação de Módulos
+
+**Problema**: Cards de tenant em `/admin/tenants` tinham `cursor-pointer` mas nenhum `onClick` handler, e a página de detalhe (`/admin/tenants/[id]`) não existia.
+
+**Solução**: Criação completa da página de detalhe + 2 API routes + cards clicáveis.
+
+**Arquivos criados**:
+- `apps/web/src/app/(admin)/admin/tenants/[id]/page.tsx` — Página completa (310+ linhas): métricas, toggle PHP module, status tenant, lista de membros
+- `apps/web/src/app/api/admin/tenants/[id]/members/route.ts` — GET: lista membros do tenant
+- `apps/web/src/app/api/admin/tenants/[id]/status/route.ts` — PATCH: altera status (active/inactive/suspended)
+
+**Arquivo modificado**:
+- `apps/web/src/app/(admin)/admin/tenants/page.tsx` — Adicionado `useRouter` + `onClick` nos cards
+
+**APIs utilizadas (existentes)**:
+- `POST /api/admin/companies/[id]/php-module` — ativa PHP module
+- `DELETE /api/admin/companies/[id]/php-module` — desativa PHP module
+
+### 3. Fix Lint — `<a>` → `<Link>`
+
+**Problema**: `admin/page.tsx` linha 1119 usava `<a href="/admin/tenants">` em vez de `<Link>` do Next.js, causando erro de lint que bloqueava o build na Vercel.
+
+**Solução**: Import de `Link` de `next/link` e substituição do `<a>` por `<Link>`.
+
+### Commits Sprint 55
+
+| Commit | Descrição |
+|--------|----------|
+| `37cdb77` | fix(email): migrar envio de email de Brevo REST API para SMTP via nodemailer |
+| `423ff77` | feat(admin): criar página de detalhe do tenant com ativação de módulos |
+| `d8631d3` | fix(admin): substituir `<a>` por `<Link>` na página admin para corrigir erro de lint |
