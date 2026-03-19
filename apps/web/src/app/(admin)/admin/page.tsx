@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { Users, Building2, Briefcase, Activity, TrendingUp, AlertTriangle, CheckCircle, ArrowUpRight, Loader2, Database, Zap, Clock, Signal, Bell, Eye, MousePointer, Brain, Target, FileCheck, Sparkles, BarChart3, Shield, ListChecks } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 
@@ -1116,9 +1117,9 @@ export default function AdminDashboard() {
         <div className="bg-white border border-[#E5E5DC] rounded-xl sm:rounded-2xl p-4 sm:p-6">
           <div className="flex items-center justify-between mb-4 sm:mb-6">
             <h3 className="text-base sm:text-lg font-semibold text-[#141042]">Organizações</h3>
-            <a href="/admin/tenants" className="text-xs sm:text-sm text-[#141042] font-medium hover:underline flex items-center">
+            <Link href="/admin/tenants" className="text-xs sm:text-sm text-[#141042] font-medium hover:underline flex items-center">
               Ver tudo <ArrowUpRight className="w-3 h-3 sm:w-4 sm:h-4 ml-1" />
-            </a>
+            </Link>
           </div>
           <div className="space-y-3 sm:space-y-4">
             {topOrganizations.length === 0 ? (
