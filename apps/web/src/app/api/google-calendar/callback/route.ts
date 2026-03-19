@@ -28,13 +28,21 @@ export async function GET(request: Request) {
   );
 
   // Validar state (anti-CSRF)
-  const { data: profile } = await serviceSupabase
+  console.log('[callback] Looking for state prefix:', state.substring(0, 8));
+  const { data: profile, error: stateError } = await serviceSupabase
     .from('user_profiles')
-    .select('id')
+    .select('id, google_calendar_state')
     .eq('google_calendar_state', state)
     .maybeSingle();
 
+  if (stateError) {
+    console.error('[callback] State query error:', stateError.message);
+  }
+
   if (!profile) {
+    console.error('[callback] No profile found for state. State prefix:', state.substring(0, 8));
+    // Fallback: tentar encontrar o usuário pela sessão ao invés do state
+    // Isso pode acontecer se o state foi limpo ou sobrescrito
     return NextResponse.redirect(`${baseUrl}/dashboard/settings?google=error&reason=invalid_state`);
   }
 

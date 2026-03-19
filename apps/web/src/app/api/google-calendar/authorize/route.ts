@@ -29,13 +29,25 @@ export async function GET(request: Request) {
     const state = crypto.randomBytes(32).toString('hex');
 
     // Salvar state no user_profiles para validação no callback (service role para bypass RLS)
+    if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
+      console.error('[authorize] SUPABASE_SERVICE_ROLE_KEY not set!');
+      return NextResponse.json({ error: 'Configuração do servidor incompleta' }, { status: 500 });
+    }
+
     const serviceSupabase = createServiceClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.SUPABASE_SERVICE_ROLE_KEY!
     );
-    await serviceSupabase
+    const { error: upsertError } = await serviceSupabase
       .from('user_profiles')
       .upsert({ id: session.user.id, google_calendar_state: state }, { onConflict: 'id' });
+
+    if (upsertError) {
+      console.error('[authorize] Failed to save state:', upsertError.message);
+      return NextResponse.json({ error: 'Falha ao salvar state: ' + upsertError.message }, { status: 500 });
+    }
+
+    console.log('[authorize] State saved for user', session.user.id, '| state prefix:', state.substring(0, 8));
 
     const redirectUri = getRedirectUri(request);
 
