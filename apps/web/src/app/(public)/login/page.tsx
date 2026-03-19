@@ -114,9 +114,13 @@ function LoginContent() {
       {/* Left Side - Branding */}
       <div className="hidden lg:flex lg:w-1/2 bg-tf-primary relative overflow-hidden">
         <div className="absolute inset-0 bg-linear-to-br from-tf-primary via-tf-primary-hover to-tf-primary" />
-        <div className="absolute inset-0 opacity-5">
-          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-white rounded-full blur-3xl" />
-          <div className="absolute bottom-1/4 right-1/4 w-64 h-64 bg-tf-accent rounded-full blur-3xl" />
+        {/* Imagem centralizada e proporcional */}
+        <div className="absolute inset-0 flex items-center justify-center">
+          <img
+            src="https://fjudsjzfnysaztcwlwgm.supabase.co/storage/v1/object/public/LOGOS/Julia%20pagina%20de%20login.jpeg"
+            alt="Talent Forge"
+            className="w-full h-full object-cover"
+          />
         </div>
         <div className="relative z-10 flex flex-col justify-between p-12 w-full">
           <Link href="/" className="flex items-center gap-3">
