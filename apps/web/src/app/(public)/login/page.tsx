@@ -28,12 +28,15 @@ function LoginContent() {
   // Exibe erros vindos do callback OAuth via query param
   useEffect(() => {
     const urlError = searchParams.get('error');
-    if (urlError === 'auth_callback_error') {
+    const oauthError = searchParams.get('oauth_error');
+    if (oauthError) {
+      setError(`Erro Google: ${decodeURIComponent(oauthError)}`);
+    } else if (urlError === 'auth_callback_error') {
       setError('Erro ao autenticar com Google. Tente novamente.');
     } else if (urlError === 'oauth_failed') {
       setError('Falha na autenticação Google. Verifique se o acesso foi concedido.');
     } else if (urlError === 'missing_code') {
-      setError('Código de autenticação ausente. Tente novamente.');
+      setError('Autenticação Google falhou. Aguarde alguns minutos e tente novamente (configuração sendo propagada).');
     }
   }, [searchParams]);
 
