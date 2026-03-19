@@ -15,7 +15,8 @@ async function getValidAccessToken(
     google_calendar_refresh_token: string;
     google_calendar_token_expires_at: string;
   },
-  serviceSupabase: ReturnType<typeof createServiceClient>,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  serviceSupabase: any,
 ): Promise<string> {
   const expiresAt = new Date(profile.google_calendar_token_expires_at).getTime();
   const now = Date.now();
