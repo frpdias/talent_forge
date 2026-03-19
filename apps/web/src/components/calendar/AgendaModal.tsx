@@ -35,6 +35,7 @@ interface Interview {
   job_id: string | null;
   event_type?: 'interview' | 'meeting';
   candidateName?: string;
+  candidateEmail?: string;
   jobTitle?: string;
 }
 
@@ -299,7 +300,7 @@ export function AgendaModal({ onClose }: AgendaModalProps) {
       const end   = new Date(viewDate.getFullYear(), viewDate.getMonth() + 2, 10);
       const { data, error } = await supabase
         .from('interviews')
-        .select('*, candidates(full_name), jobs(title)')
+        .select('*, candidates(full_name, email), jobs(title)')
         .eq('org_id', currentOrg.id)
         .gte('scheduled_at', start.toISOString())
         .lte('scheduled_at', end.toISOString())
@@ -308,8 +309,9 @@ export function AgendaModal({ onClose }: AgendaModalProps) {
       setInterviews(
         (data || []).map((r: any) => ({
           ...r,
-          candidateName: r.candidates?.full_name ?? null,
-          jobTitle:      r.jobs?.title ?? null,
+          candidateName:  r.candidates?.full_name ?? null,
+          candidateEmail: r.candidates?.email ?? null,
+          jobTitle:       r.jobs?.title ?? null,
         })),
       );
     } catch (e) {
@@ -653,10 +655,10 @@ export function AgendaModal({ onClose }: AgendaModalProps) {
                                     </span>
                                   </div>
                                   <div className="flex items-center gap-x-2 mt-0.5 opacity-75">
-                                    {iv.candidateName && (
+                                    {(iv.candidateName || iv.candidateEmail) && (
                                       <span className="flex items-center gap-1 truncate">
                                         <User2 className="h-2.5 w-2.5 shrink-0" />
-                                        {iv.candidateName}
+                                        {iv.candidateName || iv.candidateEmail}
                                       </span>
                                     )}
                                     {iv.jobTitle && (
