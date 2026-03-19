@@ -18,6 +18,8 @@ import {
   User2,
   Briefcase,
   FileText,
+  Copy,
+  Check,
 } from 'lucide-react';
 
 interface Interview {
@@ -155,6 +157,8 @@ export function AgendaModal({ onClose }: AgendaModalProps) {
     job_id:           '' as string,
     application_id:   '' as string,
   });
+
+  const [copiedMeetId, setCopiedMeetId] = useState<string | null>(null);
 
   const [candidates,           setCandidates]           = useState<CandidateOption[]>([]);
   const [candidateSearch,      setCandidateSearch]      = useState('');
@@ -668,9 +672,28 @@ export function AgendaModal({ onClose }: AgendaModalProps) {
                                       </span>
                                     )}
                                     {iv.meet_link && (
-                                      <span className="flex items-center gap-1 shrink-0 text-blue-600">
-                                        <Video className="h-2.5 w-2.5" />
+                                      <span className="flex items-center gap-1 text-blue-600 truncate">
+                                        <Video className="h-2.5 w-2.5 shrink-0" />
                                         Meet
+                                        <span className="opacity-60 truncate" title={iv.meet_link}>
+                                          {iv.meet_link.replace('https://meet.google.com/', '')}
+                                        </span>
+                                        <button
+                                          onClick={(e) => {
+                                            e.preventDefault();
+                                            e.stopPropagation();
+                                            navigator.clipboard.writeText(iv.meet_link!);
+                                            setCopiedMeetId(iv.id);
+                                            setTimeout(() => setCopiedMeetId(null), 1500);
+                                          }}
+                                          className="shrink-0 p-0.5 rounded hover:bg-blue-200/40 transition-colors"
+                                          title="Copiar link"
+                                        >
+                                          {copiedMeetId === iv.id
+                                            ? <Check className="h-2.5 w-2.5 text-green-600" />
+                                            : <Copy className="h-2.5 w-2.5" />
+                                          }
+                                        </button>
                                       </span>
                                     )}
                                     {iv.location && !iv.meet_link && (
