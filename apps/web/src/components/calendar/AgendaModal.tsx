@@ -15,6 +15,9 @@ import {
   Phone,
   Building2,
   AlertCircle,
+  User2,
+  Briefcase,
+  FileText,
 } from 'lucide-react';
 
 interface Interview {
@@ -642,23 +645,42 @@ export function AgendaModal({ onClose }: AgendaModalProps) {
                               <>
                                 <Icon className="h-3.5 w-3.5 mt-0.5 shrink-0" />
                                 <div className="flex-1 min-w-0">
-                                  <p className="font-semibold truncate">{iv.title}</p>
-                                  <div className="flex flex-wrap items-center gap-x-2 mt-0.5 opacity-75">
-                                    <span className="flex items-center gap-1">
+                                  <div className="flex items-center justify-between gap-2">
+                                    <p className="font-semibold truncate">{iv.title}</p>
+                                    <span className="flex items-center gap-1 shrink-0 opacity-75">
                                       <Clock className="h-2.5 w-2.5" />
                                       {formatTime(iv.scheduled_at)} · {iv.duration_minutes}min
                                     </span>
-                                    {iv.candidateName && <span className="truncate">{iv.candidateName}</span>}
+                                  </div>
+                                  <div className="flex items-center gap-x-2 mt-0.5 opacity-75">
+                                    {iv.candidateName && (
+                                      <span className="flex items-center gap-1 truncate">
+                                        <User2 className="h-2.5 w-2.5 shrink-0" />
+                                        {iv.candidateName}
+                                      </span>
+                                    )}
+                                    {iv.jobTitle && (
+                                      <span className="flex items-center gap-1 truncate">
+                                        <Briefcase className="h-2.5 w-2.5 shrink-0" />
+                                        {iv.jobTitle}
+                                      </span>
+                                    )}
                                     {iv.meet_link && (
-                                      <span className="flex items-center gap-1 truncate text-blue-600">
+                                      <span className="flex items-center gap-1 shrink-0 text-blue-600">
                                         <Video className="h-2.5 w-2.5" />
                                         Meet
                                       </span>
                                     )}
                                     {iv.location && !iv.meet_link && (
                                       <span className="flex items-center gap-1 truncate">
-                                        <MapPin className="h-2.5 w-2.5" />
+                                        <MapPin className="h-2.5 w-2.5 shrink-0" />
                                         {iv.location}
+                                      </span>
+                                    )}
+                                    {iv.notes && (
+                                      <span className="flex items-center gap-1 truncate ml-auto opacity-60" title={iv.notes}>
+                                        <FileText className="h-2.5 w-2.5 shrink-0" />
+                                        {iv.notes}
                                       </span>
                                     )}
                                   </div>
