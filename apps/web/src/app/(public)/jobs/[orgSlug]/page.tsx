@@ -152,7 +152,32 @@ export default function CareerPage() {
       setLoading(true);
       const { data, error } = await supabase.rpc('get_public_jobs_by_org', { p_org_slug: orgSlug });
       if (error) throw error;
-      if (!data || data.length === 0) { setNotFound(true); return; }
+
+      if (!data || data.length === 0) {
+        // Org pode existir mas sem vagas abertas — buscar dados da org via API route
+        const res = await fetch(`/api/v1/career-page/${orgSlug}`);
+        if (!res.ok) { setNotFound(true); return; }
+        const orgData = await res.json();
+        // Org existe e tem career page ativa — exibir página com empty state
+        setOrg({
+          org_name: orgData.name,
+          career_page_headline: orgData.career_page_headline,
+          career_page_logo_url: orgData.career_page_logo_url,
+          org_logo_url: orgData.logo_url,
+          career_page_color: orgData.career_page_color,
+          career_page_secondary_color: orgData.career_page_secondary_color,
+          career_page_banner_url: orgData.career_page_banner_url,
+          career_page_about: orgData.career_page_about,
+          career_page_whatsapp_url: orgData.career_page_whatsapp_url,
+          career_page_instagram_url: orgData.career_page_instagram_url,
+          career_page_linkedin_url: orgData.career_page_linkedin_url,
+          career_page_show_contact: orgData.career_page_show_contact ?? false,
+          org_industry: orgData.industry,
+        });
+        setJobs([]);
+        return;
+      }
+
       setJobs(data as PublicJob[]);
       const first = data[0] as PublicJob;
       setOrg({
@@ -504,8 +529,17 @@ export default function CareerPage() {
         {filtered.length === 0 ? (
           <div className="text-center py-20 bg-white rounded-2xl border border-gray-100">
             <Briefcase className="w-10 h-10 text-gray-200 mx-auto mb-4" />
-            <p className="font-semibold text-gray-600 mb-1">Nenhuma vaga encontrada</p>
-            <p className="text-sm text-gray-400">Tente outro termo ou remova os filtros.</p>
+            {jobs.length === 0 ? (
+              <>
+                <p className="font-semibold text-gray-600 mb-1">Nenhuma vaga aberta no momento</p>
+                <p className="text-sm text-gray-400">Acompanhe nossas redes sociais para ser o primeiro a saber das novidades.</p>
+              </>
+            ) : (
+              <>
+                <p className="font-semibold text-gray-600 mb-1">Nenhuma vaga encontrada</p>
+                <p className="text-sm text-gray-400">Tente outro termo ou remova os filtros.</p>
+              </>
+            )}
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

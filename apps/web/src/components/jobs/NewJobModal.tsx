@@ -348,7 +348,15 @@ export function NewJobModal({ isOpen, onClose, onSuccess }: NewJobModalProps) {
             <div>
               <Select
                 value={formData.status}
-                onValueChange={(value) => handleChange('status', value as 'open' | 'on_hold' | 'closed')}
+                onValueChange={(value) => {
+                  const status = value as 'open' | 'on_hold' | 'closed';
+                  setFormData((prev) => ({
+                    ...prev,
+                    status,
+                    // Ao publicar, tornar pública automaticamente
+                    is_public: status === 'open' ? true : prev.is_public,
+                  }));
+                }}
                 options={[
                   { value: 'on_hold', label: 'Rascunho — não visível para candidatos' },
                   { value: 'open', label: 'Publicar Vaga — visível imediatamente' },
