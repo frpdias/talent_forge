@@ -1,6 +1,6 @@
 # Arquitetura Canônica — TalentForge
 
-**Última atualização**: 2026-03-19 | **Score de Conformidade**: ✅ 100% (Sprint 55 — Email SMTP + Tenant Detail + Lint Fix) | **Sprints planejados**: Sprint 41 (AI Assistant) + Sprint 44 (Gate Recrutamento)
+**Última atualização**: 2026-03-20 | **Score de Conformidade**: ✅ 100% (Sprint 56 — GCal OAuth Fix + Candidatos Duplicados) | **Sprints planejados**: Sprint 41 (AI Assistant) + Sprint 44 (Gate Recrutamento)
 
 ## 📜 FONTE DA VERDADE — PRINCÍPIO FUNDAMENTAL
 
@@ -552,9 +552,10 @@ docs(arquitetura): adiciona fluxo canônico de Git & Deploy
 | `BREVO_API_KEY` | API Key do Brevo (ver `apps/api/.env`) |
 | `GOOGLE_CLIENT_ID` | OAuth Google Login (Client `331569486144-kbnb...`, projeto `melodic-voice-472713-c0`) |
 | `GOOGLE_CLIENT_SECRET` | OAuth Google Login Secret |
-| `GOOGLE_CALENDAR_CLIENT_ID` | OAuth Calendar (Client `632165529284-1c41...`, projeto `project-7c141104`) |
+| `GOOGLE_CALENDAR_CLIENT_ID` | OAuth Calendar (Client `632165529284-1c41rv9d139rktcaro1nn5qrvr0pdjfl`, projeto `project-7c141104`) — 72 chars exatos |
 | `GOOGLE_CALENDAR_CLIENT_SECRET` | OAuth Calendar Secret — **DEVE ser do mesmo Client ID acima** |
-| `GOOGLE_CALENDAR_REDIRECT_URI` | `https://talentforge.com.br/api/google-calendar/callback` |
+| `GOOGLE_CALENDAR_REDIRECT_URL` | `https://talentforge.com.br/api/google-calendar/callback` (nome no Vercel) |
+| `GOOGLE_CALENDAR_REDIRECT_URI` | `http://localhost:3000/api/google-calendar/callback` (dev local apenas — sobrescreve `REDIRECT_URL`) |
 
 > **⚠️ Se as vars SMTP sumissem do Vercel**, adicionar via CLI:
 > ```bash
@@ -683,9 +684,10 @@ npm run dev
 | `BREVO_REPLY_TO` | ✅ (para email) | `contato@talentforge.com.br` |
 | `GOOGLE_CLIENT_ID` | ✅ | OAuth Google Login — Client `331569486144` (projeto `melodic-voice-472713-c0`) |
 | `GOOGLE_CLIENT_SECRET` | ✅ | OAuth Google Login Secret |
-| `GOOGLE_CALENDAR_CLIENT_ID` | ✅ | OAuth Calendar — Client `632165529284` (projeto `project-7c141104`) |
+| `GOOGLE_CALENDAR_CLIENT_ID` | ✅ | OAuth Calendar — Client `632165529284-1c41rv9d139rktcaro1nn5qrvr0pdjfl` (72 chars, projeto `project-7c141104`) |
 | `GOOGLE_CALENDAR_CLIENT_SECRET` | ✅ | OAuth Calendar Secret — **DEVE ser do mesmo par Client ID** |
-| `GOOGLE_CALENDAR_REDIRECT_URI` | ✅ | `https://talentforge.com.br/api/google-calendar/callback` |
+| `GOOGLE_CALENDAR_REDIRECT_URL` | ✅ Vercel | `https://talentforge.com.br/api/google-calendar/callback` (nome canônico no Vercel) |
+| `GOOGLE_CALENDAR_REDIRECT_URI` | ✅ Dev local | `http://localhost:3000/api/google-calendar/callback` (sobrescreve `REDIRECT_URL` localmente) |
 | `VERCEL_OIDC_TOKEN` | ❌ **PROIBIDO em dev local** | Causa hang do servidor. **NUNCA adicionar ao `.env.local`** |
 
 > **🔴 REGRA ABSOLUTA**: A variável `VERCEL_OIDC_TOKEN` **NUNCA** deve estar ativa em `.env.local` para desenvolvimento local. Ela causa interferência no servidor Next.js, fazendo-o aceitar conexões na porta 3000 mas nunca responder às requisições (hang infinito). Se presente, comentar com `#`.
@@ -6505,22 +6507,32 @@ ALTER TABLE user_profiles
 
 #### Env vars necessárias (`.env.local` + Vercel)
 ```
+# Vercel (production/preview/development):
 GOOGLE_CALENDAR_CLIENT_ID=632165529284-1c41rv9d139rktcaro1nn5qrvr0pdjfl.apps.googleusercontent.com
-GOOGLE_CALENDAR_CLIENT_SECRET=<secret do mesmo Client ID acima>
-GOOGLE_CALENDAR_REDIRECT_URI=https://talentforge.com.br/api/google-calendar/callback
+GOOGLE_CALENDAR_CLIENT_SECRET=<secret do mesmo Client ID>
+GOOGLE_CALENDAR_REDIRECT_URL=https://talentforge.com.br/api/google-calendar/callback
+
+# Dev local (.env.local — adicionar MANUALMENTE após vercel env pull):
+GOOGLE_CALENDAR_REDIRECT_URI=http://localhost:3000/api/google-calendar/callback
 ```
+
+> **⚠️ ATENÇÃO ao `vercel env pull`**: o comando sobrescreve o `.env.local`. Após rodar, sempre:
+> 1. Remover `VERCEL_OIDC_TOKEN` (causa hang do servidor)
+> 2. Adicionar `GOOGLE_CALENDAR_REDIRECT_URI=http://localhost:3000/api/google-calendar/callback`
+> 3. Corrigir `NEXT_PUBLIC_APP_URL` para `http://localhost:3000`
+
 > Redirect URIs no Google Cloud Console (projeto `project-7c141104`, org `frpdias2016-org`):
 > - `https://talentforge.com.br/api/google-calendar/callback`
 > - `https://web-eight-rho-84.vercel.app/api/google-calendar/callback`
 > - `http://localhost:3000/api/google-calendar/callback`
 
-> **⚠️ IMPORTANTE**: `GOOGLE_CALENDAR_CLIENT_SECRET` **DEVE** corresponder ao `GOOGLE_CALENDAR_CLIENT_ID`. Login Google e Calendar usam clientes OAuth em projetos Google Cloud distintos:
+> **⚠️ IMPORTANTE**: `GOOGLE_CALENDAR_CLIENT_SECRET` **DEVE** corresponder ao `GOOGLE_CALENDAR_CLIENT_ID`. O CLIENT_ID completo tem **72 caracteres** — se truncado (71 chars), o Google retorna `invalid_client`. Login Google e Calendar usam clientes OAuth em projetos Google Cloud distintos:
 > - **Login**: Client `331569486144` → projeto `melodic-voice-472713-c0` (configurado no Supabase Auth)
 > - **Calendar**: Client `632165529284` → projeto `project-7c141104` (configurado em env vars)
 
 #### Correções aplicadas (Sprint 53)
 - `authorize/route.ts`: trocado `upsert` por `.update().eq('id', session.user.id)` — evita INSERT com `full_name` NOT NULL
-- `authorize/route.ts` e `callback/route.ts`: redirect URI agora é dinâmico via `getRedirectUri(request)` — usa `GOOGLE_CALENDAR_REDIRECT_URI` env var ou `origin` da request
+- `authorize/route.ts` e `callback/route.ts`: redirect URI agora é dinâmico via `getRedirectUri(request)` — aceita `GOOGLE_CALENDAR_REDIRECT_URI` **ou** `GOOGLE_CALENDAR_REDIRECT_URL` (nome canônico no Vercel)
 - Login Google: secret no Supabase Auth atualizado para corresponder ao client `331569486144`
 
 ---
@@ -8518,9 +8530,16 @@ Login Google e Google Calendar estavam com falhas em produção devido a secrets
 - **Causa**: `upsert` em `authorize/route.ts` tentava inserir registro com apenas `id` e `google_calendar_state`, mas `full_name` é NOT NULL
 - **Solução**: Trocado por `.update({ google_calendar_state: state }).eq('id', session.user.id)`
 
-#### 5. Google Calendar — `invalid_client`
+#### 5. Google Calendar — `invalid_client` (ocorrência 1, Sprint 53)
 - **Causa**: `GOOGLE_CALENDAR_CLIENT_SECRET` no Vercel era de um client OAuth diferente (`tk10e17j...`) do `GOOGLE_CALENDAR_CLIENT_ID` (`1c41rv9d...`)
 - **Solução**: Criado novo secret no client correto `632165529284-1c41...`
+
+#### 6. Google Calendar — `invalid_client` (ocorrência 2, Sprint 56 — 2026-03-20)
+- **Causa 1**: `GOOGLE_CALENDAR_CLIENT_ID` no `.env.local` estava **truncado** (71 chars em vez de 72 chars corretos) — faltava o char final do hash
+- **Causa 2**: `GOOGLE_CALENDAR_CLIENT_SECRET` local desatualizado — Vercel tinha sido atualizado com novo secret (`GOCSPX-Q792...`) sem sync local
+- **Causa 3**: Variável no Vercel chama `GOOGLE_CALENDAR_REDIRECT_URL` mas o código só checava `GOOGLE_CALENDAR_REDIRECT_URI` → fallback incorreto em produção
+- **Causa 4**: `http://localhost:3000/api/google-calendar/callback` não estava registrado no Google Cloud Console
+- **Solução**: (a) sync via `vercel env pull`; (b) código atualizado para aceitar `REDIRECT_URI` **ou** `REDIRECT_URL`; (c) localhost adicionado no Google Cloud Console; (d) `VERCEL_OIDC_TOKEN` removido do `.env.local`
 
 ### Mudanças Visuais na Página de Login
 
@@ -8542,9 +8561,11 @@ Login Google e Google Calendar estavam com falhas em produção devido a secrets
 
 1. **Dois clientes separados**: Login Google usa client do Supabase Auth; Calendar usa client em env vars. Nunca misturar.
 2. **Par client_id/secret**: sempre do mesmo client OAuth. Validar no Google Cloud Console antes de salvar.
-3. **Redirect URI Calendar**: definido por `GOOGLE_CALENDAR_REDIRECT_URI` env var. Fallback para `origin` da request.
-4. **State CSRF**: salvar via `.update()` (não `upsert`) em `user_profiles` — campo `google_calendar_state`.
-5. **Supabase Auth secret**: gerenciado no Dashboard Supabase → Authentication → Providers → Google. Não confundir com env vars do Calendar.
+3. **Redirect URI Calendar**: o código aceita `GOOGLE_CALENDAR_REDIRECT_URI` **ou** `GOOGLE_CALENDAR_REDIRECT_URL` (nome no Vercel). O dev local define `REDIRECT_URI=http://localhost:3000/...` para sobrescrever. Fallback final: `origin` dinâmico da request.
+4. **CLIENT_ID tem 72 chars**: `632165529284-1c41rv9d139rktcaro1nn5qrvr0pdjfl.apps.googleusercontent.com` — qualquer truncamento causa `invalid_client`.
+5. **State CSRF**: salvar via `.update()` (não `upsert`) em `user_profiles` — campo `google_calendar_state`.
+6. **Supabase Auth secret**: gerenciado no Dashboard Supabase → Authentication → Providers → Google. Não confundir com env vars do Calendar.
+7. **`vercel env pull` sobrescreve `.env.local`**: sempre remover `VERCEL_OIDC_TOKEN` e re-adicionar `GOOGLE_CALENDAR_REDIRECT_URI=http://localhost:3000/...` após sync.
 
 ---
 
