@@ -181,21 +181,21 @@ export default function CandidateLayout({ children }: { children: React.ReactNod
     const loadSidebarInterviews = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
-      // Fallback por email caso user_id não esteja preenchido no candidates
+      // Busca TODOS os registros de candidato do usuário (pode haver duplicatas)
       const orFilter = user.email
         ? `user_id.eq.${user.id},email.eq.${user.email}`
         : `user_id.eq.${user.id}`;
-      const { data: candRow } = await supabase
+      const { data: candRows } = await supabase
         .from('candidates')
         .select('id')
-        .or(orFilter)
-        .maybeSingle();
-      if (!candRow) return;
+        .or(orFilter);
+      if (!candRows || candRows.length === 0) return;
+      const candidateIds = candRows.map((c: any) => c.id);
       // Busca TODAS as entrevistas (passadas e futuras), sem filtro de data
       const { data: interviews } = await supabase
         .from('interviews')
         .select('id, title, scheduled_at, duration_minutes, location, meet_link, status, jobs(title)')
-        .eq('candidate_id', candRow.id)
+        .in('candidate_id', candidateIds)
         .neq('status', 'cancelled')
         .order('scheduled_at', { ascending: true });
       const all = interviews || [];
