@@ -770,7 +770,7 @@ export function AgendaModal({ onClose }: AgendaModalProps) {
                             const editBtn = (
                               <button
                                 onClick={e => { e.preventDefault(); e.stopPropagation(); openFormForEdit(iv); }}
-                                className="absolute top-1.5 right-1.5 p-1 rounded opacity-0 group-hover:opacity-70 hover:!opacity-100 hover:bg-black/10 transition-all"
+                                className="absolute top-1.5 right-1.5 p-1 rounded opacity-0 pointer-events-none group-hover:opacity-70 group-hover:pointer-events-auto hover:!opacity-100 hover:bg-black/10 transition-all"
                                 title="Editar entrevista"
                               >
                                 <Pencil className="h-2.5 w-2.5" />
