@@ -20,6 +20,7 @@ import {
   FileText,
   Copy,
   Check,
+  Pencil,
 } from 'lucide-react';
 
 interface Interview {
@@ -159,6 +160,7 @@ export function AgendaModal({ onClose }: AgendaModalProps) {
   });
 
   const [copiedMeetId, setCopiedMeetId] = useState<string | null>(null);
+  const [editingInterview, setEditingInterview] = useState<Interview | null>(null);
 
   const [candidates,           setCandidates]           = useState<CandidateOption[]>([]);
   const [candidateSearch,      setCandidateSearch]      = useState('');
@@ -328,6 +330,7 @@ export function AgendaModal({ onClose }: AgendaModalProps) {
   // ── actions ───────────────────────────────────────────────────────────────
 
   const openFormAt = (hour?: number) => {
+    setEditingInterview(null);
     setForm(f => ({
       ...f,
       event_type:     'interview',
@@ -341,6 +344,30 @@ export function AgendaModal({ onClose }: AgendaModalProps) {
       notes:          '',
     }));
     setCandidateSearch('');
+    setCandidates([]);
+    setCandidateApplications([]);
+    setCandidateFocused(false);
+    setFormError('');
+    setShowForm(true);
+  };
+
+  const openFormForEdit = (iv: Interview) => {
+    setEditingInterview(iv);
+    const d = new Date(iv.scheduled_at);
+    setForm({
+      event_type:       (iv.event_type ?? 'interview') as 'interview' | 'meeting',
+      title:            iv.title,
+      date:             toDateStr(d),
+      time:             `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`,
+      duration_minutes: iv.duration_minutes,
+      type:             iv.type,
+      location:         iv.meet_link || iv.location || '',
+      notes:            iv.notes || '',
+      candidate_id:     iv.candidate_id || '',
+      job_id:           iv.job_id || '',
+      application_id:   '',
+    });
+    setCandidateSearch(iv.candidateName || '');
     setCandidates([]);
     setCandidateApplications([]);
     setCandidateFocused(false);
@@ -396,7 +423,33 @@ export function AgendaModal({ onClose }: AgendaModalProps) {
         }
       }
 
-      // Salvar entrevista no banco
+      // Salvar ou atualizar entrevista no banco
+      if (editingInterview) {
+        const isVideoEdit = form.type === 'video';
+        const { error: updErr } = await supabase
+          .from('interviews')
+          .update({
+            title:            form.title,
+            scheduled_at:     scheduledAt,
+            duration_minutes: form.duration_minutes,
+            type:             form.type,
+            location:         isVideoEdit ? null : (form.location || null),
+            meet_link:        meetLink || (isVideoEdit ? (form.location || null) : null),
+            notes:            form.notes || null,
+          })
+          .eq('id', editingInterview.id);
+        if (updErr) throw updErr;
+        setEditingInterview(null);
+        setShowForm(false);
+        setForm(f => ({ ...f, title: '', time: '', location: '', notes: '', duration_minutes: 60, type: 'video', candidate_id: '', job_id: '', application_id: '', event_type: 'interview' }));
+        setCandidateSearch('');
+        setCandidateFocused(false);
+        setCandidateApplications([]);
+        await loadInterviews();
+        setSaving(false);
+        return;
+      }
+
       const { error } = await supabase.from('interviews').insert([{
         org_id:           currentOrg.id,
         title:            form.title,
@@ -415,6 +468,7 @@ export function AgendaModal({ onClose }: AgendaModalProps) {
       if (error) throw error;
 
       setShowForm(false);
+      setEditingInterview(null);
       setForm(f => ({ ...f, title: '', time: '', location: '', notes: '', duration_minutes: 60, type: 'video', candidate_id: '', job_id: '', application_id: '', event_type: 'interview' }));
       setCandidateSearch('');
       setCandidateFocused(false);
@@ -653,10 +707,19 @@ export function AgendaModal({ onClose }: AgendaModalProps) {
                                 <div className="flex-1 min-w-0">
                                   <div className="flex items-center justify-between gap-2">
                                     <p className="font-semibold truncate">{iv.title}</p>
-                                    <span className="flex items-center gap-1 shrink-0 opacity-75">
-                                      <Clock className="h-2.5 w-2.5" />
-                                      {formatTime(iv.scheduled_at)} · {iv.duration_minutes}min
-                                    </span>
+                                    <div className="flex items-center gap-1.5 shrink-0">
+                                      <span className="flex items-center gap-1 opacity-75">
+                                        <Clock className="h-2.5 w-2.5" />
+                                        {formatTime(iv.scheduled_at)} · {iv.duration_minutes}min
+                                      </span>
+                                      <button
+                                        onClick={e => { e.preventDefault(); e.stopPropagation(); openFormForEdit(iv); }}
+                                        className="p-0.5 rounded hover:bg-black/10 transition-colors opacity-60 hover:opacity-100"
+                                        title="Editar entrevista"
+                                      >
+                                        <Pencil className="h-2.5 w-2.5" />
+                                      </button>
+                                    </div>
                                   </div>
                                   <div className="flex items-center gap-x-2 mt-0.5 opacity-75">
                                     {(iv.candidateName || iv.candidateEmail) && (
@@ -775,9 +838,11 @@ export function AgendaModal({ onClose }: AgendaModalProps) {
 
             <div className="flex items-center justify-between px-6 py-4 border-b border-[#E5E5DC]">
               <h3 className="font-semibold text-[#141042]">
-                {form.event_type === 'interview' ? 'Nova Entrevista' : 'Nova Reunião'}
+                {editingInterview
+                  ? (form.event_type === 'interview' ? 'Editar Entrevista' : 'Editar Reunião')
+                  : (form.event_type === 'interview' ? 'Nova Entrevista' : 'Nova Reunião')}
               </h3>
-              <button onClick={() => setShowForm(false)} className="text-[#666666] hover:text-[#141042] transition-colors">
+              <button onClick={() => { setShowForm(false); setEditingInterview(null); }} className="text-[#666666] hover:text-[#141042] transition-colors">
                 <X className="h-5 w-5" />
               </button>
             </div>
@@ -952,8 +1017,8 @@ export function AgendaModal({ onClose }: AgendaModalProps) {
                 </div>
               </div>
 
-              {/* Link field — hidden for video when Google Calendar is connected (auto-generated) */}
-              {!(gcConnected && form.type === 'video') && (
+              {/* Link field — hidden for video when Google Calendar is connected (auto-generated), except when editing */}
+              {(editingInterview || !(gcConnected && form.type === 'video')) && (
               <div>
                 <label className="block text-xs font-medium text-[#666666] mb-1">
                   {form.type === 'video' ? 'Link (Meet, Zoom…)' : form.type === 'phone' ? 'Telefone' : 'Endereço'}
@@ -991,7 +1056,7 @@ export function AgendaModal({ onClose }: AgendaModalProps) {
 
               <div className="flex gap-3 pt-1">
                 <button
-                  type="button" onClick={() => setShowForm(false)}
+                  type="button" onClick={() => { setShowForm(false); setEditingInterview(null); }}
                   className="flex-1 px-4 py-2 border border-[#E5E5DC] text-[#141042] text-sm font-medium rounded-lg hover:bg-[#FAFAF8] transition-colors"
                 >
                   Cancelar
@@ -1000,7 +1065,7 @@ export function AgendaModal({ onClose }: AgendaModalProps) {
                   type="submit" disabled={saving}
                   className="flex-1 px-4 py-2 bg-[#141042] text-white text-sm font-medium rounded-lg hover:bg-[#1a1554] disabled:opacity-50 transition-colors"
                 >
-                  {saving ? 'Salvando…' : 'Agendar'}
+                  {saving ? 'Salvando…' : (editingInterview ? 'Salvar' : 'Agendar')}
                 </button>
               </div>
             </form>
