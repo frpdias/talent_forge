@@ -28,9 +28,24 @@ export async function GET(request: Request) {
       process.env.SUPABASE_SERVICE_ROLE_KEY!
     );
 
+    // Normalizar código: "354705" → "3547-05" para busca por código exato
+    const codeQuery = q.replace(/^(\d{4})(\d{2})$/, '$1-$2');
+    const looksLikeCode = /^\d{4}-?\d{2}$/.test(q);
+
+    if (looksLikeCode) {
+      const { data: codeData } = await serviceSupabase
+        .from('ref_cbo')
+        .select('code, title, avg_salary_min, avg_salary_max')
+        .ilike('code', `${codeQuery}%`)
+        .limit(15);
+      if (codeData && codeData.length > 0) {
+        return NextResponse.json({ results: codeData });
+      }
+    }
+
     // 1. Busca via FTS (prefix search no fts_vector)
     const cleanQuery = q.trim().split(/\s+/).join(' & ');
-    let { data: ftsData } = await serviceSupabase
+    const { data: ftsData } = await serviceSupabase
       .from('ref_cbo')
       .select('code, title, avg_salary_min, avg_salary_max')
       .textSearch('fts_vector', `${cleanQuery}:*`)
@@ -40,11 +55,11 @@ export async function GET(request: Request) {
       return NextResponse.json({ results: ftsData });
     }
 
-    // 2. Fallback: ILIKE (busca parcial no título)
+    // 2. Fallback: ILIKE no título E no código
     const { data: ilikeData } = await serviceSupabase
       .from('ref_cbo')
       .select('code, title, avg_salary_min, avg_salary_max')
-      .ilike('title', `%${q}%`)
+      .or(`title.ilike.%${q}%,code.ilike.%${q}%`)
       .limit(15);
 
     if (ilikeData && ilikeData.length > 0) {
