@@ -159,8 +159,9 @@ export function AgendaModal({ onClose }: AgendaModalProps) {
     application_id:   '' as string,
   });
 
-  const [copiedMeetId, setCopiedMeetId] = useState<string | null>(null);
+  const [copiedMeetId,     setCopiedMeetId]     = useState<string | null>(null);
   const [editingInterview, setEditingInterview] = useState<Interview | null>(null);
+  const [generatingLinkId, setGeneratingLinkId] = useState<string | null>(null);
 
   const [candidates,           setCandidates]           = useState<CandidateOption[]>([]);
   const [candidateSearch,      setCandidateSearch]      = useState('');
@@ -481,6 +482,38 @@ export function AgendaModal({ onClose }: AgendaModalProps) {
     }
   };
 
+  const generateMeetLink = async (iv: Interview) => {
+    if (!gcConnected || generatingLinkId) return;
+    setGeneratingLinkId(iv.id);
+    try {
+      const calRes = await fetch('/api/google-calendar/create-event', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title:           iv.title,
+          startTime:       iv.scheduled_at,
+          durationMinutes: iv.duration_minutes,
+          includesMeet:    true,
+        }),
+      });
+      if (!calRes.ok) throw new Error('Falha ao criar evento no Google Calendar');
+      const calData = await calRes.json();
+      const meetLink   = calData.meetLink   || null;
+      const eventId    = calData.eventId    || null;
+      if (!meetLink) throw new Error('Link do Meet não retornado pelo Google Calendar');
+      const { error } = await supabase
+        .from('interviews')
+        .update({ meet_link: meetLink, google_event_id: eventId })
+        .eq('id', iv.id);
+      if (error) throw error;
+      await loadInterviews();
+    } catch (err: any) {
+      alert(err.message || 'Erro ao gerar link do Meet');
+    } finally {
+      setGeneratingLinkId(null);
+    }
+  };
+
   const prevMonth = () => setViewDate(d => new Date(d.getFullYear(), d.getMonth() - 1, 1));
   const nextMonth = () => setViewDate(d => new Date(d.getFullYear(), d.getMonth() + 1, 1));
   const goToday   = () => { setViewDate(new Date()); setSelectedDay(new Date()); };
@@ -779,8 +812,18 @@ export function AgendaModal({ onClose }: AgendaModalProps) {
                                     {cardContent}
                                   </a>
                                 ) : (
-                                  <div className={`flex flex-1 items-start gap-2.5 px-3 py-2.5 rounded-lg border text-xs ${TYPE_COLORS[iv.type]}`}>
-                                    {cardContent}
+                                  <div className={`flex flex-col flex-1 gap-1.5 px-3 py-2.5 rounded-lg border text-xs ${TYPE_COLORS[iv.type]}`}>
+                                    <div className="flex items-start gap-2.5">{cardContent}</div>
+                                    {gcConnected && iv.type === 'video' && (
+                                      <button
+                                        onClick={() => generateMeetLink(iv)}
+                                        disabled={generatingLinkId === iv.id}
+                                        className="self-start flex items-center gap-1 px-2 py-0.5 text-[10px] font-medium rounded bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-60 transition-colors"
+                                      >
+                                        <Video className="h-2.5 w-2.5" />
+                                        {generatingLinkId === iv.id ? 'Gerando…' : 'Gerar link do Meet'}
+                                      </button>
+                                    )}
                                   </div>
                                 )}
                                 <button
