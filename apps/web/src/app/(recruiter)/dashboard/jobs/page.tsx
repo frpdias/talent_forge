@@ -104,7 +104,11 @@ export default function JobsPage() {
   }, [currentOrg?.id]);
 
   async function loadJobs() {
-    if (!currentOrg?.id) return;
+    if (!currentOrg?.id) {
+      setLoading(false);
+      setJobs([]);
+      return;
+    }
     try {
       setLoading(true);
       let query = supabase
