@@ -766,33 +766,30 @@ export function AgendaModal({ onClose }: AgendaModalProps) {
                                 </div>
                               </>
                             );
-                            // Lápis de edição FORA do <a> para não interferir com o clique do Meet
-                            const editBtn = (
-                              <button
-                                onClick={e => { e.preventDefault(); e.stopPropagation(); openFormForEdit(iv); }}
-                                className="absolute top-1.5 right-1.5 p-1 rounded opacity-0 pointer-events-none group-hover:opacity-70 group-hover:pointer-events-auto hover:!opacity-100 hover:bg-black/10 transition-all"
-                                title="Editar entrevista"
-                              >
-                                <Pencil className="h-2.5 w-2.5" />
-                              </button>
-                            );
+                            // Botão de edição ao lado do card, sem overlay para não interferir no clique
                             return (
-                              <div key={iv.id} className="relative group">
+                              <div key={iv.id} className="flex items-stretch gap-1 group">
                                 {iv.meet_link ? (
                                   <a
                                     href={iv.meet_link}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className={`flex items-start gap-2.5 px-3 py-2.5 rounded-lg border text-xs cursor-pointer hover:shadow-md transition-shadow pr-7 ${TYPE_COLORS[iv.type]}`}
+                                    className={`flex flex-1 items-start gap-2.5 px-3 py-2.5 rounded-lg border text-xs cursor-pointer hover:shadow-md transition-shadow ${TYPE_COLORS[iv.type]}`}
                                   >
                                     {cardContent}
                                   </a>
                                 ) : (
-                                  <div className={`flex items-start gap-2.5 px-3 py-2.5 rounded-lg border text-xs pr-7 ${TYPE_COLORS[iv.type]}`}>
+                                  <div className={`flex flex-1 items-start gap-2.5 px-3 py-2.5 rounded-lg border text-xs ${TYPE_COLORS[iv.type]}`}>
                                     {cardContent}
                                   </div>
                                 )}
-                                {editBtn}
+                                <button
+                                  onClick={() => openFormForEdit(iv)}
+                                  className="opacity-0 group-hover:opacity-60 hover:!opacity-100 px-1.5 rounded-lg border border-transparent hover:border-[#E5E5DC] hover:bg-white transition-all shrink-0"
+                                  title="Editar entrevista"
+                                >
+                                  <Pencil className="h-3 w-3 text-[#666666]" />
+                                </button>
                               </div>
                             );
                           })}
