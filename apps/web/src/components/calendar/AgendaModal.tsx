@@ -707,19 +707,10 @@ export function AgendaModal({ onClose }: AgendaModalProps) {
                                 <div className="flex-1 min-w-0">
                                   <div className="flex items-center justify-between gap-2">
                                     <p className="font-semibold truncate">{iv.title}</p>
-                                    <div className="flex items-center gap-1.5 shrink-0">
-                                      <span className="flex items-center gap-1 opacity-75">
-                                        <Clock className="h-2.5 w-2.5" />
-                                        {formatTime(iv.scheduled_at)} · {iv.duration_minutes}min
-                                      </span>
-                                      <button
-                                        onClick={e => { e.preventDefault(); e.stopPropagation(); openFormForEdit(iv); }}
-                                        className="p-0.5 rounded hover:bg-black/10 transition-colors opacity-60 hover:opacity-100"
-                                        title="Editar entrevista"
-                                      >
-                                        <Pencil className="h-2.5 w-2.5" />
-                                      </button>
-                                    </div>
+                                    <span className="flex items-center gap-1 shrink-0 opacity-75">
+                                      <Clock className="h-2.5 w-2.5" />
+                                      {formatTime(iv.scheduled_at)} · {iv.duration_minutes}min
+                                    </span>
                                   </div>
                                   <div className="flex items-center gap-x-2 mt-0.5 opacity-75">
                                     {(iv.candidateName || iv.candidateEmail) && (
@@ -775,19 +766,33 @@ export function AgendaModal({ onClose }: AgendaModalProps) {
                                 </div>
                               </>
                             );
-                            return iv.meet_link ? (
-                              <a
-                                key={iv.id}
-                                href={iv.meet_link}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className={`flex items-start gap-2.5 px-3 py-2.5 rounded-lg border text-xs cursor-pointer hover:shadow-md transition-shadow ${TYPE_COLORS[iv.type]}`}
+                            // Lápis de edição FORA do <a> para não interferir com o clique do Meet
+                            const editBtn = (
+                              <button
+                                onClick={e => { e.preventDefault(); e.stopPropagation(); openFormForEdit(iv); }}
+                                className="absolute top-1.5 right-1.5 p-1 rounded opacity-0 group-hover:opacity-70 hover:!opacity-100 hover:bg-black/10 transition-all"
+                                title="Editar entrevista"
                               >
-                                {cardContent}
-                              </a>
-                            ) : (
-                              <div key={iv.id} className={`flex items-start gap-2.5 px-3 py-2.5 rounded-lg border text-xs ${TYPE_COLORS[iv.type]}`}>
-                                {cardContent}
+                                <Pencil className="h-2.5 w-2.5" />
+                              </button>
+                            );
+                            return (
+                              <div key={iv.id} className="relative group">
+                                {iv.meet_link ? (
+                                  <a
+                                    href={iv.meet_link}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className={`flex items-start gap-2.5 px-3 py-2.5 rounded-lg border text-xs cursor-pointer hover:shadow-md transition-shadow pr-7 ${TYPE_COLORS[iv.type]}`}
+                                  >
+                                    {cardContent}
+                                  </a>
+                                ) : (
+                                  <div className={`flex items-start gap-2.5 px-3 py-2.5 rounded-lg border text-xs pr-7 ${TYPE_COLORS[iv.type]}`}>
+                                    {cardContent}
+                                  </div>
+                                )}
+                                {editBtn}
                               </div>
                             );
                           })}
