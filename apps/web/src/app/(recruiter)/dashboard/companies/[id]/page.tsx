@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo, Suspense } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { 
   Building2, Users, ArrowLeft, Plus, Edit, Trash2, Mail, Phone, MapPin,
-  Globe, Calendar, Briefcase, Network, Upload, Activity, ToggleLeft, ToggleRight,
+  Globe, Calendar, Briefcase, Network, Upload, Activity,
   TrendingUp, Award, Shield, Clock, BarChart3, FileText, CheckCircle2,
   UserCheck, Building, Hash, Layers
 } from 'lucide-react';
@@ -85,11 +85,9 @@ function CompanyDetailContent() {
   
   // Estado do módulo PHP
   const [phpModuleActive, setPhpModuleActive] = useState(false);
-  const [phpLoading, setPhpLoading] = useState(false);
 
   // Estado do módulo de Recrutamento
   const [recruitmentModuleActive, setRecruitmentModuleActive] = useState(false);
-  const [recruitmentLoading, setRecruitmentLoading] = useState(false);
   const [confirmDeleteEmployeeId, setConfirmDeleteEmployeeId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -144,66 +142,9 @@ function CompanyDetailContent() {
     }
   };
 
-  // Toggle módulo de Recrutamento
-  const toggleRecruitmentModule = async () => {
-    setRecruitmentLoading(true);
-    try {
-      const newStatus = !recruitmentModuleActive;
-      const method = newStatus ? 'POST' : 'DELETE';
-      const res = await fetch(`/api/admin/companies/${companyId}/recruitment-module`, { method });
-      if (!res.ok) {
-        const err = await res.json();
-        alert(`Erro: ${err.error || 'Falha ao atualizar módulo de Recrutamento'}`);
-      } else {
-        setRecruitmentModuleActive(newStatus);
-        alert(newStatus
-          ? '✅ Módulo de Recrutamento ativado!'
-          : '⚠️ Módulo de Recrutamento desativado para esta empresa.'
-        );
-      }
-    } catch (error) {
-      console.error('Erro:', error);
-    } finally {
-      setRecruitmentLoading(false);
-    }
-  };
 
-  // Toggle módulo PHP
-  const togglePhpModule = async () => {
-    setPhpLoading(true);
-    try {
-      const supabase = createClient();
-      const newStatus = !phpModuleActive;
-      
-      // Upsert na tabela php_module_activations
-      const { error } = await supabase
-        .from('php_module_activations')
-        .upsert({
-          org_id: companyId,
-          is_active: newStatus,
-          activated_at: newStatus ? new Date().toISOString() : null,
-          deactivated_at: newStatus ? null : new Date().toISOString(),
-          activation_plan: 'full'
-        }, {
-          onConflict: 'org_id'
-        });
-      
-      if (error) {
-        console.error('Erro ao atualizar módulo PHP:', error);
-        alert('Erro ao atualizar status do módulo PHP');
-      } else {
-        setPhpModuleActive(newStatus);
-        alert(newStatus 
-          ? '✅ Módulo PHP ativado! Agora você pode acessar TFCI, NR-1 e COPC para esta empresa.'
-          : '⚠️ Módulo PHP desativado para esta empresa.'
-        );
-      }
-    } catch (error) {
-      console.error('Erro:', error);
-    } finally {
-      setPhpLoading(false);
-    }
-  };
+
+
 
   const loadCompany = async () => {
     try {
@@ -407,11 +348,7 @@ function CompanyDetailContent() {
             company={company}
             employees={employees}
             phpModuleActive={phpModuleActive}
-            phpLoading={phpLoading}
-            togglePhpModule={togglePhpModule}
             recruitmentModuleActive={recruitmentModuleActive}
-            recruitmentLoading={recruitmentLoading}
-            toggleRecruitmentModule={toggleRecruitmentModule}
             onOpenPhp={() => {
               setPhpContextOrg(companyId, company.name);
               router.push('/php/dashboard');
@@ -623,15 +560,11 @@ interface CompanyInfoTabProps {
   company: Company;
   employees: Employee[];
   phpModuleActive: boolean;
-  phpLoading: boolean;
-  togglePhpModule: () => void;
   recruitmentModuleActive: boolean;
-  recruitmentLoading: boolean;
-  toggleRecruitmentModule: () => void;
   onOpenPhp: () => void;
 }
 
-function CompanyInfoTab({ company, employees, phpModuleActive, phpLoading, togglePhpModule, recruitmentModuleActive, recruitmentLoading, toggleRecruitmentModule, onOpenPhp }: CompanyInfoTabProps) {
+function CompanyInfoTab({ company, employees, phpModuleActive, recruitmentModuleActive, onOpenPhp }: CompanyInfoTabProps) {
   // Métricas calculadas dos funcionários
   const employeeStats = useMemo(() => {
     if (employees.length === 0) {
@@ -844,23 +777,14 @@ function CompanyInfoTab({ company, employees, phpModuleActive, phpLoading, toggl
                   </div>
                 </div>
               </div>
-              <button
-                onClick={toggleRecruitmentModule}
-                disabled={recruitmentLoading}
-                className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-medium transition-all shadow-sm ${
-                  recruitmentModuleActive
-                    ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-blue-200'
-                    : 'bg-[#141042] text-white hover:bg-[#1a1557] shadow-gray-200'
-                } ${recruitmentLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
-              >
-                {recruitmentLoading ? (
-                  <span className="animate-spin">⏳</span>
-                ) : recruitmentModuleActive ? (
-                  <><ToggleRight className="w-5 h-5" />Ativo</>
-                ) : (
-                  <><ToggleLeft className="w-5 h-5" />Ativar Módulo</>
-                )}
-              </button>
+              <div className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium ${
+                recruitmentModuleActive
+                  ? 'bg-blue-100 text-blue-700'
+                  : 'bg-gray-100 text-gray-500'
+              }`}>
+                <span className={`w-2 h-2 rounded-full ${recruitmentModuleActive ? 'bg-blue-500' : 'bg-gray-400'}`} />
+                {recruitmentModuleActive ? 'Ativo' : 'Inativo'}
+              </div>
             </div>
             {recruitmentModuleActive && (
               <div className="mt-5 pt-5 border-t border-blue-200 flex items-center gap-2 text-blue-700">
@@ -909,29 +833,19 @@ function CompanyInfoTab({ company, employees, phpModuleActive, phpLoading, toggl
                 </div>
               </div>
               
-              <button
-                onClick={togglePhpModule}
-                disabled={phpLoading}
-                className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-medium transition-all shadow-sm ${
-                  phpModuleActive 
-                    ? 'bg-green-600 text-white hover:bg-green-700 shadow-green-200' 
-                    : 'bg-[#141042] text-white hover:bg-[#1a1557] shadow-gray-200'
-                } ${phpLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
-              >
-                {phpLoading ? (
-                  <span className="animate-spin">⏳</span>
-                ) : phpModuleActive ? (
-                  <>
-                    <ToggleRight className="w-5 h-5" />
-                    Ativo
-                  </>
-                ) : (
-                  <>
-                    <ToggleLeft className="w-5 h-5" />
-                    Ativar Módulo
-                  </>
+              <div className="flex flex-col items-end gap-1">
+                <div className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium ${
+                  phpModuleActive
+                    ? 'bg-green-100 text-green-700'
+                    : 'bg-gray-100 text-gray-500'
+                }`}>
+                  <span className={`w-2 h-2 rounded-full ${phpModuleActive ? 'bg-green-500' : 'bg-gray-400'}`} />
+                  {phpModuleActive ? 'Ativo' : 'Inativo'}
+                </div>
+                {!phpModuleActive && (
+                  <span className="text-xs text-gray-400">Contate a Fartech para ativar</span>
                 )}
-              </button>
+              </div>
             </div>
             
             {phpModuleActive && (

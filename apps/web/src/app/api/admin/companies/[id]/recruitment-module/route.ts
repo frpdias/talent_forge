@@ -1,11 +1,29 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { createClient as createServerClient } from '@/lib/supabase/server';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
 function getAdminClient() {
   return createClient(supabaseUrl, supabaseServiceKey);
+}
+
+async function ensureAdmin() {
+  const supabase = await createServerClient();
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) {
+    return { admin: null, error: NextResponse.json({ error: 'Não autenticado' }, { status: 401 }) };
+  }
+  const { data: profile } = await supabase
+    .from('user_profiles')
+    .select('user_type')
+    .eq('id', session.user.id)
+    .single();
+  if (!profile || profile.user_type !== 'admin') {
+    return { admin: null, error: NextResponse.json({ error: 'Acesso negado — apenas admins Fartech podem gerenciar módulos' }, { status: 403 }) };
+  }
+  return { admin: getAdminClient(), error: null as null };
 }
 
 /**
@@ -19,7 +37,8 @@ export async function POST(
 ) {
   try {
     const { id: orgId } = await params;
-    const admin = getAdminClient();
+    const { admin, error: adminError } = await ensureAdmin();
+    if (adminError) return adminError;
 
     const { data: existing } = await admin
       .from('recruitment_module_activations')
@@ -77,7 +96,8 @@ export async function DELETE(
 ) {
   try {
     const { id: orgId } = await params;
-    const admin = getAdminClient();
+    const { admin, error: adminError } = await ensureAdmin();
+    if (adminError) return adminError;
 
     const { data, error } = await admin
       .from('recruitment_module_activations')

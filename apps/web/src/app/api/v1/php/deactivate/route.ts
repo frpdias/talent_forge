@@ -6,13 +6,14 @@ const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
 /**
  * POST /api/v1/php/deactivate
- * Desativa o módulo PHP para a organização
+ * Desativa o módulo PHP para uma organização.
+ * RESTRITO: apenas admins Fartech (user_type = 'admin') podem desativar.
  */
 export async function POST(request: NextRequest) {
   try {
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Buscar org_id do usuário autenticado
+    // Verificar autenticação
     const authHeader = request.headers.get('authorization');
     if (!authHeader) {
       return NextResponse.json(
@@ -32,21 +33,29 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Buscar organization do usuário
-    const { data: orgMember } = await supabase
-      .from('org_members')
-      .select('org_id')
-      .eq('user_id', user.id)
+    // Verificar se é admin Fartech
+    const { data: profile } = await supabase
+      .from('user_profiles')
+      .select('user_type')
+      .eq('id', user.id)
       .single();
 
-    if (!orgMember?.org_id) {
+    if (!profile || profile.user_type !== 'admin') {
       return NextResponse.json(
-        { error: 'Usuário não pertence a nenhuma organização' },
+        { error: 'Acesso negado — apenas admins Fartech podem desativar o módulo PHP' },
         { status: 403 }
       );
     }
 
-    const orgId = orgMember.org_id;
+    const body = await request.json();
+    const orgId = body.org_id;
+
+    if (!orgId) {
+      return NextResponse.json(
+        { error: 'org_id é obrigatório' },
+        { status: 400 }
+      );
+    }
 
     // Desativar módulo PHP
     const { data: activation, error } = await supabase
