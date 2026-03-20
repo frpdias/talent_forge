@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { Search, Loader2 } from 'lucide-react';
-import { createClient } from '@/lib/supabase/client';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
@@ -10,8 +9,8 @@ import { cn } from '@/lib/utils';
 interface CboResult {
   code: string;
   title: string;
-  avg_salary_min?: number;
-  avg_salary_max?: number;
+  avg_salary_min?: number | null;
+  avg_salary_max?: number | null;
 }
 
 interface CboSelectorProps {
@@ -29,18 +28,19 @@ export function CboSelector({ value, onChange, className, placeholder = "Buscar 
   const [selectedTitle, setSelectedTitle] = useState('');
   const wrapperRef = useRef<HTMLDivElement>(null);
 
-  const supabase = createClient();
-
   // Carregar título se já tiver valor inicial (edição)
   useEffect(() => {
     if (value && !selectedTitle) {
-      supabase.from('ref_cbo').select('title').eq('code', value).single()
-        .then(({ data }) => {
-          if (data) {
-            setSelectedTitle(`${data.title} (${value})`);
-            setQuery(`${data.title} (${value})`);
+      fetch(`/api/cbo/search?q=${encodeURIComponent(value)}`)
+        .then((res) => res.json())
+        .then(({ results: items }: { results: CboResult[] }) => {
+          const match = items.find((r) => r.code === value) ?? items[0];
+          if (match) {
+            setSelectedTitle(`${match.title} (${value})`);
+            setQuery(`${match.title} (${value})`);
           }
-        });
+        })
+        .catch(() => {/* silencioso — campo fica em branco */});
     }
   }, [value]);
 
@@ -55,11 +55,11 @@ export function CboSelector({ value, onChange, className, placeholder = "Buscar 
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Busca com debounce
+  // Busca com debounce — chama /api/cbo/search (dataset CBO 2002 oficial MTE)
   useEffect(() => {
-    if (!isOpen) return; // Não buscar se estiver fechado (ex: apenas exibindo valor selecionado)
+    if (!isOpen) return;
 
-    const searchCbo = async () => {
+    const doSearch = async () => {
       if (query.length < 2) {
         setResults([]);
         return;
@@ -67,24 +67,17 @@ export function CboSelector({ value, onChange, className, placeholder = "Buscar 
 
       setLoading(true);
       try {
-        // Busca usando o índice Full Text Search
-        // Usamos :* para prefix search (ex: "Desenvol" -> "Desenvolvedor")
-        const cleanQuery = query.trim().split(' ').join(' & ');
-        const { data, error } = await supabase
-          .from('ref_cbo')
-          .select('code, title, avg_salary_min, avg_salary_max')
-          .textSearch('fts_vector', `${cleanQuery}:*`) 
-          .limit(10);
-        
-        if (data) setResults(data);
+        const res = await fetch(`/api/cbo/search?q=${encodeURIComponent(query)}`);
+        const { results: items } = await res.json();
+        setResults(items ?? []);
       } catch (err) {
-        console.error("Erro na busca CBO:", err);
+        console.error('Erro na busca CBO:', err);
       } finally {
         setLoading(false);
       }
     };
 
-    const timeout = setTimeout(searchCbo, 300);
+    const timeout = setTimeout(doSearch, 300);
     return () => clearTimeout(timeout);
   }, [query, isOpen]);
 
