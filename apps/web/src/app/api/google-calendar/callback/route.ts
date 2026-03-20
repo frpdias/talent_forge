@@ -4,8 +4,10 @@ import { createClient as createServiceClient } from '@supabase/supabase-js';
 export const dynamic = 'force-dynamic';
 
 function getRedirectUri(requestUrl: string): string {
-  if (process.env.GOOGLE_CALENDAR_REDIRECT_URI) {
-    return process.env.GOOGLE_CALENDAR_REDIRECT_URI;
+  // Aceita tanto GOOGLE_CALENDAR_REDIRECT_URI quanto GOOGLE_CALENDAR_REDIRECT_URL
+  const explicitUri = process.env.GOOGLE_CALENDAR_REDIRECT_URI || process.env.GOOGLE_CALENDAR_REDIRECT_URL;
+  if (explicitUri) {
+    return explicitUri;
   }
   const { origin } = new URL(requestUrl);
   return `${origin}/api/google-calendar/callback`;

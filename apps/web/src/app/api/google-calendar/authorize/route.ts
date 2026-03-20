@@ -6,14 +6,15 @@ import crypto from 'crypto';
 export const dynamic = 'force-dynamic';
 
 // Deriva o redirect_uri a partir do domínio da requisição.
-// Isso garante que talentforge.com.br → talentforge.com.br/api/google-calendar/callback
-// e web-eight-rho-84.vercel.app → web-eight-rho-84.vercel.app/api/google-calendar/callback
+// Suporta tanto GOOGLE_CALENDAR_REDIRECT_URI quanto GOOGLE_CALENDAR_REDIRECT_URL
+// (o Vercel usa REDIRECT_URL, o .env.local usa REDIRECT_URI — ambos são aceitos).
 function getRedirectUri(request: Request): string {
-  // Se há uma URI explícita configurada, usar ela
-  if (process.env.GOOGLE_CALENDAR_REDIRECT_URI) {
-    return process.env.GOOGLE_CALENDAR_REDIRECT_URI;
+  // Aceita ambos os nomes de variável (URI é o padrão canonical, URL é o que o Vercel tem)
+  const explicitUri = process.env.GOOGLE_CALENDAR_REDIRECT_URI || process.env.GOOGLE_CALENDAR_REDIRECT_URL;
+  if (explicitUri) {
+    return explicitUri;
   }
-  // Derivar do host da requisição
+  // Fallback: derivar do host da requisição
   const { origin } = new URL(request.url);
   return `${origin}/api/google-calendar/callback`;
 }
