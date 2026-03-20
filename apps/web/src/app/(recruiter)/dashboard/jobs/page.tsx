@@ -104,11 +104,13 @@ export default function JobsPage() {
   }, [currentOrg?.id]);
 
   async function loadJobs() {
+    if (!currentOrg?.id) return;
     try {
       setLoading(true);
       let query = supabase
         .from('jobs')
         .select('*')
+        .eq('org_id', currentOrg.id)
         .order('created_at', { ascending: false });
 
       if (statusFilter !== 'all') query = query.eq('status', statusFilter);
