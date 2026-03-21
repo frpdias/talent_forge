@@ -106,3 +106,20 @@ $$;
 
 COMMENT ON FUNCTION get_public_jobs_by_org IS
   'Retorna vagas públicas de uma org pelo slug — SECURITY DEFINER, sem autenticação necessária';
+
+-- ── Recriar get_all_public_jobs (dependia de v_public_jobs — derrubada pelo CASCADE) ──
+CREATE OR REPLACE FUNCTION get_all_public_jobs()
+RETURNS SETOF v_public_jobs
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  SELECT * FROM v_public_jobs ORDER BY created_at DESC;
+$$;
+
+COMMENT ON FUNCTION get_all_public_jobs IS
+  'Retorna todas as vagas públicas de todas as orgs — SECURITY DEFINER, sem autenticação necessária';
+
+GRANT EXECUTE ON FUNCTION get_all_public_jobs() TO anon;
+GRANT EXECUTE ON FUNCTION get_all_public_jobs() TO authenticated;
