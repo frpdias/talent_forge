@@ -1,6 +1,6 @@
 # Arquitetura Canônica — TalentForge
 
-**Última atualização**: 2026-03-20 | **Score de Conformidade**: ✅ 100% (Sprint 56 — GCal OAuth Fix + Candidatos Duplicados) | **Sprints planejados**: Sprint 41 (AI Assistant) + Sprint 44 (Gate Recrutamento)
+**Última atualização**: 2026-03-20 | **Score de Conformidade**: ✅ 100% (Sprint 57 — CBO 2002 Completo) | **Sprints planejados**: Sprint 41 (AI Assistant) + Sprint 44 (Gate Recrutamento)
 
 ## 📜 FONTE DA VERDADE — PRINCÍPIO FUNDAMENTAL
 
@@ -158,18 +158,22 @@ PROJETO_TALENT_FORGE/
 │       │   │   │   ├── jobs/
 │       │   │   │   └── assessment/
 │       │   │   ├── api/             # API Routes
-│       │   │   │   └── admin/
-│       │   │   │       ├── users/                    # GET lista usuários
-│       │   │   │       ├── create-user/              # POST criar usuário + envio de e-mail boas-vindas
-│       │   │   │       ├── delete-user/              # DELETE excluir usuário + audit log (2026-03-15)
-│       │   │   │       ├── resend-welcome-email/     # POST reenviar e-mail boas-vindas (2026-03-14)
-│       │   │   │       ├── companies/                # CRUD empresas
-│       │   │   │       ├── metrics/                  # Métricas sistema
-│       │   │   │       ├── audit-logs/               # GET logs de auditoria
-│       │   │   │       ├── settings/                 # GET/PATCH configurações + audit log
-│       │   │   │       ├── tenants/                  # Gestão de tenants
-│       │   │   │       ├── security/                 # Score e verificações de segurança
-│       │   │   │       └── security-events/          # Eventos de segurança
+│       │   │   │   ├── admin/
+│       │   │   │   │   ├── users/                    # GET lista usuários
+│       │   │   │   │   ├── create-user/              # POST criar usuário + envio de e-mail boas-vindas
+│       │   │   │   │   ├── delete-user/              # DELETE excluir usuário + audit log (2026-03-15)
+│       │   │   │   │   ├── resend-welcome-email/     # POST reenviar e-mail boas-vindas (2026-03-14)
+│       │   │   │   │   ├── companies/                # CRUD empresas
+│       │   │   │   │   ├── metrics/                  # Métricas sistema
+│       │   │   │   │   ├── audit-logs/               # GET logs de auditoria
+│       │   │   │   │   ├── settings/                 # GET/PATCH configurações + audit log
+│       │   │   │   │   ├── tenants/                  # Gestão de tenants
+│       │   │   │   │   ├── security/                 # Score e verificações de segurança
+│       │   │   │   │   └── security-events/          # Eventos de segurança
+│       │   │   │   ├── alerts/
+│       │   │   │   │   └── subscribe/                # POST alertas de vagas por e-mail (Sprint 50)
+│       │   │   │   └── cbo/
+│       │   │   │       └── search/                   # GET busca CBO 2002 — código/título, FTS + ILIKE + fallback local (Sprint 57)
 │       │   │   ├── layout.tsx       # Root layout
 │       │   │   └── middleware.ts    # Auth + routing
 │       │   ├── components/          # Componentes reutilizáveis
@@ -196,7 +200,8 @@ PROJETO_TALENT_FORGE/
 │       │   ├── lib/                # Utilities
 │       │   │   ├── supabase/       # Supabase clients
 │       │   │   ├── utils.ts        # Helper functions
-│       │   │   └── constants.ts    # App constants
+│       │   │   ├── constants.ts    # App constants
+│       │   │   └── cbo-data.ts     # ✨ Dataset local CBO 2002 (~350 mais comuns) + searchCbo() — fallback para /api/cbo/search (Sprint 57)
 │       │   ├── hooks/              # Custom React hooks
 │       │   ├── stores/             # Zustand stores
 │       │   ├── types/              # TypeScript types
@@ -261,7 +266,11 @@ PROJETO_TALENT_FORGE/
 │   │   ├── 20260316_add_interview_status.sql ✅ enum application_status + 'interview_hr' + 'interview_manager' (pipeline sub-status)
 │   │   ├── 20260316_candidate_technical_reviews.sql ✅ tabela candidate_technical_reviews (scores, ai_review, input_snapshot) + RLS is_org_member
 │   │   ├── 20260316_recruiter_settings.sql ✅ tabela recruiter_settings (review_prompt customizável por recrutador/org) + RLS user_id + is_org_member
-│   │   └── 20260316_get_auth_user_id_by_email.sql ✅ função get_auth_user_id_by_email(email) SECURITY DEFINER — resolve UUID de auth.users por email (fallback para candidate_user_id quando candidates.user_id é null)
+│   │   ├── 20260316_get_auth_user_id_by_email.sql ✅ função get_auth_user_id_by_email(email) SECURITY DEFINER — resolve UUID de auth.users por email (fallback para candidate_user_id quando candidates.user_id é null)
+│   │   ├── 20260320_restrict_module_activations_to_admin.sql ✅ segurança: DROP policies INSERT/UPDATE/DELETE em php_module_activations + recruitment_module_activations; REVOKE authenticated; apenas service_role pode escrever
+│   │   ├── 20260320_career_page_anon_access.sql ✅ acesso anônimo à career page (sem autenticação)
+│   │   ├── 20260320_cleanup_duplicate_candidates.sql ✅ limpeza de candidatos duplicados sem candidaturas (race condition FARTECH)
+│   │   └── 20260320_populate_ref_cbo_full.sql ✅ INSERT 2445 ocupações completas CBO 2002 (MTE — domínio público) em ref_cbo via ON CONFLICT DO NOTHING
 │   ├── VALIDATE_IMPROVEMENTS.sql  # Script de validação
 │   └── README.md                  # Instruções de migrations
 │
@@ -7555,6 +7564,24 @@ Adicionar card "Módulo de Recrutamento" seguindo o mesmo padrão visual do card
 - ✅ **Rodapé dinâmico**: `drawAllFooters()` percorre todas as páginas e aplica paginação "X / Y" + branding TalentForge
 - ✅ **Commits**: `e296a14` → `origin/main`
 
+### v5.21 (2026-03-20)
+- ✅ **Score de Conformidade**: 100% mantido (Sprint 57 — CBO 2002 Completo)
+- ✅ **CBO 2002 completo no banco**: migration `20260320_populate_ref_cbo_full.sql` insere 2445 ocupações oficiais MTE em `ref_cbo` via `ON CONFLICT (code) DO NOTHING` — preserva salários preexistentes nos 16 registros originais
+- ✅ **API Route `/api/cbo/search`**: `GET /api/cbo/search?q=<termo>` — busca em 4 camadas: (1) código exato (`354705` → `3547-05`), (2) FTS prefix (`fts_vector` Supabase), (3) ILIKE em `title` + `code`, (4) fallback para dataset local `cbo-data.ts`; retorna `{ results: CboResult[] }` com `code, title, avg_salary_min?, avg_salary_max?`
+- ✅ **Dataset local `lib/cbo-data.ts`**: ~350 ocupações mais comuns do CBO 2002 com `searchCbo(query, limit)` — garante disponibilidade offline e reduz latência quando DB indisponível
+- ✅ **Commits**: `07d4f56` (feat: busca CBO dataset local) → `d6a43c3` (feat: popular ref_cbo 2445) → `54223fc` (fix: normalizar código + fallback ilike) → `origin/main`
+
+### v5.20 (2026-03-20)
+- ✅ **Score de Conformidade**: 100% mantido (Sprint 56 — GCal OAuth Fix + Candidatos Duplicados)
+- ✅ **GCal OAuth fix dual REDIRECT**: código atualizado para aceitar `GOOGLE_CALENDAR_REDIRECT_URI` **ou** `GOOGLE_CALENDAR_REDIRECT_URL` — Vercel usa `REDIRECT_URL`, dev local usa `REDIRECT_URI`; fix em `apps/web/src/app/api/google-calendar/callback/route.ts`
+- ✅ **Edição de entrevistas existentes**: `AgendaModal.tsx` permite editar data/hora/notas/link de vídeo de entrevistas já agendadas; campo manual de link de vídeo como fallback quando GCal falha
+- ✅ **Botão Gerar Meet**: cards de entrevista sem `meet_link` exibem botão "Gerar link do Meet"; lapiz (ícone edição) usa `pointer-events-none` quando invisível para não bloquear clique no Meet
+- ✅ **Segurança módulos**: migration `20260320_restrict_module_activations_to_admin.sql` — `REVOKE INSERT, UPDATE, DELETE` em `php_module_activations` e `recruitment_module_activations` do role `authenticated`; escrita somente via `service_role` (rotas admin server-side)
+- ✅ **Fix candidatos duplicados**: migration `20260320_cleanup_duplicate_candidates.sql` remove candidatos sem candidaturas criados por race condition; fix em `candidates/page.tsx` para deduplicar por `user_id` antes de buscar entrevistas
+- ✅ **Fix career page**: exibe página mesmo quando não há vagas abertas; não mostrar estado vazio como erro
+- ✅ **Fix vagas por org**: `jobs/page.tsx` filtra por `org_id` da org ativa do recrutador (hidratação do Zustand store aguardada)
+- ✅ **Commits**: `478c677` → `5a8e985` → `8412121` → `8fe1d17` → `8414e93` → `3dc6538` → `cfb838e` → `1380f6c` → `ffa4ab5` → `f631009` → `8d31dba` → `8a2b6c7` → `origin/main`
+
 ### v5.19 (2026-03-18)
 - ✅ **Score de Conformidade**: 100% mantido (Sprint 55 — Email SMTP + Tenant Detail + Lint Fix)
 - ✅ **Causa raiz identificada — dois projetos Vercel**: `talentforge.com.br` é servido por `fernando-dias-projects-e4b4044b/web` (conta `frpdias-5043`), não pelo projeto `fartechs-projects-c64e0af4/talent_forge`. Confirmado comparando ETag + `x-vercel-id` de `web-eight-rho-84.vercel.app` vs `talentforge.com.br` (idênticos). Todas as tentativas anteriores de adicionar env vars falhavam por apontar para o projeto errado.
@@ -8487,6 +8514,8 @@ CREATE TABLE job_alerts (
 | **Sprint 53** | **2026-03-19** | **OAuth Google Login + Calendar fixes: imagem Júlia no login, secret Supabase corrigido, Calendar redirect URI dinâmico, upsert→update fix, client_id/secret pareados, env vars Vercel completas** | ✅ |
 | **Sprint 54** | **2026-03-19** | **Google Meet automático via Calendar API + cards de entrevista enriquecidos (candidato, vaga, notas, link Meet com botão copiar)** | ✅ |
 | **Sprint 55** | **2026-03-19** | **Email SMTP fix (Brevo REST→nodemailer), página detalhe tenant com ativação de módulos, fix lint `<a>`→`<Link>`** | ✅ |
+| **Sprint 56** | **2026-03-20** | **GCal OAuth fix (REDIRECT_URL/URI dual), edição de entrevistas, botão Gerar Meet, fix candidatos duplicados (race condition), segurança módulos (REVOKE authenticated), fix career page sem vagas, fix vagas por org_id** | ✅ |
+| **Sprint 57** | **2026-03-20** | **CBO 2002 completo — `ref_cbo` populada com 2445 ocupações MTE, API route `/api/cbo/search` (FTS+ILIKE+local fallback), dataset local `cbo-data.ts` (~350 mais comuns), normalização de código `354705→3547-05`** | ✅ |
 
 ### Regras Canônicas — Portal Candidato
 
@@ -8732,3 +8761,118 @@ Layout do card (mesma altura, largura total utilizada):
 | `37cdb77` | fix(email): migrar envio de email de Brevo REST API para SMTP via nodemailer |
 | `423ff77` | feat(admin): criar página de detalhe do tenant com ativação de módulos |
 | `d8631d3` | fix(admin): substituir `<a>` por `<Link>` na página admin para corrigir erro de lint |
+
+---
+
+## 24) GCal OAuth Fix + Edição de Entrevistas + Segurança Módulos (Sprint 56, 2026-03-20)
+
+### 1. GCal OAuth — Variável REDIRECT_URL/URI dual
+
+**Problema**: Vercel usa `GOOGLE_CALENDAR_REDIRECT_URL` (sem `I`), dev local usa `GOOGLE_CALENDAR_REDIRECT_URI`. Código só checava `REDIRECT_URI` → fallback incorreto em produção.
+
+**Solução**: `callback/route.ts` verifica `process.env.GOOGLE_CALENDAR_REDIRECT_URI ?? process.env.GOOGLE_CALENDAR_REDIRECT_URL` — aceita ambos sem breaking change.
+
+**Regra canônica**: `GOOGLE_CALENDAR_REDIRECT_URL` = Vercel (prod) | `GOOGLE_CALENDAR_REDIRECT_URI` = dev local (sobrescreve).
+
+### 2. Edição de Entrevistas + Campo Manual de Vídeo
+
+**Arquivo**: `apps/web/src/components/calendar/AgendaModal.tsx`
+
+- Modal de entrevista agora suporta **edição** de registros existentes (não apenas criação)
+- Campo manual `video_link` como fallback quando GCal API falha — entrevista é salva normalmente sem `meet_link`
+- Botão "Gerar link do Meet" em cards sem `meet_link`
+- Lapiz (ícone edição) com `pointer-events-none` quando invisível para não bloquear clique no card Meet
+
+### 3. Segurança — Ativação de Módulos Restrita ao Admin
+
+**Migration**: `supabase/migrations/20260320_restrict_module_activations_to_admin.sql`
+
+```sql
+-- Remover políticas INSERT/UPDATE/DELETE que permitiam qualquer membro de org
+DROP POLICY IF EXISTS php_activations_insert ON php_module_activations;
+-- ... (demais policies)
+
+-- Revogar permissão do role authenticated
+REVOKE INSERT, UPDATE, DELETE ON php_module_activations FROM authenticated;
+REVOKE INSERT, UPDATE, DELETE ON recruitment_module_activations FROM authenticated;
+
+-- SELECT continua disponível para membros (exibir status no UI)
+GRANT SELECT ON php_module_activations TO authenticated;
+GRANT SELECT ON recruitment_module_activations TO authenticated;
+```
+
+**Regra**: Ativação/desativação de módulos (PHP e Recrutamento) é operação exclusivamente via API server-side com `service_role`. Nenhum usuário autenticado pode escrever diretamente nessas tabelas.
+
+### 4. Fix Candidatos Duplicados (Race Condition)
+
+**Causa**: Race condition criava registros duplicados em `candidates` para o mesmo `user_id` (ex: login social + cadastro manual simultâneos).
+
+**Solução**:
+- Migration `20260320_cleanup_duplicate_candidates.sql`: remove duplicatas sem candidaturas da FARTECH
+- `candidates/page.tsx`: deduplicação por `user_id` no frontend antes de buscar entrevistas
+
+### Commits Sprint 56
+
+| Commit | Descrição |
+|--------|----------|
+| `478c677` | fix(security): restringir ativação de módulos ao admin fartech |
+| `5a8e985` | fix(candidates): remover duplicatas sem candidaturas da FARTECH |
+| `8412121` | fix(candidate): entrevistas não aparecem quando candidato tem registros duplicados |
+| `8fe1d17` | feat(agenda): editar entrevistas existentes + campo manual de link de video |
+| `8414e93` | fix(agenda): restaurar clique no card do meet + lapiz como overlay externo |
+| `3dc6538` | fix(agenda): lapiz com pointer-events-none quando invisível |
+| `cfb838e` | fix(agenda): botão edição ao lado do card em vez de overlay |
+| `1380f6c` | feat(agenda): botão 'Gerar link do Meet' nos cards sem meet_link |
+| `ffa4ab5` | revert(agenda): remover botão Gerar link desnecessário |
+| `f631009` | fix(agenda): exibir erro quando GCal falha ao gerar link Meet |
+| `8d31dba` | fix(gcal): aceitar GOOGLE_CALENDAR_REDIRECT_URL e REDIRECT_URI |
+| `8a2b6c7` | docs: atualizar arquitetura canônica com Sprint 56 |
+
+---
+
+## 25) CBO 2002 Completo — Dataset MTE + API de Busca (Sprint 57, 2026-03-20)
+
+### Contexto
+
+O campo "Cargo/CBO" no formulário de vagas (`NewJobModal.tsx`, `EditJobDrawer.tsx`) usa o componente `CboSelector.tsx` para buscar ocupações da tabela `ref_cbo`. Antes do Sprint 57, `ref_cbo` tinha apenas ~16 registros manuais — insuficiente para cobertura real.
+
+### Implementação
+
+#### Tabela `ref_cbo` — Estrutura completa
+
+```sql
+-- Colunas relevantes
+code            TEXT PRIMARY KEY  -- Ex: '3547-05' (formato com hífen)
+title           TEXT NOT NULL     -- Ex: 'Representante comercial autônomo'
+fts_vector      TSVECTOR          -- GIN index para busca full-text
+avg_salary_min  NUMERIC           -- Salário médio mínimo (opcional)
+avg_salary_max  NUMERIC           -- Salário médio máximo (opcional)
+```
+
+Após `20260320_populate_ref_cbo_full.sql`: **2445 ocupações** do CBO 2002 oficial MTE (domínio público — Lei brasileira). `ON CONFLICT (code) DO NOTHING` preserva salários preexistentes.
+
+#### Dataset local `lib/cbo-data.ts`
+
+- ~350 ocupações mais comuns pré-carregadas em memória
+- Função `searchCbo(query: string, limit = 10): CboEntry[]` com scoring por relevância
+- Fallback quando banco indisponível ou sem resultados
+
+#### API Route `GET /api/cbo/search?q=<termo>`
+
+**Arquivo**: `apps/web/src/app/api/cbo/search/route.ts`
+
+Camadas de busca (em cascata, retorna no primeiro resultado):
+1. **Código exato**: se query parece código (`\d{4}-?\d{2}`), normaliza `354705` → `3547-05` e busca por `ILIKE code%`
+2. **FTS prefix**: `textSearch('fts_vector', 'termo:*')` — suporta busca parcial
+3. **ILIKE combinado**: `title.ilike.%q%,code.ilike.%q%`
+4. **Dataset local**: `searchCbo(q)` — sem dependência do banco
+
+**Response**: `{ results: CboResult[] }` onde `CboResult = { code, title, avg_salary_min?, avg_salary_max? }`
+
+### Commits Sprint 57
+
+| Commit | Descrição |
+|--------|----------|
+| `07d4f56` | feat(jobs): busca automática CBO com dataset oficial MTE 2002 |
+| `d6a43c3` | feat(cbo): popular ref_cbo com CBO 2002 completo (2445 ocupações MTE) e atualizar API route |
+| `54223fc` | fix(cbo): busca por código CBO (354705 → 3547-05) e fallback ilike em code+title |

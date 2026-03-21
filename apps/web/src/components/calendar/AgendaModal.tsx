@@ -416,16 +416,9 @@ export function AgendaModal({ onClose }: AgendaModalProps) {
           } else {
             const calErr = await calRes.json().catch(() => ({}));
             console.warn('[AgendaModal] Falha ao criar evento no Calendar:', calErr.error);
-            // Se 401 ou token inválido, avisar o usuário para reconectar
-            if (calRes.status === 401 || calRes.status === 400) {
-              throw new Error('Sessão do Google Calendar expirada. Desconecte e reconecte o Google Calendar nas configurações.');
-            }
-            // Outros erros: salva sem link mas avisa
-            setFormError('Aviso: link do Meet não gerado. A entrevista foi salva sem link de vídeo.');
+            // Continua salvando a entrevista mesmo sem Calendar
           }
-        } catch (calError: any) {
-          // Se for o erro de token, re-lança para cancelar o salvamento
-          if (calError?.message?.includes('Google Calendar')) throw calError;
+        } catch (calError) {
           console.warn('[AgendaModal] Erro ao chamar API do Calendar:', calError);
         }
       }
