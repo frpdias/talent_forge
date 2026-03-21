@@ -39,6 +39,25 @@ interface PublicJob {
   career_page_instagram_url: string | null;
   career_page_linkedin_url: string | null;
   career_page_show_contact: boolean;
+  // Tipografia por seção
+  career_page_hero_font_color: string | null;
+  career_page_hero_text_align: string | null;
+  career_page_hero_font_size: string | null;
+  career_page_about_font_color: string | null;
+  career_page_about_text_align: string | null;
+  career_page_about_font_size: string | null;
+  career_page_jobs_font_color: string | null;
+  career_page_jobs_text_align: string | null;
+  career_page_jobs_font_size: string | null;
+  career_page_talent_font_color: string | null;
+  career_page_talent_text_align: string | null;
+  career_page_talent_font_size: string | null;
+  career_page_testimonials_font_color: string | null;
+  career_page_testimonials_text_align: string | null;
+  career_page_testimonials_font_size: string | null;
+  career_page_process_font_color: string | null;
+  career_page_process_text_align: string | null;
+  career_page_process_font_size: string | null;
 }
 
 const TYPE_LABEL: Record<string, string> = {
@@ -120,7 +139,13 @@ export default function CareerPage() {
     'org_name' | 'career_page_headline' | 'career_page_logo_url' | 'org_logo_url' |
     'career_page_color' | 'career_page_secondary_color' | 'career_page_banner_url' |
     'career_page_about' | 'career_page_whatsapp_url' | 'career_page_instagram_url' |
-    'career_page_linkedin_url' | 'career_page_show_contact' | 'org_industry'
+    'career_page_linkedin_url' | 'career_page_show_contact' | 'org_industry' |
+    'career_page_hero_font_color' | 'career_page_hero_text_align' | 'career_page_hero_font_size' |
+    'career_page_about_font_color' | 'career_page_about_text_align' | 'career_page_about_font_size' |
+    'career_page_jobs_font_color' | 'career_page_jobs_text_align' | 'career_page_jobs_font_size' |
+    'career_page_talent_font_color' | 'career_page_talent_text_align' | 'career_page_talent_font_size' |
+    'career_page_testimonials_font_color' | 'career_page_testimonials_text_align' | 'career_page_testimonials_font_size' |
+    'career_page_process_font_color' | 'career_page_process_text_align' | 'career_page_process_font_size'
   > | null>(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
@@ -173,6 +198,24 @@ export default function CareerPage() {
           career_page_linkedin_url: orgData.career_page_linkedin_url,
           career_page_show_contact: orgData.career_page_show_contact ?? false,
           org_industry: orgData.industry,
+          career_page_hero_font_color: orgData.career_page_hero_font_color ?? '#ffffff',
+          career_page_hero_text_align: orgData.career_page_hero_text_align ?? 'right',
+          career_page_hero_font_size: orgData.career_page_hero_font_size ?? 'md',
+          career_page_about_font_color: orgData.career_page_about_font_color ?? '#374151',
+          career_page_about_text_align: orgData.career_page_about_text_align ?? 'left',
+          career_page_about_font_size: orgData.career_page_about_font_size ?? 'md',
+          career_page_jobs_font_color: orgData.career_page_jobs_font_color ?? '#141042',
+          career_page_jobs_text_align: orgData.career_page_jobs_text_align ?? 'left',
+          career_page_jobs_font_size: orgData.career_page_jobs_font_size ?? 'md',
+          career_page_talent_font_color: orgData.career_page_talent_font_color ?? '#141042',
+          career_page_talent_text_align: orgData.career_page_talent_text_align ?? 'left',
+          career_page_talent_font_size: orgData.career_page_talent_font_size ?? 'md',
+          career_page_testimonials_font_color: orgData.career_page_testimonials_font_color ?? '#141042',
+          career_page_testimonials_text_align: orgData.career_page_testimonials_text_align ?? 'center',
+          career_page_testimonials_font_size: orgData.career_page_testimonials_font_size ?? 'md',
+          career_page_process_font_color: orgData.career_page_process_font_color ?? '#141042',
+          career_page_process_text_align: orgData.career_page_process_text_align ?? 'left',
+          career_page_process_font_size: orgData.career_page_process_font_size ?? 'md',
         });
         setJobs([]);
         return;
@@ -194,6 +237,24 @@ export default function CareerPage() {
         career_page_linkedin_url: first.career_page_linkedin_url,
         career_page_show_contact: first.career_page_show_contact,
         org_industry: first.org_industry,
+        career_page_hero_font_color: first.career_page_hero_font_color ?? '#ffffff',
+        career_page_hero_text_align: first.career_page_hero_text_align ?? 'right',
+        career_page_hero_font_size: first.career_page_hero_font_size ?? 'md',
+        career_page_about_font_color: first.career_page_about_font_color ?? '#374151',
+        career_page_about_text_align: first.career_page_about_text_align ?? 'left',
+        career_page_about_font_size: first.career_page_about_font_size ?? 'md',
+        career_page_jobs_font_color: first.career_page_jobs_font_color ?? '#141042',
+        career_page_jobs_text_align: first.career_page_jobs_text_align ?? 'left',
+        career_page_jobs_font_size: first.career_page_jobs_font_size ?? 'md',
+        career_page_talent_font_color: first.career_page_talent_font_color ?? '#141042',
+        career_page_talent_text_align: first.career_page_talent_text_align ?? 'left',
+        career_page_talent_font_size: first.career_page_talent_font_size ?? 'md',
+        career_page_testimonials_font_color: first.career_page_testimonials_font_color ?? '#141042',
+        career_page_testimonials_text_align: first.career_page_testimonials_text_align ?? 'center',
+        career_page_testimonials_font_size: first.career_page_testimonials_font_size ?? 'md',
+        career_page_process_font_color: first.career_page_process_font_color ?? '#141042',
+        career_page_process_text_align: first.career_page_process_text_align ?? 'left',
+        career_page_process_font_size: first.career_page_process_font_size ?? 'md',
       });
 
       // Buscar depoimentos da org
@@ -248,6 +309,22 @@ export default function CareerPage() {
   const secondary = org?.career_page_secondary_color || '#10B981';
   const logoUrl = org?.career_page_logo_url || org?.org_logo_url || null;
   const bannerUrl = org?.career_page_banner_url || null;
+
+  // Tipografia helpers
+  const HEADING_SIZE: Record<string, string> = { sm: '1.125rem', md: '1.5rem', lg: '2rem', xl: '2.5rem' };
+  const BODY_SIZE: Record<string, string>    = { sm: '0.8125rem', md: '0.9375rem', lg: '1.0625rem', xl: '1.25rem' };
+  function typoHeading(section: 'hero' | 'about' | 'jobs' | 'talent' | 'testimonials' | 'process') {
+    const color = org?.[`career_page_${section}_font_color`] as string || primary;
+    const align = (org?.[`career_page_${section}_text_align`] as string || 'left') as React.CSSProperties['textAlign'];
+    const size  = org?.[`career_page_${section}_font_size`]  as string || 'md';
+    return { color, textAlign: align, fontSize: HEADING_SIZE[size] ?? HEADING_SIZE.md };
+  }
+  function typoBody(section: 'hero' | 'about' | 'jobs' | 'talent' | 'testimonials' | 'process') {
+    const color = org?.[`career_page_${section}_font_color`] as string || undefined;
+    const align = (org?.[`career_page_${section}_text_align`] as string || 'left') as React.CSSProperties['textAlign'];
+    const size  = org?.[`career_page_${section}_font_size`]  as string || 'md';
+    return { color, textAlign: align, fontSize: BODY_SIZE[size] ?? BODY_SIZE.md };
+  }
 
   const availableTypes = Array.from(new Set(jobs.map(j => j.employment_type).filter(Boolean))) as string[];
   const availableModalities = Array.from(new Set(jobs.map(j => j.work_modality).filter(Boolean))) as string[];
@@ -360,13 +437,13 @@ export default function CareerPage() {
           </div>
 
           {/* Texto — lado direito */}
-          <div className="text-right">
+          <div style={{ textAlign: (org?.career_page_hero_text_align || 'right') as React.CSSProperties['textAlign'] }}>
             {org?.org_industry && (
               <p className="text-xs font-extrabold uppercase tracking-[0.25em] mb-3" style={{ color: secondary }}>
                 {org.org_industry}
               </p>
             )}
-            <h1 className="text-3xl sm:text-4xl lg:text-[2.75rem] font-extrabold text-white leading-[1.1] tracking-tight mb-5">
+            <h1 className="font-extrabold leading-[1.1] tracking-tight mb-5" style={{ color: org?.career_page_hero_font_color || 'white', fontSize: ({ sm: '1.75rem', md: '2.5rem', lg: '3rem', xl: '3.5rem' })[org?.career_page_hero_font_size || 'md'] }}>
               {org?.career_page_headline || 'Faça parte do time'}
               <br />
               <span style={{ color: secondary }}>{org?.org_name}</span>
@@ -410,8 +487,8 @@ export default function CareerPage() {
                 <p className="text-xs font-extrabold uppercase tracking-widest mb-1" style={{ color: secondary }}>
                   Sobre a empresa
                 </p>
-                <h2 className="text-xl font-extrabold mb-3" style={{ color: primary }}>{org.org_name}</h2>
-                <p className="text-gray-600 leading-relaxed whitespace-pre-wrap text-[15px]">
+                <h2 className="font-extrabold mb-3" style={typoHeading('about')}>{org.org_name}</h2>
+                <p className="leading-relaxed whitespace-pre-wrap" style={typoBody('about')}>
                   {org.career_page_about}
                 </p>
               </div>
@@ -427,7 +504,7 @@ export default function CareerPage() {
             <p className="text-xs font-extrabold uppercase tracking-widest mb-1" style={{ color: secondary }}>
               Oportunidades
             </p>
-            <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight" style={{ color: primary }}>
+            <h2 className="font-extrabold tracking-tight" style={typoHeading('jobs')}>
               Vagas abertas
             </h2>
             {/* Social links */}
@@ -628,10 +705,10 @@ export default function CareerPage() {
             <p className="text-xs font-extrabold uppercase tracking-widest mb-1" style={{ color: secondary }}>
               Banco de Talentos
             </p>
-            <h3 className="text-xl font-extrabold mb-1" style={{ color: primary }}>
+            <h3 className="font-extrabold mb-1" style={typoHeading('talent')}>
               Não encontrou a vaga ideal?
             </h3>
-            <p className="text-gray-500 text-sm leading-relaxed">
+            <p className="leading-relaxed" style={typoBody('talent')}>
               Cadastre seu currículo e fique no nosso radar para futuras oportunidades.
             </p>
           </div>
@@ -672,7 +749,7 @@ export default function CareerPage() {
       {(testimonials.length > 0) && (
       <div className="bg-gray-50 py-14 px-6">
         <div className="max-w-7xl mx-auto">
-          <h2 className="text-2xl sm:text-3xl font-extrabold text-center mb-10" style={{ color: primary }}>
+          <h2 className="font-extrabold mb-10" style={typoHeading('testimonials')}>
             O que dizem sobre nossa empresa
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -716,7 +793,7 @@ export default function CareerPage() {
               <p className="text-xs font-bold uppercase tracking-[0.2em] mb-2" style={{ color: secondary }}>
                 Como funciona
               </p>
-              <h2 className="text-2xl font-extrabold mb-2" style={{ color: primary }}>
+              <h2 className="font-extrabold mb-2" style={typoHeading('process')}>
                 Nosso processo seletivo
               </h2>
               <p className="text-gray-400 text-sm mb-8">Transparência em cada etapa — do cadastro à proposta.</p>
@@ -785,7 +862,7 @@ export default function CareerPage() {
               <p className="text-xs font-bold uppercase tracking-[0.2em] mb-2" style={{ color: secondary }}>
                 Prepare-se
               </p>
-              <h2 className="text-2xl font-extrabold mb-6" style={{ color: primary }}>
+              <h2 className="font-extrabold mb-6" style={typoHeading('process')}>
                 Dicas para se destacar
               </h2>
               <div className="space-y-3">

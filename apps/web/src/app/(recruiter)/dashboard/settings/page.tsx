@@ -40,6 +40,25 @@ function SettingsPageContent() {
     career_page_instagram_url: '',
     career_page_linkedin_url: '',
     career_page_show_contact: false,
+    // Tipografia por seção
+    career_page_hero_font_color: '#ffffff',
+    career_page_hero_text_align: 'right',
+    career_page_hero_font_size: 'md',
+    career_page_about_font_color: '#374151',
+    career_page_about_text_align: 'left',
+    career_page_about_font_size: 'md',
+    career_page_jobs_font_color: '#141042',
+    career_page_jobs_text_align: 'left',
+    career_page_jobs_font_size: 'md',
+    career_page_talent_font_color: '#141042',
+    career_page_talent_text_align: 'left',
+    career_page_talent_font_size: 'md',
+    career_page_testimonials_font_color: '#141042',
+    career_page_testimonials_text_align: 'center',
+    career_page_testimonials_font_size: 'md',
+    career_page_process_font_color: '#141042',
+    career_page_process_text_align: 'left',
+    career_page_process_font_size: 'md',
   });
   const [orgSlug, setOrgSlug] = useState('');
   const [orgId, setOrgId] = useState<string | null>(null);
@@ -245,6 +264,25 @@ function SettingsPageContent() {
             career_page_instagram_url: org.career_page_instagram_url || '',
             career_page_linkedin_url: org.career_page_linkedin_url || '',
             career_page_show_contact: org.career_page_show_contact ?? false,
+            // Tipografia por seção
+            career_page_hero_font_color: org.career_page_hero_font_color || '#ffffff',
+            career_page_hero_text_align: org.career_page_hero_text_align || 'right',
+            career_page_hero_font_size: org.career_page_hero_font_size || 'md',
+            career_page_about_font_color: org.career_page_about_font_color || '#374151',
+            career_page_about_text_align: org.career_page_about_text_align || 'left',
+            career_page_about_font_size: org.career_page_about_font_size || 'md',
+            career_page_jobs_font_color: org.career_page_jobs_font_color || '#141042',
+            career_page_jobs_text_align: org.career_page_jobs_text_align || 'left',
+            career_page_jobs_font_size: org.career_page_jobs_font_size || 'md',
+            career_page_talent_font_color: org.career_page_talent_font_color || '#141042',
+            career_page_talent_text_align: org.career_page_talent_text_align || 'left',
+            career_page_talent_font_size: org.career_page_talent_font_size || 'md',
+            career_page_testimonials_font_color: org.career_page_testimonials_font_color || '#141042',
+            career_page_testimonials_text_align: org.career_page_testimonials_text_align || 'center',
+            career_page_testimonials_font_size: org.career_page_testimonials_font_size || 'md',
+            career_page_process_font_color: org.career_page_process_font_color || '#141042',
+            career_page_process_text_align: org.career_page_process_text_align || 'left',
+            career_page_process_font_size: org.career_page_process_font_size || 'md',
           });
           setOrgSlug(org.slug || '');
           setOrgId(membership.org_id);
@@ -935,6 +973,92 @@ function SettingsPageContent() {
                   checked={careerPage.career_page_show_contact}
                   onChange={(e) => setCareerPage({ ...careerPage, career_page_show_contact: e.target.checked })}
                   className="h-5 w-5 rounded border-[#E5E5DC] text-[#141042] focus:ring-[#141042] cursor-pointer" />
+              </div>
+            </div>
+
+            {/* Tipografia por seção */}
+            <div className="border-t border-[#E5E5DC] pt-4">
+              <p className="text-sm font-medium text-[#141042] mb-4">Tipografia por seção</p>
+              <div className="space-y-5">
+                {(
+                  [
+                    { key: 'hero',         label: 'Hero (cabeçalho)' },
+                    { key: 'about',        label: 'Sobre a empresa' },
+                    { key: 'jobs',         label: 'Vagas abertas' },
+                    { key: 'talent',       label: 'Banco de talentos' },
+                    { key: 'testimonials', label: 'Depoimentos' },
+                    { key: 'process',      label: 'Processo seletivo / Dicas' },
+                  ] as const
+                ).map(({ key, label }) => {
+                  const colorKey  = `career_page_${key}_font_color`  as keyof typeof careerPage;
+                  const alignKey  = `career_page_${key}_text_align`  as keyof typeof careerPage;
+                  const sizeKey   = `career_page_${key}_font_size`   as keyof typeof careerPage;
+                  return (
+                    <div key={key} className="p-3 bg-[#FAFAF8] rounded-lg border border-[#E5E5DC]">
+                      <p className="text-xs font-semibold text-[#666666] uppercase tracking-wide mb-3">{label}</p>
+                      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                        {/* Cor da fonte */}
+                        <div>
+                          <Label className="text-xs mb-1">Cor da fonte</Label>
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="color"
+                              value={careerPage[colorKey] as string}
+                              onChange={(e) => setCareerPage({ ...careerPage, [colorKey]: e.target.value })}
+                              className="h-9 w-12 rounded border border-[#E5E5DC] cursor-pointer p-1 shrink-0"
+                            />
+                            <Input
+                              value={careerPage[colorKey] as string}
+                              onChange={(e) => setCareerPage({ ...careerPage, [colorKey]: e.target.value })}
+                              placeholder="#141042"
+                              className="font-mono text-sm"
+                            />
+                          </div>
+                        </div>
+                        {/* Alinhamento */}
+                        <div>
+                          <Label className="text-xs mb-1">Alinhamento</Label>
+                          <div className="flex gap-1">
+                            {(['left', 'center', 'right'] as const).map((align) => (
+                              <button
+                                key={align}
+                                type="button"
+                                onClick={() => setCareerPage({ ...careerPage, [alignKey]: align })}
+                                className={`flex-1 py-2 text-xs rounded border transition-colors ${
+                                  careerPage[alignKey] === align
+                                    ? 'bg-[#141042] text-white border-[#141042]'
+                                    : 'bg-white text-[#666666] border-[#E5E5DC] hover:border-[#141042]'
+                                }`}
+                              >
+                                {align === 'left' ? 'Esq' : align === 'center' ? 'Centro' : 'Dir'}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                        {/* Tamanho da fonte */}
+                        <div>
+                          <Label className="text-xs mb-1">Tamanho</Label>
+                          <div className="flex gap-1">
+                            {(['sm', 'md', 'lg', 'xl'] as const).map((size) => (
+                              <button
+                                key={size}
+                                type="button"
+                                onClick={() => setCareerPage({ ...careerPage, [sizeKey]: size })}
+                                className={`flex-1 py-2 text-xs rounded border transition-colors ${
+                                  careerPage[sizeKey] === size
+                                    ? 'bg-[#141042] text-white border-[#141042]'
+                                    : 'bg-white text-[#666666] border-[#E5E5DC] hover:border-[#141042]'
+                                }`}
+                              >
+                                {size.toUpperCase()}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </div>
 
