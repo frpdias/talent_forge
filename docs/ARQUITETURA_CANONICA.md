@@ -1,6 +1,6 @@
 # Arquitetura Canônica — TalentForge
 
-**Última atualização**: 2026-03-21 | **Score de Conformidade**: ✅ 100% (Sprint 58 — Tipografia por Seção + Fix /vagas) | **Sprints planejados**: Sprint 41 (AI Assistant) + Sprint 44 (Gate Recrutamento)
+**Última atualização**: 2026-03-21 | **Score de Conformidade**: ✅ 100% (Sprint 58 — Facebook URL + Logo OrgAvatar) | **Sprints planejados**: Sprint 41 (AI Assistant) + Sprint 44 (Gate Recrutamento)
 
 ## 📜 FONTE DA VERDADE — PRINCÍPIO FUNDAMENTAL
 
@@ -276,7 +276,8 @@ PROJETO_TALENT_FORGE/
 │   │   ├── 20260320_career_page_anon_access.sql ✅ acesso anônimo à career page (sem autenticação)
 │   │   ├── 20260320_cleanup_duplicate_candidates.sql ✅ limpeza de candidatos duplicados sem candidaturas (race condition FARTECH)
 │   │   ├── 20260320_populate_ref_cbo_full.sql ✅ INSERT 2445 ocupações completas CBO 2002 (MTE — domínio público) em ref_cbo via ON CONFLICT DO NOTHING
-│   │   └── 20260321_career_page_typography.sql ✅ 18 colunas career_page_*_font_color/text_align/font_size em organizations; v_public_jobs recriada (CASCADE + CREATE); get_public_jobs_by_org + get_all_public_jobs recriados (Sprint 58)
+│   │   ├── 20260321_career_page_typography.sql ✅ 18 colunas career_page_*_font_color/text_align/font_size em organizations; v_public_jobs recriada (CASCADE + CREATE); get_public_jobs_by_org + get_all_public_jobs recriados (Sprint 58)
+│   │   └── 20260321_career_page_facebook.sql ✅ career_page_facebook_url em organizations; v_public_jobs + RPCs recriados (Sprint 58)
 │   ├── VALIDATE_IMPROVEMENTS.sql  # Script de validação
 │   └── README.md                  # Instruções de migrations
 │
@@ -8532,7 +8533,7 @@ CREATE TABLE job_alerts (
 | **Sprint 55** | **2026-03-19** | **Email SMTP fix (Brevo REST→nodemailer), página detalhe tenant com ativação de módulos, fix lint `<a>`→`<Link>`** | ✅ |
 | **Sprint 56** | **2026-03-20** | **GCal OAuth fix (REDIRECT_URL/URI dual), edição de entrevistas, botão Gerar Meet, fix candidatos duplicados (race condition), segurança módulos (REVOKE authenticated), fix career page sem vagas, fix vagas por org_id** | ✅ |
 | **Sprint 57** | **2026-03-20** | **CBO 2002 completo — `ref_cbo` populada com 2445 ocupações MTE, API route `/api/cbo/search` (FTS+ILIKE+local fallback), dataset local `cbo-data.ts` (~350 mais comuns), normalização de código `354705→3547-05`** | ✅ |
-| **Sprint 58** | **2026-03-21** | **Tipografia por seção na career page — 18 colunas em `organizations` (cor/alinhamento/tamanho por hero/about/jobs/talent/testimonials/process), UI de controles em settings, aplicação na página pública `/jobs/[orgSlug]`, fix `/vagas` (get_all_public_jobs derrubada por CASCADE)** | ✅ |
+| **Sprint 58** | **2026-03-21** | **Tipografia por seção na career page — 18 colunas em `organizations` (cor/alinhamento/tamanho por hero/about/jobs/talent/testimonials/process), UI de controles em settings, aplicação na página pública `/jobs/[orgSlug]`, fix `/vagas` (get_all_public_jobs derrubada por CASCADE), logo do recrutador em `/vagas` (OrgAvatar com fundo colorido), campo Facebook em links de contato (`career_page_facebook_url`)** | ✅ |
 
 ### Regras Canônicas — Portal Candidato
 
@@ -9011,3 +9012,6 @@ GRANT EXECUTE ON FUNCTION get_all_public_jobs() TO authenticated;
 |--------|----------|
 | `7823ee3` | feat(career-page): tipografia por seção — cor, alinhamento e tamanho de fonte |
 | `aace28b` | fix(career-page): recriar get_all_public_jobs após CASCADE na view de tipografia |
+| `88f9223` | fix(vagas): usar fundo colorido no container da logo do OrgAvatar |
+| `e43d962` | feat(settings): adicionar campo Facebook em links de contato da career page |
+| `add4b7c` | feat(career-page): exibir link do Facebook na página pública de vagas |
