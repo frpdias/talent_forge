@@ -186,14 +186,8 @@ function SkeletonCard() {
 function OrgAvatar({ name, logoUrl, size = 'md' }: {
   name: string; logoUrl: string | null; size?: 'sm' | 'md' | 'lg';
 }) {
+  const [imgError, setImgError] = useState(false);
   const sz = size === 'sm' ? 'w-8 h-8 text-sm' : size === 'lg' ? 'w-14 h-14 text-xl' : 'w-11 h-11 text-base';
-  if (logoUrl) {
-    return (
-      <div className={`${sz} rounded-xl overflow-hidden shrink-0 bg-white border border-gray-100 flex items-center justify-center shadow-sm`}>
-        <img src={logoUrl} alt={name} loading="lazy" className="w-full h-full object-contain p-1.5" />
-      </div>
-    );
-  }
   const initials = name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
   const palette = [
     'bg-[#141042] text-white', 'bg-[#1F4ED8] text-white',
@@ -201,6 +195,20 @@ function OrgAvatar({ name, logoUrl, size = 'md' }: {
     'bg-violet-600 text-white', 'bg-rose-600 text-white',
   ];
   const color = palette[name.charCodeAt(0) % palette.length];
+
+  if (logoUrl && !imgError) {
+    return (
+      <div className={`${sz} rounded-xl overflow-hidden shrink-0 bg-white border border-gray-100 flex items-center justify-center shadow-sm`}>
+        <img
+          src={logoUrl}
+          alt={name}
+          loading="lazy"
+          className="w-full h-full object-contain p-1.5"
+          onError={() => setImgError(true)}
+        />
+      </div>
+    );
+  }
   return (
     <div className={`${sz} ${color} rounded-xl flex items-center justify-center font-bold shrink-0 shadow-sm`}>
       {initials}
