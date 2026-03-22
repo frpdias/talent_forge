@@ -1,6 +1,6 @@
 # Arquitetura Canônica — TalentForge
 
-**Última atualização**: 2026-03-20 | **Score de Conformidade**: ✅ 100% (Sprint 57 — CBO 2002 Completo) | **Sprints planejados**: Sprint 41 (AI Assistant) + Sprint 44 (Gate Recrutamento)
+**Última atualização**: 2026-03-21 | **Score de Conformidade**: ✅ 100% (Sprint 58 — Tipografia por Seção + Fix /vagas) | **Sprints planejados**: Sprint 41 (AI Assistant) + Sprint 44 (Gate Recrutamento)
 
 ## 📜 FONTE DA VERDADE — PRINCÍPIO FUNDAMENTAL
 
@@ -156,6 +156,8 @@ PROJETO_TALENT_FORGE/
 │       │   │   │   ├── login/
 │       │   │   │   ├── register/
 │       │   │   │   ├── jobs/
+│       │   │   │   │   └── [orgSlug]/        # ✨ Career page pública por org (tipografia configurável — Sprint 58)
+│       │   │   │   ├── vagas/                # ✨ Job board global — /vagas e /vagas/[category] (Sprint 58 — fix)
 │       │   │   │   └── assessment/
 │       │   │   ├── api/             # API Routes
 │       │   │   │   ├── admin/
@@ -172,8 +174,11 @@ PROJETO_TALENT_FORGE/
 │       │   │   │   │   └── security-events/          # Eventos de segurança
 │       │   │   │   ├── alerts/
 │       │   │   │   │   └── subscribe/                # POST alertas de vagas por e-mail (Sprint 50)
-│       │   │   │   └── cbo/
-│       │   │   │       └── search/                   # GET busca CBO 2002 — código/título, FTS + ILIKE + fallback local (Sprint 57)
+│       │   │   │   ├── cbo/
+│       │   │   │   │   └── search/                   # GET busca CBO 2002 — código/título, FTS + ILIKE + fallback local (Sprint 57)
+│       │   │   │   └── v1/
+│       │   │   │       └── career-page/
+│       │   │   │           └── [slug]/               # ✨ GET dados públicos da career page (sem auth) — retorna org + 18 campos tipografia (Sprint 58)
 │       │   │   ├── layout.tsx       # Root layout
 │       │   │   └── middleware.ts    # Auth + routing
 │       │   ├── components/          # Componentes reutilizáveis
@@ -270,7 +275,8 @@ PROJETO_TALENT_FORGE/
 │   │   ├── 20260320_restrict_module_activations_to_admin.sql ✅ segurança: DROP policies INSERT/UPDATE/DELETE em php_module_activations + recruitment_module_activations; REVOKE authenticated; apenas service_role pode escrever
 │   │   ├── 20260320_career_page_anon_access.sql ✅ acesso anônimo à career page (sem autenticação)
 │   │   ├── 20260320_cleanup_duplicate_candidates.sql ✅ limpeza de candidatos duplicados sem candidaturas (race condition FARTECH)
-│   │   └── 20260320_populate_ref_cbo_full.sql ✅ INSERT 2445 ocupações completas CBO 2002 (MTE — domínio público) em ref_cbo via ON CONFLICT DO NOTHING
+│   │   ├── 20260320_populate_ref_cbo_full.sql ✅ INSERT 2445 ocupações completas CBO 2002 (MTE — domínio público) em ref_cbo via ON CONFLICT DO NOTHING
+│   │   └── 20260321_career_page_typography.sql ✅ 18 colunas career_page_*_font_color/text_align/font_size em organizations; v_public_jobs recriada (CASCADE + CREATE); get_public_jobs_by_org + get_all_public_jobs recriados (Sprint 58)
 │   ├── VALIDATE_IMPROVEMENTS.sql  # Script de validação
 │   └── README.md                  # Instruções de migrations
 │
@@ -7564,6 +7570,16 @@ Adicionar card "Módulo de Recrutamento" seguindo o mesmo padrão visual do card
 - ✅ **Rodapé dinâmico**: `drawAllFooters()` percorre todas as páginas e aplica paginação "X / Y" + branding TalentForge
 - ✅ **Commits**: `e296a14` → `origin/main`
 
+### v5.22 (2026-03-21)
+- ✅ **Score de Conformidade**: 100% mantido (Sprint 58 — Tipografia por Seção + Fix /vagas)
+- ✅ **Tipografia por seção — career page**: 18 novas colunas em `organizations` (`career_page_<seção>_font_color`, `_text_align`, `_font_size`) para 6 seções: hero, about, jobs, talent, testimonials, process. Defaults preservam visual original.
+- ✅ **UI de controles em settings**: bloco "Tipografia por seção" em `(recruiter)/dashboard/settings/page.tsx` — color picker + campo hex + botões alinhamento (Esq/Centro/Dir) + botões tamanho (SM/MD/LG/XL) por seção. Salva junto com o restante da career page via `supabase.update(careerPage)`.
+- ✅ **Aplicação na página pública**: `jobs/[orgSlug]/page.tsx` recebe os 18 campos via RPC `get_public_jobs_by_org` (ou `/api/v1/career-page/[slug]` quando sem vagas). Helpers `typoHeading()` e `typoBody()` aplicam `color + textAlign + fontSize` inline nos elementos de cada seção.
+- ✅ **API route `/api/v1/career-page/[slug]`**: select expandido com os 18 novos campos de tipografia.
+- ✅ **Migration `20260321_career_page_typography.sql`**: `ADD COLUMN IF NOT EXISTS` (idempotente); `DROP VIEW IF EXISTS v_public_jobs CASCADE`; recria view + `get_public_jobs_by_org` + `get_all_public_jobs` (com GRANTs para anon/authenticated).
+- ✅ **Fix `/vagas` (job board global)**: `DROP VIEW CASCADE` derrubou `get_all_public_jobs` silenciosamente. Corrigido na migration e como hotfix via SQL Editor. Página `/vagas` restaurada imediatamente.
+- ✅ **Commits**: `7823ee3` (feat: tipografia por seção) → `aace28b` (fix: recriar get_all_public_jobs) → `origin/main`
+
 ### v5.21 (2026-03-20)
 - ✅ **Score de Conformidade**: 100% mantido (Sprint 57 — CBO 2002 Completo)
 - ✅ **CBO 2002 completo no banco**: migration `20260320_populate_ref_cbo_full.sql` insere 2445 ocupações oficiais MTE em `ref_cbo` via `ON CONFLICT (code) DO NOTHING` — preserva salários preexistentes nos 16 registros originais
@@ -8516,6 +8532,7 @@ CREATE TABLE job_alerts (
 | **Sprint 55** | **2026-03-19** | **Email SMTP fix (Brevo REST→nodemailer), página detalhe tenant com ativação de módulos, fix lint `<a>`→`<Link>`** | ✅ |
 | **Sprint 56** | **2026-03-20** | **GCal OAuth fix (REDIRECT_URL/URI dual), edição de entrevistas, botão Gerar Meet, fix candidatos duplicados (race condition), segurança módulos (REVOKE authenticated), fix career page sem vagas, fix vagas por org_id** | ✅ |
 | **Sprint 57** | **2026-03-20** | **CBO 2002 completo — `ref_cbo` populada com 2445 ocupações MTE, API route `/api/cbo/search` (FTS+ILIKE+local fallback), dataset local `cbo-data.ts` (~350 mais comuns), normalização de código `354705→3547-05`** | ✅ |
+| **Sprint 58** | **2026-03-21** | **Tipografia por seção na career page — 18 colunas em `organizations` (cor/alinhamento/tamanho por hero/about/jobs/talent/testimonials/process), UI de controles em settings, aplicação na página pública `/jobs/[orgSlug]`, fix `/vagas` (get_all_public_jobs derrubada por CASCADE)** | ✅ |
 
 ### Regras Canônicas — Portal Candidato
 
@@ -8876,3 +8893,121 @@ Camadas de busca (em cascata, retorna no primeiro resultado):
 | `07d4f56` | feat(jobs): busca automática CBO com dataset oficial MTE 2002 |
 | `d6a43c3` | feat(cbo): popular ref_cbo com CBO 2002 completo (2445 ocupações MTE) e atualizar API route |
 | `54223fc` | fix(cbo): busca por código CBO (354705 → 3547-05) e fallback ilike em code+title |
+
+---
+
+## 26) Tipografia por Seção — Career Page + Fix /vagas (Sprint 58, 2026-03-21)
+
+### Contexto
+
+A página de carreira pública (`/jobs/[orgSlug]`) já permitia personalizar cores, banner e textos gerais. Esta sprint adiciona controle tipográfico independente por seção: cor da fonte, alinhamento e tamanho, configurados diretamente nas settings do recrutador.
+
+Ao mesmo tempo, um bug crítico foi identificado e corrigido: o `DROP VIEW IF EXISTS v_public_jobs CASCADE` da migration derrubou silenciosamente a função `get_all_public_jobs`, tornando a página `/vagas` (job board global) sem resultados.
+
+---
+
+### Schema — 18 novas colunas em `organizations`
+
+```sql
+-- Padrão por seção: 3 colunas × 6 seções = 18 colunas
+career_page_<seção>_font_color  TEXT  DEFAULT '<hex>'
+career_page_<seção>_text_align  TEXT  DEFAULT 'left' | 'center' | 'right'
+career_page_<seção>_font_size   TEXT  DEFAULT 'sm' | 'md' | 'lg' | 'xl'
+```
+
+| Seção | font_color default | text_align default | font_size default |
+|-------|-------------------|-------------------|------------------|
+| `hero` | `#ffffff` | `right` | `md` |
+| `about` | `#374151` | `left` | `md` |
+| `jobs` | `#141042` | `left` | `md` |
+| `talent` | `#141042` | `left` | `md` |
+| `testimonials` | `#141042` | `center` | `md` |
+| `process` | `#141042` | `left` | `md` |
+
+Os defaults replicam exatamente o visual anterior — orgs existentes não percebem mudança visual.
+
+---
+
+### Migration `20260321_career_page_typography.sql`
+
+```sql
+ALTER TABLE organizations
+  ADD COLUMN IF NOT EXISTS career_page_hero_font_color TEXT DEFAULT '#ffffff',
+  -- ... (18 colunas no total, idempotente com IF NOT EXISTS)
+
+DROP VIEW IF EXISTS v_public_jobs CASCADE;  -- ⚠️ derruba dependentes!
+
+CREATE VIEW v_public_jobs AS ...;           -- recria com os 18 novos campos
+
+CREATE OR REPLACE FUNCTION get_public_jobs_by_org(p_org_slug TEXT) ...;
+CREATE OR REPLACE FUNCTION get_all_public_jobs() ...;  -- CRÍTICO: recriar após CASCADE
+GRANT EXECUTE ON FUNCTION get_all_public_jobs() TO anon;
+GRANT EXECUTE ON FUNCTION get_all_public_jobs() TO authenticated;
+```
+
+> **⚠️ REGRA APRENDIDA**: Ao usar `DROP VIEW … CASCADE`, **sempre listar e recriar** todos os objetos dependentes. No TalentForge, `v_public_jobs` tem dois dependentes: `get_public_jobs_by_org` (career page org) e `get_all_public_jobs` (job board global `/vagas`).
+
+---
+
+### UI — Settings do Recrutador
+
+**Arquivo**: `apps/web/src/app/(recruiter)/dashboard/settings/page.tsx`
+
+Bloco "Tipografia por seção" adicionado entre os links de contato e o botão Salvar. Para cada uma das 6 seções, 3 controles em grid `sm:grid-cols-3`:
+
+1. **Cor da fonte**: `<input type="color">` + `<Input>` com hex — mesmo padrão dos campos de cor primária/secundária existentes
+2. **Alinhamento**: 3 botões (Esq / Centro / Dir) com estado ativo visual
+3. **Tamanho**: 4 botões (SM / MD / LG / XL) com estado ativo visual
+
+Padrão de estado: os 18 campos são adicionados ao `careerPage` state existente; o `handleSaveCareerPage` não precisou de nenhuma modificação — faz `supabase.update(careerPage)` que já inclui todos os campos.
+
+---
+
+### Aplicação na Página Pública
+
+**Arquivo**: `apps/web/src/app/(public)/jobs/[orgSlug]/page.tsx`
+
+Helpers definidos após as variáveis `primary`/`secondary`:
+
+```ts
+function typoHeading(section: 'hero' | 'about' | ...) {
+  // retorna { color, textAlign, fontSize } para headings
+}
+function typoBody(section: ...) {
+  // retorna { color, textAlign, fontSize } para texto corrido
+}
+```
+
+Mapeamento de tamanho:
+| Opção | Heading | Body |
+|-------|---------|------|
+| `sm` | `1.125rem` | `0.8125rem` |
+| `md` | `1.5rem` | `0.9375rem` |
+| `lg` | `2rem` | `1.0625rem` |
+| `xl` | `2.5rem` | `1.25rem` |
+
+Os estilos são aplicados via `style={typoHeading('hero')}` nos elementos `<h1>`, `<h2>`, `<h3>` e `<p>` de cada seção. O atributo `className` de Tailwind é mantido para layout/weight, e o `style` inline sobrescreve apenas color/textAlign/fontSize.
+
+---
+
+### Fix — `/vagas` sem resultados
+
+**Causa raiz**: `DROP VIEW IF EXISTS v_public_jobs CASCADE` na migration derrubou `get_all_public_jobs()` (que tem `RETURNS SETOF v_public_jobs`). A migration recriou apenas `get_public_jobs_by_org`, esquecendo `get_all_public_jobs`.
+
+**Hotfix aplicado** (SQL Editor):
+```sql
+CREATE OR REPLACE FUNCTION get_all_public_jobs() RETURNS SETOF v_public_jobs ...;
+GRANT EXECUTE ON FUNCTION get_all_public_jobs() TO anon;
+GRANT EXECUTE ON FUNCTION get_all_public_jobs() TO authenticated;
+```
+
+**Correção permanente**: `get_all_public_jobs` adicionado à migration `20260321_career_page_typography.sql` para futuras reaplicações.
+
+---
+
+### Commits Sprint 58
+
+| Commit | Descrição |
+|--------|----------|
+| `7823ee3` | feat(career-page): tipografia por seção — cor, alinhamento e tamanho de fonte |
+| `aace28b` | fix(career-page): recriar get_all_public_jobs após CASCADE na view de tipografia |
