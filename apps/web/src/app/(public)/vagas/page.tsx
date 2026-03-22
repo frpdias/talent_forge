@@ -196,9 +196,12 @@ function OrgAvatar({ name, logoUrl, size = 'md' }: {
   ];
   const color = palette[name.charCodeAt(0) % palette.length];
 
+  const bgColors = ['bg-[#141042]', 'bg-[#1F4ED8]', 'bg-[#10B981]', 'bg-[#F97316]', 'bg-violet-600', 'bg-rose-600'];
+  const bgColor = bgColors[name.charCodeAt(0) % bgColors.length];
+
   if (logoUrl && !imgError) {
     return (
-      <div className={`${sz} rounded-xl overflow-hidden shrink-0 bg-white border border-gray-100 flex items-center justify-center shadow-sm`}>
+      <div className={`${sz} rounded-xl overflow-hidden shrink-0 ${bgColor} flex items-center justify-center shadow-sm`}>
         <img
           src={logoUrl}
           alt={name}
