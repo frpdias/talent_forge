@@ -30,6 +30,7 @@ interface GlobalJob {
   org_slug: string;
   org_industry: string | null;
   org_logo_url: string | null;
+  career_page_logo_url?: string | null;
   description?: string | null;
   description_html?: string | null;
   benefits?: string | null;
@@ -424,7 +425,7 @@ function JobModal({
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 shrink-0">
           <div className="flex items-center gap-2.5 min-w-0">
-            <OrgAvatar name={job.org_name} logoUrl={job.org_logo_url} size="sm" />
+            <OrgAvatar name={job.org_name} logoUrl={job.career_page_logo_url || job.org_logo_url} size="sm" />
             <p className="text-sm font-medium text-gray-500 truncate">{job.org_name}</p>
           </div>
           <div className="flex items-center gap-2 shrink-0">
@@ -766,6 +767,7 @@ function VagasContent() {
           org_slug: j.org_slug ?? '',
           org_industry: j.org_industry ?? null,
           org_logo_url: j.org_logo_url ?? null,
+          career_page_logo_url: j.career_page_logo_url ?? null,
           description: j.description ?? null,
           description_html: j.description_html ?? null,
           benefits: j.benefits ?? null,
@@ -1309,7 +1311,7 @@ function VagasContent() {
                     >
                       <div className="p-5">
                         <div className="flex items-start gap-4">
-                          <OrgAvatar name={job.org_name} logoUrl={job.org_logo_url} size="lg" />
+                          <OrgAvatar name={job.org_name} logoUrl={job.career_page_logo_url || job.org_logo_url} size="lg" />
                           <div className="flex-1 min-w-0">
                             <div className="flex items-start justify-between gap-2 mb-1">
                               <div className="min-w-0">
