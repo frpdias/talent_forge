@@ -39,6 +39,7 @@ function SettingsPageContent() {
     career_page_whatsapp_url: '',
     career_page_instagram_url: '',
     career_page_linkedin_url: '',
+    career_page_facebook_url: '',
     career_page_show_contact: false,
     // Tipografia por seção
     career_page_hero_font_color: '#ffffff',
@@ -263,6 +264,7 @@ function SettingsPageContent() {
             career_page_whatsapp_url: org.career_page_whatsapp_url || '',
             career_page_instagram_url: org.career_page_instagram_url || '',
             career_page_linkedin_url: org.career_page_linkedin_url || '',
+            career_page_facebook_url: org.career_page_facebook_url || '',
             career_page_show_contact: org.career_page_show_contact ?? false,
             // Tipografia por seção
             career_page_hero_font_color: org.career_page_hero_font_color || '#ffffff',
@@ -959,6 +961,26 @@ function SettingsPageContent() {
                       onChange={(e) => {
                         const slug = e.target.value.replace(/\s/g, '-').replace(/[^a-zA-Z0-9\-_]/g, '').replace(/\/+$/, '');
                         setCareerPage({ ...careerPage, career_page_linkedin_url: slug ? `https://linkedin.com/company/${slug}` : '' });
+                      }}
+                    />
+                  </div>
+                </div>
+
+                {/* Facebook — só slug da página */}
+                <div className="flex items-center gap-3">
+                  <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="#1877F2"><path d="M24 12.073C24 5.405 18.627 0 12 0S0 5.405 0 12.073C0 18.1 4.388 23.094 10.125 24v-8.437H7.078v-3.49h3.047V9.41c0-3.025 1.792-4.697 4.533-4.697 1.312 0 2.686.235 2.686.235v2.97h-1.513c-1.491 0-1.956.93-1.956 1.886v2.269h3.328l-.532 3.49h-2.796V24C19.612 23.094 24 18.1 24 12.073z"/></svg>
+                  <div className="flex flex-1 rounded-lg border border-[#E5E5DC] overflow-hidden focus-within:ring-2 focus-within:ring-[#141042] bg-white">
+                    <span className="px-3 py-2 bg-[#FAFAF8] text-[#999999] text-sm border-r border-[#E5E5DC] whitespace-nowrap select-none">
+                      facebook.com/
+                    </span>
+                    <input
+                      type="text"
+                      className="flex-1 px-3 py-2 text-sm outline-none bg-white placeholder:text-[#CCCCCC]"
+                      placeholder="nomeDaPagina"
+                      value={careerPage.career_page_facebook_url.replace('https://facebook.com/', '').replace(/\/$/, '')}
+                      onChange={(e) => {
+                        const slug = e.target.value.replace(/\s/g, '').replace(/\/+$/, '');
+                        setCareerPage({ ...careerPage, career_page_facebook_url: slug ? `https://facebook.com/${slug}` : '' });
                       }}
                     />
                   </div>

@@ -35,6 +35,7 @@ export async function GET(
        career_page_whatsapp_url,
        career_page_instagram_url,
        career_page_linkedin_url,
+       career_page_facebook_url,
        career_page_show_contact,
        career_page_hero_font_color,
        career_page_hero_text_align,
