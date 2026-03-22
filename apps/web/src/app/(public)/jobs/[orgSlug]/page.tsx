@@ -38,6 +38,7 @@ interface PublicJob {
   career_page_whatsapp_url: string | null;
   career_page_instagram_url: string | null;
   career_page_linkedin_url: string | null;
+  career_page_facebook_url: string | null;
   career_page_show_contact: boolean;
   // Tipografia por seção
   career_page_hero_font_color: string | null;
@@ -139,7 +140,7 @@ export default function CareerPage() {
     'org_name' | 'career_page_headline' | 'career_page_logo_url' | 'org_logo_url' |
     'career_page_color' | 'career_page_secondary_color' | 'career_page_banner_url' |
     'career_page_about' | 'career_page_whatsapp_url' | 'career_page_instagram_url' |
-    'career_page_linkedin_url' | 'career_page_show_contact' | 'org_industry' |
+    'career_page_linkedin_url' | 'career_page_facebook_url' | 'career_page_show_contact' | 'org_industry' |
     'career_page_hero_font_color' | 'career_page_hero_text_align' | 'career_page_hero_font_size' |
     'career_page_about_font_color' | 'career_page_about_text_align' | 'career_page_about_font_size' |
     'career_page_jobs_font_color' | 'career_page_jobs_text_align' | 'career_page_jobs_font_size' |
@@ -196,6 +197,7 @@ export default function CareerPage() {
           career_page_whatsapp_url: orgData.career_page_whatsapp_url,
           career_page_instagram_url: orgData.career_page_instagram_url,
           career_page_linkedin_url: orgData.career_page_linkedin_url,
+          career_page_facebook_url: orgData.career_page_facebook_url ?? '',
           career_page_show_contact: orgData.career_page_show_contact ?? false,
           org_industry: orgData.industry,
           career_page_hero_font_color: orgData.career_page_hero_font_color ?? '#ffffff',
@@ -235,6 +237,7 @@ export default function CareerPage() {
         career_page_whatsapp_url: first.career_page_whatsapp_url,
         career_page_instagram_url: first.career_page_instagram_url,
         career_page_linkedin_url: first.career_page_linkedin_url,
+        career_page_facebook_url: first.career_page_facebook_url ?? '',
         career_page_show_contact: first.career_page_show_contact,
         org_industry: first.org_industry,
         career_page_hero_font_color: first.career_page_hero_font_color ?? '#ffffff',
@@ -508,7 +511,7 @@ export default function CareerPage() {
               Vagas abertas
             </h2>
             {/* Social links */}
-            {(org?.career_page_whatsapp_url || org?.career_page_instagram_url || org?.career_page_linkedin_url) && (
+            {(org?.career_page_whatsapp_url || org?.career_page_instagram_url || org?.career_page_linkedin_url || org?.career_page_facebook_url) && (
               <div className="flex items-center gap-2 mt-3">
                 {org.career_page_whatsapp_url && (
                   <a href={org.career_page_whatsapp_url} target="_blank" rel="noopener noreferrer"
@@ -537,6 +540,16 @@ export default function CareerPage() {
                     style={{ background: '#0A66C2' }}>
                     <svg viewBox="0 0 24 24" className="w-4 h-4 fill-white">
                       <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
+                    </svg>
+                  </a>
+                )}
+                {org.career_page_facebook_url && (
+                  <a href={org.career_page_facebook_url} target="_blank" rel="noopener noreferrer"
+                    aria-label="Facebook"
+                    className="w-8 h-8 rounded-lg flex items-center justify-center transition-all hover:scale-110 active:scale-95 shadow-sm"
+                    style={{ background: '#1877F2' }}>
+                    <svg viewBox="0 0 24 24" className="w-4 h-4 fill-white">
+                      <path d="M24 12.073C24 5.405 18.627 0 12 0S0 5.405 0 12.073C0 18.1 4.388 23.094 10.125 24v-8.437H7.078v-3.49h3.047V9.41c0-3.025 1.792-4.697 4.533-4.697 1.312 0 2.686.235 2.686.235v2.97h-1.513c-1.491 0-1.956.93-1.956 1.886v2.269h3.328l-.532 3.49h-2.796V24C19.612 23.094 24 18.1 24 12.073z"/>
                     </svg>
                   </a>
                 )}
@@ -826,7 +839,7 @@ export default function CareerPage() {
 
               {/* Links sociais */}
               {org?.career_page_show_contact && (
-                org?.career_page_whatsapp_url || org?.career_page_instagram_url || org?.career_page_linkedin_url
+                org?.career_page_whatsapp_url || org?.career_page_instagram_url || org?.career_page_linkedin_url || org?.career_page_facebook_url
               ) && (
                 <div className="mt-8">
                   <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-3">Dúvidas? Fale conosco</p>
@@ -850,6 +863,14 @@ export default function CareerPage() {
                         className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all hover:scale-105 active:scale-95 border bg-white"
                         style={{ color: '#0369a1', borderColor: '#bae6fd' }}>
                         <Linkedin className="w-4 h-4" />LinkedIn
+                      </a>
+                    )}
+                    {org.career_page_facebook_url && (
+                      <a href={org.career_page_facebook_url} target="_blank" rel="noopener noreferrer"
+                        className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all hover:scale-105 active:scale-95 border bg-white"
+                        style={{ color: '#1877F2', borderColor: '#bfdbfe' }}>
+                        <svg viewBox="0 0 24 24" className="w-4 h-4 fill-current"><path d="M24 12.073C24 5.405 18.627 0 12 0S0 5.405 0 12.073C0 18.1 4.388 23.094 10.125 24v-8.437H7.078v-3.49h3.047V9.41c0-3.025 1.792-4.697 4.533-4.697 1.312 0 2.686.235 2.686.235v2.97h-1.513c-1.491 0-1.956.93-1.956 1.886v2.269h3.328l-.532 3.49h-2.796V24C19.612 23.094 24 18.1 24 12.073z"/></svg>
+                        Facebook
                       </a>
                     )}
                   </div>
@@ -959,6 +980,13 @@ export default function CareerPage() {
                   className="w-8 h-8 rounded-lg flex items-center justify-center bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white transition-all"
                   aria-label="LinkedIn">
                   <Linkedin className="w-3.5 h-3.5" />
+                </a>
+              )}
+              {org.career_page_facebook_url && (
+                <a href={org.career_page_facebook_url} target="_blank" rel="noopener noreferrer"
+                  className="w-8 h-8 rounded-lg flex items-center justify-center bg-blue-50 text-blue-700 hover:bg-blue-700 hover:text-white transition-all"
+                  aria-label="Facebook">
+                  <svg viewBox="0 0 24 24" className="w-3.5 h-3.5 fill-current"><path d="M24 12.073C24 5.405 18.627 0 12 0S0 5.405 0 12.073C0 18.1 4.388 23.094 10.125 24v-8.437H7.078v-3.49h3.047V9.41c0-3.025 1.792-4.697 4.533-4.697 1.312 0 2.686.235 2.686.235v2.97h-1.513c-1.491 0-1.956.93-1.956 1.886v2.269h3.328l-.532 3.49h-2.796V24C19.612 23.094 24 18.1 24 12.073z"/></svg>
                 </a>
               )}
             </div>
