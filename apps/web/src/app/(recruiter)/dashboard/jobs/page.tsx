@@ -23,6 +23,7 @@ import {
   ImageDown,
   FileDown,
   Loader2,
+  X,
 } from 'lucide-react';
 import { JobDetailsModal } from '@/components/jobs/JobDetailsModal';
 import { Button } from '@/components/ui/button';
@@ -112,6 +113,7 @@ export default function JobsPage() {
   const [shareMenuJob, setShareMenuJob] = useState<string | null>(null);
   const [bannerLoading, setBannerLoading] = useState<'png' | 'pdf' | null>(null);
   const [pendingDownload, setPendingDownload] = useState<'png' | 'pdf' | null>(null);
+  const [showBannerPreview, setShowBannerPreview] = useState(false);
   const bannerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -384,6 +386,13 @@ export default function JobsPage() {
     if (!orgBannerData) return;
     setBannerJob(job);
     setPendingDownload(format);
+  };
+
+  const handlePreviewBanner = (job: Job) => {
+    if (!orgBannerData) return;
+    setBannerJob(job);
+    setShareMenuJob(null);
+    setShowBannerPreview(true);
   };
 
   return (
@@ -841,7 +850,15 @@ export default function JobsPage() {
                                 Compartilhar
                               </button>
                               {shareMenuJob === job.id && (
-                                <div className="absolute right-0 bottom-10 z-50 bg-white border border-[#E5E5DC] rounded-xl shadow-lg py-1 min-w-[160px]" onClick={(e) => e.stopPropagation()}>
+                                <div className="absolute right-0 bottom-10 z-50 bg-white border border-[#E5E5DC] rounded-xl shadow-lg py-1 min-w-40" onClick={(e) => e.stopPropagation()}>
+                                  <button
+                                    onClick={() => handlePreviewBanner(job)}
+                                    className="flex items-center gap-2 w-full px-4 py-2.5 text-sm text-[#141042] hover:bg-[#F8FAFC] transition-colors"
+                                  >
+                                    <Eye className="h-4 w-4 text-[#8B5CF6]" />
+                                    Visualizar
+                                  </button>
+                                  <div className="h-px bg-[#E5E5DC] mx-3" />
                                   <button
                                     onClick={() => handleShareBanner(job, 'png')}
                                     disabled={bannerLoading !== null}
@@ -987,7 +1004,15 @@ export default function JobsPage() {
                                 <Share2 className="h-3.5 w-3.5" />
                               </button>
                               {shareMenuJob === job.id && (
-                                <div className="absolute right-0 bottom-8 z-50 bg-white border border-[#E5E5DC] rounded-xl shadow-lg py-1 min-w-[150px]">
+                                <div className="absolute right-0 bottom-8 z-50 bg-white border border-[#E5E5DC] rounded-xl shadow-lg py-1 min-w-36">
+                                  <button
+                                    onClick={() => handlePreviewBanner(job)}
+                                    className="flex items-center gap-2 w-full px-4 py-2.5 text-sm text-[#141042] hover:bg-[#F8FAFC] transition-colors"
+                                  >
+                                    <Eye className="h-4 w-4 text-[#8B5CF6]" />
+                                    Visualizar
+                                  </button>
+                                  <div className="h-px bg-[#E5E5DC] mx-3" />
                                   <button
                                     onClick={() => handleShareBanner(job, 'png')}
                                     disabled={bannerLoading !== null}
@@ -1034,6 +1059,71 @@ export default function JobsPage() {
         onClose={() => setSelectedJobId(null)}
         onUpdated={() => { void loadJobs(); }}
       />
+
+      {/* ─── Modal de prévia do banner ─────────────────────────── */}
+      {showBannerPreview && bannerJob && orgBannerData && (
+        <div
+          className="fixed inset-0 z-100 flex items-center justify-center"
+          style={{ backgroundColor: 'rgba(0,0,0,0.85)' }}
+          onClick={() => setShowBannerPreview(false)}
+        >
+          <div
+            className="relative flex flex-col items-center gap-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Fechar */}
+            <button
+              onClick={() => setShowBannerPreview(false)}
+              className="absolute -top-12 right-0 text-white/70 hover:text-white transition-colors"
+            >
+              <X className="h-7 w-7" />
+            </button>
+
+            {/* Banner escalado para 45% */}
+            <div style={{ transform: 'scale(0.45)', transformOrigin: 'top center', width: 1080, height: 1350, flexShrink: 0 }}>
+              <JobSocialBanner
+                job={{
+                  title: bannerJob.title,
+                  location: bannerJob.location ?? null,
+                  employment_type: bannerJob.employment_type ?? null,
+                  work_modality: bannerJob.work_modality ?? null,
+                  seniority: bannerJob.seniority ?? bannerJob.seniority_level ?? null,
+                  salary_range: bannerJob.salary_range ?? null,
+                  salary_min: bannerJob.salary_min ?? null,
+                  salary_max: bannerJob.salary_max ?? null,
+                  description: bannerJob.description ?? null,
+                  requirements: bannerJob.requirements ?? null,
+                  benefits: bannerJob.benefits ?? null,
+                }}
+                org={orgBannerData}
+              />
+            </div>
+
+            {/* Ações */}
+            <div
+              className="flex gap-3"
+              style={{ marginTop: `calc(1350px * 0.45 - 1350px + 1rem)` }}
+            >
+              <button
+                onClick={() => { setShowBannerPreview(false); if (bannerRef.current) handleShareBanner(bannerJob, 'png'); }}
+                disabled={bannerLoading !== null}
+                className="flex items-center gap-2 px-5 py-2.5 bg-[#10B981] text-white rounded-xl font-semibold hover:bg-[#059669] transition-colors disabled:opacity-50"
+              >
+                <ImageDown className="h-4 w-4" />
+                Baixar PNG
+              </button>
+              <button
+                onClick={() => { setShowBannerPreview(false); if (bannerRef.current) handleShareBanner(bannerJob, 'pdf'); }}
+                disabled={bannerLoading !== null}
+                className="flex items-center gap-2 px-5 py-2.5 bg-[#3B82F6] text-white rounded-xl font-semibold hover:bg-[#2563EB] transition-colors disabled:opacity-50"
+              >
+                <FileDown className="h-4 w-4" />
+                Baixar PDF
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ─── Hidden banner for social media generation ─────────────── */}
       {/* Always mounted when orgBannerData is ready so bannerRef is never null */}
