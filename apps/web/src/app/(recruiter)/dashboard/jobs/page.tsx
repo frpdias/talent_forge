@@ -106,6 +106,7 @@ export default function JobsPage() {
   const [bannerJob, setBannerJob] = useState<Job | null>(null);
   const [shareMenuJob, setShareMenuJob] = useState<string | null>(null);
   const [bannerLoading, setBannerLoading] = useState<'png' | 'pdf' | null>(null);
+  const [pendingDownload, setPendingDownload] = useState<'png' | 'pdf' | null>(null);
   const bannerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -323,30 +324,52 @@ export default function JobsPage() {
     loadJobs();
   };
 
-  const handleShareBanner = async (job: Job, format: 'png' | 'pdf') => {
-    if (!orgBannerData || !bannerRef.current) return;
-    setBannerJob(job);
-    // Wait for React to render the banner with the new job data
-    await new Promise((r) => setTimeout(r, 120));
+  // Triggered after bannerJob state update causes re-render with new data
+  useEffect(() => {
+    if (!pendingDownload || !bannerJob || !orgBannerData) return;
+    const format = pendingDownload;
+    setPendingDownload(null);
     setBannerLoading(format);
-    try {
-      if (format === 'png') {
-        await downloadJobBannerPNG(bannerRef.current, job.title);
-      } else {
-        await downloadJobBannerPDF(bannerRef.current, {
-          title: job.title,
-          location: job.location ?? null,
-          employment_type: job.employment_type ?? null,
-          work_modality: job.work_modality ?? null,
-          seniority_level: job.seniority_level ?? null,
-          salary_min: job.salary_min ?? null,
-          salary_max: job.salary_max ?? null,
-        }, orgBannerData);
+
+    // Wait for images inside the banner to finish loading
+    const el = bannerRef.current;
+    if (!el) { setBannerLoading(null); return; }
+
+    const imgs = Array.from(el.querySelectorAll('img'));
+    const waitForImgs = Promise.all(
+      imgs.map(img => img.complete
+        ? Promise.resolve()
+        : new Promise<void>(res => { img.onload = () => res(); img.onerror = () => res(); })
+      )
+    );
+
+    waitForImgs.then(async () => {
+      try {
+        if (format === 'png') {
+          await downloadJobBannerPNG(el, bannerJob.title);
+        } else {
+          await downloadJobBannerPDF(el, {
+            title: bannerJob.title,
+            location: bannerJob.location ?? null,
+            employment_type: bannerJob.employment_type ?? null,
+            work_modality: bannerJob.work_modality ?? null,
+            seniority_level: bannerJob.seniority_level ?? null,
+            salary_min: bannerJob.salary_min ?? null,
+            salary_max: bannerJob.salary_max ?? null,
+          }, orgBannerData);
+        }
+      } finally {
+        setBannerLoading(null);
+        setShareMenuJob(null);
       }
-    } finally {
-      setBannerLoading(null);
-      setShareMenuJob(null);
-    }
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pendingDownload, bannerJob]);
+
+  const handleShareBanner = (job: Job, format: 'png' | 'pdf') => {
+    if (!orgBannerData) return;
+    setBannerJob(job);
+    setPendingDownload(format);
   };
 
   return (
@@ -999,18 +1022,19 @@ export default function JobsPage() {
       />
 
       {/* ─── Hidden banner for social media generation ─────────────── */}
-      {bannerJob && orgBannerData && (
+      {/* Always mounted when orgBannerData is ready so bannerRef is never null */}
+      {orgBannerData && (
         <div style={{ position: 'fixed', left: -9999, top: 0, zIndex: -1, pointerEvents: 'none' }}>
           <JobSocialBanner
             ref={bannerRef}
             job={{
-              title: bannerJob.title,
-              location: bannerJob.location ?? null,
-              employment_type: bannerJob.employment_type ?? null,
-              work_modality: bannerJob.work_modality ?? null,
-              seniority_level: bannerJob.seniority_level ?? null,
-              salary_min: bannerJob.salary_min ?? null,
-              salary_max: bannerJob.salary_max ?? null,
+              title: bannerJob?.title ?? '',
+              location: bannerJob?.location ?? null,
+              employment_type: bannerJob?.employment_type ?? null,
+              work_modality: bannerJob?.work_modality ?? null,
+              seniority_level: bannerJob?.seniority_level ?? null,
+              salary_min: bannerJob?.salary_min ?? null,
+              salary_max: bannerJob?.salary_max ?? null,
             }}
             org={orgBannerData}
           />
