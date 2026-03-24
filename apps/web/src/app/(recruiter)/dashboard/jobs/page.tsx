@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import {
   Briefcase,
   Plus,
@@ -19,6 +19,10 @@ import {
   CheckCircle2,
   XCircle,
   Filter,
+  Share2,
+  ImageDown,
+  FileDown,
+  Loader2,
 } from 'lucide-react';
 import { JobDetailsModal } from '@/components/jobs/JobDetailsModal';
 import { Button } from '@/components/ui/button';
@@ -26,6 +30,12 @@ import { createClient } from '@/lib/supabase/client';
 import { PublicationBadges } from '@/components/publisher/PublicationStatus';
 import { NewJobModal } from '@/components/jobs/NewJobModal';
 import { useOrgStore } from '@/lib/store';
+import {
+  JobSocialBanner,
+  downloadJobBannerPNG,
+  downloadJobBannerPDF,
+  type OrgBannerData,
+} from '@/components/jobs/JobSocialBanner';
 
 interface Job {
   id: string;
@@ -34,6 +44,7 @@ interface Job {
   location: string;
   type: string;
   employment_type: string;
+  work_modality?: string;
   seniority_level?: string;
   is_remote?: boolean;
   salary_min?: number;
@@ -91,6 +102,11 @@ export default function JobsPage() {
   const [selectedJobs, setSelectedJobs] = useState<Set<string>>(new Set());
   const [showFilters, setShowFilters] = useState(false);
   const [orgSlug, setOrgSlug] = useState<string>('');
+  const [orgBannerData, setOrgBannerData] = useState<OrgBannerData | null>(null);
+  const [bannerJob, setBannerJob] = useState<Job | null>(null);
+  const [shareMenuJob, setShareMenuJob] = useState<string | null>(null);
+  const [bannerLoading, setBannerLoading] = useState<'png' | 'pdf' | null>(null);
+  const bannerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     loadJobs();
@@ -98,8 +114,31 @@ export default function JobsPage() {
 
   useEffect(() => {
     if (currentOrg?.id) {
-      supabase.from('organizations').select('slug').eq('id', currentOrg.id).single()
-        .then(({ data }: { data: { slug?: string } | null }) => { if (data?.slug) setOrgSlug(data.slug); });
+      supabase.from('organizations')
+        .select(`slug, name, logo_url,
+          career_page_logo_url, career_page_banner_url,
+          career_page_color, career_page_secondary_color,
+          career_page_whatsapp_url, career_page_instagram_url,
+          career_page_linkedin_url, career_page_facebook_url`)
+        .eq('id', currentOrg.id)
+        .single()
+        .then(({ data }: { data: Record<string, string | null> | null }) => {
+          if (!data) return;
+          if (data.slug) setOrgSlug(data.slug);
+          setOrgBannerData({
+            name: data.name ?? '',
+            slug: data.slug ?? '',
+            logo_url: data.logo_url,
+            career_page_logo_url: data.career_page_logo_url,
+            career_page_banner_url: data.career_page_banner_url,
+            career_page_color: data.career_page_color,
+            career_page_secondary_color: data.career_page_secondary_color,
+            career_page_whatsapp_url: data.career_page_whatsapp_url,
+            career_page_instagram_url: data.career_page_instagram_url,
+            career_page_linkedin_url: data.career_page_linkedin_url,
+            career_page_facebook_url: data.career_page_facebook_url,
+          });
+        });
     }
   }, [currentOrg?.id]);
 
@@ -282,6 +321,32 @@ export default function JobsPage() {
     const { id, created_at, ...rest } = job as any;
     await supabase.from('jobs').insert({ ...rest, title: `${job.title} (cópia)`, status: 'on_hold' });
     loadJobs();
+  };
+
+  const handleShareBanner = async (job: Job, format: 'png' | 'pdf') => {
+    if (!orgBannerData || !bannerRef.current) return;
+    setBannerJob(job);
+    // Wait for React to render the banner with the new job data
+    await new Promise((r) => setTimeout(r, 120));
+    setBannerLoading(format);
+    try {
+      if (format === 'png') {
+        await downloadJobBannerPNG(bannerRef.current, job.title);
+      } else {
+        await downloadJobBannerPDF(bannerRef.current, {
+          title: job.title,
+          location: job.location ?? null,
+          employment_type: job.employment_type ?? null,
+          work_modality: job.work_modality ?? null,
+          seniority_level: job.seniority_level ?? null,
+          salary_min: job.salary_min ?? null,
+          salary_max: job.salary_max ?? null,
+        }, orgBannerData);
+      }
+    } finally {
+      setBannerLoading(null);
+      setShareMenuJob(null);
+    }
   };
 
   return (
@@ -728,6 +793,37 @@ export default function JobsPage() {
                               <Eye className="h-3.5 w-3.5" />
                               Ver Detalhes
                             </button>
+                            {/* Share button card view */}
+                            <div className="relative">
+                              <button
+                                onClick={(e) => { e.stopPropagation(); setShareMenuJob(shareMenuJob === job.id ? null : job.id); }}
+                                title="Gerar banner para redes sociais"
+                                className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-white bg-[#141042] rounded-lg hover:bg-[#1f1a6e] transition-colors font-medium"
+                              >
+                                <Share2 className="h-3.5 w-3.5" />
+                                Compartilhar
+                              </button>
+                              {shareMenuJob === job.id && (
+                                <div className="absolute right-0 bottom-10 z-50 bg-white border border-[#E5E5DC] rounded-xl shadow-lg py-1 min-w-[160px]" onClick={(e) => e.stopPropagation()}>
+                                  <button
+                                    onClick={() => handleShareBanner(job, 'png')}
+                                    disabled={bannerLoading !== null}
+                                    className="flex items-center gap-2 w-full px-4 py-2.5 text-sm text-[#141042] hover:bg-[#F8FAFC] transition-colors disabled:opacity-50"
+                                  >
+                                    {bannerLoading === 'png' ? <Loader2 className="h-4 w-4 animate-spin" /> : <ImageDown className="h-4 w-4 text-[#10B981]" />}
+                                    Baixar PNG
+                                  </button>
+                                  <button
+                                    onClick={() => handleShareBanner(job, 'pdf')}
+                                    disabled={bannerLoading !== null}
+                                    className="flex items-center gap-2 w-full px-4 py-2.5 text-sm text-[#141042] hover:bg-[#F8FAFC] transition-colors disabled:opacity-50"
+                                  >
+                                    {bannerLoading === 'pdf' ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileDown className="h-4 w-4 text-[#3B82F6]" />}
+                                    Baixar PDF
+                                  </button>
+                                </div>
+                              )}
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -844,6 +940,36 @@ export default function JobsPage() {
                               <Eye className="h-3.5 w-3.5" />
                               Detalhes
                             </button>
+                            {/* Share button table view */}
+                            <div className="relative">
+                              <button
+                                onClick={() => setShareMenuJob(shareMenuJob === job.id ? null : job.id)}
+                                title="Gerar banner para redes sociais"
+                                className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-white bg-[#141042] rounded-lg hover:bg-[#1f1a6e] transition-colors font-medium"
+                              >
+                                <Share2 className="h-3.5 w-3.5" />
+                              </button>
+                              {shareMenuJob === job.id && (
+                                <div className="absolute right-0 bottom-8 z-50 bg-white border border-[#E5E5DC] rounded-xl shadow-lg py-1 min-w-[150px]">
+                                  <button
+                                    onClick={() => handleShareBanner(job, 'png')}
+                                    disabled={bannerLoading !== null}
+                                    className="flex items-center gap-2 w-full px-4 py-2.5 text-sm text-[#141042] hover:bg-[#F8FAFC] transition-colors disabled:opacity-50"
+                                  >
+                                    {bannerLoading === 'png' ? <Loader2 className="h-4 w-4 animate-spin" /> : <ImageDown className="h-4 w-4 text-[#10B981]" />}
+                                    PNG
+                                  </button>
+                                  <button
+                                    onClick={() => handleShareBanner(job, 'pdf')}
+                                    disabled={bannerLoading !== null}
+                                    className="flex items-center gap-2 w-full px-4 py-2.5 text-sm text-[#141042] hover:bg-[#F8FAFC] transition-colors disabled:opacity-50"
+                                  >
+                                    {bannerLoading === 'pdf' ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileDown className="h-4 w-4 text-[#3B82F6]" />}
+                                    PDF
+                                  </button>
+                                </div>
+                              )}
+                            </div>
                           </div>
                         </td>
                       </tr>
@@ -871,6 +997,25 @@ export default function JobsPage() {
         onClose={() => setSelectedJobId(null)}
         onUpdated={() => { void loadJobs(); }}
       />
+
+      {/* ─── Hidden banner for social media generation ─────────────── */}
+      {bannerJob && orgBannerData && (
+        <div style={{ position: 'fixed', left: -9999, top: 0, zIndex: -1, pointerEvents: 'none' }}>
+          <JobSocialBanner
+            ref={bannerRef}
+            job={{
+              title: bannerJob.title,
+              location: bannerJob.location ?? null,
+              employment_type: bannerJob.employment_type ?? null,
+              work_modality: bannerJob.work_modality ?? null,
+              seniority_level: bannerJob.seniority_level ?? null,
+              salary_min: bannerJob.salary_min ?? null,
+              salary_max: bannerJob.salary_max ?? null,
+            }}
+            org={orgBannerData}
+          />
+        </div>
+      )}
     </div>
   );
 }
