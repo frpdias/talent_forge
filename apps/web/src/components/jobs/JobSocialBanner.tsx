@@ -283,7 +283,7 @@ export const JobSocialBanner = forwardRef<HTMLDivElement, { job: JobBannerData; 
           {/* Espaço da foto (empurra conteúdo para baixo) */}
           <div style={{ flex: 1, minHeight: 0, maxHeight: org.career_page_banner_url ? 120 : 40 }} />
 
-          {/* ── Título da vaga ── */
+          {/* ── Título da vaga ── */}
           <div style={{
             color: '#fff', fontSize: titleSize, fontWeight: 900,
             lineHeight: 1.06, letterSpacing: -1.5,
