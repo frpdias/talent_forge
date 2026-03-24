@@ -2,7 +2,7 @@
 
 ## Fonte da Verdade
 **SEMPRE leia `docs/ARQUITETURA_CANONICA.md` antes de qualquer alteração.**
-Score de conformidade atual: ✅ 100% (Sprint 54 — Google Meet Auto + Cards Enriquecidos)
+Score de conformidade atual: ✅ 100% (Sprint 61 — Módulo IT Test + Integração Parecer IA + PDF)
 
 ## Stack
 - **Frontend**: Next.js 15.5.x + React 18 + Tailwind CSS 4 (CSS-first) + Supabase JS

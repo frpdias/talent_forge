@@ -1,6 +1,6 @@
 # Arquitetura Canônica — TalentForge
 
-**Última atualização**: 2026-03-25 | **Score de Conformidade**: ✅ 100% (Sprint 61 — Módulo Teste de Informática) | **Sprints planejados**: Sprint 41 (AI Assistant) + Sprint 44 (Gate Recrutamento)
+**Última atualização**: 2026-03-25 | **Score de Conformidade**: ✅ 100% (Sprint 61 — Módulo Teste de Informática + Integração Parecer IA + PDF) | **Sprints planejados**: Sprint 41 (AI Assistant) + Sprint 44 (Gate Recrutamento)
 
 ## 📜 FONTE DA VERDADE — PRINCÍPIO FUNDAMENTAL
 
@@ -8538,7 +8538,7 @@ CREATE TABLE job_alerts (
 | **Sprint 58** | **2026-03-21** | **Tipografia por seção na career page — 18 colunas em `organizations` (cor/alinhamento/tamanho por hero/about/jobs/talent/testimonials/process), UI de controles em settings, aplicação na página pública `/jobs/[orgSlug]`, fix `/vagas` (get_all_public_jobs derrubada por CASCADE), logo do recrutador em `/vagas` (OrgAvatar com fundo colorido), campo Facebook em links de contato (`career_page_facebook_url`)** | ✅ |
 | **Sprint 59** | **2026-03-24** | **Banner social para vagas — `JobSocialBanner` (1080×1350px), PNG via html2canvas + PDF via jsPDF com links clicáveis, `data-pdf-link` + `getBoundingClientRect()`, descrição/requisitos/benefícios no banner, fix race condition (useEffect + banner sempre montado), botão "Compartilhar" em `/dashboard/jobs`** | ✅ |
 | **Sprint 60** | **2026-03-24** | **Tipografia avançada na career page — seletor de família de fonte (9 opções) por seção em `/dashboard/settings` com preview visual via Google Fonts; modal de prévia do banner 45% escalado em `/dashboard/jobs` antes de baixar (botões PNG/PDF dentro do modal); fix `career_page_facebook_url` omitido no `DROP VIEW … CASCADE`; RPCs `get_public_jobs_by_org` + `get_all_public_jobs` sempre recriadas após CASCADE** | ✅ |
-| **Sprint 61** | **2026-03-25** | **Módulo Teste de Informática — 3 níveis (Júnior/Pleno/Sênior), questões por categoria (Windows/Word/Excel/PowerPoint/Outlook/Redes Sociais/Power BI); Junior automático para todos os candidatos; Pleno/Senior ativado pelo recrutador; acesso por token público sem login em `/it-test/[token]`; resultado alimenta `score_testes` em `candidate_technical_reviews`; UI recrutador na aba Assessments de `/dashboard/candidates`** | ✅ |
+| **Sprint 61** | **2026-03-25** | **Módulo Teste de Informática — 3 níveis (Júnior/Pleno/Sênior), 131 questões (39+44+48) por categoria; Júnior automático; Pleno/Sênior ativado pelo recrutador; modal inline ou link externo; acesso por token público em `/it-test/[token]`; resultado integrado no `score_testes` do parecer técnico com IA (peso proporcional, até 15 pts, cross-org lookup por e-mail); seção visual no PDF (círculo score + barra progresso); `{{informatica}}` no DEFAULT_REVIEW_PROMPT; cleanup de candidatos duplicados (Julia)** | ✅ |
 
 ### Regras Canônicas — Portal Candidato
 
@@ -9280,15 +9280,37 @@ Permitir que candidatos realizem um Teste de Informática (múltipla escolha) cu
 | Power BI | 5 | 6 | 10 |
 | **Total** | **39** | **44** | **48** |
 
+### Integração com Parecer Técnico e PDF
+
+#### Parecer Técnico com IA (`technical-review/route.ts`)
+
+- **Busca cross-org**: o resultado do IT test é buscado por e-mail do candidato, varrendo todos os `candidate_id`s associados e todos os `assignment_id`s de qualquer org — garante que duplicatas de candidato não impeçam a visualização do resultado.
+- **`calcScoreTestes`**: pesos atualizados — DISC 35 pts, Color 25 pts, PI 25 pts, IT Test proporcional ao score (até 15 pts). Total máx: 100.
+- **`snapshotBase`**: campo `itTest` adicionado com `{ score, correct_answers, total_questions, nivel }`.
+- **Prompt da IA**: variável `{{informatica}}` inserida na seção "Teste de Informática / Conhecimentos em TI" do `DEFAULT_REVIEW_PROMPT`. Formato: `Score: 76% (30/39 questões corretas — nível Júnior)` ou `Não realizado`.
+- **Análise IA**: tópico 4 renomeado para "Análise Comportamental e Técnica" com instrução para interpretar performance no IT test.
+
+#### Relatório PDF Completo (`CandidateCurriculumPDF.ts`)
+
+- **`FullReportData.report`**: campo `itTest` adicionado (`score`, `correct_answers`, `total_questions`, `nivel`, `completed_at`).
+- **Nova seção visual** na página de scores/testes do PDF: círculo colorido com score (verde ≥75 / amarelo ≥50 / vermelho <50), nível, contagem de acertos e barra de progresso. Se não realizado: mensagem em itálico.
+- **Card de scores**: label "Testes Comportamentais" renomeado para "Testes e Informática".
+- **`handleGeneratePDF`** em `candidates/page.tsx`: passa `itTest?.result` como `report.itTest`.
+
 ### Arquivos criados/alterados
 
 - `supabase/migrations/20260325_it_test_module.sql` — schema + RLS
 - `scripts/import-it-test-questions.js` — script de seed do CSV para o banco
 - `apps/web/src/app/api/it-test/[token]/route.ts` — GET: busca atribuição + questões por token
-- `apps/web/src/app/api/it-test/[token]/submit/route.ts` — POST: submissão de respostas, cálculo de score, atualização de `score_testes`
-- `apps/web/src/app/api/recruiter/candidates/[id]/it-test/route.ts` — GET: busca atribuição+resultado; POST: atribui/substitui nível
+- `apps/web/src/app/api/it-test/[token]/submit/route.ts` — POST: submissão de respostas, cálculo de score
+- `apps/web/src/app/api/recruiter/candidates/[id]/it-test/route.ts` — GET cross-org por e-mail; POST: atribui/substitui nível
+- `apps/web/src/app/api/recruiter/candidates/[id]/technical-review/route.ts` — integração IT test: fetch cross-org, `calcScoreTestes` com peso IT test, `snapshotBase.itTest`, variável `{{informatica}}` no prompt
+- `apps/web/src/app/api/candidate/it-test/route.ts` — GET: card do teste no portal do candidato autenticado
 - `apps/web/src/app/it-test/[token]/page.tsx` — página pública do candidato (sem login)
-- `apps/web/src/app/(recruiter)/dashboard/candidates/page.tsx` — estados + funções + card "Teste de Informática" na aba Assessments
+- `apps/web/src/components/candidate/ItTestModal.tsx` — modal inline (Júnior): dialog centralizado, overlay blur, auto-advance 280ms, 4 paletas de cores, resultado com círculo de score
+- `apps/web/src/components/curriculum/CandidateCurriculumPDF.ts` — `FullReportData.report.itTest` + seção IT test na página de scores do PDF
+- `apps/web/src/lib/defaults.ts` — `DEFAULT_REVIEW_PROMPT` com seção "Teste de Informática" e variável `{{informatica}}`
+- `apps/web/src/app/(recruiter)/dashboard/candidates/page.tsx` — estados + funções + card "Teste de Informática" na aba Assessments + PASS de `itTest.result` no PDF
 
 ### Seed de questões
 
@@ -9301,6 +9323,19 @@ node scripts/import-it-test-questions.js ./caminho/para/Teste_de_Informatica.csv
 
 | Commit | Descrição |
 |--------|----------|
-| (pendente) | feat(it-test): módulo Teste de Informática — migration, API routes, página candidato, UI recrutador |
+| `a2c9e5f` | feat(it-test): módulo Teste de Informática — migration SQL, banco de questões, rotas API (token público + recrutador), página `/it-test/[token]` |
+| `25ad0d7` | feat(it-test): UI recrutador — card de atribuição/resultado na aba Assessments de `/dashboard/candidates` |
+| `a2ac081` | feat(it-test): import CSV — 131 questões (39 Júnior + 44 Pleno + 48 Sênior) importadas via script |
+| `77d49c2` | fix(it-test): auto-atribuição Júnior no registro de candidato e em `/candidates/new` |
+| `564e947` | feat(it-test): card IT Test no portal do candidato — rota GET `/api/candidate/it-test` + componente na dashboard |
+| `672e78a` | feat(it-test): ItTestModal — Júnior inline; Pleno/Sênior → link externo |
+| `8f04b0b` | fix(it-test): `.limit(1)` no lookup de candidato para evitar erro `.maybeSingle()` com duplicatas |
+| `914a8ec` | feat(it-test): redesign ItTestModal — dialog centralizado, overlay blur, auto-advance, paletas de cores, tela de resultado |
+| `5d8b787` | feat(it-test): resultado IT test na aba Testes da página detalhe do candidato — rota GET `/api/recruiter/candidates/[id]/it-test` + card com score/progress bar |
+| `ad9d084` | fix(it-test): lookup cross-org v1 — busca por e-mail para encontrar resultado em candidatos duplicados |
+| `3c1bd89` | fix(it-test): lookup cross-org v2 — split em duas queries: assignment da org do recrutador (link) + resultado de qualquer assignment |
+| `963942a` | fix(candidates): cleanup candidatos duplicados Julia — migrar resultado para candidato correto, deletar 2 duplicatas |
+| `f854401` | feat(parecer): resultado do Teste de Informática integrado no score e prompt do parecer técnico com IA — `calcScoreTestes` com 4 componentes, fetch cross-org, `snapshotBase.itTest`, variável `{{informatica}}` no `DEFAULT_REVIEW_PROMPT` |
+| `7e956d8` | feat(pdf): Teste de Informática no relatório completo PDF — `FullReportData.report.itTest`, seção visual com círculo de score + barra de progresso, label "Testes e Informática" |
 
 | `21bea6d` | fix(career-page): reincluir career_page_facebook_url na view v_public_jobs |
