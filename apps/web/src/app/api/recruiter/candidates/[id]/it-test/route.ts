@@ -114,12 +114,12 @@ export async function POST(
     .maybeSingle();
   if (!member) return NextResponse.json({ error: 'Acesso negado' }, { status: 403 });
 
-  // Verificar se candidato pertence à org
+  // Verificar se candidato pertence à org (campo owner_org_id na tabela candidates)
   const { data: candidate } = await sb
     .from('candidates')
     .select('id, full_name')
     .eq('id', candidateId)
-    .eq('org_id', orgId)
+    .eq('owner_org_id', orgId)
     .maybeSingle();
   if (!candidate) {
     return NextResponse.json({ error: 'Candidato não encontrado' }, { status: 404 });

@@ -37,7 +37,7 @@ CREATE TABLE IF NOT EXISTS it_test_assignments (
   candidate_id  UUID        NOT NULL REFERENCES candidates(id)     ON DELETE CASCADE,
   org_id        UUID        NOT NULL REFERENCES organizations(id)  ON DELETE CASCADE,
   nivel         TEXT        NOT NULL CHECK (nivel IN ('junior', 'pleno', 'senior')),
-  assigned_by   UUID        REFERENCES user_profiles(user_id),   -- NULL = automático (Junior)
+  assigned_by   UUID        REFERENCES user_profiles(id),    -- NULL = automático (Junior)
   token         TEXT        NOT NULL UNIQUE DEFAULT gen_random_uuid()::TEXT,
   assigned_at   TIMESTAMPTZ NOT NULL DEFAULT now(),
   UNIQUE (candidate_id, org_id)
@@ -82,14 +82,18 @@ CREATE INDEX IF NOT EXISTS idx_it_test_assignments_cand    ON it_test_assignment
 CREATE INDEX IF NOT EXISTS idx_it_test_assignments_token   ON it_test_assignments (token);
 CREATE INDEX IF NOT EXISTS idx_it_test_results_candidate   ON it_test_results (candidate_id, org_id);
 
--- ── 5. Permissões service_role ─────────────────────────────────────────
+-- ── 5. Permissões service_role (backend — bypass RLS) ─────────────────
 GRANT SELECT ON it_test_questions   TO service_role;
 GRANT ALL    ON it_test_assignments TO service_role;
 GRANT ALL    ON it_test_results     TO service_role;
 
--- ── 6. Permissões authenticated (leitura de questões) ──────────────────
+-- ── 6. Permissões authenticated (leitura via RLS) ──────────────────────
+-- Recrutadores authenticated leem questões para exibição futura (admin)
 GRANT SELECT ON it_test_questions   TO authenticated;
-GRANT ALL    ON it_test_assignments TO authenticated;
-GRANT ALL    ON it_test_results     TO authenticated;
+-- Leitura de atribuições e resultados pela própria org (filtrada por RLS is_org_member)
+GRANT SELECT ON it_test_assignments TO authenticated;
+GRANT SELECT ON it_test_results     TO authenticated;
+-- Leitura pública das questões (candidato acessa via service_role na API, mas anon por precaução)
+GRANT SELECT ON it_test_questions   TO anon;
 
 -- ── FIM ────────────────────────────────────────────────────────────────
