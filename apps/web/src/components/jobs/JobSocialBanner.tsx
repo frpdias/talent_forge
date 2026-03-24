@@ -72,26 +72,30 @@ const FbPath = 'M24 12.073C24 5.405 18.627 0 12 0S0 5.405 0 12.073C0 18.1 4.388 
 function Section({ title, items, accent }: { title: string; items: string[]; accent: string }) {
   if (items.length === 0) return null;
   return (
-    <div style={{ flex: 1, minWidth: 0 }}>
-      {/* Label com linha colorida à esquerda */}
-      <div style={{
-        display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14,
-      }}>
-        <div style={{ width: 3, height: 18, backgroundColor: accent, borderRadius: 2, flexShrink: 0 }} />
+    <div style={{
+      flex: 1, minWidth: 0,
+      backgroundColor: 'rgba(255,255,255,0.06)',
+      border: '1px solid rgba(255,255,255,0.1)',
+      borderRadius: 14,
+      padding: '22px 24px',
+      display: 'flex', flexDirection: 'column', alignItems: 'center',
+    }}>
+      {/* Título centralizado */}
+      <div style={{ marginBottom: 16, textAlign: 'center' }}>
         <span style={{
-          color: accent, fontSize: 13, fontWeight: 800,
+          color: accent, fontSize: 12, fontWeight: 800,
           letterSpacing: 3.5, textTransform: 'uppercase',
         }}>{title}</span>
       </div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 10, width: '100%', alignItems: 'center' }}>
         {items.map((item, i) => (
-          <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+          <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, width: '100%' }}>
             <div style={{
               width: 5, height: 5, borderRadius: '50%',
-              backgroundColor: accent, flexShrink: 0, marginTop: 9,
+              backgroundColor: accent, flexShrink: 0, marginTop: 8,
               boxShadow: `0 0 0 3px ${accent}33`,
             }} />
-            <span style={{ color: 'rgba(255,255,255,0.85)', fontSize: 18, lineHeight: 1.5 }}>
+            <span style={{ color: 'rgba(255,255,255,0.85)', fontSize: 16, lineHeight: 1.5 }}>
               {item}
             </span>
           </div>
@@ -331,40 +335,40 @@ export const JobSocialBanner = forwardRef<HTMLDivElement, { job: JobBannerData; 
             </div>
           </div>
 
-          {/* ── Card de detalhes ── */}
+          {/* ── Três cards iguais: Sobre a Vaga / Requisitos / Benefícios ── */}
           {hasDetails && (
-            <div style={{
-              backgroundColor: 'rgba(0,0,0,0.52)',
-              border: '1px solid rgba(255,255,255,0.08)',
-              borderLeft: `5px solid ${secondary}`,
-              borderRadius: 16,
-              padding: '26px 32px',
-              marginBottom: 32,
-            }}>
-              {/* Descrição */}
+            <div style={{ display: 'flex', gap: 16, marginBottom: 32 }}>
+
+              {/* Card: Sobre a Vaga */}
               {description && (
-                <div style={{ marginBottom: reqItems.length > 0 || benItems.length > 0 ? 22 : 0 }}>
-                  <div style={{
-                    color: secondary, fontSize: 12, fontWeight: 800,
-                    letterSpacing: 4, textTransform: 'uppercase', marginBottom: 10,
-                  }}>
-                    Sobre a Vaga
+                <div style={{
+                  flex: 1,
+                  backgroundColor: 'rgba(255,255,255,0.06)',
+                  border: '1px solid rgba(255,255,255,0.1)',
+                  borderRadius: 14,
+                  padding: '22px 24px',
+                  display: 'flex', flexDirection: 'column', alignItems: 'center',
+                }}>
+                  <div style={{ marginBottom: 14, textAlign: 'center' }}>
+                    <span style={{
+                      color: secondary, fontSize: 12, fontWeight: 800,
+                      letterSpacing: 3.5, textTransform: 'uppercase',
+                    }}>
+                      Sobre a Vaga
+                    </span>
                   </div>
                   <div style={{
-                    color: 'rgba(255,255,255,0.88)', fontSize: 18, lineHeight: 1.6,
+                    color: 'rgba(255,255,255,0.85)', fontSize: 16, lineHeight: 1.6,
+                    textAlign: 'center',
                   }}>
                     {description}
                   </div>
                 </div>
               )}
 
-              {/* Requisitos + Benefícios lado a lado, sem centralização */}
-              {(reqItems.length > 0 || benItems.length > 0) && (
-                <div style={{ display: 'flex', gap: 40 }}>
-                  <Section title="Requisitos" items={reqItems} accent={secondary} />
-                  <Section title="Benefícios" items={benItems} accent={secondary} />
-                </div>
-              )}
+              {/* Cards: Requisitos + Benefícios */}
+              <Section title="Requisitos" items={reqItems} accent={secondary} />
+              <Section title="Benefícios" items={benItems} accent={secondary} />
             </div>
           )}
 
