@@ -400,6 +400,7 @@ export default function CandidatesPage() {
           recruiterNote: currentReview?.recruiter_note || reviewNote || null,
           aiReview: currentReview?.ai_review || null,
           reviewDate: currentReview?.created_at || null,
+          itTest: itTest?.result ?? null,
         },
       };
       await generateFullReportPDF(data);

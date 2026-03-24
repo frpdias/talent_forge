@@ -496,6 +496,13 @@ export interface FullReportData extends CurriculumData {
     aiReview?: string | null;
     reviewDate?: string | null;
     jobApplied?: string | null;
+    itTest?: {
+      score: number;
+      correct_answers: number;
+      total_questions: number;
+      nivel: string;
+      completed_at?: string | null;
+    } | null;
   };
 }
 
@@ -612,7 +619,7 @@ async function appendReportPages(doc: jsPDF, data: FullReportData): Promise<void
     const s = report.scores;
     const cols = [
       { label: 'Score Total', value: Math.round(s.total), sub: 'de 100' },
-      { label: 'Testes Comportamentais', value: Math.round(s.testes), sub: 'peso 40%' },
+      { label: 'Testes e Informática', value: Math.round(s.testes), sub: 'peso 40%' },
       { label: 'Experiência', value: Math.round(s.experiencia), sub: 'peso 35%' },
       { label: 'Avaliação Recrutador', value: Math.round(s.recrutador), sub: `nota ${s.rating}/10 · peso 25%` },
     ];
@@ -844,6 +851,70 @@ async function appendReportPages(doc: jsPDF, data: FullReportData): Promise<void
       Object.keys(piAdapted ?? {}).slice(0, 6).length,
     );
     y += 14 + piRows * 8;
+  }
+
+  // ══ Teste de Informática ════════════════════════════════════════════════
+  {
+    y = sectionHeader(y, 'Teste de Informática');
+    const NIVEL_PT: Record<string, string> = { junior: 'Júnior', pleno: 'Pleno', senior: 'Sênior' };
+    const it = report?.itTest;
+    if (it) {
+      const pct = Math.round(Number(it.score));
+      const color = scoreColor(pct);
+      const nivel = NIVEL_PT[it.nivel] ?? it.nivel;
+      const barTotalW = contentW - 50;
+      const fillW = Math.max(2, (pct / 100) * barTotalW);
+
+      // Círculo com score
+      const cx = ml + 12;
+      const cy = y + 10;
+      doc.setFillColor(...bgLight);
+      doc.circle(cx, cy, 11, 'F');
+      doc.setFillColor(...color);
+      doc.setDrawColor(...color);
+      doc.setLineWidth(2);
+      doc.circle(cx, cy, 11, 'D');
+      doc.setLineWidth(0.5);
+      doc.setFontSize(13);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(...color);
+      const pctStr = `${pct}%`;
+      doc.text(pctStr, cx - doc.getTextWidth(pctStr) / 2, cy + 1.5);
+      doc.setFontSize(6);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(...textGray);
+      doc.text('Score', cx - doc.getTextWidth('Score') / 2, cy + 5.5);
+
+      // Detalhes à direita
+      const dx = ml + 28;
+      doc.setFontSize(7.5);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(...primary);
+      doc.text(`Nível: ${nivel}`, dx, y + 5);
+
+      doc.setFontSize(7);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(...textDark);
+      doc.text(`${it.correct_answers} de ${it.total_questions} questões corretas`, dx, y + 11);
+
+      // Barra de progresso
+      doc.setFillColor(230, 230, 245);
+      doc.roundedRect(dx, y + 14, barTotalW, 5.5, 2, 2, 'F');
+      doc.setFillColor(...color);
+      doc.roundedRect(dx, y + 14, fillW, 5.5, 2, 2, 'F');
+
+      doc.setFontSize(6.5);
+      doc.setTextColor(...textGray);
+      doc.text(`${pct}%`, dx + barTotalW + 2, y + 18);
+
+      y += 28;
+    } else {
+      doc.setFontSize(8.5);
+      doc.setFont('helvetica', 'italic');
+      doc.setTextColor(...textGray);
+      doc.text('Teste de Informática não realizado.', ml, y);
+      y += 10;
+    }
   }
 
   // ══ Rodapé desta página ═══════════════════════════════════════════════
