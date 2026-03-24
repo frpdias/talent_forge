@@ -18,6 +18,7 @@ import {
   ChevronDown,
   ChevronUp,
   RefreshCw,
+  Monitor,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -101,6 +102,10 @@ export default function CandidateDetailPage() {
   const [colorResult, setColorResult] = useState<ColorResult | null>(null);
   const [discResult, setDiscResult] = useState<DISCResult | null>(null);
   const [piResult, setPiResult] = useState<PIResult | null>(null);
+  const [itTestData, setItTestData] = useState<{
+    assignment: { id: string; nivel: string; assigned_at: string; link: string } | null;
+    result: { score: number; total_questions: number; correct_answers: number; nivel: string; completed_at: string } | null;
+  } | null>(null);
   const [loading, setLoading] = useState(true);
   const [editMode, setEditMode] = useState(false);
   const [editedCandidate, setEditedCandidate] = useState<Partial<Candidate>>({});
@@ -131,7 +136,27 @@ export default function CandidateDetailPage() {
   useEffect(() => {
     loadData();
     loadReviews();
+    loadItTest();
   }, [candidateId]);
+
+  async function loadItTest() {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+      const orgId = localStorage.getItem('selected_org_id') ?? session.user.user_metadata?.org_id ?? '';
+      const res = await fetch(`/api/recruiter/candidates/${candidateId}/it-test`, {
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+          'x-org-id': orgId,
+        },
+      });
+      if (!res.ok) return;
+      const data = await res.json();
+      setItTestData({ assignment: data.assignment ?? null, result: data.result ?? null });
+    } catch {
+      // silencioso
+    }
+  }
 
   async function loadReviews() {
     try {
@@ -1184,7 +1209,89 @@ export default function CandidateDetailPage() {
               </Card>
             )}
 
-            {!colorResult && !discResult && !piResult && (
+            {/* IT Test Card */}
+            {itTestData?.assignment && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Monitor className="h-5 w-5 text-[#141042]" />
+                    Teste de Informática
+                    {itTestData.result && (
+                      <span className={`ml-auto text-sm font-semibold px-3 py-1 rounded-full ${
+                        itTestData.result.score >= 70 ? 'bg-emerald-100 text-emerald-700' :
+                        itTestData.result.score >= 50 ? 'bg-amber-100 text-amber-700' :
+                        'bg-red-100 text-red-600'
+                      }`}>
+                        {itTestData.result.score.toFixed(0)}%
+                      </span>
+                    )}
+                    {!itTestData.result && (
+                      <span className="ml-auto text-xs font-medium px-3 py-1 rounded-full bg-gray-100 text-gray-500">
+                        Aguardando resposta
+                      </span>
+                    )}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex flex-col gap-4">
+                    {/* Nível do teste */}
+                    <div className="flex items-center gap-3">
+                      <span className="text-sm text-gray-500">Nível atribuído:</span>
+                      <span className={`text-sm font-semibold px-2.5 py-0.5 rounded-full ${
+                        itTestData.assignment.nivel === 'junior' ? 'bg-blue-100 text-blue-700' :
+                        itTestData.assignment.nivel === 'pleno' ? 'bg-violet-100 text-violet-700' :
+                        'bg-orange-100 text-orange-700'
+                      }`}>
+                        {{ junior: 'Júnior', pleno: 'Pleno', senior: 'Sênior' }[itTestData.assignment.nivel] ?? itTestData.assignment.nivel}
+                      </span>
+                      <span className="text-xs text-gray-400 ml-auto">
+                        Atribuído em {new Date(itTestData.assignment.assigned_at).toLocaleDateString('pt-BR')}
+                      </span>
+                    </div>
+
+                    {/* Resultado */}
+                    {itTestData.result ? (
+                      <div className="rounded-xl border border-gray-100 bg-gray-50 p-4 space-y-3">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-medium text-gray-700">Acertos</span>
+                          <span className="text-sm font-bold text-[#141042]">
+                            {itTestData.result.correct_answers} / {itTestData.result.total_questions} questões
+                          </span>
+                        </div>
+                        <Progress
+                          value={itTestData.result.score}
+                          className="h-3"
+                        />
+                        <div className="flex items-center justify-between text-xs text-gray-400">
+                          <span>
+                            {itTestData.result.score >= 70 ? '✅ Bom resultado' :
+                             itTestData.result.score >= 50 ? '⚠️ Resultado razoável' :
+                             '❌ Abaixo da média'}
+                          </span>
+                          <span>
+                            Concluído em {new Date(itTestData.result.completed_at).toLocaleDateString('pt-BR')}
+                          </span>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="rounded-xl border border-dashed border-gray-200 p-4 text-center">
+                        <p className="text-sm text-gray-400">O candidato ainda não respondeu o teste.</p>
+                        <a
+                          href={itTestData.assignment.link}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-xs text-[#3B82F6] underline mt-1 inline-block"
+                        >
+                          Ver link do teste
+                        </a>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {!colorResult && !discResult && !piResult && !itTestData?.assignment && (
               <Card>
                 <CardContent className="p-12 text-center">
                   <TrendingUp className="h-12 w-12 text-gray-300 mx-auto mb-4" />
@@ -1192,16 +1299,8 @@ export default function CandidateDetailPage() {
                     Nenhuma avaliação concluída
                   </h3>
                   <p className="text-gray-500">
-                    O candidato ainda não completou nenhuma avaliação comportamental
+                    O candidato ainda não completou nenhuma avaliação
                   </p>
-                </CardContent>
-              </Card>
-            )}
-
-            {!colorResult && !discResult && !piResult && (
-              <Card>
-                <CardContent className="py-10 text-center text-gray-600">
-                  Nenhum resultado de teste encontrado para este candidato.
                 </CardContent>
               </Card>
             )}
