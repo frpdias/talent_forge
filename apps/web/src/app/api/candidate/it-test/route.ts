@@ -28,18 +28,28 @@ export async function GET(req: NextRequest) {
   }
 
   // 1. Encontrar o candidato pelo user_id
-  const { data: candidate } = await sb
+  // .limit(1) evita erro de maybeSingle() quando há candidatos duplicados com mesmo user_id
+  const { data: candidate, error: candErr } = await sb
     .from('candidates')
     .select('id, email')
     .eq('user_id', user.id)
+    .order('created_at', { ascending: false })
+    .limit(1)
     .maybeSingle();
+
+  if (candErr) {
+    console.warn('[candidate/it-test] candidate error:', candErr.message);
+  }
 
   if (!candidate) {
     // Fallback: buscar pelo e-mail do auth user
+    // Tb usa limit(1) para evitar erro com e-mails duplicados
     const { data: byEmail } = await sb
       .from('candidates')
       .select('id, email')
       .ilike('email', user.email ?? '')
+      .order('created_at', { ascending: false })
+      .limit(1)
       .maybeSingle();
 
     if (!byEmail) {
