@@ -348,29 +348,34 @@ export default function JobsPage() {
       )
     );
 
-    waitForImgs.then(async () => {
-      try {
-        if (format === 'png') {
-          await downloadJobBannerPNG(el, bannerJob.title);
-        } else {
-          await downloadJobBannerPDF(el, {
-            title: bannerJob.title,
-            location: bannerJob.location ?? null,
-            employment_type: bannerJob.employment_type ?? null,
-            work_modality: bannerJob.work_modality ?? null,
-            seniority: bannerJob.seniority ?? bannerJob.seniority_level ?? null,
-            salary_range: bannerJob.salary_range ?? null,
-            salary_min: bannerJob.salary_min ?? null,
-            salary_max: bannerJob.salary_max ?? null,
-            description: bannerJob.description ?? null,
-            requirements: bannerJob.requirements ?? null,
-            benefits: bannerJob.benefits ?? null,
-          }, orgBannerData);
+    waitForImgs.then(() => {
+      // Yield to the browser so the loading UI can paint before html2canvas
+      // blocks the main thread (~300ms). setTimeout breaks the microtask chain
+      // and creates a new macrotask, allowing a frame to be rendered first.
+      setTimeout(async () => {
+        try {
+          if (format === 'png') {
+            await downloadJobBannerPNG(el, bannerJob.title);
+          } else {
+            await downloadJobBannerPDF(el, {
+              title: bannerJob.title,
+              location: bannerJob.location ?? null,
+              employment_type: bannerJob.employment_type ?? null,
+              work_modality: bannerJob.work_modality ?? null,
+              seniority: bannerJob.seniority ?? bannerJob.seniority_level ?? null,
+              salary_range: bannerJob.salary_range ?? null,
+              salary_min: bannerJob.salary_min ?? null,
+              salary_max: bannerJob.salary_max ?? null,
+              description: bannerJob.description ?? null,
+              requirements: bannerJob.requirements ?? null,
+              benefits: bannerJob.benefits ?? null,
+            }, orgBannerData);
+          }
+        } finally {
+          setBannerLoading(null);
+          setShareMenuJob(null);
         }
-      } finally {
-        setBannerLoading(null);
-        setShareMenuJob(null);
-      }
+      }, 80);
     });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pendingDownload, bannerJob]);
