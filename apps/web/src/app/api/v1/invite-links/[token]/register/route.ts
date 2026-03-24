@@ -113,7 +113,24 @@ export async function POST(
       return NextResponse.json({ error: candidateError.message }, { status: 500 });
     }
 
-    // 4. Incrementa uses_count e desativa se atingiu o limite
+    // 4. Auto-atribuição: Teste Junior para todo candidato criado via convite
+    //    assigned_by = null indica atribuição automática do sistema
+    const { error: itTestError } = await supabase
+      .from('it_test_assignments')
+      .insert({
+        candidate_id: candidate.id,
+        org_id: linkData.org_id,
+        nivel: 'junior',
+        assigned_by: null,
+        token: crypto.randomUUID(),
+      });
+
+    if (itTestError) {
+      console.warn('[register] Auto-atribuição IT Test falhou:', itTestError.message);
+      // Não bloqueia o cadastro — candidato criado mesmo sem o teste
+    }
+
+    // 5. Incrementa uses_count e desativa se atingiu o limite
     const newCount = (linkData.uses_count || 0) + 1;
     const shouldDeactivate = newCount >= maxUses;
     await supabase

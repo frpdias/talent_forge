@@ -128,7 +128,26 @@ export default function NewCandidatePage() {
 
       const candidateId = inserted.id;
 
-      // 2. Upload do currículo (se houver)
+      // 2. Auto-atribuição: Teste Junior para todo candidato criado manualmente
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.access_token) {
+          await fetch(`/api/recruiter/candidates/${candidateId}/it-test`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${session.access_token}`,
+              'x-org-id': orgId,
+            },
+            body: JSON.stringify({ nivel: 'junior' }),
+          });
+        }
+      } catch (itErr) {
+        console.warn('Auto-atribuição IT Test falhou:', itErr);
+        // Não bloqueia o cadastro
+      }
+
+      // 3. Upload do currículo (se houver)
       if (resumeFile && candidateId) {
         const ext = resumeFile.name.split('.').pop();
         const path = `candidates/${candidateId}/${Date.now()}.${ext}`;
