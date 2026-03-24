@@ -1,6 +1,6 @@
 # Arquitetura Canônica — TalentForge
 
-**Última atualização**: 2026-03-21 | **Score de Conformidade**: ✅ 100% (Sprint 58 — Facebook URL + Logo OrgAvatar) | **Sprints planejados**: Sprint 41 (AI Assistant) + Sprint 44 (Gate Recrutamento)
+**Última atualização**: 2026-03-24 | **Score de Conformidade**: ✅ 100% (Sprint 59 — Banner Social para Vagas) | **Sprints planejados**: Sprint 41 (AI Assistant) + Sprint 44 (Gate Recrutamento)
 
 ## 📜 FONTE DA VERDADE — PRINCÍPIO FUNDAMENTAL
 
@@ -8534,6 +8534,7 @@ CREATE TABLE job_alerts (
 | **Sprint 56** | **2026-03-20** | **GCal OAuth fix (REDIRECT_URL/URI dual), edição de entrevistas, botão Gerar Meet, fix candidatos duplicados (race condition), segurança módulos (REVOKE authenticated), fix career page sem vagas, fix vagas por org_id** | ✅ |
 | **Sprint 57** | **2026-03-20** | **CBO 2002 completo — `ref_cbo` populada com 2445 ocupações MTE, API route `/api/cbo/search` (FTS+ILIKE+local fallback), dataset local `cbo-data.ts` (~350 mais comuns), normalização de código `354705→3547-05`** | ✅ |
 | **Sprint 58** | **2026-03-21** | **Tipografia por seção na career page — 18 colunas em `organizations` (cor/alinhamento/tamanho por hero/about/jobs/talent/testimonials/process), UI de controles em settings, aplicação na página pública `/jobs/[orgSlug]`, fix `/vagas` (get_all_public_jobs derrubada por CASCADE), logo do recrutador em `/vagas` (OrgAvatar com fundo colorido), campo Facebook em links de contato (`career_page_facebook_url`)** | ✅ |
+| **Sprint 59** | **2026-03-24** | **Banner social para vagas — `JobSocialBanner` (1080×1350px), PNG via html2canvas + PDF via jsPDF com links clicáveis, `data-pdf-link` + `getBoundingClientRect()`, descrição/requisitos/benefícios no banner, fix race condition (useEffect + banner sempre montado), botão "Compartilhar" em `/dashboard/jobs`** | ✅ |
 
 ### Regras Canônicas — Portal Candidato
 
@@ -9015,3 +9016,167 @@ GRANT EXECUTE ON FUNCTION get_all_public_jobs() TO authenticated;
 | `88f9223` | fix(vagas): usar fundo colorido no container da logo do OrgAvatar |
 | `e43d962` | feat(settings): adicionar campo Facebook em links de contato da career page |
 | `add4b7c` | feat(career-page): exibir link do Facebook na página pública de vagas |
+
+---
+
+## 28) Banner Social para Vagas (Sprint 59, 2026-03-24)
+
+### Contexto
+
+Recrutadores precisam compartilhar vagas em redes sociais (Instagram, LinkedIn) com um banner visualmente rico. O banner usa as imagens, cores e links já cadastrados pelo recrutador nas configurações da career page.
+
+### Componente `JobSocialBanner`
+
+**Arquivo**: `apps/web/src/components/jobs/JobSocialBanner.tsx`
+
+Componente React com `forwardRef` que renderiza um banner 1080×1350px (formato retrato 4:5 — ideal para Instagram/LinkedIn).
+
+#### Exports
+
+| Export | Tipo | Descrição |
+|--------|------|-----------|
+| `JobSocialBanner` | `React.ForwardRefExoticComponent` | Componente visual do banner |
+| `OrgBannerData` | `interface` | Dados da organização (cores, logo, links sociais) |
+| `JobBannerData` | `interface` | Dados da vaga para o banner |
+| `downloadJobBannerPNG(ref)` | `async function` | Gera e baixa PNG via html2canvas |
+| `downloadJobBannerPDF(ref)` | `async function` | Gera e baixa PDF via jsPDF com links clicáveis |
+
+#### `OrgBannerData`
+
+```ts
+interface OrgBannerData {
+  name: string;
+  logo_url?: string | null;
+  career_page_color?: string | null;           // cor primária
+  career_page_secondary_color?: string | null; // cor do acento lateral
+  career_page_banner_url?: string | null;      // imagem de fundo
+  career_page_whatsapp_url?: string | null;
+  career_page_instagram_url?: string | null;
+  career_page_linkedin_url?: string | null;
+  career_page_facebook_url?: string | null;
+}
+```
+
+#### `JobBannerData`
+
+```ts
+interface JobBannerData {
+  title: string;
+  location?: string | null;
+  employment_type?: string | null;
+  work_modality?: string | null;
+  seniority?: string | null;
+  salary_range?: string | null;
+  salary_min?: number | null;
+  salary_max?: number | null;
+  description?: string | null;
+  requirements?: string | null;
+  benefits?: string | null;
+}
+```
+
+#### Layout do Banner
+
+1. **Fundo**: imagem `career_page_banner_url` com gradiente escuro sobreposto
+2. **Faixa de acento**: barra vertical esquerda na cor `career_page_secondary_color`
+3. **Header**: logo da org + nome
+4. **Badge**: "VAGA ABERTA" em destaque
+5. **Título da vaga**: fonte grande, branca
+6. **Pills de tags**: localização, tipo, modalidade, senioridade, faixa salarial
+7. **Card de detalhes**: "Sobre a Vaga" (descrição truncada), requisitos e benefícios em listas
+8. **Rodapé**: ícones de redes sociais clicáveis + CTA "Candidate-se agora" com URL da career page
+
+### Pattern `data-pdf-link`
+
+Para garantir que os links no PDF correspondam exatamente às posições no banner renderizado, usa-se o atributo `data-pdf-link`:
+
+```tsx
+<a href={url} data-pdf-link={url}>
+  <Icon />
+</a>
+```
+
+Na geração do PDF:
+```ts
+const container = bannerRef.current;
+const links = container.querySelectorAll('[data-pdf-link]');
+links.forEach(el => {
+  const rect = el.getBoundingClientRect();
+  const containerRect = container.getBoundingClientRect();
+  const x = (rect.left - containerRect.left) * scale;
+  const y = (rect.top - containerRect.top) * scale;
+  pdf.link(x, y, rect.width * scale, rect.height * scale, { url: el.dataset.pdfLink });
+});
+```
+
+> **⚠️ REGRA CANÔNICA**: Nunca usar coordenadas hardcoded para links em PDFs. Sempre usar `getBoundingClientRect()` relativo ao container do banner.
+
+### Fix — Race Condition no Download
+
+**Problema**: `bannerRef.current` era `null` porque o banner era montado condicionalmente (`bannerJob && <JobSocialBanner>`). No momento da chamada `handleShareBanner`, o estado ainda não tinha sido atualizado e o ref estava null.
+
+**Solução canônica**:
+
+1. **Montar sempre** o banner quando `orgBannerData` existir (posição off-screen):
+   ```tsx
+   {orgBannerData && (
+     <div style={{ position: 'fixed', left: '-9999px', top: 0, zIndex: -1 }}>
+       <JobSocialBanner ref={bannerRef} org={orgBannerData} job={bannerJob ?? emptyJob} />
+     </div>
+   )}
+   ```
+
+2. **`useEffect` com `pendingDownload`**: aguarda o React commitar o DOM e as imagens carregarem antes de executar o download:
+   ```ts
+   useEffect(() => {
+     if (!pendingDownload || !bannerJob) return;
+     // aguarda todas as <img> do banner carregarem
+     const imgs = bannerRef.current?.querySelectorAll('img') ?? [];
+     Promise.all([...imgs].map(img => img.complete ? Promise.resolve() : new Promise(r => { img.onload = r; img.onerror = r; })))
+       .then(() => {
+         if (pendingDownload === 'png') downloadJobBannerPNG(bannerRef);
+         else downloadJobBannerPDF(bannerRef);
+         setPendingDownload(null);
+       });
+   }, [pendingDownload, bannerJob]);
+   ```
+
+### Helpers
+
+```ts
+function parseList(text: string | null | undefined, max = 6): string[]
+// Divide texto por \n, ;, ou , — remove prefixos de bullet (•, -, *, números)
+
+function truncate(text: string, limit = 220): string
+// Trunca com "..." se necessário
+```
+
+### Dependências
+
+| Lib | Versão | Uso |
+|-----|--------|-----|
+| `html2canvas` | `^1.4.1` | Captura DOM → canvas → PNG |
+| `jspdf` | `^4.0.0` | Geração de PDF + links clicáveis |
+
+Opções html2canvas:
+```ts
+{ useCORS: true, allowTaint: false, scale: 1, width: 1080, height: 1350, imageTimeout: 8000 }
+```
+
+### Integração em `/dashboard/jobs`
+
+**Arquivo**: `apps/web/src/app/(recruiter)/dashboard/jobs/page.tsx`
+
+- `orgBannerData` preenchido no fetch inicial da org (inclui todos os campos `career_page_*`)
+- Botão "Compartilhar" com dropdown (PNG / PDF) em cada card e linha da tabela
+- Estados: `orgBannerData`, `bannerJob`, `shareMenuJob`, `bannerLoading`, `pendingDownload`
+- Ícones: `Share2`, `ImageDown`, `FileDown`, `Loader2` de `lucide-react`
+
+### Commits Sprint 59
+
+| Commit | Descrição |
+|--------|----------|
+| `d37c204` | feat(jobs): banner social para vagas — JobSocialBanner com PNG e PDF |
+| `2728c24` | fix(jobs): corrigir race condition no download do banner e dados da vaga |
+| `bb91009` | feat(jobs): adicionar descrição, requisitos e benefícios ao banner social |
+| `3b8ef66` | fix(jobs): links PDF com getBoundingClientRect e redesign do banner 1080×1350 |
