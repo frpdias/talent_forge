@@ -31,17 +31,21 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_SR_KEY);
 
 function parseCSV(content) {
   const lines  = content.split('\n').map(l => l.trim()).filter(Boolean);
-  const header = 'nivel,categoria,pergunta,alternativa_a,alternativa_b,alternativa_c,alternativa_d,resposta';
   const questions = [];
   let order = 0;
 
-  for (const line of lines) {
+  for (let line of lines) {
+    // Remover aspas que envolvem a linha inteira: "Junior,Windows,..." → Junior,Windows,...
+    if (line.startsWith('"') && line.endsWith('"')) {
+      line = line.slice(1, -1);
+    }
+
     // Pular linhas de cabeçalho (repetidas entre blocos de nível)
     if (line.toLowerCase().startsWith('nivel') || line.toLowerCase().startsWith('nível')) {
       continue;
     }
 
-    // Split por vírgula respeitando aspas
+    // Split por vírgula respeitando aspas internas
     const cols = splitCSVLine(line);
     if (cols.length < 8) continue;
 
