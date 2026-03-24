@@ -239,22 +239,19 @@ export const JobSocialBanner = forwardRef<HTMLDivElement, { job: JobBannerData; 
             )}
 
             {/* Info da empresa */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, minWidth: 0 }}>
-              {/* Badge "Estamos Contratando" */}
+            <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 6, minWidth: 0 }}>
+              {/* Label "Estamos Contratando" — texto simples, sem pill */}
               <div style={{
-                display: 'inline-flex', alignItems: 'center', gap: 8,
-                alignSelf: 'flex-start',
-                backgroundColor: secondary,
-                borderRadius: 8, padding: '5px 16px',
+                display: 'flex', alignItems: 'center', gap: 8,
               }}>
                 <div style={{
-                  width: 7, height: 7, borderRadius: '50%',
-                  backgroundColor: '#fff',
-                  boxShadow: '0 0 0 3px rgba(255,255,255,0.35)',
+                  width: 6, height: 6, borderRadius: '50%',
+                  backgroundColor: secondary, flexShrink: 0,
+                  boxShadow: `0 0 0 3px ${secondary}40`,
                 }} />
                 <span style={{
-                  color: '#fff', fontSize: 13, fontWeight: 800,
-                  letterSpacing: 3, textTransform: 'uppercase',
+                  color: secondary, fontSize: 12, fontWeight: 800,
+                  letterSpacing: 3.5, textTransform: 'uppercase',
                 }}>
                   Estamos Contratando
                 </span>
@@ -262,10 +259,10 @@ export const JobSocialBanner = forwardRef<HTMLDivElement, { job: JobBannerData; 
 
               {/* Nome da empresa */}
               <div style={{
-                color: '#fff', fontSize: 34, fontWeight: 800,
-                lineHeight: 1.05, letterSpacing: -0.5,
+                color: '#fff', fontSize: 30, fontWeight: 800,
+                lineHeight: 1.1, letterSpacing: -0.5,
                 overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-                maxWidth: 600,
+                maxWidth: 580,
               }}>
                 {org.name}
               </div>
