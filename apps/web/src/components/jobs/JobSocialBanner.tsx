@@ -238,34 +238,14 @@ export const JobSocialBanner = forwardRef<HTMLDivElement, { job: JobBannerData; 
               </div>
             )}
 
-            {/* Info da empresa */}
-            <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 6, minWidth: 0 }}>
-              {/* Label "Estamos Contratando" — texto simples, sem pill */}
-              <div style={{
-                display: 'flex', alignItems: 'center', gap: 8,
-              }}>
-                <div style={{
-                  width: 6, height: 6, borderRadius: '50%',
-                  backgroundColor: secondary, flexShrink: 0,
-                  boxShadow: `0 0 0 3px ${secondary}40`,
-                }} />
-                <span style={{
-                  color: secondary, fontSize: 12, fontWeight: 800,
-                  letterSpacing: 3.5, textTransform: 'uppercase',
-                }}>
-                  Estamos Contratando
-                </span>
-              </div>
-
-              {/* Nome da empresa */}
-              <div style={{
-                color: '#fff', fontSize: 30, fontWeight: 800,
-                lineHeight: 1.1, letterSpacing: -0.5,
-                overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-                maxWidth: 580,
-              }}>
-                {org.name}
-              </div>
+            {/* Nome da empresa */}
+            <div style={{
+              color: '#fff', fontSize: 34, fontWeight: 800,
+              lineHeight: 1.1, letterSpacing: -0.5,
+              overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+              maxWidth: 620, minWidth: 0,
+            }}>
+              {org.name}
             </div>
           </div>
 
@@ -306,7 +286,7 @@ export const JobSocialBanner = forwardRef<HTMLDivElement, { job: JobBannerData; 
         }}>
 
           {/* Espaço da foto (empurra conteúdo para baixo) */}
-          <div style={{ flex: 1, minHeight: 0, maxHeight: 220 }} />
+          <div style={{ flex: 1, minHeight: 0, maxHeight: org.career_page_banner_url ? 120 : 40 }} />
 
           {/* ── Label eyebrow: VAGA ABERTA ── */}
           <div style={{
