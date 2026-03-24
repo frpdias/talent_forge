@@ -209,41 +209,36 @@ export const JobSocialBanner = forwardRef<HTMLDivElement, { job: JobBannerData; 
           {/* ── Bloco esquerdo: logo + dados da empresa ── */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 28, flex: 1, minWidth: 0 }}>
 
-            {/* Logo */}
+            {/* Logo — sem card, apenas a imagem flutuante */}
             {logoUrl ? (
-              <div style={{
-                width: 104, height: 104, borderRadius: 22, overflow: 'hidden',
-                flexShrink: 0,
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                backgroundColor: 'rgba(255,255,255,0.08)',
-                border: `2px solid ${secondary}55`,
-                boxShadow: `0 0 0 5px ${secondary}18, 0 8px 28px rgba(0,0,0,0.5)`,
-              }}>
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={logoUrl} alt={org.name} crossOrigin="anonymous"
-                  style={{ width: '100%', height: '100%', objectFit: 'contain', padding: 8 }}
-                />
-              </div>
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={logoUrl} alt={org.name} crossOrigin="anonymous"
+                style={{
+                  width: 96, height: 96, objectFit: 'contain',
+                  flexShrink: 0,
+                  filter: 'drop-shadow(0 4px 16px rgba(0,0,0,0.5))',
+                }}
+              />
             ) : (
               <div style={{
-                width: 104, height: 104, borderRadius: 22, flexShrink: 0,
+                width: 96, height: 96, borderRadius: 20, flexShrink: 0,
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 background: `linear-gradient(135deg, ${secondary} 0%, ${secondary}bb 100%)`,
-                boxShadow: `0 0 0 5px ${secondary}22, 0 8px 28px rgba(0,0,0,0.5)`,
+                filter: 'drop-shadow(0 4px 16px rgba(0,0,0,0.4))',
               }}>
-                <span style={{ color: '#fff', fontSize: 40, fontWeight: 900, letterSpacing: -1 }}>
+                <span style={{ color: '#fff', fontSize: 38, fontWeight: 900, letterSpacing: -1 }}>
                   {org.name.charAt(0).toUpperCase()}
                 </span>
               </div>
             )}
 
-            {/* Nome da empresa */}
+            {/* Nome da empresa — flex:1 para ocupar espaço restante sem cortar */}
             <div style={{
               color: '#fff', fontSize: 34, fontWeight: 800,
               lineHeight: 1.1, letterSpacing: -0.5,
-              overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-              maxWidth: 620, minWidth: 0,
+              flex: 1, minWidth: 0,
+              wordBreak: 'break-word',
             }}>
               {org.name}
             </div>
