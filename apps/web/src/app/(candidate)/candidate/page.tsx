@@ -89,6 +89,11 @@ export default function CandidateDashboard() {
   const [activeModal, setActiveModal] = useState<'disc' | 'colors' | 'pi' | null>(null);
   const [activeTestModal, setActiveTestModal] = useState<'disc' | 'color-test' | 'pi-test' | null>(null);
 
+  // IT Test
+  const [itTest, setItTest] = useState<{ nivel: string; link: string } | null>(null);
+  const [itTestResult, setItTestResult] = useState<{ score: number; total_questions: number; correct_answers: number } | null>(null);
+  const [itTestLoading, setItTestLoading] = useState(true);
+
   // Dashboard — dados reais
   const [dashStats, setDashStats] = useState({ total: 0, active: 0, hired: 0, completion: 0 });
   const [openJobsCount, setOpenJobsCount] = useState(0);
@@ -349,6 +354,36 @@ export default function CandidateDashboard() {
       }
     };
     loadPI();
+  }, []);
+
+  // Carrega IT Test do candidato
+  useEffect(() => {
+    const loadItTest = async () => {
+      try {
+        setItTestLoading(true);
+        const supabase = createClient();
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session?.access_token) return;
+
+        const res = await fetch('/api/candidate/it-test', {
+          headers: { Authorization: `Bearer ${session.access_token}` },
+        });
+        if (!res.ok) return;
+
+        const data = await res.json();
+        if (data.assignment) {
+          setItTest({ nivel: data.assignment.nivel, link: data.assignment.link });
+        }
+        if (data.result) {
+          setItTestResult(data.result);
+        }
+      } catch (e) {
+        console.warn('[CandidateDash] IT Test load error:', e);
+      } finally {
+        setItTestLoading(false);
+      }
+    };
+    loadItTest();
   }, []);
 
   // Carrega stats, vagas e candidaturas reais
@@ -671,6 +706,51 @@ export default function CandidateDashboard() {
           );
         })()}
       </div>
+
+      {/* ══ Avaliações Técnicas ══ */}
+      {!itTestLoading && itTest && (
+        <div className="bg-white border border-[#E5E5DC] rounded-xl sm:rounded-2xl p-4 sm:p-5 shadow-[0_2px_8px_rgba(20,16,66,0.06),0_1px_2px_rgba(20,16,66,0.04)] hover:shadow-[0_8px_32px_rgba(20,16,66,0.10),0_2px_8px_rgba(20,16,66,0.06)] hover:-translate-y-0.5 transition-all duration-300">
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div className="w-11 h-11 rounded-xl bg-[#10B981]/10 text-[#10B981] flex items-center justify-center text-xl">
+                💻
+              </div>
+              <div>
+                <p className="text-xs uppercase tracking-wide text-[#666666] font-semibold">Teste de Informática</p>
+                <p className="text-sm font-semibold text-[#141042] capitalize">
+                  Nível {itTest.nivel === 'junior' ? 'Júnior' : itTest.nivel === 'pleno' ? 'Pleno' : 'Sênior'}
+                </p>
+              </div>
+            </div>
+
+            {itTestResult ? (
+              <div className="flex items-center gap-4">
+                <div className="text-right">
+                  <p className="text-2xl font-bold text-[#10B981]">{itTestResult.score.toFixed(0)}%</p>
+                  <p className="text-xs text-[#888]">{itTestResult.correct_answers}/{itTestResult.total_questions} corretas</p>
+                </div>
+                <span className="inline-flex items-center gap-1 text-xs font-medium text-[#10B981] bg-[#10B981]/10 px-2.5 py-1 rounded-full">
+                  ✓ Concluído
+                </span>
+              </div>
+            ) : (
+              <a
+                href={itTest.link}
+                target="_self"
+                className="inline-flex items-center gap-2 bg-[#10B981] hover:bg-[#0EA271] text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors shrink-0"
+              >
+                Fazer agora →
+              </a>
+            )}
+          </div>
+
+          {!itTestResult && (
+            <p className="mt-3 text-[13px] text-[#666] leading-snug">
+              Você tem um teste de informática pendente. Complete-o para melhorar seu perfil e destacar-se para recrutadores.
+            </p>
+          )}
+        </div>
+      )}
 
       {/* ══ Modal de detalhe dos perfis comportamentais ══ */}
       {activeModal && (() => {
