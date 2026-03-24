@@ -283,21 +283,7 @@ export const JobSocialBanner = forwardRef<HTMLDivElement, { job: JobBannerData; 
           {/* Espaço da foto (empurra conteúdo para baixo) */}
           <div style={{ flex: 1, minHeight: 0, maxHeight: org.career_page_banner_url ? 120 : 40 }} />
 
-          {/* ── Label eyebrow: VAGA ABERTA ── */}
-          <div style={{
-            display: 'flex', alignItems: 'center', gap: 14,
-            marginBottom: 18,
-          }}>
-            <div style={{ width: 48, height: 4, backgroundColor: secondary, borderRadius: 2 }} />
-            <span style={{
-              color: secondary, fontSize: 15, fontWeight: 800,
-              letterSpacing: 5, textTransform: 'uppercase',
-            }}>
-              Vaga Aberta
-            </span>
-          </div>
-
-          {/* ── Título da vaga ── */}
+          {/* ── Título da vaga ── */
           <div style={{
             color: '#fff', fontSize: titleSize, fontWeight: 900,
             lineHeight: 1.06, letterSpacing: -1.5,
@@ -306,28 +292,44 @@ export const JobSocialBanner = forwardRef<HTMLDivElement, { job: JobBannerData; 
             {job.title || ''}
           </div>
 
-          {/* ── Tags de atributos ── */}
-          {tags.length > 0 && (
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, marginBottom: 32 }}>
-              {tags.map((tag, i) => (
-                <div key={i} style={{
-                  display: 'flex', alignItems: 'center', gap: 9,
-                  backgroundColor: tag.highlight ? secondary : 'rgba(255,255,255,0.11)',
-                  border: tag.highlight ? 'none' : '1.5px solid rgba(255,255,255,0.2)',
-                  borderRadius: 10, padding: '9px 20px',
-                  boxShadow: tag.highlight ? `0 4px 18px ${secondary}55` : 'none',
+          {/* ── Tags de atributos + badge Vaga Aberta ── */}
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, marginBottom: 32 }}>
+            {tags.map((tag, i) => (
+              <div key={i} style={{
+                display: 'flex', alignItems: 'center', gap: 9,
+                backgroundColor: tag.highlight ? secondary : 'rgba(255,255,255,0.11)',
+                border: tag.highlight ? 'none' : '1.5px solid rgba(255,255,255,0.2)',
+                borderRadius: 10, padding: '9px 20px',
+                boxShadow: tag.highlight ? `0 4px 18px ${secondary}55` : 'none',
+              }}>
+                <span style={{ fontSize: 18, lineHeight: 1 }}>{tag.emoji}</span>
+                <span style={{
+                  color: '#fff', fontSize: 19, fontWeight: tag.highlight ? 700 : 500,
+                  letterSpacing: -0.2,
                 }}>
-                  <span style={{ fontSize: 18, lineHeight: 1 }}>{tag.emoji}</span>
-                  <span style={{
-                    color: '#fff', fontSize: 19, fontWeight: tag.highlight ? 700 : 500,
-                    letterSpacing: -0.2,
-                  }}>
-                    {tag.text}
-                  </span>
-                </div>
-              ))}
+                  {tag.text}
+                </span>
+              </div>
+            ))}
+            {/* Badge Vaga Aberta — sempre ao final, à direita do salário */}
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: 8,
+              border: `2px solid ${secondary}`,
+              borderRadius: 10, padding: '9px 20px',
+            }}>
+              <div style={{
+                width: 7, height: 7, borderRadius: '50%',
+                backgroundColor: secondary,
+                boxShadow: `0 0 0 3px ${secondary}35`,
+              }} />
+              <span style={{
+                color: secondary, fontSize: 18, fontWeight: 800,
+                letterSpacing: 1, textTransform: 'uppercase',
+              }}>
+                Vaga Aberta
+              </span>
             </div>
-          )}
+          </div>
 
           {/* ── Card de detalhes ── */}
           {hasDetails && (
