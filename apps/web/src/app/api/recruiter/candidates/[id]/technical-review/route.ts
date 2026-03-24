@@ -12,12 +12,15 @@ function createAdminClient() {
 
 // ─── Cálculo de score ────────────────────────────────────────────────────────
 
-function calcScoreTestes(disc: any, color: any, pi: any): number {
+function calcScoreTestes(disc: any, color: any, pi: any, itTest?: any): number {
   let score = 0;
-  if (disc) score += 40;           // DISC completo
-  else if (color) score += 0;
-  if (color) score += 30;          // Color completo
-  if (pi) score += 30;             // PI completo
+  if (disc) score += 35;            // DISC completo
+  if (color) score += 25;           // Color completo
+  if (pi) score += 25;              // PI completo
+  if (itTest) {                     // Teste de Informática: proporcional ao score (até 15 pts)
+    const itScore = Number(itTest.score) || 0;
+    score += Math.round((itScore / 100) * 15);
+  }
   return Math.min(100, score);
 }
 
@@ -252,8 +255,33 @@ export async function POST(
       }
     }
 
+    // 7.5 Buscar resultado do Teste de Informática (cross-org: busca por email)
+    let itTestResult: any = null;
+    if (candidate.email) {
+      const { data: candidateDupes } = await supabase
+        .from('candidates')
+        .select('id')
+        .ilike('email', candidate.email)
+        .limit(20);
+      const allCandIds = [...new Set([candidateId, ...(candidateDupes ?? []).map((c: any) => c.id)])];
+      const { data: allAssignments } = await supabase
+        .from('it_test_assignments')
+        .select('id')
+        .in('candidate_id', allCandIds);
+      if (allAssignments && allAssignments.length > 0) {
+        const { data: itRes } = await supabase
+          .from('it_test_results')
+          .select('score, correct_answers, total_questions, nivel, completed_at')
+          .in('assignment_id', allAssignments.map((a: any) => a.id))
+          .order('completed_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        itTestResult = itRes;
+      }
+    }
+
     // 8. Calcular scores parciais (score_recrutador será calculado após resposta da IA)
-    const scoreTestes = calcScoreTestes(discResult, colorResult, piResult);
+    const scoreTestes = calcScoreTestes(discResult, colorResult, piResult, itTestResult);
     const scoreExperiencia = calcScoreExperiencia(experienceYears, topEdu);
 
     // 9. Construir resumo das vagas
@@ -282,6 +310,7 @@ export async function POST(
       disc: discResult,
       color: colorResult,
       pi: piResult,
+      itTest: itTestResult,
       notes: (notes ?? []).map((n: any) => n.note),
       recruiterNote,
       jobs: jobsData.map((j) => ({ id: j.id, title: j.title, seniority: j.seniority })),
@@ -330,6 +359,9 @@ export async function POST(
         disc: discSummary,
         cores: colorSummary,
         pi: piSummary,
+        informatica: itTestResult
+          ? `Score: ${Number(itTestResult.score).toFixed(0)}% (${itTestResult.correct_answers}/${itTestResult.total_questions} questões corretas — nível ${{ junior: 'Júnior', pleno: 'Pleno', senior: 'Sênior' }[itTestResult.nivel as string] ?? itTestResult.nivel})`
+          : 'Não realizado',
         anotacoes: notesSummary,
         contexto_recrutador: recruiterNote ? `Contexto adicional do recrutador: ${recruiterNote}` : '',
         score_testes: String(scoreTestes),

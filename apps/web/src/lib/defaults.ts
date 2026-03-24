@@ -21,12 +21,15 @@ Localização: {{localizacao}}
 Avaliação de Cores: {{cores}}
 Predictive Index (PI): {{pi}}
 
+## Teste de Informática / Conhecimentos em TI
+{{informatica}}
+
 ## Anotações e Contexto do Recrutador
 {{anotacoes}}
 {{contexto_recrutador}}
 
 ## Score Calculado (dados objetivos)
-- Testes comportamentais: {{score_testes}}/100
+- Testes comportamentais e técnicos: {{score_testes}}/100
 - Experiência e formação: {{score_experiencia}}/100
 
 ## Vagas em que se Candidatou
@@ -45,8 +48,8 @@ Liste 3–5 pontos fortes identificados com base nos dados.
 ### 3. Pontos de Desenvolvimento
 Liste 2–4 áreas que necessitam atenção ou desenvolvimento.
 
-### 4. Análise Comportamental
-Interprete os resultados dos testes (DISC, Cores, PI) e o que indicam sobre o candidato no ambiente de trabalho.
+### 4. Análise Comportamental e Técnica
+Interprete os resultados dos testes (DISC, Cores, PI) e o que indicam sobre o candidato no ambiente de trabalho. Se o Teste de Informática foi realizado, avalie a performance técnica e o nível demonstrado.
 
 ### 5. Avaliação de Aderência à(s) Vaga(s)
 Compare o perfil do candidato com os requisitos das vagas acima. Destaque os pontos de alinhamento e os gaps relevantes. Se não houver vagas específicas, avalie o perfil geral de empregabilidade.
