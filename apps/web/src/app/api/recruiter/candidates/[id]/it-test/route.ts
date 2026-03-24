@@ -40,7 +40,7 @@ export async function GET(
   if (!member) return NextResponse.json({ error: 'Acesso negado' }, { status: 403 });
 
   // Resolver todos os IDs de candidato com o mesmo email (duplicatas)
-  // para garantir que achamos o assignment/resultado correto independente do ID da URL
+  // para garantir que achamos o resultado correto independente da org em que foi feito
   const { data: candidateRow } = await sb
     .from('candidates')
     .select('id, email')
@@ -58,39 +58,45 @@ export async function GET(
     (dupes ?? []).forEach((r) => candidateIds.add(r.id));
   }
 
-  // Buscar TODAS as atribuições para estes candidatos na org
-  const { data: assignments } = await sb
+  // Buscar atribuição do candidato NA ORG DO RECRUTADOR (para exibir o link correto)
+  const { data: orgAssignment } = await sb
     .from('it_test_assignments')
-    .select('id, nivel, token, assigned_at, candidate_id')
+    .select('id, nivel, token, assigned_at')
     .in('candidate_id', Array.from(candidateIds))
     .eq('org_id', orgId)
-    .order('assigned_at', { ascending: false });
+    .order('assigned_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
 
-  if (!assignments || assignments.length === 0) {
+  if (!orgAssignment) {
     return NextResponse.json({ assignment: null, result: null });
   }
 
-  // Buscar resultados para todos os assignments encontrados
-  const assignmentIds = assignments.map((a) => a.id);
-  const { data: results } = await sb
-    .from('it_test_results')
-    .select('assignment_id, score, total_questions, correct_answers, nivel, completed_at')
-    .in('assignment_id', assignmentIds);
+  // Buscar resultado em QUALQUER assignment dos candidatos com o mesmo email
+  // (o candidato pode ter feito o teste via outro registro duplicado / outra org)
+  const { data: allAssignments } = await sb
+    .from('it_test_assignments')
+    .select('id')
+    .in('candidate_id', Array.from(candidateIds));
 
-  // Priorizar assignment que TEM resultado; se nenhum, usar o mais recente
-  const resultMap = new Map((results ?? []).map((r) => [r.assignment_id, r]));
-  const assignmentWithResult = assignments.find((a) => resultMap.has(a.id));
-  const bestAssignment = assignmentWithResult ?? assignments[0];
-  const result = resultMap.get(bestAssignment.id) ?? null;
+  const allAssignmentIds = (allAssignments ?? []).map((a) => a.id);
+
+  const { data: result } = await sb
+    .from('it_test_results')
+    .select('score, total_questions, correct_answers, nivel, completed_at')
+    .in('assignment_id', allAssignmentIds)
+    .order('completed_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
 
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://web-eight-rho-84.vercel.app';
 
   return NextResponse.json({
     assignment: {
-      id:          bestAssignment.id,
-      nivel:       bestAssignment.nivel,
-      assigned_at: bestAssignment.assigned_at,
-      link:        `${baseUrl}/it-test/${bestAssignment.token}`,
+      id:          orgAssignment.id,
+      nivel:       orgAssignment.nivel,
+      assigned_at: orgAssignment.assigned_at,
+      link:        `${baseUrl}/it-test/${orgAssignment.token}`,
     },
     result: result ?? null,
   });
