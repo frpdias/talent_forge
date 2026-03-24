@@ -1,6 +1,6 @@
 # Arquitetura Canônica — TalentForge
 
-**Última atualização**: 2026-03-24 | **Score de Conformidade**: ✅ 100% (Sprint 59 — Banner Social para Vagas) | **Sprints planejados**: Sprint 41 (AI Assistant) + Sprint 44 (Gate Recrutamento)
+**Última atualização**: 2026-03-24 | **Score de Conformidade**: ✅ 100% (Sprint 60 — Tipografia: Fonte por Seção + Preview Banner + Fix Página Pública) | **Sprints planejados**: Sprint 41 (AI Assistant) + Sprint 44 (Gate Recrutamento)
 
 ## 📜 FONTE DA VERDADE — PRINCÍPIO FUNDAMENTAL
 
@@ -277,7 +277,8 @@ PROJETO_TALENT_FORGE/
 │   │   ├── 20260320_cleanup_duplicate_candidates.sql ✅ limpeza de candidatos duplicados sem candidaturas (race condition FARTECH)
 │   │   ├── 20260320_populate_ref_cbo_full.sql ✅ INSERT 2445 ocupações completas CBO 2002 (MTE — domínio público) em ref_cbo via ON CONFLICT DO NOTHING
 │   │   ├── 20260321_career_page_typography.sql ✅ 18 colunas career_page_*_font_color/text_align/font_size em organizations; v_public_jobs recriada (CASCADE + CREATE); get_public_jobs_by_org + get_all_public_jobs recriados (Sprint 58)
-│   │   └── 20260321_career_page_facebook.sql ✅ career_page_facebook_url em organizations; v_public_jobs + RPCs recriados (Sprint 58)
+│   │   ├── 20260321_career_page_facebook.sql ✅ career_page_facebook_url em organizations; v_public_jobs + RPCs recriados (Sprint 58)
+│   │   └── 20260324_career_page_font_family.sql ✅ 6 colunas career_page_*_font_family em organizations (inter/poppins/roboto/montserrat/lato/raleway/nunito/playfair/merriweather); v_public_jobs + RPCs (get_public_jobs_by_org + get_all_public_jobs) recriados com facebook_url corrigido (Sprint 60)
 │   ├── VALIDATE_IMPROVEMENTS.sql  # Script de validação
 │   └── README.md                  # Instruções de migrations
 │
@@ -8535,6 +8536,7 @@ CREATE TABLE job_alerts (
 | **Sprint 57** | **2026-03-20** | **CBO 2002 completo — `ref_cbo` populada com 2445 ocupações MTE, API route `/api/cbo/search` (FTS+ILIKE+local fallback), dataset local `cbo-data.ts` (~350 mais comuns), normalização de código `354705→3547-05`** | ✅ |
 | **Sprint 58** | **2026-03-21** | **Tipografia por seção na career page — 18 colunas em `organizations` (cor/alinhamento/tamanho por hero/about/jobs/talent/testimonials/process), UI de controles em settings, aplicação na página pública `/jobs/[orgSlug]`, fix `/vagas` (get_all_public_jobs derrubada por CASCADE), logo do recrutador em `/vagas` (OrgAvatar com fundo colorido), campo Facebook em links de contato (`career_page_facebook_url`)** | ✅ |
 | **Sprint 59** | **2026-03-24** | **Banner social para vagas — `JobSocialBanner` (1080×1350px), PNG via html2canvas + PDF via jsPDF com links clicáveis, `data-pdf-link` + `getBoundingClientRect()`, descrição/requisitos/benefícios no banner, fix race condition (useEffect + banner sempre montado), botão "Compartilhar" em `/dashboard/jobs`** | ✅ |
+| **Sprint 60** | **2026-03-24** | **Tipografia avançada na career page — seletor de família de fonte (9 opções) por seção em `/dashboard/settings` com preview visual via Google Fonts; modal de prévia do banner 45% escalado em `/dashboard/jobs` antes de baixar (botões PNG/PDF dentro do modal); fix `career_page_facebook_url` omitido no `DROP VIEW … CASCADE`; RPCs `get_public_jobs_by_org` + `get_all_public_jobs` sempre recriadas após CASCADE** | ✅ |
 
 ### Regras Canônicas — Portal Candidato
 
@@ -9180,3 +9182,62 @@ Opções html2canvas:
 | `2728c24` | fix(jobs): corrigir race condition no download do banner e dados da vaga |
 | `bb91009` | feat(jobs): adicionar descrição, requisitos e benefícios ao banner social |
 | `3b8ef66` | fix(jobs): links PDF com getBoundingClientRect e redesign do banner 1080×1350 |
+
+---
+
+## 29) Tipografia Avançada + Preview Banner (Sprint 60, 2026-03-24)
+
+### Contexto
+Sprint de refinamento visual com dois entregáveis principais: (1) seletor de família de fonte na seção Tipografia de `/dashboard/settings`, e (2) modal de prévia do banner antes do download em `/dashboard/jobs`. Também corrigiu um bug crítico de regressão: `career_page_facebook_url` omitida ao recriar `v_public_jobs` via `DROP … CASCADE`.
+
+### Seletor de Fonte em Settings
+
+**Arquivo**: `apps/web/src/app/(recruiter)/dashboard/settings/page.tsx`
+
+- 6 novas chaves de estado: `career_page_{section}_font_family` (sections: hero, about, jobs, talent, testimonials, process)
+- Default `'inter'` para todas as seções
+- `<select>` estilizado com preview inline da fonte selecionada
+- Frase de preview: `"Talent Forge — Oportunidades"` renderizada na fonte escolhida
+- Google Fonts carregados via `useEffect` injetando `<link>` no `<head>` (evita CLS)
+- 9 opções: inter · poppins · roboto · montserrat · lato · raleway · nunito · playfair display · merriweather
+- Layout: Linha 1 (Fonte + Cor) | Linha 2 (Alinhamento + Tamanho) — grid 2+2 no lugar de 3 colunas anteriores
+
+### Modal de Prévia do Banner
+
+**Arquivo**: `apps/web/src/app/(recruiter)/dashboard/jobs/page.tsx`
+
+- Estado `showBannerPreview: boolean`
+- Handler `handlePreviewBanner(job)`: define `bannerJob`, fecha menu, abre modal
+- Botão "Visualizar" (ícone `Eye` roxo) inserido **antes** de "Baixar PNG" nos dois dropdowns (card view e list view), separado por `<div>` divisor
+- Modal: overlay `rgba(0,0,0,0.85)` + `z-100`; fechar clicando fora ou no `X`
+- Banner renderizado no modal a `transform: scale(0.45); transformOrigin: 'top center'` sobre container `1080px` → visual ~486px de largura
+- Botões "Baixar PNG" e "Baixar PDF" dentro do modal (fecham o modal ao acionar)
+
+### Fix: `career_page_facebook_url` omitida
+
+`DROP VIEW IF EXISTS v_public_jobs CASCADE` na migration `20260324` havia omitido `o.career_page_facebook_url` na recriação da view, sumindo o ícone do Facebook da página `/jobs/[orgSlug]`. Corrigido na migration e reaplicado no banco.
+
+### Regra canônica reforçada
+
+> **⚠️ CHECKLIST obrigatório ao usar `DROP VIEW … CASCADE` em `v_public_jobs`:**
+> 1. Incluir **todas** as colunas da view anterior + novas colunas
+> 2. Recriar `get_public_jobs_by_org(TEXT)` — GRANT anon + authenticated
+> 3. Recriar `get_all_public_jobs()` — GRANT anon + authenticated
+> 4. Verificar `career_page_facebook_url` está presente
+> 5. Verificar `/jobs/[orgSlug]` carrega após aplicar
+
+### Migration
+
+`supabase/migrations/20260324_career_page_font_family.sql`
+- `ADD COLUMN IF NOT EXISTS career_page_{section}_font_family TEXT DEFAULT 'inter'` (6 colunas)
+- `DROP VIEW IF EXISTS v_public_jobs CASCADE` → recria com 40+ colunas incluindo `facebook_url` e `font_family`
+- Recria `get_public_jobs_by_org` + `get_all_public_jobs` com GRANTs
+
+### Commits Sprint 60
+
+| Commit | Descrição |
+|--------|----------|
+| `80db164` | feat(jobs): adicionar prévia do banner antes de baixar — modal escalado 45% com botões PNG/PDF |
+| `ad9b7f2` | feat(settings): adicionar seleção de família de fonte na tipografia por seção — 9 fontes com preview visual |
+| `6503f48` | fix(migrations): recriar funções RPC derrubadas pelo DROP VIEW CASCADE |
+| `21bea6d` | fix(career-page): reincluir career_page_facebook_url na view v_public_jobs |
