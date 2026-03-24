@@ -1,6 +1,6 @@
 # Arquitetura Canônica — TalentForge
 
-**Última atualização**: 2026-03-24 | **Score de Conformidade**: ✅ 100% (Sprint 60 — Tipografia: Fonte por Seção + Preview Banner + Fix Página Pública) | **Sprints planejados**: Sprint 41 (AI Assistant) + Sprint 44 (Gate Recrutamento)
+**Última atualização**: 2026-03-25 | **Score de Conformidade**: ✅ 100% (Sprint 61 — Módulo Teste de Informática) | **Sprints planejados**: Sprint 41 (AI Assistant) + Sprint 44 (Gate Recrutamento)
 
 ## 📜 FONTE DA VERDADE — PRINCÍPIO FUNDAMENTAL
 
@@ -279,6 +279,7 @@ PROJETO_TALENT_FORGE/
 │   │   ├── 20260321_career_page_typography.sql ✅ 18 colunas career_page_*_font_color/text_align/font_size em organizations; v_public_jobs recriada (CASCADE + CREATE); get_public_jobs_by_org + get_all_public_jobs recriados (Sprint 58)
 │   │   ├── 20260321_career_page_facebook.sql ✅ career_page_facebook_url em organizations; v_public_jobs + RPCs recriados (Sprint 58)
 │   │   └── 20260324_career_page_font_family.sql ✅ 6 colunas career_page_*_font_family em organizations (inter/poppins/roboto/montserrat/lato/raleway/nunito/playfair/merriweather); v_public_jobs + RPCs (get_public_jobs_by_org + get_all_public_jobs) recriados com facebook_url corrigido (Sprint 60)
+│   │   └── 20260325_it_test_module.sql ✅ Módulo Teste de Informática: tabelas it_test_questions + it_test_assignments + it_test_results + RLS (Sprint 61)
 │   ├── VALIDATE_IMPROVEMENTS.sql  # Script de validação
 │   └── README.md                  # Instruções de migrations
 │
@@ -8537,6 +8538,7 @@ CREATE TABLE job_alerts (
 | **Sprint 58** | **2026-03-21** | **Tipografia por seção na career page — 18 colunas em `organizations` (cor/alinhamento/tamanho por hero/about/jobs/talent/testimonials/process), UI de controles em settings, aplicação na página pública `/jobs/[orgSlug]`, fix `/vagas` (get_all_public_jobs derrubada por CASCADE), logo do recrutador em `/vagas` (OrgAvatar com fundo colorido), campo Facebook em links de contato (`career_page_facebook_url`)** | ✅ |
 | **Sprint 59** | **2026-03-24** | **Banner social para vagas — `JobSocialBanner` (1080×1350px), PNG via html2canvas + PDF via jsPDF com links clicáveis, `data-pdf-link` + `getBoundingClientRect()`, descrição/requisitos/benefícios no banner, fix race condition (useEffect + banner sempre montado), botão "Compartilhar" em `/dashboard/jobs`** | ✅ |
 | **Sprint 60** | **2026-03-24** | **Tipografia avançada na career page — seletor de família de fonte (9 opções) por seção em `/dashboard/settings` com preview visual via Google Fonts; modal de prévia do banner 45% escalado em `/dashboard/jobs` antes de baixar (botões PNG/PDF dentro do modal); fix `career_page_facebook_url` omitido no `DROP VIEW … CASCADE`; RPCs `get_public_jobs_by_org` + `get_all_public_jobs` sempre recriadas após CASCADE** | ✅ |
+| **Sprint 61** | **2026-03-25** | **Módulo Teste de Informática — 3 níveis (Júnior/Pleno/Sênior), questões por categoria (Windows/Word/Excel/PowerPoint/Outlook/Redes Sociais/Power BI); Junior automático para todos os candidatos; Pleno/Senior ativado pelo recrutador; acesso por token público sem login em `/it-test/[token]`; resultado alimenta `score_testes` em `candidate_technical_reviews`; UI recrutador na aba Assessments de `/dashboard/candidates`** | ✅ |
 
 ### Regras Canônicas — Portal Candidato
 
@@ -9240,4 +9242,65 @@ Sprint de refinamento visual com dois entregáveis principais: (1) seletor de fa
 | `80db164` | feat(jobs): adicionar prévia do banner antes de baixar — modal escalado 45% com botões PNG/PDF |
 | `ad9b7f2` | feat(settings): adicionar seleção de família de fonte na tipografia por seção — 9 fontes com preview visual |
 | `6503f48` | fix(migrations): recriar funções RPC derrubadas pelo DROP VIEW CASCADE |
+
+---
+
+## 30) Módulo Teste de Informática (Sprint 61, 2026-03-25)
+
+### Objetivo
+
+Permitir que candidatos realizem um Teste de Informática (múltipla escolha) cujo resultado alimenta o componente `score_testes` do score técnico do candidato.
+
+### Fluxo
+
+- **Júnior**: atribuído automaticamente a todos os candidatos ao serem criados
+- **Pleno / Sênior**: recrutador ativa manualmente na aba "Assessments" do painel do candidato
+- **Substituição**: uma única atribuição ativa por `(candidate_id, org_id)` — nova atribuição sobrescreve a anterior e invalida o resultado anterior
+- **Acesso**: candidato acessa `/it-test/[token]` sem necessitar de login — token UUID único por atribuição
+- **Score**: ao finalizar, `it_test_results.score` (0-100) é gravado em `candidate_technical_reviews.score_testes`
+
+### Tabelas criadas
+
+| Tabela | Descrição |
+|--------|-----------|
+| `it_test_questions` | Banco de questões por nível e categoria; leitura pública (RLS: `USING (true)`) |
+| `it_test_assignments` | Atribuição recrutador→candidato; `UNIQUE(candidate_id, org_id)`; campo `token` UUID único |
+| `it_test_results` | Resultado do teste; `score` gerado como coluna calculada `(correct/total)*100`; `UNIQUE(assignment_id)` |
+
+### Categorias e quantidade de questões por nível
+
+| Categoria | Júnior | Pleno | Sênior |
+|-----------|--------|-------|--------|
+| Windows | 10 | 10 | 10 |
+| Word | 5 | 5 | 5 |
+| Excel | 5 | 10 | 10 |
+| PowerPoint | 5 | 5 | 5 |
+| Outlook | 3 | 3 | 3 |
+| Redes Sociais | 6 | 5 | 5 |
+| Power BI | 5 | 6 | 10 |
+| **Total** | **39** | **44** | **48** |
+
+### Arquivos criados/alterados
+
+- `supabase/migrations/20260325_it_test_module.sql` — schema + RLS
+- `scripts/import-it-test-questions.js` — script de seed do CSV para o banco
+- `apps/web/src/app/api/it-test/[token]/route.ts` — GET: busca atribuição + questões por token
+- `apps/web/src/app/api/it-test/[token]/submit/route.ts` — POST: submissão de respostas, cálculo de score, atualização de `score_testes`
+- `apps/web/src/app/api/recruiter/candidates/[id]/it-test/route.ts` — GET: busca atribuição+resultado; POST: atribui/substitui nível
+- `apps/web/src/app/it-test/[token]/page.tsx` — página pública do candidato (sem login)
+- `apps/web/src/app/(recruiter)/dashboard/candidates/page.tsx` — estados + funções + card "Teste de Informática" na aba Assessments
+
+### Seed de questões
+
+Após aplicar a migration, executar:
+```
+node scripts/import-it-test-questions.js ./caminho/para/Teste_de_Informatica.csv
+```
+
+### Commits Sprint 61
+
+| Commit | Descrição |
+|--------|----------|
+| (pendente) | feat(it-test): módulo Teste de Informática — migration, API routes, página candidato, UI recrutador |
+
 | `21bea6d` | fix(career-page): reincluir career_page_facebook_url na view v_public_jobs |

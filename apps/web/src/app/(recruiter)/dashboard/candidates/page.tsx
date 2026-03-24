@@ -89,6 +89,13 @@ export default function CandidatesPage() {
   const [detailsLoading, setDetailsLoading] = useState(false);
   const [resumeViewerUrl, setResumeViewerUrl] = useState<string | null>(null);
   const [resumeViewerLoading, setResumeViewerLoading] = useState(false);
+  const [itTest, setItTest] = useState<{
+    assignment: { id: string; nivel: string; assigned_at: string; link: string } | null;
+    result: { score: number; correct_answers: number; total_questions: number; nivel: string; completed_at: string } | null;
+  } | null>(null);
+  const [itTestLoading, setItTestLoading] = useState(false);
+  const [itTestAssigning, setItTestAssigning] = useState(false);
+  const [itTestCopied, setItTestCopied] = useState(false);
   const supabase = useMemo(() => createClient(), []);
 
   useEffect(() => {
@@ -100,9 +107,11 @@ export default function CandidatesPage() {
       setResumeViewerUrl(null);
       setCurrentReview(null);
       setReviewHistory([]);
+      setItTest(null);
       setActiveTab('profile');
       loadCandidateDetails(selectedCandidate);
       loadReviews(selectedCandidate.id);
+      loadItTest(selectedCandidate.id);
     }
   }, [selectedCandidate]);
 
@@ -165,6 +174,54 @@ export default function CandidatesPage() {
       alert(err.message || 'Erro ao gerar parecer');
     } finally {
       setReviewLoading(false);
+    }
+  }
+
+  async function loadItTest(candidateId: string) {
+    try {
+      setItTestLoading(true);
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+      const orgId = resolvedOrgId ?? localStorage.getItem('selected_org_id') ?? session.user.user_metadata?.org_id;
+      if (!orgId) return;
+      const res = await fetch(`/api/recruiter/candidates/${candidateId}/it-test`, {
+        headers: { 'Authorization': `Bearer ${session.access_token}`, 'x-org-id': orgId },
+      });
+      if (res.ok) setItTest(await res.json());
+    } catch (err) {
+      console.error('loadItTest error:', err);
+    } finally {
+      setItTestLoading(false);
+    }
+  }
+
+  async function handleAssignItTest(nivel: 'junior' | 'pleno' | 'senior') {
+    if (!selectedCandidate) return;
+    try {
+      setItTestAssigning(true);
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+      const orgId = resolvedOrgId ?? localStorage.getItem('selected_org_id') ?? session.user.user_metadata?.org_id;
+      if (!orgId) return;
+      const res = await fetch(`/api/recruiter/candidates/${selectedCandidate.id}/it-test`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+          'x-org-id': orgId,
+        },
+        body: JSON.stringify({ nivel }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setItTest({ assignment: data.assignment, result: null });
+      } else {
+        alert('Erro ao atribuir teste. Tente novamente.');
+      }
+    } catch (err) {
+      console.error('handleAssignItTest error:', err);
+    } finally {
+      setItTestAssigning(false);
     }
   }
 
@@ -1502,6 +1559,94 @@ export default function CandidatesPage() {
                                   </p>
                                 )}
                               </div>
+                            </div>
+
+                            {/* ── Teste de Informática ──────────────────────────── */}
+                            <div className="relative overflow-visible rounded-2xl border border-[#E5E5DC] bg-white/90 p-4 sm:p-6 shadow-[0_12px_40px_-28px_rgba(20,16,66,0.3)]">
+                              <div className="flex items-center gap-3 mb-4">
+                                <div className="w-12 h-12 rounded-xl bg-linear-to-br from-blue-500 to-indigo-600 text-white flex items-center justify-center shadow-inner text-xl font-bold">
+                                  💻
+                                </div>
+                                <div>
+                                  <p className="text-xs uppercase tracking-wide text-blue-700/80 font-semibold">Teste de Informática</p>
+                                  {itTest?.result && (
+                                    <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
+                                      itTest.result.score >= 80 ? 'bg-emerald-100 text-emerald-700' :
+                                      itTest.result.score >= 60 ? 'bg-blue-100 text-blue-700' :
+                                      'bg-amber-100 text-amber-700'
+                                    }`}>
+                                      {Math.round(itTest.result.score)}% · {itTest.result.nivel === 'junior' ? 'Júnior' : itTest.result.nivel === 'pleno' ? 'Pleno' : 'Sênior'}
+                                    </span>
+                                  )}
+                                </div>
+                                <div className="ml-auto flex gap-2">
+                                  {(['junior', 'pleno', 'senior'] as const).map(n => (
+                                    <button
+                                      key={n}
+                                      disabled={itTestAssigning}
+                                      onClick={() => handleAssignItTest(n)}
+                                      className={`text-xs px-3 py-1.5 rounded-lg font-medium transition-colors border ${
+                                        itTest?.assignment?.nivel === n && !itTest?.result
+                                          ? 'bg-[#141042] text-white border-[#141042]'
+                                          : 'border-slate-200 text-slate-600 hover:border-[#141042] hover:text-[#141042]'
+                                      }`}
+                                    >
+                                      {n === 'junior' ? 'Jr' : n === 'pleno' ? 'Pl' : 'Sr'}
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
+
+                              {itTestLoading ? (
+                                <p className="text-sm text-slate-400">Carregando…</p>
+                              ) : itTest?.result ? (
+                                <div className="space-y-3">
+                                  <div className="grid grid-cols-3 gap-3">
+                                    <div className="bg-slate-50 rounded-xl p-3 text-center">
+                                      <p className="text-2xl font-extrabold text-[#141042]">{Math.round(itTest.result.score)}%</p>
+                                      <p className="text-xs text-slate-500 mt-0.5">Score geral</p>
+                                    </div>
+                                    <div className="bg-slate-50 rounded-xl p-3 text-center">
+                                      <p className="text-2xl font-extrabold text-emerald-600">{itTest.result.correct_answers}</p>
+                                      <p className="text-xs text-slate-500 mt-0.5">Acertos</p>
+                                    </div>
+                                    <div className="bg-slate-50 rounded-xl p-3 text-center">
+                                      <p className="text-2xl font-extrabold text-slate-400">{itTest.result.total_questions}</p>
+                                      <p className="text-xs text-slate-500 mt-0.5">Total</p>
+                                    </div>
+                                  </div>
+                                  <p className="text-xs text-slate-400">
+                                    Concluído em {new Date(itTest.result.completed_at).toLocaleDateString('pt-BR')}
+                                  </p>
+                                </div>
+                              ) : itTest?.assignment ? (
+                                <div className="bg-blue-50 rounded-xl p-4">
+                                  <p className="text-sm text-blue-800 font-medium mb-2">
+                                    Teste {itTest.assignment.nivel === 'junior' ? 'Júnior' : itTest.assignment.nivel === 'pleno' ? 'Pleno' : 'Sênior'} atribuído — aguardando resposta
+                                  </p>
+                                  <div className="flex items-center gap-2">
+                                    <input
+                                      readOnly
+                                      value={itTest.assignment.link}
+                                      className="flex-1 text-xs bg-white border border-blue-200 rounded-lg px-3 py-2 text-slate-600 truncate"
+                                    />
+                                    <button
+                                      onClick={() => {
+                                        navigator.clipboard.writeText(itTest.assignment!.link);
+                                        setItTestCopied(true);
+                                        setTimeout(() => setItTestCopied(false), 2000);
+                                      }}
+                                      className="text-xs px-3 py-2 bg-[#141042] text-white rounded-lg hover:bg-[#1e1866] transition-colors whitespace-nowrap"
+                                    >
+                                      {itTestCopied ? '✓ Copiado' : 'Copiar link'}
+                                    </button>
+                                  </div>
+                                </div>
+                              ) : (
+                                <p className="text-sm text-slate-400">
+                                  Nenhum teste atribuído. Clique em <strong>Jr</strong>, <strong>Pl</strong> ou <strong>Sr</strong> para ativar o nível adequado.
+                                </p>
+                              )}
                             </div>
                           </>
                         )}
