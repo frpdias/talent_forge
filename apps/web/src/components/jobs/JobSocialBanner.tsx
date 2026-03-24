@@ -73,22 +73,25 @@ function Section({ title, items, accent }: { title: string; items: string[]; acc
   if (items.length === 0) return null;
   return (
     <div style={{ flex: 1, minWidth: 0 }}>
+      {/* Label com linha colorida à esquerda */}
       <div style={{
-        color: accent, fontSize: 15, fontWeight: 800,
-        letterSpacing: 3, textTransform: 'uppercase', marginBottom: 12,
-        display: 'flex', alignItems: 'center', gap: 8,
+        display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14,
       }}>
-        <div style={{ width: 20, height: 3, backgroundColor: accent, borderRadius: 2, flexShrink: 0 }} />
-        {title}
+        <div style={{ width: 3, height: 18, backgroundColor: accent, borderRadius: 2, flexShrink: 0 }} />
+        <span style={{
+          color: accent, fontSize: 13, fontWeight: 800,
+          letterSpacing: 3.5, textTransform: 'uppercase',
+        }}>{title}</span>
       </div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
         {items.map((item, i) => (
-          <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
+          <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
             <div style={{
-              width: 6, height: 6, borderRadius: '50%',
-              backgroundColor: accent, flexShrink: 0, marginTop: 8,
+              width: 5, height: 5, borderRadius: '50%',
+              backgroundColor: accent, flexShrink: 0, marginTop: 9,
+              boxShadow: `0 0 0 3px ${accent}33`,
             }} />
-            <span style={{ color: 'rgba(255,255,255,0.88)', fontSize: 19, lineHeight: 1.45 }}>
+            <span style={{ color: 'rgba(255,255,255,0.85)', fontSize: 18, lineHeight: 1.5 }}>
               {item}
             </span>
           </div>
@@ -107,21 +110,21 @@ export const JobSocialBanner = forwardRef<HTMLDivElement, { job: JobBannerData; 
     const logoUrl   = org.career_page_logo_url || org.logo_url;
     const jobUrl    = `https://talentforge.com.br/jobs/${org.slug}`;
 
-    // ── Tags ──
-    const tags: string[] = [];
-    if (job.location)        tags.push(`📍  ${job.location}`);
-    if (job.employment_type) tags.push(EMPLOYMENT_LABELS[job.employment_type] ?? job.employment_type);
-    if (job.work_modality)   tags.push(MODALITY_LABELS[job.work_modality]    ?? job.work_modality);
-    if (job.seniority)       tags.push(SENIORITY_LABELS[job.seniority]       ?? job.seniority);
+    // ── Tags enriquecidas (ícone + texto) ──
+    const tags: Array<{ emoji: string; text: string; highlight?: boolean }> = [];
+    if (job.location)        tags.push({ emoji: '📍', text: job.location });
+    if (job.employment_type) tags.push({ emoji: '💼', text: EMPLOYMENT_LABELS[job.employment_type] ?? job.employment_type });
+    if (job.work_modality)   tags.push({ emoji: '🏠', text: MODALITY_LABELS[job.work_modality]    ?? job.work_modality });
+    if (job.seniority)       tags.push({ emoji: '⭐', text: SENIORITY_LABELS[job.seniority]       ?? job.seniority });
     if (job.salary_range) {
-      tags.push(`💰  ${job.salary_range}`);
+      tags.push({ emoji: '💰', text: job.salary_range, highlight: true });
     } else if (job.salary_min) {
       const hi = job.salary_max ? ` – R$ ${(job.salary_max / 1000).toFixed(0)}k` : '';
-      tags.push(`💰  R$ ${(job.salary_min / 1000).toFixed(0)}k${hi}`);
+      tags.push({ emoji: '💰', text: `R$ ${(job.salary_min / 1000).toFixed(0)}k${hi}`, highlight: true });
     }
 
     // ── Content sections ──
-    const description = truncate(job.description, 220);
+    const description = truncate(job.description, 240);
     const reqItems    = parseList(job.requirements, 5);
     const benItems    = parseList(job.benefits, 5);
     const hasDetails  = description || reqItems.length > 0 || benItems.length > 0;
@@ -134,7 +137,10 @@ export const JobSocialBanner = forwardRef<HTMLDivElement, { job: JobBannerData; 
     if (org.career_page_facebook_url)  socials.push({ path: FbPath, color: '#1877F2', url: org.career_page_facebook_url });
 
     const titleLen  = job.title?.length ?? 0;
-    const titleSize = titleLen > 42 ? 52 : titleLen > 30 ? 64 : 76;
+    const titleSize = titleLen > 48 ? 48 : titleLen > 36 ? 60 : titleLen > 24 ? 72 : 82;
+
+    // Altura do header fixo (px) — sincronizado com o padding-top do content
+    const HEADER_H = 148;
 
     return (
       <div
@@ -143,13 +149,13 @@ export const JobSocialBanner = forwardRef<HTMLDivElement, { job: JobBannerData; 
           width: 1080,
           height: 1350,
           position: 'relative',
-          fontFamily: 'Arial, Helvetica, sans-serif',
+          fontFamily: '"Helvetica Neue", Arial, Helvetica, sans-serif',
           overflow: 'hidden',
           backgroundColor: primary,
           boxSizing: 'border-box',
         }}
       >
-        {/* ── Background image ── */}
+        {/* ── Background: imagem full-bleed ── */}
         {org.career_page_banner_url && (
           // eslint-disable-next-line @next/next/no-img-element
           <img
@@ -158,142 +164,229 @@ export const JobSocialBanner = forwardRef<HTMLDivElement, { job: JobBannerData; 
             crossOrigin="anonymous"
             style={{
               position: 'absolute', inset: 0,
-              width: '100%', height: '100%', objectFit: 'cover',
+              width: '100%', height: '100%',
+              objectFit: 'cover', objectPosition: 'center 30%',
             }}
           />
         )}
 
-        {/* ── Gradient overlay — transparent top → very dark bottom ── */}
+        {/* ── Overlay: escuro no topo (sob header) e na base (conteúdo) ── */}
         <div style={{
           position: 'absolute', inset: 0,
-          background: 'linear-gradient(to bottom, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0.55) 35%, rgba(0,0,0,0.93) 60%, rgba(0,0,0,0.98) 100%)',
+          background: org.career_page_banner_url
+            ? `linear-gradient(to bottom,
+                rgba(0,0,0,0.85) 0%,
+                rgba(0,0,0,0.82) ${HEADER_H}px,
+                rgba(0,0,0,0.15) ${HEADER_H + 120}px,
+                rgba(0,0,0,0.10) 42%,
+                rgba(0,0,0,0.78) 56%,
+                rgba(0,0,0,0.97) 70%,
+                rgba(0,0,0,0.99) 100%)`
+            : `linear-gradient(150deg, ${primary} 0%, ${primary}f0 60%, ${primary}cc 100%)`,
         }} />
 
-        {/* ── Left accent stripe ── */}
+        {/* ── Faixa superior de destaque (secondary) ── */}
         <div style={{
-          position: 'absolute', left: 0, top: 0, bottom: 0,
-          width: 10, backgroundColor: secondary,
+          position: 'absolute', top: 0, left: 0, right: 0,
+          height: 6, backgroundColor: secondary, zIndex: 10,
         }} />
 
-        {/* ── Content ── */}
+        {/* ══════════════════════════════════════════════
+            CABEÇALHO — Identidade da empresa
+            Fundo semi-sólido para leitura garantida
+        ══════════════════════════════════════════════ */}
         <div style={{
-          position: 'relative', zIndex: 1,
-          height: '100%',
-          display: 'flex', flexDirection: 'column',
-          padding: '56px 60px 52px 72px',
+          position: 'absolute', top: 6, left: 0, right: 0,
+          height: HEADER_H,
+          backgroundColor: 'rgba(0,0,0,0.72)',
+          borderBottom: `1px solid rgba(255,255,255,0.09)`,
+          zIndex: 6,
+          display: 'flex', alignItems: 'center',
+          padding: '0 56px',
           boxSizing: 'border-box',
         }}>
 
-          {/* ── Header: logo + org ── */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
+          {/* ── Bloco esquerdo: logo + dados da empresa ── */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 28, flex: 1, minWidth: 0 }}>
+
+            {/* Logo */}
             {logoUrl ? (
               <div style={{
-                width: 88, height: 88, borderRadius: 18, overflow: 'hidden',
-                backgroundColor: primary, flexShrink: 0,
+                width: 104, height: 104, borderRadius: 22, overflow: 'hidden',
+                flexShrink: 0,
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                border: `2px solid ${secondary}`,
+                backgroundColor: 'rgba(255,255,255,0.08)',
+                border: `2px solid ${secondary}55`,
+                boxShadow: `0 0 0 5px ${secondary}18, 0 8px 28px rgba(0,0,0,0.5)`,
               }}>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={logoUrl} alt={org.name} crossOrigin="anonymous"
-                  style={{ width: '100%', height: '100%', objectFit: 'contain', padding: 6 }}
+                  style={{ width: '100%', height: '100%', objectFit: 'contain', padding: 8 }}
                 />
               </div>
             ) : (
               <div style={{
-                width: 88, height: 88, borderRadius: 18, backgroundColor: secondary,
-                display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+                width: 104, height: 104, borderRadius: 22, flexShrink: 0,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                background: `linear-gradient(135deg, ${secondary} 0%, ${secondary}bb 100%)`,
+                boxShadow: `0 0 0 5px ${secondary}22, 0 8px 28px rgba(0,0,0,0.5)`,
               }}>
-                <span style={{ color: '#fff', fontSize: 34, fontWeight: 900 }}>
+                <span style={{ color: '#fff', fontSize: 40, fontWeight: 900, letterSpacing: -1 }}>
                   {org.name.charAt(0).toUpperCase()}
                 </span>
               </div>
             )}
-            <div>
+
+            {/* Info da empresa */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, minWidth: 0 }}>
+              {/* Badge "Estamos Contratando" */}
               <div style={{
-                color: secondary, fontSize: 13, fontWeight: 800,
-                letterSpacing: 5, textTransform: 'uppercase', marginBottom: 5,
+                display: 'inline-flex', alignItems: 'center', gap: 8,
+                alignSelf: 'flex-start',
+                backgroundColor: secondary,
+                borderRadius: 8, padding: '5px 16px',
               }}>
-                ESTAMOS CONTRATANDO
+                <div style={{
+                  width: 7, height: 7, borderRadius: '50%',
+                  backgroundColor: '#fff',
+                  boxShadow: '0 0 0 3px rgba(255,255,255,0.35)',
+                }} />
+                <span style={{
+                  color: '#fff', fontSize: 13, fontWeight: 800,
+                  letterSpacing: 3, textTransform: 'uppercase',
+                }}>
+                  Estamos Contratando
+                </span>
               </div>
-              <div style={{ color: '#fff', fontSize: 26, fontWeight: 700 }}>
+
+              {/* Nome da empresa */}
+              <div style={{
+                color: '#fff', fontSize: 34, fontWeight: 800,
+                lineHeight: 1.05, letterSpacing: -0.5,
+                overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                maxWidth: 600,
+              }}>
                 {org.name}
               </div>
             </div>
           </div>
 
-          {/* ── Spacer (pushes content down near banner image) ── */}
-          <div style={{ flex: 1, minHeight: 24 }} />
-
-          {/* ── "VAGA ABERTA" badge ── */}
-          <div style={{ marginBottom: 18, display: 'flex' }}>
-            <div style={{
-              display: 'inline-flex', alignItems: 'center',
-              backgroundColor: secondary, borderRadius: 100, padding: '7px 22px',
-            }}>
-              <span style={{
-                color: '#fff', fontSize: 15, fontWeight: 800,
-                letterSpacing: 4, textTransform: 'uppercase',
-              }}>
-                ✦  VAGA ABERTA  ✦
-              </span>
+          {/* ── Bloco direito: redes sociais ── */}
+          {socials.length > 0 && (
+            <div style={{ display: 'flex', gap: 12, alignItems: 'center', flexShrink: 0 }}>
+              {socials.map((s, i) => (
+                <div
+                  key={i}
+                  data-pdf-link={s.url}
+                  style={{
+                    width: 54, height: 54, borderRadius: 14,
+                    backgroundColor: `${s.color}20`,
+                    border: `1.5px solid ${s.color}60`,
+                    flexShrink: 0,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  }}
+                >
+                  <svg viewBox="0 0 24 24" width={26} height={26} fill={s.color}>
+                    <path d={s.path} />
+                  </svg>
+                </div>
+              ))}
             </div>
+          )}
+        </div>
+
+        {/* ══════════════════════════════════════════════
+            CONTEÚDO DO JOB — abaixo do cabeçalho
+        ══════════════════════════════════════════════ */}
+        <div style={{
+          position: 'relative', zIndex: 1,
+          height: '100%',
+          display: 'flex', flexDirection: 'column',
+          // padding-top = 6px (stripe) + HEADER_H + 20px respiração da foto
+          padding: `${6 + HEADER_H + 20}px 64px 52px 64px`,
+          boxSizing: 'border-box',
+        }}>
+
+          {/* Espaço da foto (empurra conteúdo para baixo) */}
+          <div style={{ flex: 1, minHeight: 0, maxHeight: 220 }} />
+
+          {/* ── Label eyebrow: VAGA ABERTA ── */}
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: 14,
+            marginBottom: 18,
+          }}>
+            <div style={{ width: 48, height: 4, backgroundColor: secondary, borderRadius: 2 }} />
+            <span style={{
+              color: secondary, fontSize: 15, fontWeight: 800,
+              letterSpacing: 5, textTransform: 'uppercase',
+            }}>
+              Vaga Aberta
+            </span>
           </div>
 
-          {/* ── Job title ── */}
+          {/* ── Título da vaga ── */}
           <div style={{
             color: '#fff', fontSize: titleSize, fontWeight: 900,
-            lineHeight: 1.08, letterSpacing: -1, marginBottom: 24, maxWidth: 940,
+            lineHeight: 1.06, letterSpacing: -1.5,
+            marginBottom: 26, maxWidth: 990,
           }}>
             {job.title || ''}
           </div>
 
-          {/* ── Tags ── */}
+          {/* ── Tags de atributos ── */}
           {tags.length > 0 && (
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 9, marginBottom: 36 }}>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, marginBottom: 32 }}>
               {tags.map((tag, i) => (
                 <div key={i} style={{
-                  backgroundColor: 'rgba(255,255,255,0.12)',
-                  border: '1.5px solid rgba(255,255,255,0.28)',
-                  borderRadius: 100, padding: '8px 20px',
-                  color: '#fff', fontSize: 19, fontWeight: 500,
+                  display: 'flex', alignItems: 'center', gap: 9,
+                  backgroundColor: tag.highlight ? secondary : 'rgba(255,255,255,0.11)',
+                  border: tag.highlight ? 'none' : '1.5px solid rgba(255,255,255,0.2)',
+                  borderRadius: 10, padding: '9px 20px',
+                  boxShadow: tag.highlight ? `0 4px 18px ${secondary}55` : 'none',
                 }}>
-                  {tag}
+                  <span style={{ fontSize: 18, lineHeight: 1 }}>{tag.emoji}</span>
+                  <span style={{
+                    color: '#fff', fontSize: 19, fontWeight: tag.highlight ? 700 : 500,
+                    letterSpacing: -0.2,
+                  }}>
+                    {tag.text}
+                  </span>
                 </div>
               ))}
             </div>
           )}
 
-          {/* ── Details: description + requirements + benefits ── */}
+          {/* ── Card de detalhes ── */}
           {hasDetails && (
             <div style={{
-              backgroundColor: 'rgba(0,0,0,0.35)',
-              border: '1px solid rgba(255,255,255,0.1)',
-              borderRadius: 20, padding: '28px 32px',
-              marginBottom: 36,
+              backgroundColor: 'rgba(0,0,0,0.52)',
+              border: '1px solid rgba(255,255,255,0.08)',
+              borderLeft: `5px solid ${secondary}`,
+              borderRadius: 16,
+              padding: '26px 32px',
+              marginBottom: 32,
             }}>
-              {/* Description */}
+              {/* Descrição */}
               {description && (
-                <div style={{ marginBottom: reqItems.length > 0 || benItems.length > 0 ? 24 : 0 }}>
+                <div style={{ marginBottom: reqItems.length > 0 || benItems.length > 0 ? 22 : 0 }}>
                   <div style={{
-                    color: secondary, fontSize: 15, fontWeight: 800,
-                    letterSpacing: 3, textTransform: 'uppercase', marginBottom: 10,
-                    display: 'flex', alignItems: 'center', gap: 8,
+                    color: secondary, fontSize: 12, fontWeight: 800,
+                    letterSpacing: 4, textTransform: 'uppercase', marginBottom: 10,
                   }}>
-                    <div style={{ width: 20, height: 3, backgroundColor: secondary, borderRadius: 2 }} />
-                    SOBRE A VAGA
+                    Sobre a Vaga
                   </div>
                   <div style={{
-                    color: 'rgba(255,255,255,0.88)', fontSize: 19, lineHeight: 1.55,
+                    color: 'rgba(255,255,255,0.88)', fontSize: 18, lineHeight: 1.6,
                   }}>
                     {description}
                   </div>
                 </div>
               )}
 
-              {/* Requirements + Benefits side by side */}
+              {/* Requisitos + Benefícios lado a lado, sem centralização */}
               {(reqItems.length > 0 || benItems.length > 0) && (
-                <div style={{ display: 'flex', gap: 32 }}>
+                <div style={{ display: 'flex', gap: 40 }}>
                   <Section title="Requisitos" items={reqItems} accent={secondary} />
                   <Section title="Benefícios" items={benItems} accent={secondary} />
                 </div>
@@ -301,64 +394,52 @@ export const JobSocialBanner = forwardRef<HTMLDivElement, { job: JobBannerData; 
             </div>
           )}
 
-          {/* ── Footer ── */}
+          {/* ── Rodapé ── */}
           <div style={{
-            borderTop: `2px solid ${secondary}`,
-            paddingTop: 26,
             display: 'flex', alignItems: 'center',
             justifyContent: 'space-between', gap: 16,
+            paddingTop: 24,
+            borderTop: '1.5px solid rgba(255,255,255,0.13)',
           }}>
-            {/* Social icons */}
-            <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-              {socials.length > 0 ? socials.map((s, i) => (
-                <div
-                  key={i}
-                  data-pdf-link={s.url}
-                  style={{
-                    width: 60, height: 60, borderRadius: 14,
-                    backgroundColor: s.color, flexShrink: 0,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
-                  }}
-                >
-                  <svg viewBox="0 0 24 24" width={30} height={30} fill="white">
-                    <path d={s.path} />
-                  </svg>
-                </div>
-              )) : (
-                <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 17 }}>
-                  {org.name}
-                </div>
-              )}
+            {/* URL de candidatura */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+              <span style={{
+                color: 'rgba(255,255,255,0.38)', fontSize: 12,
+                fontWeight: 700, letterSpacing: 2.5, textTransform: 'uppercase',
+              }}>
+                Candidate-se em
+              </span>
+              <span style={{
+                color: 'rgba(255,255,255,0.72)', fontSize: 17, fontWeight: 600, letterSpacing: -0.2,
+              }}>
+                talentforge.com.br/jobs/{org.slug}
+              </span>
             </div>
 
-            {/* CTA */}
+            {/* Botão CTA */}
             <div
               data-pdf-link={jobUrl}
               style={{
-                backgroundColor: secondary, borderRadius: 18,
-                padding: '16px 28px', textAlign: 'center', flexShrink: 0,
-                boxShadow: `0 8px 32px ${secondary}55`, minWidth: 300,
+                display: 'flex', alignItems: 'center',
+                backgroundColor: secondary, borderRadius: 14,
+                padding: '17px 30px', flexShrink: 0,
+                boxShadow: `0 8px 32px ${secondary}55`,
               }}
             >
-              <div style={{
-                color: '#fff', fontSize: 19, fontWeight: 900,
-                letterSpacing: 0.5, marginBottom: 6,
+              <span style={{
+                color: '#fff', fontSize: 21, fontWeight: 900, letterSpacing: -0.3,
               }}>
-                Candidate-se agora →
-              </div>
-              <div style={{ color: 'rgba(255,255,255,0.85)', fontSize: 15, fontWeight: 500 }}>
-                talentforge.com.br/jobs/{org.slug}
-              </div>
+                Quero me candidatar →
+              </span>
             </div>
           </div>
         </div>
 
         {/* ── Watermark ── */}
         <div style={{
-          position: 'absolute', bottom: 14, right: 18,
-          color: 'rgba(255,255,255,0.22)',
-          fontSize: 11, fontWeight: 700, letterSpacing: 2,
+          position: 'absolute', bottom: 14, right: 20,
+          color: 'rgba(255,255,255,0.18)',
+          fontSize: 11, fontWeight: 700, letterSpacing: 3,
         }}>
           TALENTFORGE
         </div>
