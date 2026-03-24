@@ -45,8 +45,10 @@ interface Job {
   type: string;
   employment_type: string;
   work_modality?: string;
-  seniority_level?: string;
+  seniority?: string;
+  seniority_level?: string; // alias legacy
   is_remote?: boolean;
+  salary_range?: string;
   salary_min?: number;
   salary_max?: number;
   status: 'open' | 'on_hold' | 'closed';
@@ -353,7 +355,8 @@ export default function JobsPage() {
             location: bannerJob.location ?? null,
             employment_type: bannerJob.employment_type ?? null,
             work_modality: bannerJob.work_modality ?? null,
-            seniority_level: bannerJob.seniority_level ?? null,
+            seniority: bannerJob.seniority ?? bannerJob.seniority_level ?? null,
+            salary_range: bannerJob.salary_range ?? null,
             salary_min: bannerJob.salary_min ?? null,
             salary_max: bannerJob.salary_max ?? null,
           }, orgBannerData);
@@ -1032,7 +1035,8 @@ export default function JobsPage() {
               location: bannerJob?.location ?? null,
               employment_type: bannerJob?.employment_type ?? null,
               work_modality: bannerJob?.work_modality ?? null,
-              seniority_level: bannerJob?.seniority_level ?? null,
+              seniority: bannerJob?.seniority ?? bannerJob?.seniority_level ?? null,
+              salary_range: bannerJob?.salary_range ?? null,
               salary_min: bannerJob?.salary_min ?? null,
               salary_max: bannerJob?.salary_max ?? null,
             }}
