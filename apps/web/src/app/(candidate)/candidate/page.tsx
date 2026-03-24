@@ -9,6 +9,7 @@ import { createClient } from '@/lib/supabase/client';
 import ColorTestModal from '@/components/candidate/ColorTestModal';
 import PiTestModal from '@/components/candidate/PiTestModal';
 import DiscTestModal from '@/components/candidate/DiscTestModal';
+import ItTestModal from '@/components/candidate/ItTestModal';
 import CropAvatarModal from '@/components/candidate/CropAvatarModal';
 
 const AssessmentRadarChart = dynamic(
@@ -90,9 +91,10 @@ export default function CandidateDashboard() {
   const [activeTestModal, setActiveTestModal] = useState<'disc' | 'color-test' | 'pi-test' | null>(null);
 
   // IT Test
-  const [itTest, setItTest] = useState<{ nivel: string; link: string } | null>(null);
+  const [itTest, setItTest] = useState<{ nivel: string; link: string; token: string } | null>(null);
   const [itTestResult, setItTestResult] = useState<{ score: number; total_questions: number; correct_answers: number } | null>(null);
   const [itTestLoading, setItTestLoading] = useState(true);
+  const [itTestModalOpen, setItTestModalOpen] = useState(false);
 
   // Dashboard — dados reais
   const [dashStats, setDashStats] = useState({ total: 0, active: 0, hired: 0, completion: 0 });
@@ -372,7 +374,7 @@ export default function CandidateDashboard() {
 
         const data = await res.json();
         if (data.assignment) {
-          setItTest({ nivel: data.assignment.nivel, link: data.assignment.link });
+          setItTest({ nivel: data.assignment.nivel, link: data.assignment.link, token: data.assignment.token });
         }
         if (data.result) {
           setItTestResult(data.result);
@@ -733,7 +735,16 @@ export default function CandidateDashboard() {
                   ✓ Concluído
                 </span>
               </div>
+            ) : itTest.nivel === 'junior' ? (
+              // Junior: abre modal inline (igual DISC/Cores/PI)
+              <button
+                onClick={() => setItTestModalOpen(true)}
+                className="inline-flex items-center gap-2 bg-[#10B981] hover:bg-[#0EA271] text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors shrink-0"
+              >
+                Fazer agora →
+              </button>
             ) : (
+              // Pleno/Senior: link externo ativado pelo recrutador
               <a
                 href={itTest.link}
                 target="_self"
@@ -746,10 +757,39 @@ export default function CandidateDashboard() {
 
           {!itTestResult && (
             <p className="mt-3 text-[13px] text-[#666] leading-snug">
-              Você tem um teste de informática pendente. Complete-o para melhorar seu perfil e destacar-se para recrutadores.
+              {itTest.nivel === 'junior'
+                ? 'Responda o teste de informática para destacar seus conhecimentos técnicos.'
+                : 'O recrutador ativou um teste de informática para você. Complete-o para avançar no processo.'}
             </p>
           )}
         </div>
+      )}
+
+      {/* Modal inline do IT Test */}
+      {itTestModalOpen && itTest && (
+        <ItTestModal
+          token={itTest.token}
+          nivel={itTest.nivel}
+          onClose={(completed) => {
+            setItTestModalOpen(false);
+            if (completed) {
+              // Recarrega o resultado
+              (async () => {
+                try {
+                  const supabase = createClient();
+                  const { data: { session } } = await supabase.auth.getSession();
+                  if (!session?.access_token) return;
+                  const res = await fetch('/api/candidate/it-test', {
+                    headers: { Authorization: `Bearer ${session.access_token}` },
+                  });
+                  if (!res.ok) return;
+                  const data = await res.json();
+                  if (data.result) setItTestResult(data.result);
+                } catch { /* silencioso */ }
+              })();
+            }
+          }}
+        />
       )}
 
       {/* ══ Modal de detalhe dos perfis comportamentais ══ */}

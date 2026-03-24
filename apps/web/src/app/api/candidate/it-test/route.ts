@@ -80,6 +80,7 @@ async function fetchAssignment(sb: ReturnType<typeof adminClient>, candidateId: 
       id:          assignment.id,
       nivel:       assignment.nivel,
       assigned_at: assignment.assigned_at,
+      token:       assignment.token,
       link:        `${baseUrl}/it-test/${assignment.token}`,
     },
     result: result ?? null,
