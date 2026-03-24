@@ -45,21 +45,27 @@ function SettingsPageContent() {
     career_page_hero_font_color: '#ffffff',
     career_page_hero_text_align: 'right',
     career_page_hero_font_size: 'md',
+    career_page_hero_font_family: 'inter',
     career_page_about_font_color: '#374151',
     career_page_about_text_align: 'left',
     career_page_about_font_size: 'md',
+    career_page_about_font_family: 'inter',
     career_page_jobs_font_color: '#141042',
     career_page_jobs_text_align: 'left',
     career_page_jobs_font_size: 'md',
+    career_page_jobs_font_family: 'inter',
     career_page_talent_font_color: '#141042',
     career_page_talent_text_align: 'left',
     career_page_talent_font_size: 'md',
+    career_page_talent_font_family: 'inter',
     career_page_testimonials_font_color: '#141042',
     career_page_testimonials_text_align: 'center',
     career_page_testimonials_font_size: 'md',
+    career_page_testimonials_font_family: 'inter',
     career_page_process_font_color: '#141042',
     career_page_process_text_align: 'left',
     career_page_process_font_size: 'md',
+    career_page_process_font_family: 'inter',
   });
   const [orgSlug, setOrgSlug] = useState('');
   const [orgId, setOrgId] = useState<string | null>(null);
@@ -116,6 +122,17 @@ function SettingsPageContent() {
   useEffect(() => {
     loadGcalStatus();
   }, [loadGcalStatus]);
+
+  // Carrega Google Fonts para o preview de tipografia
+  useEffect(() => {
+    const href = 'https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&family=Roboto:wght@400;700&family=Montserrat:wght@400;700&family=Lato:wght@400;700&family=Raleway:wght@400;700&family=Nunito:wght@400;700&family=Playfair+Display:wght@400;700&family=Merriweather:wght@400;700&display=swap';
+    if (!document.querySelector(`link[href="${href}"]`)) {
+      const link = document.createElement('link');
+      link.rel = 'stylesheet';
+      link.href = href;
+      document.head.appendChild(link);
+    }
+  }, []);
 
   // Lê resultado do callback OAuth (?google=connected | ?google=error)
   useEffect(() => {
@@ -270,21 +287,27 @@ function SettingsPageContent() {
             career_page_hero_font_color: org.career_page_hero_font_color || '#ffffff',
             career_page_hero_text_align: org.career_page_hero_text_align || 'right',
             career_page_hero_font_size: org.career_page_hero_font_size || 'md',
+            career_page_hero_font_family: org.career_page_hero_font_family || 'inter',
             career_page_about_font_color: org.career_page_about_font_color || '#374151',
             career_page_about_text_align: org.career_page_about_text_align || 'left',
             career_page_about_font_size: org.career_page_about_font_size || 'md',
+            career_page_about_font_family: org.career_page_about_font_family || 'inter',
             career_page_jobs_font_color: org.career_page_jobs_font_color || '#141042',
             career_page_jobs_text_align: org.career_page_jobs_text_align || 'left',
             career_page_jobs_font_size: org.career_page_jobs_font_size || 'md',
+            career_page_jobs_font_family: org.career_page_jobs_font_family || 'inter',
             career_page_talent_font_color: org.career_page_talent_font_color || '#141042',
             career_page_talent_text_align: org.career_page_talent_text_align || 'left',
             career_page_talent_font_size: org.career_page_talent_font_size || 'md',
+            career_page_talent_font_family: org.career_page_talent_font_family || 'inter',
             career_page_testimonials_font_color: org.career_page_testimonials_font_color || '#141042',
             career_page_testimonials_text_align: org.career_page_testimonials_text_align || 'center',
             career_page_testimonials_font_size: org.career_page_testimonials_font_size || 'md',
+            career_page_testimonials_font_family: org.career_page_testimonials_font_family || 'inter',
             career_page_process_font_color: org.career_page_process_font_color || '#141042',
             career_page_process_text_align: org.career_page_process_text_align || 'left',
             career_page_process_font_size: org.career_page_process_font_size || 'md',
+            career_page_process_font_family: org.career_page_process_font_family || 'inter',
           });
           setOrgSlug(org.slug || '');
           setOrgId(membership.org_id);
@@ -1012,13 +1035,53 @@ function SettingsPageContent() {
                     { key: 'process',      label: 'Processo seletivo / Dicas' },
                   ] as const
                 ).map(({ key, label }) => {
-                  const colorKey  = `career_page_${key}_font_color`  as keyof typeof careerPage;
-                  const alignKey  = `career_page_${key}_text_align`  as keyof typeof careerPage;
-                  const sizeKey   = `career_page_${key}_font_size`   as keyof typeof careerPage;
+                  const colorKey  = `career_page_${key}_font_color`   as keyof typeof careerPage;
+                  const alignKey  = `career_page_${key}_text_align`   as keyof typeof careerPage;
+                  const sizeKey   = `career_page_${key}_font_size`    as keyof typeof careerPage;
+                  const familyKey = `career_page_${key}_font_family`  as keyof typeof careerPage;
+
+                  const FONT_OPTIONS = [
+                    { value: 'inter',     label: 'Inter',           css: 'Inter, sans-serif' },
+                    { value: 'poppins',   label: 'Poppins',         css: "'Poppins', sans-serif" },
+                    { value: 'roboto',    label: 'Roboto',          css: "'Roboto', sans-serif" },
+                    { value: 'montserrat',label: 'Montserrat',      css: "'Montserrat', sans-serif" },
+                    { value: 'lato',      label: 'Lato',            css: "'Lato', sans-serif" },
+                    { value: 'raleway',   label: 'Raleway',         css: "'Raleway', sans-serif" },
+                    { value: 'nunito',    label: 'Nunito',          css: "'Nunito', sans-serif" },
+                    { value: 'playfair',  label: 'Playfair Display',css: "'Playfair Display', serif" },
+                    { value: 'merriweather', label: 'Merriweather', css: "'Merriweather', serif" },
+                  ] as const;
+
                   return (
                     <div key={key} className="p-3 bg-[#FAFAF8] rounded-lg border border-[#E5E5DC]">
                       <p className="text-xs font-semibold text-[#666666] uppercase tracking-wide mb-3">{label}</p>
-                      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+
+                      {/* Linha 1: Fonte + Cor */}
+                      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 mb-3">
+                        {/* Família da fonte */}
+                        <div>
+                          <Label className="text-xs mb-1">Fonte</Label>
+                          <select
+                            value={careerPage[familyKey] as string}
+                            onChange={(e) => setCareerPage({ ...careerPage, [familyKey]: e.target.value })}
+                            className="w-full h-9 rounded-md border border-[#E5E5DC] bg-white px-3 text-sm text-[#141042] focus:outline-none focus:ring-2 focus:ring-[#141042]/20"
+                            style={{ fontFamily: FONT_OPTIONS.find(f => f.value === careerPage[familyKey])?.css }}
+                          >
+                            {FONT_OPTIONS.map((f) => (
+                              <option key={f.value} value={f.value} style={{ fontFamily: f.css }}>
+                                {f.label}
+                              </option>
+                            ))}
+                          </select>
+                          {/* Preview da fonte selecionada */}
+                          <p
+                            className="mt-1.5 text-base text-[#141042] truncate"
+                            style={{ fontFamily: FONT_OPTIONS.find(f => f.value === careerPage[familyKey])?.css }}
+                          >
+                            Talent Forge — Oportunidades
+                          </p>
+                        </div>
+
                         {/* Cor da fonte */}
                         <div>
                           <Label className="text-xs mb-1">Cor da fonte</Label>
@@ -1037,6 +1100,10 @@ function SettingsPageContent() {
                             />
                           </div>
                         </div>
+                      </div>
+
+                      {/* Linha 2: Alinhamento + Tamanho */}
+                      <div className="grid grid-cols-2 gap-3">
                         {/* Alinhamento */}
                         <div>
                           <Label className="text-xs mb-1">Alinhamento</Label>
