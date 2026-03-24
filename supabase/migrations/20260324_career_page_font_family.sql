@@ -82,3 +82,31 @@ WHERE
 
 -- RLS na view (herda da tabela base, mas garantimos acesso público)
 GRANT SELECT ON v_public_jobs TO anon, authenticated;
+
+-- ── Recriar funções RPC que dependem da view (derrubadas pelo CASCADE) ──
+CREATE OR REPLACE FUNCTION get_public_jobs_by_org(p_org_slug TEXT)
+RETURNS SETOF v_public_jobs
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  SELECT * FROM v_public_jobs WHERE org_slug = p_org_slug;
+$$;
+
+GRANT EXECUTE ON FUNCTION get_public_jobs_by_org(TEXT) TO anon;
+GRANT EXECUTE ON FUNCTION get_public_jobs_by_org(TEXT) TO authenticated;
+
+CREATE OR REPLACE FUNCTION get_all_public_jobs()
+RETURNS SETOF v_public_jobs
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  SELECT * FROM v_public_jobs ORDER BY created_at DESC;
+$$;
+
+GRANT EXECUTE ON FUNCTION get_all_public_jobs() TO anon;
+GRANT EXECUTE ON FUNCTION get_all_public_jobs() TO authenticated;
+
