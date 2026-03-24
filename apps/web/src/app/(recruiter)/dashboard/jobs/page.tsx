@@ -51,6 +51,9 @@ interface Job {
   salary_range?: string;
   salary_min?: number;
   salary_max?: number;
+  description?: string;
+  requirements?: string;
+  benefits?: string;
   status: 'open' | 'on_hold' | 'closed';
   application_deadline?: string;
   applications_count?: number;
@@ -359,6 +362,9 @@ export default function JobsPage() {
             salary_range: bannerJob.salary_range ?? null,
             salary_min: bannerJob.salary_min ?? null,
             salary_max: bannerJob.salary_max ?? null,
+            description: bannerJob.description ?? null,
+            requirements: bannerJob.requirements ?? null,
+            benefits: bannerJob.benefits ?? null,
           }, orgBannerData);
         }
       } finally {
@@ -1039,6 +1045,9 @@ export default function JobsPage() {
               salary_range: bannerJob?.salary_range ?? null,
               salary_min: bannerJob?.salary_min ?? null,
               salary_max: bannerJob?.salary_max ?? null,
+              description: bannerJob?.description ?? null,
+              requirements: bannerJob?.requirements ?? null,
+              benefits: bannerJob?.benefits ?? null,
             }}
             org={orgBannerData}
           />
