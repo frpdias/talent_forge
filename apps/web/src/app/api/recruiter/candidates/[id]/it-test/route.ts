@@ -39,33 +39,58 @@ export async function GET(
     .maybeSingle();
   if (!member) return NextResponse.json({ error: 'Acesso negado' }, { status: 403 });
 
-  // Buscar atribuição
-  const { data: assignment } = await sb
-    .from('it_test_assignments')
-    .select('id, nivel, token, assigned_at')
-    .eq('candidate_id', candidateId)
-    .eq('org_id', orgId)
+  // Resolver todos os IDs de candidato com o mesmo email (duplicatas)
+  // para garantir que achamos o assignment/resultado correto independente do ID da URL
+  const { data: candidateRow } = await sb
+    .from('candidates')
+    .select('id, email')
+    .eq('id', candidateId)
     .maybeSingle();
 
-  if (!assignment) {
+  const candidateIds = new Set<string>([candidateId]);
+
+  if (candidateRow?.email) {
+    const { data: dupes } = await sb
+      .from('candidates')
+      .select('id')
+      .ilike('email', candidateRow.email)
+      .limit(20);
+    (dupes ?? []).forEach((r) => candidateIds.add(r.id));
+  }
+
+  // Buscar TODAS as atribuições para estes candidatos na org
+  const { data: assignments } = await sb
+    .from('it_test_assignments')
+    .select('id, nivel, token, assigned_at, candidate_id')
+    .in('candidate_id', Array.from(candidateIds))
+    .eq('org_id', orgId)
+    .order('assigned_at', { ascending: false });
+
+  if (!assignments || assignments.length === 0) {
     return NextResponse.json({ assignment: null, result: null });
   }
 
-  // Buscar resultado (se houver)
-  const { data: result } = await sb
+  // Buscar resultados para todos os assignments encontrados
+  const assignmentIds = assignments.map((a) => a.id);
+  const { data: results } = await sb
     .from('it_test_results')
-    .select('score, total_questions, correct_answers, nivel, completed_at')
-    .eq('assignment_id', assignment.id)
-    .maybeSingle();
+    .select('assignment_id, score, total_questions, correct_answers, nivel, completed_at')
+    .in('assignment_id', assignmentIds);
+
+  // Priorizar assignment que TEM resultado; se nenhum, usar o mais recente
+  const resultMap = new Map((results ?? []).map((r) => [r.assignment_id, r]));
+  const assignmentWithResult = assignments.find((a) => resultMap.has(a.id));
+  const bestAssignment = assignmentWithResult ?? assignments[0];
+  const result = resultMap.get(bestAssignment.id) ?? null;
 
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://web-eight-rho-84.vercel.app';
 
   return NextResponse.json({
     assignment: {
-      id:          assignment.id,
-      nivel:       assignment.nivel,
-      assigned_at: assignment.assigned_at,
-      link:        `${baseUrl}/it-test/${assignment.token}`,
+      id:          bestAssignment.id,
+      nivel:       bestAssignment.nivel,
+      assigned_at: bestAssignment.assigned_at,
+      link:        `${baseUrl}/it-test/${bestAssignment.token}`,
     },
     result: result ?? null,
   });
