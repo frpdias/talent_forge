@@ -46,6 +46,7 @@ SELECT
   o.career_page_whatsapp_url,
   o.career_page_instagram_url,
   o.career_page_linkedin_url,
+  o.career_page_facebook_url,
   o.career_page_show_contact,
   -- Tipografia por seção — cor, alinhamento, tamanho
   o.career_page_hero_font_color,
