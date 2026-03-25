@@ -1,6 +1,6 @@
 # Arquitetura Canônica — TalentForge
 
-**Última atualização**: 2026-03-25 | **Score de Conformidade**: ✅ 100% (Sprint 61 — Módulo Teste de Informática + Integração Parecer IA + PDF + Divulgação de Empresa no Banner) | **Sprints planejados**: Sprint 41 (AI Assistant) + Sprint 44 (Gate Recrutamento)
+**Última atualização**: 2026-03-25 | **Score de Conformidade**: ✅ 100% (Sprint 62 — LLM Router: Ollama local para planos free + OpenAI para pro/enterprise) | **Sprints planejados**: Sprint 41 (AI Assistant) + Sprint 44 (Gate Recrutamento)
 
 ## 📜 FONTE DA VERDADE — PRINCÍPIO FUNDAMENTAL
 
@@ -281,6 +281,7 @@ PROJETO_TALENT_FORGE/
 │   │   └── 20260324_career_page_font_family.sql ✅ 6 colunas career_page_*_font_family em organizations (inter/poppins/roboto/montserrat/lato/raleway/nunito/playfair/merriweather); v_public_jobs + RPCs (get_public_jobs_by_org + get_all_public_jobs) recriados com facebook_url corrigido (Sprint 60)
 │   │   └── 20260325_it_test_module.sql ✅ Módulo Teste de Informática: tabelas it_test_questions + it_test_assignments + it_test_results + RLS (Sprint 61)
 │   │   └── 20260325_job_company_disclosure.sql ✅ Divulgação opcional da empresa na vaga: ADD COLUMN company_disclosed/company_name/company_logo_url em jobs; bucket job-logos (público, 2MB) com políticas RLS via is_org_member() (Sprint 61)
+│   │   └── 20260325_organizations_plan.sql ✅ Coluna `plan` em organizations: 'free' (Ollama local) | 'pro' | 'enterprise' (OpenAI GPT-4o) — DEFAULT 'free' (Sprint 62)
 │   ├── VALIDATE_IMPROVEMENTS.sql  # Script de validação
 │   └── README.md                  # Instruções de migrations
 │
@@ -1501,6 +1502,7 @@ organizations (
   industry TEXT,
   status TEXT CHECK (status IN ('active', 'inactive', 'pending', 'suspended')),
   plan_id TEXT,
+  plan TEXT NOT NULL DEFAULT 'free' CHECK (plan IN ('free', 'pro', 'enterprise')),  -- Roteamento de IA (Sprint 62)
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW(),
   
@@ -1525,6 +1527,7 @@ organizations (
 - **RLS:** ✅ ATIVADO com 5 policies (ver seção de segurança)
 - **Migration Campos Corporativos:** `20260204_organization_corporate_fields.sql`
 - **Migration org_type:** `20260310_organizations_org_type.sql` — separa empresas-clientes (`company`) de agências/headhunters (`recruiter`). Admin UI em `/admin/companies` exibe dois blocos separados.
+- **Migration plan:** `20260325_organizations_plan.sql` — coluna `plan` ('free'|'pro'|'enterprise') usada pelo LLM Router para rotear chamadas de IA (Ollama vs OpenAI).
 
 ##### 2. **org_members** - Membros de Organizações
 ```sql
@@ -8547,6 +8550,7 @@ CREATE TABLE job_alerts (
 | **Sprint 59** | **2026-03-24** | **Banner social para vagas — `JobSocialBanner` (1080×1350px), PNG via html2canvas + PDF via jsPDF com links clicáveis, `data-pdf-link` + `getBoundingClientRect()`, descrição/requisitos/benefícios no banner, fix race condition (useEffect + banner sempre montado), botão "Compartilhar" em `/dashboard/jobs`** | ✅ |
 | **Sprint 60** | **2026-03-24** | **Tipografia avançada na career page — seletor de família de fonte (9 opções) por seção em `/dashboard/settings` com preview visual via Google Fonts; modal de prévia do banner 45% escalado em `/dashboard/jobs` antes de baixar (botões PNG/PDF dentro do modal); fix `career_page_facebook_url` omitido no `DROP VIEW … CASCADE`; RPCs `get_public_jobs_by_org` + `get_all_public_jobs` sempre recriadas após CASCADE** | ✅ |
 | **Sprint 61** | **2026-03-25** | **Módulo Teste de Informática — 3 níveis (Júnior/Pleno/Sênior), 131 questões (39+44+48) por categoria; Júnior automático; Pleno/Sênior ativado pelo recrutador; modal inline ou link externo; acesso por token público em `/it-test/[token]`; resultado integrado no `score_testes` do parecer técnico com IA (peso proporcional, até 15 pts, cross-org lookup por e-mail); seção visual no PDF (círculo score + barra progresso); `{{informatica}}` no DEFAULT_REVIEW_PROMPT; cleanup de candidatos duplicados (Julia)** | ✅ |
+| **Sprint 62** | **2026-03-25** | **LLM Router — `organizations.plan` ('free'\|'pro'\|'enterprise'); `apps/web/src/lib/llm-router.ts` roteia: free → Ollama local (gemma3:4b via Cloudflare Tunnel, env `OLLAMA_BASE_URL`+`OLLAMA_MODEL`), pro/enterprise → OpenAI GPT-4o; `technical-review/route.ts` usa router; `ai_model` salvo para auditoria; Módulo PHP sempre em OpenAI (premium-only)** | ✅ |
 
 ### Regras Canônicas — Portal Candidato
 
@@ -9347,6 +9351,77 @@ node scripts/import-it-test-questions.js ./caminho/para/Teste_de_Informatica.csv
 | `672e78a` | feat(it-test): ItTestModal — Júnior inline; Pleno/Sênior → link externo |
 | `8f04b0b` | fix(it-test): `.limit(1)` no lookup de candidato para evitar erro `.maybeSingle()` com duplicatas |
 | `914a8ec` | feat(it-test): redesign ItTestModal — dialog centralizado, overlay blur, auto-advance, paletas de cores, tela de resultado |
+
+---
+
+## 31) LLM Router — Ollama + OpenAI (Sprint 62, 2026-03-25)
+
+### Objetivo
+
+Roteamento dinâmico de chamadas de IA com base no plano da organização, eliminando dependência exclusiva de OpenAI e reduzindo custo operacional para planos gratuitos.
+
+### Arquitetura
+
+```
+organizations.plan
+  'free'                     → Ollama (Mac Mini local via Cloudflare Tunnel)
+  'pro' | 'enterprise'       → OpenAI GPT-4o
+```
+
+### Arquivo principal
+
+**`apps/web/src/lib/llm-router.ts`**
+
+```ts
+export type OrgPlan = 'free' | 'pro' | 'enterprise';
+
+export async function callLLM(params: {
+  orgPlan: OrgPlan;
+  messages: LLMMessage[];
+  maxTokens?: number;
+  temperature?: number;
+}): Promise<LLMResult>
+// LLMResult: { text, model, provider }
+```
+
+Usa o SDK OpenAI apontando `baseURL` para o Ollama (API 100% compatível):
+```ts
+// free → Ollama
+new OpenAI({ baseURL: `${OLLAMA_BASE_URL}/v1`, apiKey: 'ollama' })
+
+// pro/enterprise → OpenAI padrão
+new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
+```
+
+### Variáveis de ambiente
+
+| Var | Descrição | Exemplo |
+|-----|-----------|---------|
+| `OLLAMA_BASE_URL` | URL pública do Ollama via Cloudflare Tunnel | `https://xxxx.trycloudflare.com` |
+| `OLLAMA_MODEL` | Modelo padrão para planos free | `gemma3:4b` |
+| `OPENAI_API_KEY` | Chave OpenAI (pro/enterprise) | `sk-...` |
+
+> **⚠️ ATENÇÃO:** A URL do Cloudflare Tunnel temporário muda a cada reinicialização. Para produção, usar Named Tunnel permanente: `cloudflared tunnel create talentforge-ollama`.
+
+### Regra de escopo
+
+- **Parecer Técnico** (`/api/recruiter/candidates/[id]/technical-review`): usa `callLLM()` — roteado pelo plano
+- **Módulo PHP** (`apps/api/src/php/ai/ai-enhanced.service.ts`): sempre OpenAI (PHP é premium-only, não rotear)
+
+### Schema adicionado (Sprint 62)
+
+```sql
+-- supabase/migrations/20260325_organizations_plan.sql
+ALTER TABLE organizations
+  ADD COLUMN plan TEXT NOT NULL DEFAULT 'free'
+  CHECK (plan IN ('free', 'pro', 'enterprise'));
+```
+
+### Commits Sprint 62
+
+| Commit | Descrição |
+|--------|----------|
+| `7321f5f` | feat(ia): LLM Router — Ollama (free/gemma3:4b) + OpenAI (pro/enterprise) via organizations.plan |
 | `5d8b787` | feat(it-test): resultado IT test na aba Testes da página detalhe do candidato — rota GET `/api/recruiter/candidates/[id]/it-test` + card com score/progress bar |
 | `ad9d084` | fix(it-test): lookup cross-org v1 — busca por e-mail para encontrar resultado em candidatos duplicados |
 | `3c1bd89` | fix(it-test): lookup cross-org v2 — split em duas queries: assignment da org do recrutador (link) + resultado de qualquer assignment |
