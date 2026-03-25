@@ -51,8 +51,8 @@ const SENIORITY_LABELS: Record<string, string> = {
 function parseList(text: string | null, max = 5): string[] {
   if (!text?.trim()) return [];
   const byLine = text.split(/\n+/).map(l => l.replace(/^[-•*]\s*/, '').trim()).filter(Boolean);
-  if (byLine.length > 1) return byLine.slice(0, max);
-  return text.split(/[;,]+/).map(l => l.trim()).filter(Boolean).slice(0, max);
+  const items = byLine.length > 1 ? byLine : text.split(/[;,]+/).map(l => l.trim()).filter(Boolean);
+  return items.slice(0, max).map(item => truncate(item, 250));
 }
 
 function truncate(text: string | null, max: number): string {
