@@ -26,9 +26,7 @@ export interface LLMResult {
 
 // ─── Configuração dos modelos ─────────────────────────────────────────────────
 
-const OPENAI_MODEL  = 'gpt-4o';
-const OLLAMA_MODEL  = process.env.OLLAMA_MODEL ?? 'gemma3:4b';
-const OLLAMA_URL    = process.env.OLLAMA_BASE_URL; // URL pública via Cloudflare Tunnel
+const OPENAI_MODEL = 'gpt-4o';
 
 // ─── Função principal ─────────────────────────────────────────────────────────
 
@@ -40,10 +38,14 @@ export async function callLLM(params: {
 }): Promise<LLMResult> {
   const { orgPlan, messages, maxTokens = 1500, temperature = 0.7 } = params;
 
-  const useOllama = orgPlan === 'free' && !!OLLAMA_URL;
+  // Leitura dentro da função para evitar análise estática do Next.js no build
+  const ollamaUrl   = process.env.OLLAMA_BASE_URL;
+  const ollamaModel = process.env.OLLAMA_MODEL ?? 'gemma3:4b';
+
+  const useOllama = orgPlan === 'free' && !!ollamaUrl;
 
   if (useOllama) {
-    return callOllama(messages, maxTokens, temperature);
+    return callOllama(messages, maxTokens, temperature, ollamaUrl!, ollamaModel);
   } else {
     return callOpenAI(messages, maxTokens, temperature);
   }
@@ -55,19 +57,17 @@ async function callOllama(
   messages: LLMMessage[],
   maxTokens: number,
   temperature: number,
+  ollamaUrl: string,
+  ollamaModel: string,
 ): Promise<LLMResult> {
-  if (!OLLAMA_URL) {
-    throw new Error('OLLAMA_BASE_URL não configurada. Configure o Cloudflare Tunnel.');
-  }
-
   // O SDK OpenAI funciona nativamente com Ollama apontando o baseURL
   const client = new OpenAI({
-    baseURL: `${OLLAMA_URL}/v1`,
+    baseURL: `${ollamaUrl}/v1`,
     apiKey:  'ollama', // Ollama não valida a key, mas o SDK exige algo
   });
 
   const completion = await client.chat.completions.create({
-    model:       OLLAMA_MODEL,
+    model:       ollamaModel,
     messages,
     max_tokens:  maxTokens,
     temperature,
@@ -76,7 +76,7 @@ async function callOllama(
   const text = completion.choices[0]?.message?.content ?? '';
   return {
     text,
-    model:    `ollama/${OLLAMA_MODEL}`,
+    model:    `ollama/${ollamaModel}`,
     provider: 'ollama',
   };
 }
