@@ -141,9 +141,11 @@ export function EditJobDrawer({ jobId, isOpen, onClose, onSaved }: EditJobDrawer
       // Upload logo se houver novo arquivo
       let logoUrl = formData.company_logo_url;
       if (formData.company_disclosed && logoFile) {
-        const { data: { user } } = await supabase.auth.getUser();
+        // Busca org_id da vaga para construir path compatível com is_org_member()
+        const { data: jobOrg } = await supabase.from('jobs').select('org_id').eq('id', jobId).single();
+        const orgId = jobOrg?.org_id ?? jobId;
         const ext = logoFile.name.split('.').pop();
-        const path = `${jobId}/${Date.now()}.${ext}`;
+        const path = `${orgId}/${Date.now()}.${ext}`;
         const { error: uploadError } = await supabase.storage
           .from('job-logos')
           .upload(path, logoFile, { upsert: true });

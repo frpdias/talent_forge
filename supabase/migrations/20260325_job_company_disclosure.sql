@@ -21,20 +21,35 @@ VALUES (
 )
 ON CONFLICT (id) DO NOTHING;
 
--- Política: qualquer autenticado pode fazer upload
-CREATE POLICY "Authenticated can upload job logos"
+-- Política: upload restrito a membros da org (path: job-logos/[orgId]/...)
+CREATE POLICY "job-logos authenticated upload"
   ON storage.objects FOR INSERT
   TO authenticated
-  WITH CHECK (bucket_id = 'job-logos');
+  WITH CHECK (
+    bucket_id = 'job-logos'
+    AND auth.uid() IS NOT NULL
+    AND is_org_member((storage.foldername(name))[1]::UUID)
+  );
 
--- Política: qualquer autenticado pode atualizar sua logo
-CREATE POLICY "Authenticated can update job logos"
+-- Política: update restrito a membros da org
+CREATE POLICY "job-logos authenticated update"
   ON storage.objects FOR UPDATE
   TO authenticated
-  USING (bucket_id = 'job-logos');
+  USING (
+    bucket_id = 'job-logos'
+    AND is_org_member((storage.foldername(name))[1]::UUID)
+  );
 
--- Política: leitura pública
-CREATE POLICY "Public read job logos"
+-- Política: delete restrito a membros da org
+CREATE POLICY "job-logos authenticated delete"
+  ON storage.objects FOR DELETE
+  TO authenticated
+  USING (
+    bucket_id = 'job-logos'
+    AND is_org_member((storage.foldername(name))[1]::UUID)
+  );
+
+-- Política: leitura pública (bucket público)
+CREATE POLICY "job-logos public read"
   ON storage.objects FOR SELECT
-  TO public
   USING (bucket_id = 'job-logos');

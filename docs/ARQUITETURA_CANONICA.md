@@ -280,6 +280,7 @@ PROJETO_TALENT_FORGE/
 │   │   ├── 20260321_career_page_facebook.sql ✅ career_page_facebook_url em organizations; v_public_jobs + RPCs recriados (Sprint 58)
 │   │   └── 20260324_career_page_font_family.sql ✅ 6 colunas career_page_*_font_family em organizations (inter/poppins/roboto/montserrat/lato/raleway/nunito/playfair/merriweather); v_public_jobs + RPCs (get_public_jobs_by_org + get_all_public_jobs) recriados com facebook_url corrigido (Sprint 60)
 │   │   └── 20260325_it_test_module.sql ✅ Módulo Teste de Informática: tabelas it_test_questions + it_test_assignments + it_test_results + RLS (Sprint 61)
+│   │   └── 20260325_job_company_disclosure.sql ✅ Divulgação opcional da empresa na vaga: ADD COLUMN company_disclosed/company_name/company_logo_url em jobs; bucket job-logos (público, 2MB) com políticas RLS via is_org_member() (Sprint 61)
 │   ├── VALIDATE_IMPROVEMENTS.sql  # Script de validação
 │   └── README.md                  # Instruções de migrations
 │
@@ -1575,9 +1576,15 @@ jobs (
   title TEXT NOT NULL,
   description TEXT,
   requirements TEXT,
+  benefits TEXT,
   location TEXT,
   employment_type TEXT CHECK (employment_type IN ('full_time', 'part_time', 'contract', 'internship')),
   status TEXT CHECK (status IN ('open', 'on_hold', 'closed')),
+  is_public BOOLEAN DEFAULT false,
+  application_deadline DATE,
+  company_disclosed BOOLEAN NOT NULL DEFAULT false,  -- Empresa revelada publicamente?
+  company_name TEXT,                                 -- Nome da empresa (quando company_disclosed=true)
+  company_logo_url TEXT,                             -- URL logo empresa no bucket job-logos (quando company_disclosed=true)
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 )
@@ -1588,6 +1595,7 @@ jobs (
 - **Índices:** PRIMARY KEY (id), INDEX (org_id), INDEX (status), INDEX (created_at)
 - **Importância:** Tabela CENTRAL para conectar candidatos com organizações
 - **RLS:** Membros da org podem ver/editar
+- **Nota:** `company_disclosed=false` = vaga sigilosa (exibe org padrão no banner); `=true` = exibe company_name + company_logo_url
 
 ##### 5. **pipeline_stages** - Estágios do Pipeline de Contratação
 ```sql
