@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/client';
 import { API_V1_URL } from '@/lib/api-config';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { toast } from 'sonner';
+import { OllamaMonitorCard } from '@/components/admin/OllamaMonitorCard';
 
 interface ApiKey {
   id: string;
@@ -178,6 +179,9 @@ export default function ApiKeysPage() {
           <p className="text-sm text-[#666666]">Revogadas</p>
         </div>
       </div>
+
+      {/* Ollama Monitor */}
+      <OllamaMonitorCard />
 
       {/* Search */}
       <div className="relative">
