@@ -48,6 +48,11 @@ export class AiEnhancedService {
   private readonly COST_PER_1K_OUTPUT_TOKENS = 0.06;
 
   constructor(private readonly configService: ConfigService) {
+    // ⚠️ ROTEAMENTO DE IA (Sprint 62):
+    // O Módulo PHP é exclusivo de planos pro/enterprise → sempre usa OpenAI GPT-4o.
+    // O roteamento Ollama (planos free) ocorre no layer Next.js (apps/web/src/lib/llm-router.ts)
+    // via endpoint /api/recruiter/candidates/[id]/technical-review.
+
     // Initialize Supabase client
     const supabaseUrl = this.configService.get<string>('SUPABASE_URL');
     const supabaseKey = this.configService.get<string>('SUPABASE_SERVICE_ROLE_KEY');

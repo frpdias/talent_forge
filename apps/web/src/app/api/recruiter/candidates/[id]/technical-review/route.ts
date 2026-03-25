@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import OpenAI from 'openai';
+import { callLLM, type OrgPlan } from '@/lib/llm-router';
 import { DEFAULT_REVIEW_PROMPT } from '@/lib/defaults';
 
 function createAdminClient() {
@@ -99,7 +99,15 @@ export async function POST(
       return NextResponse.json({ error: 'Acesso negado' }, { status: 403 });
     }
 
-    // 2.5 Buscar prompt customizado do recrutador (ou usar padrão)
+    // 2.5 Buscar plano da organização (define qual provider de IA usar)
+    const { data: orgData } = await supabase
+      .from('organizations')
+      .select('plan')
+      .eq('id', orgId)
+      .maybeSingle();
+    const orgPlan: OrgPlan = (orgData?.plan as OrgPlan) ?? 'free';
+
+    // 2.6 Buscar prompt customizado do recrutador (ou usar padrão)
     const { data: recruiterSettings } = await supabase
       .from('recruiter_settings')
       .select('review_prompt')
@@ -319,68 +327,67 @@ export async function POST(
     // 10. Gerar parecer com IA
     let aiReview = '';
     let recruiterRating = 7; // será sobrescrito pela IA
-    const openaiKey = process.env.OPENAI_API_KEY;
+    let aiModel = 'none';
 
-    if (openaiKey) {
-      const openai = new OpenAI({ apiKey: openaiKey });
+    const grauMap: Record<string, string> = {
+      doutorado: 'Doutorado', mestrado: 'Mestrado', mba: 'MBA',
+      pos_graduacao: 'Pós-Graduação', graduacao: 'Graduação',
+      tecnico: 'Técnico', ensino_medio: 'Ensino Médio', ensino_fundamental: 'Ensino Fundamental',
+    };
 
-      const grauMap: Record<string, string> = {
-        doutorado: 'Doutorado', mestrado: 'Mestrado', mba: 'MBA',
-        pos_graduacao: 'Pós-Graduação', graduacao: 'Graduação',
-        tecnico: 'Técnico', ensino_medio: 'Ensino Médio', ensino_fundamental: 'Ensino Fundamental',
-      };
+    const discSummary = discResult
+      ? `DISC: D=${discResult.D}%, I=${discResult.I}%, S=${discResult.S}%, C=${discResult.C}% (Perfil: ${discResult.profile})`
+      : 'Não realizado';
+    const colorSummary = colorResult
+      ? `Cor primária: ${colorResult.primary_color}, secundária: ${colorResult.secondary_color}`
+      : 'Não realizado';
+    const piSummary = piResult
+      ? `Natural: ${JSON.stringify(piResult.natural)}`
+      : 'Não realizado';
+    const expSummary = experiences.map((e: any) =>
+      `- ${e.job_title} @ ${e.company_name}${e.is_current ? ' (atual)' : ''}`
+    ).join('\n') || 'Sem experiências cadastradas';
+    const eduSummary = educations.map((e: any) =>
+      `- ${grauMap[e.degree_level] ?? e.degree_level} em ${e.course_name} — ${e.institution}`
+    ).join('\n') || 'Sem formação cadastrada';
+    const notesSummary = (notes ?? []).length > 0
+      ? (notes ?? []).map((n: any) => `• ${n.note}`).join('\n')
+      : 'Sem anotações do recrutador';
 
-      const discSummary = discResult
-        ? `DISC: D=${discResult.D}%, I=${discResult.I}%, S=${discResult.S}%, C=${discResult.C}% (Perfil: ${discResult.profile})`
-        : 'Não realizado';
-      const colorSummary = colorResult
-        ? `Cor primária: ${colorResult.primary_color}, secundária: ${colorResult.secondary_color}`
-        : 'Não realizado';
-      const piSummary = piResult
-        ? `Natural: ${JSON.stringify(piResult.natural)}`
-        : 'Não realizado';
-      const expSummary = experiences.map((e: any) =>
-        `- ${e.job_title} @ ${e.company_name}${e.is_current ? ' (atual)' : ''}`
-      ).join('\n') || 'Sem experiências cadastradas';
-      const eduSummary = educations.map((e: any) =>
-        `- ${grauMap[e.degree_level] ?? e.degree_level} em ${e.course_name} — ${e.institution}`
-      ).join('\n') || 'Sem formação cadastrada';
-      const notesSummary = (notes ?? []).length > 0
-        ? (notes ?? []).map((n: any) => `• ${n.note}`).join('\n')
-        : 'Sem anotações do recrutador';
+    const prompt = fillPrompt(promptTemplate, {
+      nome: candidate.full_name,
+      cargo: candidate.current_title ?? 'Não informado',
+      localizacao: candidate.location ?? 'Não informada',
+      formacao: eduSummary,
+      anos_experiencia: String(experienceYears),
+      experiencias: expSummary,
+      disc: discSummary,
+      cores: colorSummary,
+      pi: piSummary,
+      informatica: itTestResult
+        ? `Score: ${Number(itTestResult.score).toFixed(0)}% (${itTestResult.correct_answers}/${itTestResult.total_questions} questões corretas — nível ${{ junior: 'Júnior', pleno: 'Pleno', senior: 'Sênior' }[itTestResult.nivel as string] ?? itTestResult.nivel})`
+        : 'Não realizado',
+      anotacoes: notesSummary,
+      contexto_recrutador: recruiterNote ? `Contexto adicional do recrutador: ${recruiterNote}` : '',
+      score_testes: String(scoreTestes),
+      score_experiencia: String(scoreExperiencia),
+      vagas: vagasSummary,
+    });
 
-      const prompt = fillPrompt(promptTemplate, {
-        nome: candidate.full_name,
-        cargo: candidate.current_title ?? 'Não informado',
-        localizacao: candidate.location ?? 'Não informada',
-        formacao: eduSummary,
-        anos_experiencia: String(experienceYears),
-        experiencias: expSummary,
-        disc: discSummary,
-        cores: colorSummary,
-        pi: piSummary,
-        informatica: itTestResult
-          ? `Score: ${Number(itTestResult.score).toFixed(0)}% (${itTestResult.correct_answers}/${itTestResult.total_questions} questões corretas — nível ${{ junior: 'Júnior', pleno: 'Pleno', senior: 'Sênior' }[itTestResult.nivel as string] ?? itTestResult.nivel})`
-          : 'Não realizado',
-        anotacoes: notesSummary,
-        contexto_recrutador: recruiterNote ? `Contexto adicional do recrutador: ${recruiterNote}` : '',
-        score_testes: String(scoreTestes),
-        score_experiencia: String(scoreExperiencia),
-        vagas: vagasSummary,
-      });
-
-      const completion = await openai.chat.completions.create({
-        model: 'gpt-4o',
+    try {
+      // LLM Router: free → Ollama (gemma3:4b local), pro/enterprise → OpenAI GPT-4o
+      const llmResult = await callLLM({
+        orgPlan,
         messages: [{ role: 'user', content: prompt }],
-        max_tokens: 1500,
+        maxTokens: 1500,
         temperature: 0.7,
       });
-
-      const rawText = completion.choices[0]?.message?.content ?? '';
-      recruiterRating = parseRecruiterRating(rawText);
-      aiReview = stripRatingLine(rawText);
-    } else {
-      aiReview = `## Parecer Técnico — Gerado sem IA\n\n**Atenção:** OPENAI_API_KEY não configurada. Configure a variável de ambiente para habilitar a geração automática de pareceres.\n\n**Scores calculados:**\n- Testes: ${scoreTestes}/100\n- Experiência: ${scoreExperiencia}/100`;
+      aiModel = llmResult.model;
+      recruiterRating = parseRecruiterRating(llmResult.text);
+      aiReview = stripRatingLine(llmResult.text);
+    } catch (llmErr: any) {
+      console.error('[technical-review] LLM error:', llmErr.message);
+      aiReview = `## Parecer Técnico — Erro na geração\n\n**Atenção:** Não foi possível gerar o parecer automático (${llmErr.message}).\n\n**Scores calculados:**\n- Testes: ${scoreTestes}/100\n- Experiência: ${scoreExperiencia}/100`;
       recruiterRating = 7;
     }
 
@@ -408,7 +415,7 @@ export async function POST(
         recruiter_rating: recruiterRating,
         recruiter_note: recruiterNote || null,
         ai_review: aiReview,
-        ai_model: openaiKey ? 'gpt-4o' : 'none',
+        ai_model: aiModel,
         input_snapshot: inputSnapshot,
       })
       .select()
