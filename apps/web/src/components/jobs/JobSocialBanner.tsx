@@ -110,13 +110,16 @@ export const JobSocialBanner = forwardRef<HTMLDivElement, { job: JobBannerData; 
   ({ job, org }, ref) => {
     const primary   = org.career_page_color           || '#141042';
     const secondary = org.career_page_secondary_color || '#10B981';
-    // Se a vaga tem empresa revelada, usar os dados da empresa; caso contrário, usa org
-    const displayName  = (job.company_disclosed && job.company_name) ? job.company_name : org.name;
-    const displayLogo  = (job.company_disclosed && job.company_logo_url)
+
+    // Empresa revelada → usa dados da empresa; confidencial → oculta identidade no banner
+    const isConfidential = !job.company_disclosed;
+    const displayName    = (!isConfidential && job.company_name) ? job.company_name : org.name;
+    const displayLogo    = (!isConfidential && job.company_logo_url)
       ? job.company_logo_url
       : (org.career_page_logo_url || org.logo_url);
-    const logoUrl   = displayLogo;
-    const jobUrl    = `https://talentforge.com.br/jobs/${org.slug}`;
+    // Quando confidencial, não exibir logo da org (preserva sigilo)
+    const logoUrl = isConfidential ? null : displayLogo;
+    const jobUrl  = `https://talentforge.com.br/jobs/${org.slug}`;
 
     // ── Tags enriquecidas (ícone + texto) ──
     const tags: Array<{ emoji: string; text: string; highlight?: boolean }> = [];
@@ -217,8 +220,22 @@ export const JobSocialBanner = forwardRef<HTMLDivElement, { job: JobBannerData; 
           {/* ── Bloco esquerdo: logo + dados da empresa ── */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 28, flex: 1, minWidth: 0 }}>
 
-            {/* Logo — sem card, apenas a imagem flutuante */}
-            {logoUrl ? (
+            {/* Logo / placeholder confidencial */}
+            {isConfidential ? (
+              /* Ícone de cadeado — empresa em sigilo */
+              <div style={{
+                width: 96, height: 96, borderRadius: 20, flexShrink: 0,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                background: 'rgba(255,255,255,0.08)',
+                border: '2px solid rgba(255,255,255,0.18)',
+              }}>
+                {/* cadeado SVG */}
+                <svg viewBox="0 0 24 24" width={44} height={44} fill="none" stroke="rgba(255,255,255,0.55)" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="3" y="11" width="18" height="11" rx="2" />
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                </svg>
+              </div>
+            ) : logoUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={logoUrl} alt={displayName} crossOrigin="anonymous"
@@ -241,14 +258,45 @@ export const JobSocialBanner = forwardRef<HTMLDivElement, { job: JobBannerData; 
               </div>
             )}
 
-            {/* Nome da empresa — flex:1 para ocupar espaço restante sem cortar */}
-            <div style={{
-              color: '#fff', fontSize: 34, fontWeight: 800,
-              lineHeight: 1.1, letterSpacing: -0.5,
-              flex: 1, minWidth: 0,
-              wordBreak: 'break-word',
-            }}>
-              {displayName}
+            {/* Nome / status de divulgação */}
+            <div style={{ flex: 1, minWidth: 0 }}>
+              {isConfidential ? (
+                /* Badge confidencial */
+                <div style={{ display: 'inline-flex', alignItems: 'center', gap: 10 }}>
+                  <span style={{
+                    color: 'rgba(255,255,255,0.45)',
+                    fontSize: 28, fontWeight: 700,
+                    letterSpacing: 2, textTransform: 'uppercase',
+                  }}>
+                    Empresa Confidencial
+                  </span>
+                </div>
+              ) : (
+                /* Nome + badge verde "Empresa revelada" */
+                <div>
+                  <div style={{
+                    color: '#fff', fontSize: 34, fontWeight: 800,
+                    lineHeight: 1.1, letterSpacing: -0.5,
+                    wordBreak: 'break-word',
+                  }}>
+                    {displayName}
+                  </div>
+                  <div style={{
+                    display: 'inline-flex', alignItems: 'center', gap: 6,
+                    marginTop: 8,
+                    backgroundColor: `${secondary}22`,
+                    border: `1.5px solid ${secondary}66`,
+                    borderRadius: 20, padding: '3px 12px',
+                  }}>
+                    <svg viewBox="0 0 24 24" width={13} height={13} fill="none" stroke={secondary} strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                    <span style={{ color: secondary, fontSize: 12, fontWeight: 700, letterSpacing: 1, textTransform: 'uppercase' }}>
+                      Empresa revelada
+                    </span>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
