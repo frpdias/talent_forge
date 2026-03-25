@@ -115,9 +115,16 @@ export function EditJobDrawer({ jobId, isOpen, onClose, onSaved }: EditJobDrawer
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
+  const MAX_LOGO_SIZE = 2 * 1024 * 1024; // 2MB
+
   const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    if (file.size > MAX_LOGO_SIZE) {
+      toast.error(`A logo deve ter no máximo 2MB. O arquivo selecionado tem ${(file.size / 1024 / 1024).toFixed(1)}MB.`);
+      if (logoInputRef.current) logoInputRef.current.value = '';
+      return;
+    }
     setLogoFile(file);
     const reader = new FileReader();
     reader.onload = () => setLogoPreview(reader.result as string);
