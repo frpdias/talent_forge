@@ -1,12 +1,13 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Key, Plus, Copy, Trash2, Eye, EyeOff, Search, Calendar, Check, X, AlertCircle } from 'lucide-react';
+import { Key, Plus, Copy, Trash2, Eye, EyeOff, Search, Calendar, Check, X, AlertCircle, Globe } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { API_V1_URL } from '@/lib/api-config';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { toast } from 'sonner';
 import { OllamaMonitorCard } from '@/components/admin/OllamaMonitorCard';
+import { ApiCatalogModal } from '@/components/admin/ApiCatalog';
 
 interface ApiKey {
   id: string;
@@ -32,6 +33,7 @@ export default function ApiKeysPage() {
     expires_in_days: 30,
   });
   const [confirmRevokeId, setConfirmRevokeId] = useState<string | null>(null);
+  const [showCatalog, setShowCatalog] = useState(false);
 
   const availablePermissions = [
     'jobs:read', 'jobs:write',
@@ -155,13 +157,22 @@ export default function ApiKeysPage() {
           <h2 className="text-xl sm:text-2xl font-semibold text-[#141042]">API Keys</h2>
           <p className="text-sm text-[#666666]">Gerencie chaves de acesso para integrações</p>
         </div>
-        <button
-          onClick={() => setShowModal(true)}
-          className="flex items-center space-x-2 px-5 py-2.5 bg-[#141042] text-white rounded-xl hover:bg-[#1e1a5e] transition-colors"
-        >
-          <Plus className="w-5 h-5" />
-          <span>Nova API Key</span>
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setShowCatalog(true)}
+            className="flex items-center space-x-2 px-4 py-2.5 border border-[#E5E5DC] text-[#141042] bg-white rounded-xl hover:bg-[#FAFAF8] transition-colors"
+          >
+            <Globe className="w-4 h-4" />
+            <span className="text-sm">Ver todas as APIs</span>
+          </button>
+          <button
+            onClick={() => setShowModal(true)}
+            className="flex items-center space-x-2 px-5 py-2.5 bg-[#141042] text-white rounded-xl hover:bg-[#1e1a5e] transition-colors"
+          >
+            <Plus className="w-5 h-5" />
+            <span>Nova API Key</span>
+          </button>
+        </div>
       </div>
 
       {/* Stats */}
@@ -393,6 +404,7 @@ export default function ApiKeysPage() {
         onConfirm={doRevoke}
         onCancel={() => setConfirmRevokeId(null)}
       />
+      {showCatalog && <ApiCatalogModal onClose={() => setShowCatalog(false)} />}
     </div>
   );
 }
