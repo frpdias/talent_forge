@@ -280,23 +280,8 @@ export const JobSocialBanner = forwardRef<HTMLDivElement, { job: JobBannerData; 
             </div>
           </div>
 
-          {/* ── Bloco direito: badge empresa revelada + redes sociais ── */}
+          {/* ── Bloco direito: redes sociais ── */}
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 12, flexShrink: 0 }}>
-            {!isConfidential && (
-              <div style={{
-                display: 'inline-flex', alignItems: 'center', gap: 7,
-                backgroundColor: `${secondary}22`,
-                border: `1.5px solid ${secondary}77`,
-                borderRadius: 20, padding: '5px 16px',
-              }}>
-                <svg viewBox="0 0 24 24" width={14} height={14} fill="none" stroke={secondary} strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
-                  <polyline points="20 6 9 17 4 12" />
-                </svg>
-                <span style={{ color: secondary, fontSize: 13, fontWeight: 700, letterSpacing: 1.2, textTransform: 'uppercase' }}>
-                  Empresa revelada
-                </span>
-              </div>
-            )}
             {socials.length > 0 && (
             <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
               {socials.map((s, i) => (
