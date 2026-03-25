@@ -268,9 +268,15 @@ export function EditJobDrawer({ jobId, isOpen, onClose, onSaved }: EditJobDrawer
 
               {/* Descrição */}
               <div>
-                <h3 className="text-sm font-semibold text-gray-700 mb-4">Descrição da Vaga</h3>
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-sm font-semibold text-gray-700">Descrição da Vaga</h3>
+                  <span className={`text-xs ${(formData.description?.length ?? 0) > 950 ? 'text-red-500 font-semibold' : 'text-gray-400'}`}>
+                    {formData.description?.length ?? 0}/1000
+                  </span>
+                </div>
                 <Textarea
                   className="min-h-30"
+                  maxLength={1000}
                   value={formData.description}
                   onChange={(e) => handleChange('description', e.target.value)}
                   placeholder="Descreva as responsabilidades e atividades da vaga..."
@@ -279,9 +285,15 @@ export function EditJobDrawer({ jobId, isOpen, onClose, onSaved }: EditJobDrawer
 
               {/* Requisitos */}
               <div>
-                <h3 className="text-sm font-semibold text-gray-700 mb-4">Requisitos</h3>
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-sm font-semibold text-gray-700">Requisitos</h3>
+                  <span className={`text-xs ${(formData.requirements?.length ?? 0) > 950 ? 'text-red-500 font-semibold' : 'text-gray-400'}`}>
+                    {formData.requirements?.length ?? 0}/1000
+                  </span>
+                </div>
                 <Textarea
                   className="min-h-30"
+                  maxLength={1000}
                   value={formData.requirements}
                   onChange={(e) => handleChange('requirements', e.target.value)}
                   placeholder="Liste os requisitos necessários para a vaga..."
@@ -290,9 +302,15 @@ export function EditJobDrawer({ jobId, isOpen, onClose, onSaved }: EditJobDrawer
 
               {/* Benefícios */}
               <div>
-                <h3 className="text-sm font-semibold text-gray-700 mb-4">Benefícios</h3>
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-sm font-semibold text-gray-700">Benefícios</h3>
+                  <span className={`text-xs ${(formData.benefits?.length ?? 0) > 950 ? 'text-red-500 font-semibold' : 'text-gray-400'}`}>
+                    {formData.benefits?.length ?? 0}/1000
+                  </span>
+                </div>
                 <Textarea
                   className="min-h-25"
+                  maxLength={1000}
                   value={formData.benefits}
                   onChange={(e) => handleChange('benefits', e.target.value)}
                   placeholder="Liste os benefícios oferecidos..."

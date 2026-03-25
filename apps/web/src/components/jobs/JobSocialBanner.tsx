@@ -52,16 +52,7 @@ function parseList(text: string | null, max = 5): string[] {
   if (!text?.trim()) return [];
   const byLine = text.split(/\n+/).map(l => l.replace(/^[-•*]\s*/, '').trim()).filter(Boolean);
   const items = byLine.length > 1 ? byLine : text.split(/[;,]+/).map(l => l.trim()).filter(Boolean);
-  return items.slice(0, max).map(item => truncate(item, 250));
-}
-
-function truncate(text: string | null, max: number): string {
-  if (!text) return '';
-  if (text.length <= max) return text;
-  // Corta na última fronteira de palavra antes do limite
-  const cut = text.slice(0, max);
-  const lastSpace = cut.lastIndexOf(' ');
-  return (lastSpace > max * 0.6 ? cut.slice(0, lastSpace) : cut).trimEnd() + '…';
+  return items.slice(0, max);
 }
 
 // ─── SVG icon paths ───────────────────────────────────────────────────────────
@@ -132,7 +123,7 @@ export const JobSocialBanner = forwardRef<HTMLDivElement, { job: JobBannerData; 
     }
 
     // ── Content sections ──
-    const description = truncate(job.description, 250);
+    const description = job.description?.trim() || '';
     const reqItems    = parseList(job.requirements, 5);
     const benItems    = parseList(job.benefits, 5);
     const hasDetails  = description || reqItems.length > 0 || benItems.length > 0;

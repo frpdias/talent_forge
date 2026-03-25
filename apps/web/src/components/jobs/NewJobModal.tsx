@@ -258,46 +258,61 @@ export function NewJobModal({ isOpen, onClose, onSuccess }: NewJobModalProps) {
             </h3>
 
             <div>
-              <Label htmlFor="modal-description" className="text-sm font-medium text-[#141042]">
-                Descrição *
-              </Label>
+              <div className="flex items-center justify-between mb-1">
+                <Label htmlFor="modal-description" className="text-sm font-medium text-[#141042]">
+                  Descrição *
+                </Label>
+                <span className={`text-xs ${(formData.description?.length ?? 0) > 950 ? 'text-red-500 font-semibold' : 'text-[#999]'}`}>
+                  {formData.description?.length ?? 0}/1000
+                </span>
+              </div>
               <Textarea
                 id="modal-description"
                 required
                 rows={5}
+                maxLength={1000}
                 value={formData.description}
                 onChange={(e) => handleChange('description', e.target.value)}
                 placeholder="Descreva as responsabilidades e atividades do cargo..."
-                className="mt-1"
               />
             </div>
 
             <div>
-              <Label htmlFor="modal-requirements" className="text-sm font-medium text-[#141042]">
-                Requisitos *
-              </Label>
+              <div className="flex items-center justify-between mb-1">
+                <Label htmlFor="modal-requirements" className="text-sm font-medium text-[#141042]">
+                  Requisitos *
+                </Label>
+                <span className={`text-xs ${(formData.requirements?.length ?? 0) > 950 ? 'text-red-500 font-semibold' : 'text-[#999]'}`}>
+                  {formData.requirements?.length ?? 0}/1000
+                </span>
+              </div>
               <Textarea
                 id="modal-requirements"
                 required
                 rows={5}
+                maxLength={1000}
                 value={formData.requirements}
                 onChange={(e) => handleChange('requirements', e.target.value)}
                 placeholder="Liste os requisitos necessários (um por linha)..."
-                className="mt-1"
               />
             </div>
 
             <div>
-              <Label htmlFor="modal-benefits" className="text-sm font-medium text-[#141042]">
-                Benefícios
-              </Label>
+              <div className="flex items-center justify-between mb-1">
+                <Label htmlFor="modal-benefits" className="text-sm font-medium text-[#141042]">
+                  Benefícios
+                </Label>
+                <span className={`text-xs ${(formData.benefits?.length ?? 0) > 950 ? 'text-red-500 font-semibold' : 'text-[#999]'}`}>
+                  {formData.benefits?.length ?? 0}/1000
+                </span>
+              </div>
               <Textarea
                 id="modal-benefits"
                 rows={3}
+                maxLength={1000}
                 value={formData.benefits}
                 onChange={(e) => handleChange('benefits', e.target.value)}
                 placeholder="Liste os benefícios oferecidos (um por linha)..."
-                className="mt-1"
               />
             </div>
           </div>
