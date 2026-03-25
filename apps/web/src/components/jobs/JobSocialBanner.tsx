@@ -57,7 +57,11 @@ function parseList(text: string | null, max = 4): string[] {
 
 function truncate(text: string | null, max: number): string {
   if (!text) return '';
-  return text.length > max ? text.slice(0, max).trimEnd() + '…' : text;
+  if (text.length <= max) return text;
+  // Corta na última fronteira de palavra antes do limite
+  const cut = text.slice(0, max);
+  const lastSpace = cut.lastIndexOf(' ');
+  return (lastSpace > max * 0.6 ? cut.slice(0, lastSpace) : cut).trimEnd() + '…';
 }
 
 // ─── SVG icon paths ───────────────────────────────────────────────────────────
@@ -128,7 +132,7 @@ export const JobSocialBanner = forwardRef<HTMLDivElement, { job: JobBannerData; 
     }
 
     // ── Content sections ──
-    const description = truncate(job.description, 240);
+    const description = truncate(job.description, 320);
     const reqItems    = parseList(job.requirements, 5);
     const benItems    = parseList(job.benefits, 5);
     const hasDetails  = description || reqItems.length > 0 || benItems.length > 0;
