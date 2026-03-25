@@ -9408,10 +9408,10 @@ new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
 - **Parecer Técnico** (`/api/recruiter/candidates/[id]/technical-review`): usa `callLLM()` — roteado pelo plano
 - **Módulo PHP** (`apps/api/src/php/ai/ai-enhanced.service.ts`): sempre OpenAI (PHP é premium-only, não rotear)
 
-### Schema adicionado (Sprint 62)
+### Schema adicionado (Sprint 62) ✅ Aplicado em produção
 
 ```sql
--- supabase/migrations/20260325_organizations_plan.sql
+-- supabase/migrations/20260325_organizations_plan.sql (✅ aplicado)
 ALTER TABLE organizations
   ADD COLUMN plan TEXT NOT NULL DEFAULT 'free'
   CHECK (plan IN ('free', 'pro', 'enterprise'));
