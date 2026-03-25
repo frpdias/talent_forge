@@ -48,11 +48,11 @@ const SENIORITY_LABELS: Record<string, string> = {
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 /** Split a plain-text list field into items (newlines or semicolons). */
-function parseList(text: string | null, max = 5): string[] {
+function parseList(text: string | null): string[] {
   if (!text?.trim()) return [];
   const byLine = text.split(/\n+/).map(l => l.replace(/^[-•*]\s*/, '').trim()).filter(Boolean);
-  const items = byLine.length > 1 ? byLine : text.split(/[;,]+/).map(l => l.trim()).filter(Boolean);
-  return items.slice(0, max);
+  if (byLine.length > 1) return byLine;
+  return text.split(/[;,]+/).map(l => l.trim()).filter(Boolean);
 }
 
 // ─── SVG icon paths ───────────────────────────────────────────────────────────
@@ -124,8 +124,8 @@ export const JobSocialBanner = forwardRef<HTMLDivElement, { job: JobBannerData; 
 
     // ── Content sections ──
     const description = job.description?.trim() || '';
-    const reqItems    = parseList(job.requirements, 5);
-    const benItems    = parseList(job.benefits, 5);
+    const reqItems    = parseList(job.requirements);
+    const benItems    = parseList(job.benefits);
     const hasDetails  = description || reqItems.length > 0 || benItems.length > 0;
 
     // ── Social links ──
