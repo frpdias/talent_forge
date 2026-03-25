@@ -44,6 +44,8 @@ export async function callLLM(params: {
 
   const useOllama = orgPlan === 'free' && !!ollamaUrl;
 
+  console.log(`[llm-router] plan=${orgPlan} url=${ollamaUrl ?? 'UNDEFINED'} use=${useOllama}`);
+
   if (useOllama) {
     try {
       return await callOllama(messages, maxTokens, temperature, ollamaUrl!, ollamaModel);
