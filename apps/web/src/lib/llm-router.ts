@@ -44,8 +44,16 @@ export async function callLLM(params: {
 
   const useOllama = orgPlan === 'free' && !!ollamaUrl;
 
+  console.log(`[llm-router] orgPlan=${orgPlan} ollamaUrl=${ollamaUrl ?? 'undefined'} useOllama=${useOllama}`);
+
   if (useOllama) {
-    return callOllama(messages, maxTokens, temperature, ollamaUrl!, ollamaModel);
+    try {
+      return await callOllama(messages, maxTokens, temperature, ollamaUrl!, ollamaModel);
+    } catch (ollamaErr: any) {
+      // Fallback para OpenAI se Ollama estiver indisponível
+      console.warn('[llm-router] Ollama indisponível, usando OpenAI como fallback:', ollamaErr.message);
+      return callOpenAI(messages, maxTokens, temperature);
+    }
   } else {
     return callOpenAI(messages, maxTokens, temperature);
   }
