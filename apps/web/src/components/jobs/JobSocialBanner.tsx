@@ -72,8 +72,9 @@ function Section({ title, items, accent }: { title: string; items: string[]; acc
       backgroundColor: 'rgba(255,255,255,0.06)',
       border: '1px solid rgba(255,255,255,0.1)',
       borderRadius: 14,
-      padding: '22px 24px',
+      padding: '18px 20px',
       display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-start',
+      overflow: 'hidden',
     }}>
       {/* Título centralizado */}
       <div style={{ marginBottom: 16, textAlign: 'center' }}>
@@ -87,10 +88,10 @@ function Section({ title, items, accent }: { title: string; items: string[]; acc
           <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, width: '100%' }}>
             <div style={{
               width: 5, height: 5, borderRadius: '50%',
-              backgroundColor: accent, flexShrink: 0, marginTop: 8,
+              backgroundColor: accent, flexShrink: 0, marginTop: 7,
               boxShadow: `0 0 0 3px ${accent}33`,
             }} />
-            <span style={{ color: 'rgba(255,255,255,0.85)', fontSize: 16, lineHeight: 1.5 }}>
+            <span style={{ color: 'rgba(255,255,255,0.85)', fontSize: 14, lineHeight: 1.45 }}>
               {item}
             </span>
           </div>
@@ -332,7 +333,7 @@ export const JobSocialBanner = forwardRef<HTMLDivElement, { job: JobBannerData; 
 
           {/* ── Três cards iguais: Sobre a Vaga / Requisitos / Benefícios ── */}
           {hasDetails && (
-            <div style={{ display: 'flex', gap: 16, marginBottom: 32, alignItems: 'stretch' }}>
+            <div style={{ display: 'flex', gap: 16, flex: 1, minHeight: 0, marginBottom: 28, overflow: 'hidden', alignItems: 'stretch' }}>
 
               {/* Card: Sobre a Vaga */}
               {description && (
@@ -341,8 +342,9 @@ export const JobSocialBanner = forwardRef<HTMLDivElement, { job: JobBannerData; 
                   backgroundColor: 'rgba(255,255,255,0.06)',
                   border: '1px solid rgba(255,255,255,0.1)',
                   borderRadius: 14,
-                  padding: '22px 24px',
+                  padding: '18px 20px',
                   display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-start',
+                  overflow: 'hidden',
                 }}>
                   <div style={{ marginBottom: 14, textAlign: 'center' }}>
                     <span style={{
@@ -353,8 +355,9 @@ export const JobSocialBanner = forwardRef<HTMLDivElement, { job: JobBannerData; 
                     </span>
                   </div>
                   <div style={{
-                    color: 'rgba(255,255,255,0.85)', fontSize: 16, lineHeight: 1.6,
+                    color: 'rgba(255,255,255,0.85)', fontSize: 14, lineHeight: 1.55,
                     textAlign: 'center',
+                    overflow: 'hidden',
                   }}>
                     {description}
                   </div>
