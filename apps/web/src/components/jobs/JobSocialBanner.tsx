@@ -48,11 +48,12 @@ const SENIORITY_LABELS: Record<string, string> = {
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 /** Split a plain-text list field into items (newlines or semicolons). */
-function parseList(text: string | null, max = 4): string[] {
+function parseList(text: string | null, max = 3): string[] {
   if (!text?.trim()) return [];
   const byLine = text.split(/\n+/).map(l => l.replace(/^[-•*]\s*/, '').trim()).filter(Boolean);
-  if (byLine.length > 1) return byLine.slice(0, max);
-  return text.split(/[;,]+/).map(l => l.trim()).filter(Boolean).slice(0, max);
+  const items = byLine.length > 1 ? byLine : text.split(/[;,]+/).map(l => l.trim()).filter(Boolean);
+  // Trunca cada item em 80 chars para caber nas colunas do banner
+  return items.slice(0, max).map(item => truncate(item, 80));
 }
 
 function truncate(text: string | null, max: number): string {
@@ -132,9 +133,9 @@ export const JobSocialBanner = forwardRef<HTMLDivElement, { job: JobBannerData; 
     }
 
     // ── Content sections ──
-    const description = truncate(job.description, 320);
-    const reqItems    = parseList(job.requirements, 5);
-    const benItems    = parseList(job.benefits, 5);
+    const description = truncate(job.description, 250);
+    const reqItems    = parseList(job.requirements, 3);
+    const benItems    = parseList(job.benefits, 3);
     const hasDetails  = description || reqItems.length > 0 || benItems.length > 0;
 
     // ── Social links ──
