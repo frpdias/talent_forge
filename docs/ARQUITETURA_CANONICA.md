@@ -1,6 +1,6 @@
 # Arquitetura Canônica — TalentForge
 
-**Última atualização**: 2026-03-25 | **Score de Conformidade**: ✅ 100% (Sprint 62 — LLM Router: Ollama local para planos free + OpenAI para pro/enterprise) | **Sprints planejados**: Sprint 41 (AI Assistant) + Sprint 44 (Gate Recrutamento)
+**Última atualização**: 2026-03-25 | **Score de Conformidade**: ✅ 100% (Sprint 62 — LLM Router: Ollama/gemma3:4b via ngrok para planos free + OpenAI GPT-4o para pro/enterprise — ✅ validado em produção) | **Sprints planejados**: Sprint 41 (AI Assistant) + Sprint 44 (Gate Recrutamento)
 
 ## 📜 FONTE DA VERDADE — PRINCÍPIO FUNDAMENTAL
 
@@ -8550,7 +8550,7 @@ CREATE TABLE job_alerts (
 | **Sprint 59** | **2026-03-24** | **Banner social para vagas — `JobSocialBanner` (1080×1350px), PNG via html2canvas + PDF via jsPDF com links clicáveis, `data-pdf-link` + `getBoundingClientRect()`, descrição/requisitos/benefícios no banner, fix race condition (useEffect + banner sempre montado), botão "Compartilhar" em `/dashboard/jobs`** | ✅ |
 | **Sprint 60** | **2026-03-24** | **Tipografia avançada na career page — seletor de família de fonte (9 opções) por seção em `/dashboard/settings` com preview visual via Google Fonts; modal de prévia do banner 45% escalado em `/dashboard/jobs` antes de baixar (botões PNG/PDF dentro do modal); fix `career_page_facebook_url` omitido no `DROP VIEW … CASCADE`; RPCs `get_public_jobs_by_org` + `get_all_public_jobs` sempre recriadas após CASCADE** | ✅ |
 | **Sprint 61** | **2026-03-25** | **Módulo Teste de Informática — 3 níveis (Júnior/Pleno/Sênior), 131 questões (39+44+48) por categoria; Júnior automático; Pleno/Sênior ativado pelo recrutador; modal inline ou link externo; acesso por token público em `/it-test/[token]`; resultado integrado no `score_testes` do parecer técnico com IA (peso proporcional, até 15 pts, cross-org lookup por e-mail); seção visual no PDF (círculo score + barra progresso); `{{informatica}}` no DEFAULT_REVIEW_PROMPT; cleanup de candidatos duplicados (Julia)** | ✅ |
-| **Sprint 62** | **2026-03-25** | **LLM Router — `organizations.plan` ('free'\|'pro'\|'enterprise'); `apps/web/src/lib/llm-router.ts` roteia: free → Ollama local (gemma3:4b via Cloudflare Tunnel, env `OLLAMA_BASE_URL`+`OLLAMA_MODEL`), pro/enterprise → OpenAI GPT-4o; `technical-review/route.ts` usa router; `ai_model` salvo para auditoria; Módulo PHP sempre em OpenAI (premium-only)** | ✅ |
+| **Sprint 62** | **2026-03-25** | **LLM Router — `organizations.plan` ('free'\|'pro'\|'enterprise'); `apps/web/src/lib/llm-router.ts` roteia: free → Ollama/gemma3:4b via ngrok tunnel (Mac Mini, `OLLAMA_BASE_URL`+`OLLAMA_MODEL`+header `ngrok-skip-browser-warning`), pro/enterprise → OpenAI GPT-4o; fallback automático para OpenAI se Ollama indisponível; `technical-review/route.ts` usa router; `ai_model` salvo para auditoria (`ollama/gemma3:4b` ✅ validado em produção); Módulo PHP sempre em OpenAI (premium-only); script `~/start-ollama-tunnel.sh` no Mac Mini para subir ambiente** | ✅ |
 
 ### Regras Canônicas — Portal Candidato
 
@@ -9364,7 +9364,7 @@ Roteamento dinâmico de chamadas de IA com base no plano da organização, elimi
 
 ```
 organizations.plan
-  'free'                     → Ollama (Mac Mini local via Cloudflare Tunnel)
+  'free'                     → Ollama (Mac Mini local via ngrok tunnel)
   'pro' | 'enterprise'       → OpenAI GPT-4o
 ```
 
@@ -9386,22 +9386,30 @@ export async function callLLM(params: {
 
 Usa o SDK OpenAI apontando `baseURL` para o Ollama (API 100% compatível):
 ```ts
-// free → Ollama
-new OpenAI({ baseURL: `${OLLAMA_BASE_URL}/v1`, apiKey: 'ollama' })
+// free → Ollama (com header para bypass ngrok browser warning)
+new OpenAI({
+  baseURL: `${OLLAMA_BASE_URL}/v1`,
+  apiKey: 'ollama',
+  defaultHeaders: { 'ngrok-skip-browser-warning': 'true' },
+})
 
 // pro/enterprise → OpenAI padrão
 new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
 ```
 
+Se Ollama estiver indisponível, faz **fallback automático para OpenAI** sem retornar erro.
+
 ### Variáveis de ambiente
 
 | Var | Descrição | Exemplo |
 |-----|-----------|---------|
-| `OLLAMA_BASE_URL` | URL pública do Ollama via Cloudflare Tunnel | `https://xxxx.trycloudflare.com` |
+| `OLLAMA_BASE_URL` | URL pública do Ollama via ngrok | `https://wakerife-noelle-merest.ngrok-free.dev` |
 | `OLLAMA_MODEL` | Modelo padrão para planos free | `gemma3:4b` |
 | `OPENAI_API_KEY` | Chave OpenAI (pro/enterprise) | `sk-...` |
 
-> **⚠️ ATENÇÃO:** A URL do Cloudflare Tunnel temporário muda a cada reinicialização. Para produção, usar Named Tunnel permanente: `cloudflared tunnel create talentforge-ollama`.
+> **⚠️ ATENÇÃO:** A URL do ngrok free muda a cada reinicialização do tunnel. Para subir o ambiente: `bash ~/start-ollama-tunnel.sh` no Mac Mini (Mac Mini M4, 8GB). Após mudança de URL, atualizar `OLLAMA_BASE_URL` no Vercel e forçar redeploy.
+>
+> **Ollama requer** `OLLAMA_ORIGINS="https://<url-ngrok>" OLLAMA_HOST="0.0.0.0:11434"` para aceitar requisições externas.
 
 ### Regra de escopo
 
@@ -9421,6 +9429,11 @@ ALTER TABLE organizations
 
 | Commit | Descrição |
 |--------|----------|
+| `9cd6f41` | chore: redeploy com OLLAMA_BASE_URL corrigido para ngrok |
+| `6b2dcb6` | chore(ia): remove console.log de debug do llm-router |
+| `11c1ca0` | fix(ia): adiciona header ngrok-skip-browser-warning nas chamadas ao Ollama |
+| `bd75f83` | fix(ia): fallback OpenAI + log quando Ollama indisponível |
+| `fdf1eb9` | fix(ia): lê OLLAMA_BASE_URL dentro da função (runtime, não build) |
 | `7321f5f` | feat(ia): LLM Router — Ollama (free/gemma3:4b) + OpenAI (pro/enterprise) via organizations.plan |
 | `5d8b787` | feat(it-test): resultado IT test na aba Testes da página detalhe do candidato — rota GET `/api/recruiter/candidates/[id]/it-test` + card com score/progress bar |
 | `ad9d084` | fix(it-test): lookup cross-org v1 — busca por e-mail para encontrar resultado em candidatos duplicados |
