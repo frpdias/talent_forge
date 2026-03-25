@@ -69,9 +69,13 @@ async function callOllama(
   ollamaModel: string,
 ): Promise<LLMResult> {
   // O SDK OpenAI funciona nativamente com Ollama apontando o baseURL
+  // Header ngrok-skip-browser-warning necessário para tunnels ngrok
   const client = new OpenAI({
     baseURL: `${ollamaUrl}/v1`,
     apiKey:  'ollama', // Ollama não valida a key, mas o SDK exige algo
+    defaultHeaders: {
+      'ngrok-skip-browser-warning': 'true',
+    },
   });
 
   const completion = await client.chat.completions.create({
