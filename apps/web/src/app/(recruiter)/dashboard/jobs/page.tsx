@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useMemo, useRef, useTransition } from 'react';
 import {
   Briefcase,
   Plus,
@@ -115,6 +115,9 @@ export default function JobsPage() {
   const [pendingDownload, setPendingDownload] = useState<'png' | 'pdf' | null>(null);
   const [showBannerPreview, setShowBannerPreview] = useState(false);
   const bannerRef = useRef<HTMLDivElement>(null);
+  // startTransition: evita bloquear o main thread ao abrir/fechar o menu de compartilhamento
+  // (setShareMenuJob re-renderiza todos os cards — deferred resolve o INP de ~300ms)
+  const [, startShareTransition] = useTransition();
 
   useEffect(() => {
     loadJobs();
@@ -842,7 +845,7 @@ export default function JobsPage() {
                             {/* Share button card view */}
                             <div className="relative">
                               <button
-                                onClick={(e) => { e.stopPropagation(); setShareMenuJob(shareMenuJob === job.id ? null : job.id); }}
+                                onClick={(e) => { e.stopPropagation(); startShareTransition(() => setShareMenuJob(shareMenuJob === job.id ? null : job.id)); }}
                                 title="Gerar banner para redes sociais"
                                 className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-white bg-[#141042] rounded-lg hover:bg-[#1f1a6e] transition-colors font-medium"
                               >
@@ -997,7 +1000,7 @@ export default function JobsPage() {
                             {/* Share button table view */}
                             <div className="relative">
                               <button
-                                onClick={() => setShareMenuJob(shareMenuJob === job.id ? null : job.id)}
+                                onClick={() => startShareTransition(() => setShareMenuJob(shareMenuJob === job.id ? null : job.id))}
                                 title="Gerar banner para redes sociais"
                                 className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-white bg-[#141042] rounded-lg hover:bg-[#1f1a6e] transition-colors font-medium"
                               >
