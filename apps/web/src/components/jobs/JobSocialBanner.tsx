@@ -111,14 +111,12 @@ export const JobSocialBanner = forwardRef<HTMLDivElement, { job: JobBannerData; 
     const primary   = org.career_page_color           || '#141042';
     const secondary = org.career_page_secondary_color || '#10B981';
 
-    // Empresa revelada → usa dados da empresa; confidencial → oculta identidade no banner
+    // Revelada → usa dados da empresa cadastrada; confidencial → usa dados da org do recrutador
     const isConfidential = !job.company_disclosed;
     const displayName    = (!isConfidential && job.company_name) ? job.company_name : org.name;
-    const displayLogo    = (!isConfidential && job.company_logo_url)
+    const logoUrl        = (!isConfidential && job.company_logo_url)
       ? job.company_logo_url
       : (org.career_page_logo_url || org.logo_url);
-    // Quando confidencial, não exibir logo da org (preserva sigilo)
-    const logoUrl = isConfidential ? null : displayLogo;
     const jobUrl  = `https://talentforge.com.br/jobs/${org.slug}`;
 
     // ── Tags enriquecidas (ícone + texto) ──
@@ -220,22 +218,8 @@ export const JobSocialBanner = forwardRef<HTMLDivElement, { job: JobBannerData; 
           {/* ── Bloco esquerdo: logo + dados da empresa ── */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 28, flex: 1, minWidth: 0 }}>
 
-            {/* Logo / placeholder confidencial */}
-            {isConfidential ? (
-              /* Ícone de cadeado — empresa em sigilo */
-              <div style={{
-                width: 96, height: 96, borderRadius: 20, flexShrink: 0,
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                background: 'rgba(255,255,255,0.08)',
-                border: '2px solid rgba(255,255,255,0.18)',
-              }}>
-                {/* cadeado SVG */}
-                <svg viewBox="0 0 24 24" width={44} height={44} fill="none" stroke="rgba(255,255,255,0.55)" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round">
-                  <rect x="3" y="11" width="18" height="11" rx="2" />
-                  <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-                </svg>
-              </div>
-            ) : logoUrl ? (
+            {/* Logo da empresa (revelada) ou da org do recrutador (confidencial) */}
+            {logoUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={logoUrl} alt={displayName} crossOrigin="anonymous"
@@ -260,23 +244,13 @@ export const JobSocialBanner = forwardRef<HTMLDivElement, { job: JobBannerData; 
 
             {/* Nome da empresa */}
             <div style={{ flex: 1, minWidth: 0 }}>
-              {isConfidential ? (
-                <span style={{
-                  color: 'rgba(255,255,255,0.45)',
-                  fontSize: 28, fontWeight: 700,
-                  letterSpacing: 2, textTransform: 'uppercase',
-                }}>
-                  Empresa Confidencial
-                </span>
-              ) : (
-                <div style={{
-                  color: '#fff', fontSize: 34, fontWeight: 800,
-                  lineHeight: 1.1, letterSpacing: -0.5,
-                  wordBreak: 'break-word',
-                }}>
-                  {displayName}
-                </div>
-              )}
+              <div style={{
+                color: '#fff', fontSize: 34, fontWeight: 800,
+                lineHeight: 1.1, letterSpacing: -0.5,
+                wordBreak: 'break-word',
+              }}>
+                {displayName}
+              </div>
             </div>
           </div>
 
