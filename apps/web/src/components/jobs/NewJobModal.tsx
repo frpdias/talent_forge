@@ -262,16 +262,15 @@ export function NewJobModal({ isOpen, onClose, onSuccess }: NewJobModalProps) {
                 <Label htmlFor="modal-description" className="text-sm font-medium text-[#141042]">
                   Descrição *
                 </Label>
-                <span className={`text-xs ${(formData.description?.length ?? 0) > 950 ? 'text-red-500 font-semibold' : 'text-[#999]'}`}>
-                  {formData.description?.length ?? 0}/1000
+                <span className={`text-xs ${(formData.description?.length ?? 0) > 650 ? 'text-red-500 font-semibold' : 'text-[#999]'}`}>
+                  {formData.description?.length ?? 0}/700
                 </span>
               </div>
               <Textarea
                 id="modal-description"
                 required
                 rows={5}
-                maxLength={1000}
-                value={formData.description}
+                maxLength={700}
                 onChange={(e) => handleChange('description', e.target.value)}
                 placeholder="Descreva as responsabilidades e atividades do cargo..."
               />
@@ -282,16 +281,15 @@ export function NewJobModal({ isOpen, onClose, onSuccess }: NewJobModalProps) {
                 <Label htmlFor="modal-requirements" className="text-sm font-medium text-[#141042]">
                   Requisitos *
                 </Label>
-                <span className={`text-xs ${(formData.requirements?.length ?? 0) > 950 ? 'text-red-500 font-semibold' : 'text-[#999]'}`}>
-                  {formData.requirements?.length ?? 0}/1000
+                <span className={`text-xs ${(formData.requirements?.length ?? 0) > 650 ? 'text-red-500 font-semibold' : 'text-[#999]'}`}>
+                  {formData.requirements?.length ?? 0}/700
                 </span>
               </div>
               <Textarea
                 id="modal-requirements"
                 required
                 rows={5}
-                maxLength={1000}
-                value={formData.requirements}
+                maxLength={700}
                 onChange={(e) => handleChange('requirements', e.target.value)}
                 placeholder="Liste os requisitos necessários (um por linha)..."
               />
@@ -302,15 +300,14 @@ export function NewJobModal({ isOpen, onClose, onSuccess }: NewJobModalProps) {
                 <Label htmlFor="modal-benefits" className="text-sm font-medium text-[#141042]">
                   Benefícios
                 </Label>
-                <span className={`text-xs ${(formData.benefits?.length ?? 0) > 950 ? 'text-red-500 font-semibold' : 'text-[#999]'}`}>
-                  {formData.benefits?.length ?? 0}/1000
+                <span className={`text-xs ${(formData.benefits?.length ?? 0) > 650 ? 'text-red-500 font-semibold' : 'text-[#999]'}`}>
+                  {formData.benefits?.length ?? 0}/700
                 </span>
               </div>
               <Textarea
                 id="modal-benefits"
                 rows={3}
-                maxLength={1000}
-                value={formData.benefits}
+                maxLength={700}
                 onChange={(e) => handleChange('benefits', e.target.value)}
                 placeholder="Liste os benefícios oferecidos (um por linha)..."
               />
