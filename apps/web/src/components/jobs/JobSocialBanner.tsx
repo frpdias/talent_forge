@@ -30,6 +30,9 @@ export interface JobBannerData {
   description: string | null;
   requirements: string | null;
   benefits: string | null;
+  company_disclosed: boolean | null;
+  company_name: string | null;
+  company_logo_url: string | null;
 }
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -107,7 +110,12 @@ export const JobSocialBanner = forwardRef<HTMLDivElement, { job: JobBannerData; 
   ({ job, org }, ref) => {
     const primary   = org.career_page_color           || '#141042';
     const secondary = org.career_page_secondary_color || '#10B981';
-    const logoUrl   = org.career_page_logo_url || org.logo_url;
+    // Se a vaga tem empresa revelada, usar os dados da empresa; caso contrário, usa org
+    const displayName  = (job.company_disclosed && job.company_name) ? job.company_name : org.name;
+    const displayLogo  = (job.company_disclosed && job.company_logo_url)
+      ? job.company_logo_url
+      : (org.career_page_logo_url || org.logo_url);
+    const logoUrl   = displayLogo;
     const jobUrl    = `https://talentforge.com.br/jobs/${org.slug}`;
 
     // ── Tags enriquecidas (ícone + texto) ──
@@ -213,7 +221,7 @@ export const JobSocialBanner = forwardRef<HTMLDivElement, { job: JobBannerData; 
             {logoUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
-                src={logoUrl} alt={org.name} crossOrigin="anonymous"
+                src={logoUrl} alt={displayName} crossOrigin="anonymous"
                 style={{
                   width: 96, height: 96, objectFit: 'contain',
                   flexShrink: 0,
@@ -228,7 +236,7 @@ export const JobSocialBanner = forwardRef<HTMLDivElement, { job: JobBannerData; 
                 filter: 'drop-shadow(0 4px 16px rgba(0,0,0,0.4))',
               }}>
                 <span style={{ color: '#fff', fontSize: 38, fontWeight: 900, letterSpacing: -1 }}>
-                  {org.name.charAt(0).toUpperCase()}
+                  {displayName.charAt(0).toUpperCase()}
                 </span>
               </div>
             )}
@@ -240,7 +248,7 @@ export const JobSocialBanner = forwardRef<HTMLDivElement, { job: JobBannerData; 
               flex: 1, minWidth: 0,
               wordBreak: 'break-word',
             }}>
-              {org.name}
+              {displayName}
             </div>
           </div>
 

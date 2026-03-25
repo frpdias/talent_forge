@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { Save } from 'lucide-react';
+import { useRef, useState } from 'react';
+import { Building2, Save, Upload, X } from 'lucide-react';
 import { Modal } from '@/components/ui/modal';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -25,6 +25,9 @@ interface JobFormData {
   status: 'open' | 'on_hold' | 'closed';
   is_public: boolean;
   application_deadline: string;
+  company_disclosed: boolean;
+  company_name: string;
+  company_logo_url: string;
 }
 
 const INITIAL_FORM: JobFormData = {
@@ -41,6 +44,9 @@ const INITIAL_FORM: JobFormData = {
   status: 'on_hold',
   is_public: false,
   application_deadline: '',
+  company_disclosed: false,
+  company_name: '',
+  company_logo_url: '',
 };
 
 interface NewJobModalProps {
@@ -54,6 +60,9 @@ export function NewJobModal({ isOpen, onClose, onSuccess }: NewJobModalProps) {
   const [error, setError] = useState<string | null>(null);
   const [marketSalary, setMarketSalary] = useState<{ min: number; max: number } | null>(null);
   const [formData, setFormData] = useState<JobFormData>(INITIAL_FORM);
+  const [logoFile, setLogoFile] = useState<File | null>(null);
+  const [logoPreview, setLogoPreview] = useState<string | null>(null);
+  const logoInputRef = useRef<HTMLInputElement>(null);
 
   const supabase = createClient();
 
@@ -61,10 +70,28 @@ export function NewJobModal({ isOpen, onClose, onSuccess }: NewJobModalProps) {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
+  const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setLogoFile(file);
+    const reader = new FileReader();
+    reader.onload = () => setLogoPreview(reader.result as string);
+    reader.readAsDataURL(file);
+  };
+
+  const removeLogo = () => {
+    setLogoFile(null);
+    setLogoPreview(null);
+    setFormData((prev) => ({ ...prev, company_logo_url: '' }));
+    if (logoInputRef.current) logoInputRef.current.value = '';
+  };
+
   const handleClose = () => {
     setFormData(INITIAL_FORM);
     setMarketSalary(null);
     setError(null);
+    setLogoFile(null);
+    setLogoPreview(null);
     onClose();
   };
 
@@ -76,6 +103,19 @@ export function NewJobModal({ isOpen, onClose, onSuccess }: NewJobModalProps) {
       setLoading(true);
 
       const member = await getUserOrganization(supabase);
+
+      // Upload logo se houver arquivo selecionado
+      let logoUrl = formData.company_logo_url;
+      if (formData.company_disclosed && logoFile) {
+        const ext = logoFile.name.split('.').pop();
+        const path = `${member.org_id}/${Date.now()}.${ext}`;
+        const { error: uploadError } = await supabase.storage
+          .from('job-logos')
+          .upload(path, logoFile, { upsert: true });
+        if (uploadError) throw new Error(`Erro ao enviar logo: ${uploadError.message}`);
+        const { data: urlData } = supabase.storage.from('job-logos').getPublicUrl(path);
+        logoUrl = urlData.publicUrl;
+      }
 
       const jobData = {
         title: formData.title,
@@ -91,6 +131,9 @@ export function NewJobModal({ isOpen, onClose, onSuccess }: NewJobModalProps) {
         status: formData.status,
         is_public: formData.is_public,
         application_deadline: formData.application_deadline || null,
+        company_disclosed: formData.company_disclosed,
+        company_name: formData.company_disclosed ? formData.company_name || null : null,
+        company_logo_url: formData.company_disclosed ? logoUrl || null : null,
         org_id: member.org_id,
       };
 
@@ -347,6 +390,90 @@ export function NewJobModal({ isOpen, onClose, onSuccess }: NewJobModalProps) {
                 className="mt-1 w-full px-3 py-2 border border-[#E5E5DC] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#141042] text-sm text-[#141042]"
               />
             </div>
+          </div>
+
+          <hr className="border-[#E5E5DC]" />
+
+          {/* Identidade da Empresa */}
+          <div className="space-y-4">
+            <h3 className="text-sm font-semibold text-[#141042] uppercase tracking-wider">
+              Identidade da Empresa
+            </h3>
+
+            <div className="flex items-center justify-between p-4 bg-[#FAFAF8] rounded-lg border border-[#E5E5DC]">
+              <div className="flex items-center gap-3">
+                <Building2 className="h-4 w-4 text-[#141042]" />
+                <div>
+                  <p className="text-sm font-medium text-[#141042]">Revelar empresa na vaga</p>
+                  <p className="text-xs text-[#666666] mt-0.5">
+                    {formData.company_disclosed
+                      ? 'A empresa será identificada publicamente'
+                      : 'Empresa em sigilo — identidade não será divulgada'}
+                  </p>
+                </div>
+              </div>
+              <input
+                type="checkbox"
+                checked={formData.company_disclosed}
+                onChange={(e) => setFormData((p) => ({ ...p, company_disclosed: e.target.checked }))}
+                className="h-5 w-5 rounded border-[#E5E5DC] text-[#141042] focus:ring-[#141042] cursor-pointer"
+              />
+            </div>
+
+            {formData.company_disclosed && (
+              <div className="space-y-4 pl-2 border-l-2 border-[#141042]/20">
+                <div>
+                  <Label className="text-sm font-medium text-[#141042]">Nome da Empresa</Label>
+                  <Input
+                    value={formData.company_name}
+                    onChange={(e) => handleChange('company_name', e.target.value)}
+                    placeholder="Ex: TechCorp Soluções"
+                    className="mt-1"
+                    maxLength={120}
+                  />
+                </div>
+
+                <div>
+                  <Label className="text-sm font-medium text-[#141042]">Logo da Empresa</Label>
+                  <div className="mt-1">
+                    {logoPreview ? (
+                      <div className="flex items-center gap-3">
+                        <img
+                          src={logoPreview}
+                          alt="Preview logo"
+                          className="h-16 w-16 object-contain rounded-lg border border-[#E5E5DC] bg-white p-1"
+                        />
+                        <button
+                          type="button"
+                          onClick={removeLogo}
+                          className="flex items-center gap-1.5 text-xs text-red-500 hover:text-red-700 transition-colors"
+                        >
+                          <X className="h-3.5 w-3.5" />
+                          Remover logo
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => logoInputRef.current?.click()}
+                        className="flex items-center gap-2 px-4 py-2.5 border border-dashed border-[#E5E5DC] rounded-lg text-sm text-[#666] hover:border-[#141042] hover:text-[#141042] transition-colors w-full justify-center"
+                      >
+                        <Upload className="h-4 w-4" />
+                        Importar logo (PNG, JPG, SVG)
+                      </button>
+                    )}
+                    <input
+                      ref={logoInputRef}
+                      type="file"
+                      accept="image/png,image/jpeg,image/jpg,image/svg+xml,image/webp"
+                      className="hidden"
+                      onChange={handleLogoChange}
+                    />
+                    <p className="text-xs text-[#999] mt-1.5">Tamanho máximo: 2MB. Recomendado: fundo transparente.</p>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
           <hr className="border-[#E5E5DC]" />

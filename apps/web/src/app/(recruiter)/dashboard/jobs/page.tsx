@@ -64,6 +64,9 @@ interface Job {
   created_at: string;
   org_id?: string;
   slug?: string;
+  company_disclosed?: boolean;
+  company_name?: string | null;
+  company_logo_url?: string | null;
 }
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; dot: string; stripe: string; iconBg: string; iconColor: string }> = {
@@ -374,6 +377,9 @@ export default function JobsPage() {
               description: bannerJob.description ?? null,
               requirements: bannerJob.requirements ?? null,
               benefits: bannerJob.benefits ?? null,
+              company_disclosed: bannerJob.company_disclosed ?? null,
+              company_name: bannerJob.company_name ?? null,
+              company_logo_url: bannerJob.company_logo_url ?? null,
             }, orgBannerData);
           }
         } finally {
@@ -1097,6 +1103,9 @@ export default function JobsPage() {
                   description: bannerJob.description ?? null,
                   requirements: bannerJob.requirements ?? null,
                   benefits: bannerJob.benefits ?? null,
+                  company_disclosed: bannerJob.company_disclosed ?? null,
+                  company_name: bannerJob.company_name ?? null,
+                  company_logo_url: bannerJob.company_logo_url ?? null,
                 }}
                 org={orgBannerData}
               />
@@ -1146,6 +1155,9 @@ export default function JobsPage() {
               description: bannerJob?.description ?? null,
               requirements: bannerJob?.requirements ?? null,
               benefits: bannerJob?.benefits ?? null,
+              company_disclosed: bannerJob?.company_disclosed ?? null,
+              company_name: bannerJob?.company_name ?? null,
+              company_logo_url: bannerJob?.company_logo_url ?? null,
             }}
             org={orgBannerData}
           />

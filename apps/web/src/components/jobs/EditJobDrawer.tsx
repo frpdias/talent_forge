@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { X, Save } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { Building2, Upload, X, Save } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -36,12 +36,18 @@ interface JobFormData {
   requirements: string;
   benefits: string;
   status: 'open' | 'on_hold' | 'closed';
+  company_disclosed: boolean;
+  company_name: string;
+  company_logo_url: string;
 }
 
 export function EditJobDrawer({ jobId, isOpen, onClose, onSaved }: EditJobDrawerProps) {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [marketSalary, setMarketSalary] = useState<{ min: number; max: number } | null>(null);
+  const [logoFile, setLogoFile] = useState<File | null>(null);
+  const [logoPreview, setLogoPreview] = useState<string | null>(null);
+  const logoInputRef = useRef<HTMLInputElement>(null);
   const [formData, setFormData] = useState<JobFormData>({
     title: '',
     cbo_code: '',
@@ -54,6 +60,9 @@ export function EditJobDrawer({ jobId, isOpen, onClose, onSaved }: EditJobDrawer
     requirements: '',
     benefits: '',
     status: 'on_hold',
+    company_disclosed: false,
+    company_name: '',
+    company_logo_url: '',
   });
 
   const supabase = createClient();
@@ -87,7 +96,14 @@ export function EditJobDrawer({ jobId, isOpen, onClose, onSaved }: EditJobDrawer
         requirements: data.requirements || '',
         benefits: data.benefits || '',
         status: data.status || 'on_hold',
+        company_disclosed: data.company_disclosed ?? false,
+        company_name: data.company_name || '',
+        company_logo_url: data.company_logo_url || '',
       });
+      // Se já tem logo salva, mostra no preview
+      if (data.company_logo_url) {
+        setLogoPreview(data.company_logo_url);
+      }
     } catch (error) {
       console.error('Erro ao carregar vaga:', error);
     } finally {
@@ -99,12 +115,42 @@ export function EditJobDrawer({ jobId, isOpen, onClose, onSaved }: EditJobDrawer
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
+  const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setLogoFile(file);
+    const reader = new FileReader();
+    reader.onload = () => setLogoPreview(reader.result as string);
+    reader.readAsDataURL(file);
+  };
+
+  const removeLogo = () => {
+    setLogoFile(null);
+    setLogoPreview(null);
+    setFormData((prev) => ({ ...prev, company_logo_url: '' }));
+    if (logoInputRef.current) logoInputRef.current.value = '';
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!jobId) return;
 
     try {
       setSaving(true);
+
+      // Upload logo se houver novo arquivo
+      let logoUrl = formData.company_logo_url;
+      if (formData.company_disclosed && logoFile) {
+        const { data: { user } } = await supabase.auth.getUser();
+        const ext = logoFile.name.split('.').pop();
+        const path = `${jobId}/${Date.now()}.${ext}`;
+        const { error: uploadError } = await supabase.storage
+          .from('job-logos')
+          .upload(path, logoFile, { upsert: true });
+        if (uploadError) throw new Error(`Erro ao enviar logo: ${uploadError.message}`);
+        const { data: urlData } = supabase.storage.from('job-logos').getPublicUrl(path);
+        logoUrl = urlData.publicUrl;
+      }
 
       const { error } = await supabase
         .from('jobs')
@@ -120,6 +166,9 @@ export function EditJobDrawer({ jobId, isOpen, onClose, onSaved }: EditJobDrawer
           requirements: formData.requirements,
           benefits: formData.benefits,
           status: formData.status,
+          company_disclosed: formData.company_disclosed,
+          company_name: formData.company_disclosed ? formData.company_name || null : null,
+          company_logo_url: formData.company_disclosed ? logoUrl || null : null,
         })
         .eq('id', jobId);
 
@@ -312,6 +361,87 @@ export function EditJobDrawer({ jobId, isOpen, onClose, onSaved }: EditJobDrawer
                   onChange={(e) => handleChange('benefits', e.target.value)}
                   placeholder="Liste os benefícios oferecidos..."
                 />
+              </div>
+
+
+              {/* Identidade da Empresa */}
+              <div>
+                <h3 className="text-sm font-semibold text-gray-700 mb-4">Identidade da Empresa</h3>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200">
+                    <div className="flex items-center gap-3">
+                      <Building2 className="h-4 w-4 text-[#141042]" />
+                      <div>
+                        <p className="text-sm font-medium text-gray-900">Revelar empresa na vaga</p>
+                        <p className="text-xs text-gray-500 mt-0.5">
+                          {formData.company_disclosed
+                            ? 'A empresa será identificada publicamente'
+                            : 'Empresa em sigilo — identidade não será divulgada'}
+                        </p>
+                      </div>
+                    </div>
+                    <input
+                      type="checkbox"
+                      checked={formData.company_disclosed}
+                      onChange={(e) => setFormData((p) => ({ ...p, company_disclosed: e.target.checked }))}
+                      className="h-5 w-5 rounded border-gray-300 text-[#141042] focus:ring-[#141042] cursor-pointer"
+                    />
+                  </div>
+
+                  {formData.company_disclosed && (
+                    <div className="space-y-4 pl-2 border-l-2 border-[#141042]/20">
+                      <div>
+                        <Label>Nome da Empresa</Label>
+                        <Input
+                          value={formData.company_name}
+                          onChange={(e) => handleChange('company_name', e.target.value)}
+                          placeholder="Ex: TechCorp Soluções"
+                          maxLength={120}
+                        />
+                      </div>
+
+                      <div>
+                        <Label>Logo da Empresa</Label>
+                        <div className="mt-1">
+                          {logoPreview ? (
+                            <div className="flex items-center gap-3">
+                              <img
+                                src={logoPreview}
+                                alt="Logo da empresa"
+                                className="h-16 w-16 object-contain rounded-lg border border-gray-200 bg-white p-1"
+                              />
+                              <button
+                                type="button"
+                                onClick={removeLogo}
+                                className="flex items-center gap-1.5 text-xs text-red-500 hover:text-red-700 transition-colors"
+                              >
+                                <X className="h-3.5 w-3.5" />
+                                Remover logo
+                              </button>
+                            </div>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => logoInputRef.current?.click()}
+                              className="flex items-center gap-2 px-4 py-2.5 border border-dashed border-gray-300 rounded-lg text-sm text-gray-500 hover:border-[#141042] hover:text-[#141042] transition-colors w-full justify-center"
+                            >
+                              <Upload className="h-4 w-4" />
+                              Importar logo (PNG, JPG, SVG)
+                            </button>
+                          )}
+                          <input
+                            ref={logoInputRef}
+                            type="file"
+                            accept="image/png,image/jpeg,image/jpg,image/svg+xml,image/webp"
+                            className="hidden"
+                            onChange={handleLogoChange}
+                          />
+                          <p className="text-xs text-gray-400 mt-1.5">Tamanho máximo: 2MB. Recomendado: fundo transparente.</p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
 
               {/* Status */}
