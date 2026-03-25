@@ -82,7 +82,7 @@ function Section({ title, items, accent }: { title: string; items: string[]; acc
       border: '1px solid rgba(255,255,255,0.1)',
       borderRadius: 14,
       padding: '22px 24px',
-      display: 'flex', flexDirection: 'column', alignItems: 'center',
+      display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-start',
     }}>
       {/* Título centralizado */}
       <div style={{ marginBottom: 16, textAlign: 'center' }}>
@@ -341,7 +341,7 @@ export const JobSocialBanner = forwardRef<HTMLDivElement, { job: JobBannerData; 
 
           {/* ── Três cards iguais: Sobre a Vaga / Requisitos / Benefícios ── */}
           {hasDetails && (
-            <div style={{ display: 'flex', gap: 16, marginBottom: 32 }}>
+            <div style={{ display: 'flex', gap: 16, marginBottom: 32, alignItems: 'stretch' }}>
 
               {/* Card: Sobre a Vaga */}
               {description && (
@@ -351,7 +351,7 @@ export const JobSocialBanner = forwardRef<HTMLDivElement, { job: JobBannerData; 
                   border: '1px solid rgba(255,255,255,0.1)',
                   borderRadius: 14,
                   padding: '22px 24px',
-                  display: 'flex', flexDirection: 'column', alignItems: 'center',
+                  display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-start',
                 }}>
                   <div style={{ marginBottom: 14, textAlign: 'center' }}>
                     <span style={{
