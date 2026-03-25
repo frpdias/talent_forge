@@ -24,7 +24,6 @@ import {
   FileDown,
   Loader2,
   X,
-  Sparkles,
 } from 'lucide-react';
 import { JobDetailsModal } from '@/components/jobs/JobDetailsModal';
 import { Button } from '@/components/ui/button';
@@ -115,9 +114,6 @@ export default function JobsPage() {
   const [bannerLoading, setBannerLoading] = useState<'png' | 'pdf' | null>(null);
   const [pendingDownload, setPendingDownload] = useState<'png' | 'pdf' | null>(null);
   const [showBannerPreview, setShowBannerPreview] = useState(false);
-  type BannerSummary = { jobId: string; description: string | null; requirements: string | null; benefits: string | null };
-  const [bannerSummary, setBannerSummary] = useState<BannerSummary | null>(null);
-  const [bannerSummaryLoading, setBannerSummaryLoading] = useState(false);
   const bannerRef = useRef<HTMLDivElement>(null);
   // startTransition: evita bloquear o main thread ao abrir/fechar o menu de compartilhamento
   // (setShareMenuJob re-renderiza todos os cards — deferred resolve o INP de ~300ms)
@@ -389,60 +385,17 @@ export default function JobsPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pendingDownload, bannerJob]);
 
-  const fetchBannerSummary = async (job: Job): Promise<BannerSummary> => {
-    try {
-      const res = await fetch('/api/recruiter/jobs/banner-summary', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          title: job.title,
-          description: job.description,
-          requirements: job.requirements,
-          benefits: job.benefits,
-          seniority: job.seniority ?? (job as any).seniority_level,
-        }),
-      });
-      if (!res.ok) throw new Error('API error');
-      const data = await res.json();
-      return {
-        jobId: job.id,
-        description: data.description ?? null,
-        requirements: Array.isArray(data.requirements) && data.requirements.length > 0
-          ? data.requirements.join('\n')
-          : null,
-        benefits: Array.isArray(data.benefits) && data.benefits.length > 0
-          ? data.benefits.join('\n')
-          : null,
-      };
-    } catch {
-      // Fallback: retorna dados originais
-      return {
-        jobId: job.id,
-        description: job.description ?? null,
-        requirements: job.requirements ?? null,
-        benefits: job.benefits ?? null,
-      };
-    }
-  };
-
   const handleShareBanner = (job: Job, format: 'png' | 'pdf') => {
     if (!orgBannerData) return;
     setBannerJob(job);
-    // Se summary for de outra vaga, limpa
-    if (bannerSummary?.jobId !== job.id) setBannerSummary(null);
     setPendingDownload(format);
   };
 
-  const handlePreviewBanner = async (job: Job) => {
+  const handlePreviewBanner = (job: Job) => {
     if (!orgBannerData) return;
     setBannerJob(job);
-    setBannerSummary(null);
     setShareMenuJob(null);
     setShowBannerPreview(true);
-    setBannerSummaryLoading(true);
-    const summary = await fetchBannerSummary(job);
-    setBannerSummary(summary);
-    setBannerSummaryLoading(false);
   };
 
   return (
@@ -1129,67 +1082,47 @@ export default function JobsPage() {
               <X className="h-7 w-7" />
             </button>
 
-            {/* Banner escalado para 45% — com overlay de loading IA */}
-            <div className="relative">
-              <div style={{ transform: 'scale(0.45)', transformOrigin: 'top center', width: 1080, height: 1350, flexShrink: 0 }}>
-                <JobSocialBanner
-                  job={{
-                    title: bannerJob.title,
-                    location: bannerJob.location ?? null,
-                    employment_type: bannerJob.employment_type ?? null,
-                    work_modality: bannerJob.work_modality ?? null,
-                    seniority: bannerJob.seniority ?? bannerJob.seniority_level ?? null,
-                    salary_range: bannerJob.salary_range ?? null,
-                    salary_min: bannerJob.salary_min ?? null,
-                    salary_max: bannerJob.salary_max ?? null,
-                    description: (bannerSummary !== null && bannerSummary.jobId === bannerJob.id ? bannerSummary.description : null) ?? bannerJob.description ?? null,
-                    requirements: (bannerSummary !== null && bannerSummary.jobId === bannerJob.id ? bannerSummary.requirements : null) ?? bannerJob.requirements ?? null,
-                    benefits: (bannerSummary !== null && bannerSummary.jobId === bannerJob.id ? bannerSummary.benefits : null) ?? bannerJob.benefits ?? null,
-                  }}
-                  org={orgBannerData}
-                />
-              </div>
-              {/* Overlay enquanto IA gera o resumo */}
-              {bannerSummaryLoading && (
-                <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/70 rounded-xl gap-3">
-                  <Loader2 className="h-8 w-8 text-white animate-spin" />
-                  <span className="text-white text-sm font-medium flex items-center gap-2">
-                    <Sparkles className="h-4 w-4 text-yellow-300" />
-                    Gerando resumo com IA...
-                  </span>
-                </div>
-              )}
+            {/* Banner escalado para 45% */}
+            <div style={{ transform: 'scale(0.45)', transformOrigin: 'top center', width: 1080, height: 1350, flexShrink: 0 }}>
+              <JobSocialBanner
+                job={{
+                  title: bannerJob.title,
+                  location: bannerJob.location ?? null,
+                  employment_type: bannerJob.employment_type ?? null,
+                  work_modality: bannerJob.work_modality ?? null,
+                  seniority: bannerJob.seniority ?? bannerJob.seniority_level ?? null,
+                  salary_range: bannerJob.salary_range ?? null,
+                  salary_min: bannerJob.salary_min ?? null,
+                  salary_max: bannerJob.salary_max ?? null,
+                  description: bannerJob.description ?? null,
+                  requirements: bannerJob.requirements ?? null,
+                  benefits: bannerJob.benefits ?? null,
+                }}
+                org={orgBannerData}
+              />
             </div>
 
-            {/* Badge IA + ações */}
+            {/* Ações */}
             <div
-              className="flex flex-col items-center gap-3"
+              className="flex gap-3"
               style={{ marginTop: `calc(1350px * 0.45 - 1350px + 1rem)` }}
             >
-              {bannerSummary?.jobId === bannerJob.id && !bannerSummaryLoading && (
-                <div className="flex items-center gap-1.5 text-xs text-white/60">
-                  <Sparkles className="h-3 w-3 text-yellow-300" />
-                  Resumo gerado com IA
-                </div>
-              )}
-              <div className="flex gap-3">
-                <button
-                  onClick={() => { setShowBannerPreview(false); if (bannerRef.current) handleShareBanner(bannerJob, 'png'); }}
-                  disabled={bannerLoading !== null || bannerSummaryLoading}
-                  className="flex items-center gap-2 px-5 py-2.5 bg-[#10B981] text-white rounded-xl font-semibold hover:bg-[#059669] transition-colors disabled:opacity-50"
-                >
-                  <ImageDown className="h-4 w-4" />
-                  Baixar PNG
-                </button>
-                <button
-                  onClick={() => { setShowBannerPreview(false); if (bannerRef.current) handleShareBanner(bannerJob, 'pdf'); }}
-                  disabled={bannerLoading !== null || bannerSummaryLoading}
-                  className="flex items-center gap-2 px-5 py-2.5 bg-[#3B82F6] text-white rounded-xl font-semibold hover:bg-[#2563EB] transition-colors disabled:opacity-50"
-                >
-                  <FileDown className="h-4 w-4" />
-                  Baixar PDF
-                </button>
-              </div>
+              <button
+                onClick={() => { setShowBannerPreview(false); if (bannerRef.current) handleShareBanner(bannerJob, 'png'); }}
+                disabled={bannerLoading !== null}
+                className="flex items-center gap-2 px-5 py-2.5 bg-[#10B981] text-white rounded-xl font-semibold hover:bg-[#059669] transition-colors disabled:opacity-50"
+              >
+                <ImageDown className="h-4 w-4" />
+                Baixar PNG
+              </button>
+              <button
+                onClick={() => { setShowBannerPreview(false); if (bannerRef.current) handleShareBanner(bannerJob, 'pdf'); }}
+                disabled={bannerLoading !== null}
+                className="flex items-center gap-2 px-5 py-2.5 bg-[#3B82F6] text-white rounded-xl font-semibold hover:bg-[#2563EB] transition-colors disabled:opacity-50"
+              >
+                <FileDown className="h-4 w-4" />
+                Baixar PDF
+              </button>
             </div>
           </div>
         </div>
@@ -1210,9 +1143,9 @@ export default function JobsPage() {
               salary_range: bannerJob?.salary_range ?? null,
               salary_min: bannerJob?.salary_min ?? null,
               salary_max: bannerJob?.salary_max ?? null,
-              description: (bannerSummary !== null && bannerSummary.jobId === bannerJob?.id ? bannerSummary.description : null) ?? bannerJob?.description ?? null,
-              requirements: (bannerSummary !== null && bannerSummary.jobId === bannerJob?.id ? bannerSummary.requirements : null) ?? bannerJob?.requirements ?? null,
-              benefits: (bannerSummary !== null && bannerSummary.jobId === bannerJob?.id ? bannerSummary.benefits : null) ?? bannerJob?.benefits ?? null,
+              description: bannerJob?.description ?? null,
+              requirements: bannerJob?.requirements ?? null,
+              benefits: bannerJob?.benefits ?? null,
             }}
             org={orgBannerData}
           />
