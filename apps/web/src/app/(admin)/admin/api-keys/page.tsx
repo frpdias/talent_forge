@@ -176,18 +176,31 @@ export default function ApiKeysPage() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <button
+          onClick={() => setShowCatalog(true)}
+          className="bg-[#141042] text-white rounded-xl p-4 text-left hover:bg-[#1e1a5e] transition-colors group"
+        >
+          <p className="text-2xl font-semibold">97</p>
+          <p className="text-sm text-white/70">Endpoints mapeados</p>
+          <p className="text-xs text-white/50 mt-1 group-hover:text-white/70 transition-colors">Ver catálogo →</p>
+        </button>
         <div className="bg-white border border-[#E5E5DC] rounded-xl p-4">
-          <p className="text-2xl font-semibold text-[#141042]">{apiKeys.length}</p>
-          <p className="text-sm text-[#666666]">Total de Keys</p>
+          <p className="text-2xl font-semibold text-[#141042]">14</p>
+          <p className="text-sm text-[#666666]">Grupos de API</p>
+          <p className="text-xs text-[#999] mt-1">Admin · v1 · Recruiter</p>
         </div>
         <div className="bg-white border border-[#E5E5DC] rounded-xl p-4">
           <p className="text-2xl font-semibold text-green-600">{activeCount}</p>
-          <p className="text-sm text-[#666666]">Ativas</p>
+          <p className="text-sm text-[#666666]">API Keys ativas</p>
+          <p className="text-xs text-[#999] mt-1">{apiKeys.length} no total</p>
         </div>
         <div className="bg-white border border-[#E5E5DC] rounded-xl p-4">
-          <p className="text-2xl font-semibold text-red-600">{apiKeys.length - activeCount}</p>
-          <p className="text-sm text-[#666666]">Revogadas</p>
+          <p className={`text-2xl font-semibold ${apiKeys.length - activeCount > 0 ? 'text-red-600' : 'text-[#999]'}`}>
+            {apiKeys.length - activeCount}
+          </p>
+          <p className="text-sm text-[#666666]">Keys revogadas</p>
+          <p className="text-xs text-[#999] mt-1">&nbsp;</p>
         </div>
       </div>
 
