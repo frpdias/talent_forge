@@ -1,6 +1,6 @@
 # Arquitetura Canônica — TalentForge
 
-**Última atualização**: 2026-03-25 | **Score de Conformidade**: ✅ 100% (Sprint 61 — Módulo Teste de Informática + Integração Parecer IA + PDF) | **Sprints planejados**: Sprint 41 (AI Assistant) + Sprint 44 (Gate Recrutamento)
+**Última atualização**: 2026-03-25 | **Score de Conformidade**: ✅ 100% (Sprint 61 — Módulo Teste de Informática + Integração Parecer IA + PDF + Divulgação de Empresa no Banner) | **Sprints planejados**: Sprint 41 (AI Assistant) + Sprint 44 (Gate Recrutamento)
 
 ## 📜 FONTE DA VERDADE — PRINCÍPIO FUNDAMENTAL
 
@@ -1595,7 +1595,7 @@ jobs (
 - **Índices:** PRIMARY KEY (id), INDEX (org_id), INDEX (status), INDEX (created_at)
 - **Importância:** Tabela CENTRAL para conectar candidatos com organizações
 - **RLS:** Membros da org podem ver/editar
-- **Nota:** `company_disclosed=false` = vaga sigilosa (exibe org padrão no banner); `=true` = exibe company_name + company_logo_url
+- **Nota:** `company_disclosed=false` = vaga sigilosa — banner exibe logo e nome da **organização do recrutador**; `=true` = banner exibe **company_name + company_logo_url** (empresa cadastrada na vaga). Não existe estado de "cadeado"/anonimato: a identidade sempre é visível, alternando entre org do recrutador ou empresa da vaga.
 
 ##### 5. **pipeline_stages** - Estágios do Pipeline de Contratação
 ```sql
@@ -9059,6 +9059,7 @@ Componente React com `forwardRef` que renderiza um banner 1080×1350px (formato 
 interface OrgBannerData {
   name: string;
   logo_url?: string | null;
+  career_page_logo_url?: string | null;        // logo preferencial da career page (tem prioridade sobre logo_url)
   career_page_color?: string | null;           // cor primária
   career_page_secondary_color?: string | null; // cor do acento lateral
   career_page_banner_url?: string | null;      // imagem de fundo
@@ -9084,19 +9085,26 @@ interface JobBannerData {
   description?: string | null;
   requirements?: string | null;
   benefits?: string | null;
+  // Divulgação de empresa (Sprint 61)
+  company_disclosed?: boolean | null;  // true = revelar empresa, false = exibir org do recrutador
+  company_name?: string | null;        // Nome da empresa (quando company_disclosed=true)
+  company_logo_url?: string | null;    // URL do logo no bucket job-logos (quando company_disclosed=true)
 }
 ```
 
 #### Layout do Banner
 
 1. **Fundo**: imagem `career_page_banner_url` com gradiente escuro sobreposto
-2. **Faixa de acento**: barra vertical esquerda na cor `career_page_secondary_color`
-3. **Header**: logo da org + nome
-4. **Badge**: "VAGA ABERTA" em destaque
+2. **Faixa de acento**: barra superior na cor `career_page_secondary_color`
+3. **Header**: identidade da empresa — comportamento de divulgação:
+   - `company_disclosed=false` (padrão): exibe logo + nome da **organização do recrutador** (`org.logo_url` / `org.name`)
+   - `company_disclosed=true`: exibe `company_logo_url` + `company_name` da **empresa cadastrada na vaga**
+   - Fallback sem logo: avatar com a inicial do nome
+4. **Badge**: “VAGA ABERTA” em destaque
 5. **Título da vaga**: fonte grande, branca
 6. **Pills de tags**: localização, tipo, modalidade, senioridade, faixa salarial
-7. **Card de detalhes**: "Sobre a Vaga" (descrição truncada), requisitos e benefícios em listas
-8. **Rodapé**: ícones de redes sociais clicáveis + CTA "Candidate-se agora" com URL da career page
+7. **Card de detalhes**: “Sobre a Vaga” (descrição truncada), requisitos e benefícios em listas
+8. **Rodapé**: ícones de redes sociais clicáveis + CTA “Candidate-se agora” com URL da career page
 
 ### Pattern `data-pdf-link`
 
