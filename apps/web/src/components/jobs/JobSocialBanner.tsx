@@ -258,51 +258,47 @@ export const JobSocialBanner = forwardRef<HTMLDivElement, { job: JobBannerData; 
               </div>
             )}
 
-            {/* Nome / status de divulgação */}
+            {/* Nome da empresa */}
             <div style={{ flex: 1, minWidth: 0 }}>
               {isConfidential ? (
-                /* Badge confidencial */
-                <div style={{ display: 'inline-flex', alignItems: 'center', gap: 10 }}>
-                  <span style={{
-                    color: 'rgba(255,255,255,0.45)',
-                    fontSize: 28, fontWeight: 700,
-                    letterSpacing: 2, textTransform: 'uppercase',
-                  }}>
-                    Empresa Confidencial
-                  </span>
-                </div>
+                <span style={{
+                  color: 'rgba(255,255,255,0.45)',
+                  fontSize: 28, fontWeight: 700,
+                  letterSpacing: 2, textTransform: 'uppercase',
+                }}>
+                  Empresa Confidencial
+                </span>
               ) : (
-                /* Nome + badge verde "Empresa revelada" */
-                <div>
-                  <div style={{
-                    color: '#fff', fontSize: 34, fontWeight: 800,
-                    lineHeight: 1.1, letterSpacing: -0.5,
-                    wordBreak: 'break-word',
-                  }}>
-                    {displayName}
-                  </div>
-                  <div style={{
-                    display: 'inline-flex', alignItems: 'center', gap: 6,
-                    marginTop: 8,
-                    backgroundColor: `${secondary}22`,
-                    border: `1.5px solid ${secondary}66`,
-                    borderRadius: 20, padding: '3px 12px',
-                  }}>
-                    <svg viewBox="0 0 24 24" width={13} height={13} fill="none" stroke={secondary} strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
-                      <polyline points="20 6 9 17 4 12" />
-                    </svg>
-                    <span style={{ color: secondary, fontSize: 12, fontWeight: 700, letterSpacing: 1, textTransform: 'uppercase' }}>
-                      Empresa revelada
-                    </span>
-                  </div>
+                <div style={{
+                  color: '#fff', fontSize: 34, fontWeight: 800,
+                  lineHeight: 1.1, letterSpacing: -0.5,
+                  wordBreak: 'break-word',
+                }}>
+                  {displayName}
                 </div>
               )}
             </div>
           </div>
 
-          {/* ── Bloco direito: redes sociais ── */}
-          {socials.length > 0 && (
-            <div style={{ display: 'flex', gap: 12, alignItems: 'center', flexShrink: 0 }}>
+          {/* ── Bloco direito: badge empresa revelada + redes sociais ── */}
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 12, flexShrink: 0 }}>
+            {!isConfidential && (
+              <div style={{
+                display: 'inline-flex', alignItems: 'center', gap: 7,
+                backgroundColor: `${secondary}22`,
+                border: `1.5px solid ${secondary}77`,
+                borderRadius: 20, padding: '5px 16px',
+              }}>
+                <svg viewBox="0 0 24 24" width={14} height={14} fill="none" stroke={secondary} strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+                <span style={{ color: secondary, fontSize: 13, fontWeight: 700, letterSpacing: 1.2, textTransform: 'uppercase' }}>
+                  Empresa revelada
+                </span>
+              </div>
+            )}
+            {socials.length > 0 && (
+            <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
               {socials.map((s, i) => (
                 <div
                   key={i}
@@ -322,6 +318,7 @@ export const JobSocialBanner = forwardRef<HTMLDivElement, { job: JobBannerData; 
               ))}
             </div>
           )}
+          </div>{/* fim bloco direito */}
         </div>
 
         {/* ══════════════════════════════════════════════
