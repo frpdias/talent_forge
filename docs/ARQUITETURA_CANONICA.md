@@ -1,6 +1,6 @@
 # Arquitetura Canônica — TalentForge
 
-**Última atualização**: 2026-03-25 | **Score de Conformidade**: ✅ 100% (Sprint 62 — LLM Router: Ollama/gemma3:4b via ngrok para planos free + OpenAI GPT-4o para pro/enterprise — ✅ validado em produção) | **Sprints planejados**: Sprint 41 (AI Assistant) + Sprint 44 (Gate Recrutamento)
+**Última atualização**: 2026-03-27 | **Score de Conformidade**: ✅ 100% (Sprint 65 — Debug geral: fix Tailwind v4 em 5 arquivos + otimizações de bundle: lazy load jspdf/xlsx/recharts, optimizePackageImports — ✅ zero erros TypeScript) | **Sprints planejados**: Sprint 41 (AI Assistant) + Sprint 44 (Gate Recrutamento)
 
 ## 📜 FONTE DA VERDADE — PRINCÍPIO FUNDAMENTAL
 
@@ -1117,6 +1117,11 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 
 const nextConfig = {
   eslint: { ignoreDuringBuilds: true },
+  transpilePackages: ['@talentforge/types'],
+  // Sprint 64: tree-shake automático — apenas símbolos usados são bundlados
+  experimental: {
+    optimizePackageImports: ['lucide-react', 'recharts', 'date-fns'],
+  },
   images: {
     remotePatterns: [{
       protocol: 'https',
@@ -3152,7 +3157,7 @@ DELETE /api/admin/companies/:id/php-module // Desativar módulo PHP
 | `/admin/roles` | Visualização de roles |
 | `/admin/audit-logs` | Logs de auditoria |
 | `/admin/security-events` | Eventos de segurança |
-| `/admin/api-keys` | Gestão de API keys |
+| `/admin/api-keys` | **Gestão de API keys + Monitor Ollama + Catálogo de APIs** — `OllamaMonitorCard` (status realtime + guia configuração + script), `ApiCatalog` (97 endpoints, 14 grupos, busca em tempo real), 4 cards de stats (Sprint 63) |
 | `/admin/settings` | **Configurações do Sistema** (notificações, segurança, sistema, geral, email) |
 
 #### Dashboard Admin (2026-01-23 - Atualizado Sprint 1)
@@ -3953,7 +3958,7 @@ Dashboard (Frontend)
 - **Necessário:** API `/api/admin/settings` (GET/POST)
 
 #### Interfaces Faltantes
-- `/admin/api-keys` (não implementado)
+- `/admin/api-keys` ✅ **implementado** — Monitor Ollama + Catálogo 97 APIs + gestão de keys (Sprint 63)
 - `/admin/audit-logs` (não implementado)
 - `/admin/security-events` (não implementado)
 - `/admin/roles` (visualização apenas, sem edição)
@@ -8551,6 +8556,9 @@ CREATE TABLE job_alerts (
 | **Sprint 60** | **2026-03-24** | **Tipografia avançada na career page — seletor de família de fonte (9 opções) por seção em `/dashboard/settings` com preview visual via Google Fonts; modal de prévia do banner 45% escalado em `/dashboard/jobs` antes de baixar (botões PNG/PDF dentro do modal); fix `career_page_facebook_url` omitido no `DROP VIEW … CASCADE`; RPCs `get_public_jobs_by_org` + `get_all_public_jobs` sempre recriadas após CASCADE** | ✅ |
 | **Sprint 61** | **2026-03-25** | **Módulo Teste de Informática — 3 níveis (Júnior/Pleno/Sênior), 131 questões (39+44+48) por categoria; Júnior automático; Pleno/Sênior ativado pelo recrutador; modal inline ou link externo; acesso por token público em `/it-test/[token]`; resultado integrado no `score_testes` do parecer técnico com IA (peso proporcional, até 15 pts, cross-org lookup por e-mail); seção visual no PDF (círculo score + barra progresso); `{{informatica}}` no DEFAULT_REVIEW_PROMPT; cleanup de candidatos duplicados (Julia)** | ✅ |
 | **Sprint 62** | **2026-03-25** | **LLM Router — `organizations.plan` ('free'\|'pro'\|'enterprise'); `apps/web/src/lib/llm-router.ts` roteia: free → Ollama/gemma3:4b via ngrok tunnel (Mac Mini, `OLLAMA_BASE_URL`+`OLLAMA_MODEL`+header `ngrok-skip-browser-warning`), pro/enterprise → OpenAI GPT-4o; fallback automático para OpenAI se Ollama indisponível; `technical-review/route.ts` usa router; `ai_model` salvo para auditoria (`ollama/gemma3:4b` ✅ validado em produção); Módulo PHP sempre em OpenAI (premium-only); script `~/start-ollama-tunnel.sh` no Mac Mini para subir ambiente** | ✅ |
+| **Sprint 63** | **2026-03-27** | **Admin Ollama Monitor + Catálogo de APIs — `OllamaMonitorCard` (card + modal 3 abas: Status/Como configurar/Script completo) em `/admin/api-keys`; route `/api/admin/ollama-status` (admin-only, timeout 5s, detecta conectividade Ollama); `ApiCatalog` modal com 97 endpoints mapeados em 14 grupos, busca em tempo real, badge por método HTTP; botão "Ver todas as APIs" no header da página; 4 cards de stats: 97 Endpoints (clicável→catálogo), 14 Grupos de API, API Keys ativas, Keys Revogadas** | ✅ |
+| **Sprint 64** | **2026-03-27** | **Otimizações de bundle/performance — `next.config.mjs`: `experimental.optimizePackageImports: ['lucide-react', 'recharts', 'date-fns']` (tree-shake de 1500+ ícones do lucide); `jspdf`+`jspdf-autotable`+`xlsx` convertidos para dynamic imports async em `ReportExport.tsx`, `CandidateReportPDF.tsx`, `Nr1CompliancePDF.tsx` (~1.2MB removidos do bundle inicial); `AnalyticsPanel` (recharts 588 linhas) → `dynamic()` ssr:false em `dashboard/page.tsx`; `SourceEffectiveness` (recharts) → `dynamic()` ssr:false em `reports/page.tsx`; loading states com `Loader2` em todos os componentes lazy** | ✅ |
+| **Sprint 65** | **2026-03-27** | **Debug geral — audit completo do codebase; zero erros TypeScript confirmados; 19 classes Tailwind v4 corrigidas em 5 arquivos (`vagas/page.tsx`, `admin/page.tsx`, `jobs/[orgSlug]/page.tsx`, `candidate/page.tsx`, `ItTestModal.tsx`): `bg-gradient-to-r/br` → `bg-linear-to-r/br`, `flex-shrink-0` → `shrink-0`, `z-[9999]` → `z-9999`, `z-[10000]` → `z-10000`, `top-[112px]` → `top-28`, `h-[3px]` → `h-0.75`, valores arbitrários px → classes canônicas v4** | ✅ |
 
 ### Regras Canônicas — Portal Candidato
 
