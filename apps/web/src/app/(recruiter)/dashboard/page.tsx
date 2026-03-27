@@ -23,7 +23,18 @@ import { useOrgStore } from '@/lib/store';
 import { reportsApi } from '@/lib/api';
 import { formatDate } from '@/lib/utils';
 import { createClient } from '@/lib/supabase/client';
-import AnalyticsPanel from './analytics-panel';
+import dynamic from 'next/dynamic';
+
+// Carrega recharts apenas quando o painel de analytics for exibido
+const AnalyticsPanel = dynamic(() => import('./analytics-panel'), {
+  loading: () => (
+    <div className="flex items-center justify-center py-20 text-[#666]">
+      <Loader2 className="w-6 h-6 animate-spin mr-2" />
+      Carregando análises…
+    </div>
+  ),
+  ssr: false,
+});
 
 interface DashboardStats {
   totalJobs: number;

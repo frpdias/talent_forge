@@ -1,8 +1,7 @@
 'use client';
 
-import { FileDown } from 'lucide-react';
-import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
+import { useState } from 'react';
+import { FileDown, Loader2 } from 'lucide-react';
 
 const NR1_DIMENSIONS = [
   { key: 'workload_pace_risk', label: 'Carga e Ritmo de Trabalho' },
@@ -82,7 +81,15 @@ function getRiskColor(level: number | string): [number, number, number] {
 }
 
 export function Nr1CompliancePDF({ assessments, complianceReport, orgName, cnpj }: Nr1CompliancePDFProps) {
-  const handleExport = () => {
+  const [loading, setLoading] = useState(false);
+
+  const handleExport = async () => {
+    setLoading(true);
+    try {
+    const [{ default: jsPDF }, { default: autoTable }] = await Promise.all([
+      import('jspdf'),
+      import('jspdf-autotable'),
+    ]);
     const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
     const pageW = doc.internal.pageSize.getWidth();
     const margin = 14;
@@ -415,15 +422,19 @@ export function Nr1CompliancePDF({ assessments, complianceReport, orgName, cnpj 
 
     const filename = `NR1_Compliance_${orgName?.replace(/\s+/g, '_') || 'Relatorio'}_${new Date().toISOString().split('T')[0]}.pdf`;
     doc.save(filename);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <button
       onClick={handleExport}
-      className="flex items-center gap-2 px-4 py-2 border border-[#E5E5DC] text-[#141042] rounded-lg hover:bg-[#FAFAF8] transition-colors text-sm font-medium"
+      disabled={loading}
+      className="flex items-center gap-2 px-4 py-2 border border-[#E5E5DC] text-[#141042] rounded-lg hover:bg-[#FAFAF8] transition-colors text-sm font-medium disabled:opacity-70"
     >
-      <FileDown className="w-4 h-4" />
-      Exportar PDF NR-1
+      {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileDown className="w-4 h-4" />}
+      {loading ? 'Gerando…' : 'Exportar PDF NR-1'}
     </button>
   );
 }

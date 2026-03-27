@@ -36,6 +36,10 @@ const securityHeaders = [
 
 const nextConfig = {
   transpilePackages: ['@talentforge/types'],
+  // Importa apenas os ícones/componentes usados — reduz bundle drasticamente
+  experimental: {
+    optimizePackageImports: ['lucide-react', 'recharts', 'date-fns'],
+  },
   images: {
     remotePatterns: [
       {

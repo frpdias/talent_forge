@@ -2,10 +2,10 @@
 
 import { Header } from '@/components/layout';
 import { Card, CardContent, Button } from '@/components/ui';
-import { SourceEffectiveness } from '@/components';
 import { useEffect, useMemo, useState } from 'react';
 import { useOrgStore } from '@/lib/store';
 import { createClient } from '@/lib/supabase/client';
+import dynamic from 'next/dynamic';
 import {
   BarChart3,
   Users,
@@ -15,7 +15,13 @@ import {
   Target,
   Clock,
   ArrowUpRight,
+  Loader2,
 } from 'lucide-react';
+
+const SourceEffectiveness = dynamic(
+  () => import('@/components/analytics/SourceEffectiveness').then(m => ({ default: m.SourceEffectiveness })),
+  { loading: () => <div className="flex justify-center py-8"><Loader2 className="w-5 h-5 animate-spin text-[#666]" /></div>, ssr: false }
+);
 
 interface DashboardStats {
   totalJobs: number;

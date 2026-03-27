@@ -3,8 +3,6 @@
 import { useState } from 'react';
 import { FileDown, Loader2, X, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
 
 // ─── Tipos ────────────────────────────────────────────────────────────────────
 
@@ -68,7 +66,11 @@ const DOC_LABELS: Record<string, string> = {
 
 // ─── Geração do PDF ───────────────────────────────────────────────────────────
 
-function generatePDF(data: CandidateReportData, recruiterNotes: string) {
+async function generatePDF(data: CandidateReportData, recruiterNotes: string) {
+  const [{ default: jsPDF }, { default: autoTable }] = await Promise.all([
+    import('jspdf'),
+    import('jspdf-autotable'),
+  ]);
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
   const pageW = doc.internal.pageSize.getWidth();
   const pageH = doc.internal.pageSize.getHeight();
@@ -405,15 +407,13 @@ export function CandidateReportPDF({ data }: CandidateReportPDFProps) {
   const [notes, setNotes] = useState('');
   const [generating, setGenerating] = useState(false);
 
-  function handleGenerate() {
+  async function handleGenerate() {
     setGenerating(true);
     try {
-      generatePDF(data, notes);
+      await generatePDF(data, notes);
     } finally {
-      setTimeout(() => {
-        setGenerating(false);
-        setOpen(false);
-      }, 600);
+      setGenerating(false);
+      setOpen(false);
     }
   }
 
