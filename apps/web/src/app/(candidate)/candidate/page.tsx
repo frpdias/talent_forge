@@ -507,7 +507,7 @@ export default function CandidateDashboard() {
         <div className="relative flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           <div className="flex items-center gap-4 flex-1">
             {/* Avatar upload */}
-            <label className="relative cursor-pointer flex-shrink-0 group">
+            <label className="relative cursor-pointer shrink-0 group">
               <input
                 type="file"
                 accept="image/jpeg,image/png,image/webp"

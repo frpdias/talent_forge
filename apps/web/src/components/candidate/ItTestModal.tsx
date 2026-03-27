@@ -131,7 +131,7 @@ export default function ItTestModal({ token, nivel, onClose }: Props) {
   return createPortal(
     /* ── Overlay ── */
     <div
-      className="fixed inset-0 z-[9999] flex items-center justify-center p-4"
+      className="fixed inset-0 z-9999 flex items-center justify-center p-4"
       style={{ background: 'rgba(14,14,40,0.72)', backdropFilter: 'blur(4px)' }}
       onClick={(e) => { if (e.target === e.currentTarget && !result) onClose(false); }}
       role="dialog"
@@ -344,7 +344,7 @@ export default function ItTestModal({ token, nivel, onClose }: Props) {
       {/* ── Confirm dialog (questões em branco) ── */}
       {showConfirm && (
         <div
-          className="fixed inset-0 z-[10000] flex items-center justify-center p-4"
+          className="fixed inset-0 z-10000 flex items-center justify-center p-4"
           style={{ background: 'rgba(0,0,0,0.45)' }}
         >
           <div className="bg-white rounded-2xl p-6 max-w-sm w-full shadow-2xl text-center space-y-4">

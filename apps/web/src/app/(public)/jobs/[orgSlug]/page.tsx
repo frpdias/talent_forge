@@ -411,9 +411,9 @@ export default function CareerPage() {
           <>
             <div className="absolute inset-0"
               style={{ background: `linear-gradient(135deg, ${primary} 0%, ${primary}ee 55%, ${secondary}66 100%)` }} />
-            <div className="absolute -top-24 -right-24 w-[500px] h-[500px] rounded-full opacity-20 blur-3xl"
+            <div className="absolute -top-24 -right-24 w-125 h-125 rounded-full opacity-20 blur-3xl"
               style={{ background: secondary }} />
-            <div className="absolute -bottom-16 -left-16 w-[300px] h-[300px] rounded-full opacity-10 blur-2xl"
+            <div className="absolute -bottom-16 -left-16 w-75 h-75 rounded-full opacity-10 blur-2xl"
               style={{ background: secondary }} />
           </>
         )}
@@ -427,7 +427,7 @@ export default function CareerPage() {
               <img
                 src={logoUrl}
                 alt={org?.org_name}
-                className="h-[84px] max-w-[330px] object-contain"
+                className="h-21 max-w-82.5 object-contain"
                 style={{ filter: 'drop-shadow(0 4px 16px rgba(0,0,0,0.3))' }}
               />
             ) : (
@@ -469,7 +469,7 @@ export default function CareerPage() {
         </div>
 
         {/* Curva de separação */}
-        <div className="absolute bottom-0 left-0 right-0 overflow-hidden leading-[0]">
+        <div className="absolute bottom-0 left-0 right-0 overflow-hidden leading-0">
           <svg viewBox="0 0 1440 48" preserveAspectRatio="none" className="w-full h-12" fill="#F7F7F5">
             <path d="M0,48 C480,0 960,0 1440,48 L1440,48 L0,48 Z" />
           </svg>
@@ -484,7 +484,7 @@ export default function CareerPage() {
               {logoUrl && (
                 <img src={logoUrl} alt={org.org_name}
                   loading="lazy"
-                  className="h-[84px] max-h-[84px] max-w-[150px] object-contain shrink-0 hidden sm:block" />
+                  className="h-21 max-h-21 max-w-37.5 object-contain shrink-0 hidden sm:block" />
               )}
               <div>
                 <p className="text-xs font-extrabold uppercase tracking-widest mb-1" style={{ color: secondary }}>
@@ -643,7 +643,7 @@ export default function CareerPage() {
                   className={`group w-full text-left bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200 overflow-hidden${isLastOdd ? ' sm:col-span-2' : ''}`}
                 >
                   <div
-                    className="h-[2px] w-0 group-hover:w-full transition-all duration-500"
+                    className="h-0.5 w-0 group-hover:w-full transition-all duration-500"
                     style={{ background: `linear-gradient(90deg, ${primary}, ${secondary})` }}
                   />
                   <div className="px-6 py-5 flex items-center gap-4">
@@ -814,7 +814,7 @@ export default function CareerPage() {
               {/* Steps */}
               <div className="relative">
                 {/* linha vertical */}
-                <div className="absolute left-[18px] top-6 bottom-6 w-px bg-gray-200" />
+                <div className="absolute left-4.5 top-6 bottom-6 w-px bg-gray-200" />
                 <div className="space-y-5">
                   {[
                     { step: '01', title: 'Candidatura', desc: 'Você se inscreve pela vaga e preenche o cadastro com seus dados e experiências.' },
@@ -955,7 +955,7 @@ export default function CareerPage() {
         <div className="max-w-7xl mx-auto px-6 py-8 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             {logoUrl
-              ? <img src={logoUrl} alt={org?.org_name} loading="lazy" className="h-[42px] object-contain opacity-50" />
+              ? <img src={logoUrl} alt={org?.org_name} loading="lazy" className="h-10.5 object-contain opacity-50" />
               : <span className="text-sm font-semibold text-gray-400">{org?.org_name}</span>
             }
           </div>
@@ -1104,7 +1104,7 @@ export default function CareerPage() {
                       <div className="space-y-2">
                         {selectedJob.requirements.split('\n').filter(Boolean).map((req, i) => (
                           <div key={i} className="flex items-start gap-2.5">
-                            <div className="w-1.5 h-1.5 rounded-full mt-[7px] shrink-0" style={{ background: primary }} />
+                            <div className="w-1.5 h-1.5 rounded-full mt-1.75 shrink-0" style={{ background: primary }} />
                             <p className="text-sm text-gray-600 leading-relaxed">{req.replace(/^[-•*]\s*/, '')}</p>
                           </div>
                         ))}

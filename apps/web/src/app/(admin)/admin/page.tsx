@@ -870,7 +870,7 @@ export default function AdminDashboard() {
               </h3>
               <div className="space-y-4">
                 {/* AI Usage */}
-                <div className="p-3 bg-gradient-to-r from-[#EC4899]/5 to-[#8B5CF6]/5 rounded-lg border border-[#EC4899]/20">
+                <div className="p-3 bg-linear-to-r from-[#EC4899]/5 to-[#8B5CF6]/5 rounded-lg border border-[#EC4899]/20">
                   <p className="text-xs text-[#999] mb-1">Uso de IA (30 dias)</p>
                   <div className="grid grid-cols-2 gap-2">
                     <div>

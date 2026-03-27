@@ -576,7 +576,7 @@ function JobModal({
                 <button
                   onClick={handleApply}
                   disabled={applyStatus === 'loading'}
-                  className="flex items-center justify-center gap-2 w-full bg-gradient-to-r from-[#141042] to-[#1F4ED8] hover:from-[#1a1565] hover:to-[#1e40af] disabled:opacity-60 text-white font-semibold text-base py-3.5 rounded-xl transition-all shadow-md hover:shadow-lg"
+                  className="flex items-center justify-center gap-2 w-full bg-linear-to-r from-[#141042] to-[#1F4ED8] hover:from-[#1a1565] hover:to-[#1e40af] disabled:opacity-60 text-white font-semibold text-base py-3.5 rounded-xl transition-all shadow-md hover:shadow-lg"
                 >
                   {applyStatus === 'loading' ? (
                     <><Loader2 className="h-4 w-4 animate-spin" /> Enviando candidatura…</>
@@ -600,7 +600,7 @@ function JobModal({
             <>
               <Link
                 href={loginUrl}
-                className="block w-full text-center bg-gradient-to-r from-[#141042] to-[#1F4ED8] hover:from-[#1a1565] hover:to-[#1e40af] text-white font-semibold text-base py-3.5 rounded-xl transition-all shadow-md hover:shadow-lg"
+                className="block w-full text-center bg-linear-to-r from-[#141042] to-[#1F4ED8] hover:from-[#1a1565] hover:to-[#1e40af] text-white font-semibold text-base py-3.5 rounded-xl transition-all shadow-md hover:shadow-lg"
               >
                 Candidatar-se a esta vaga
               </Link>
@@ -963,7 +963,7 @@ function VagasContent() {
                   <div className="w-7 h-7 rounded-full bg-[#10B981] flex items-center justify-center text-white text-xs font-bold shrink-0">
                     {(authUser.email?.[0] ?? 'C').toUpperCase()}
                   </div>
-                  <span className="hidden sm:block max-w-[140px] truncate">{authUser.email}</span>
+                  <span className="hidden sm:block max-w-35 truncate">{authUser.email}</span>
                 </Link>
                 <button
                   onClick={async () => { await supabase.auth.signOut(); setAuthUser(null); }}
@@ -1152,7 +1152,7 @@ function VagasContent() {
         <div className="flex gap-6 items-start">
 
           {/* Sidebar */}
-          <aside className="hidden lg:block w-64 shrink-0 sticky top-[112px] sm:top-[128px]">
+          <aside className="hidden lg:block w-64 shrink-0 sticky top-28 sm:top-32">
               <FilterSidebar
                 filterType={filterType} setFilterType={setFilterType}
                 filterModality={filterModality} setFilterModality={setFilterModality}
@@ -1165,7 +1165,7 @@ function VagasContent() {
               />
 
               {/* Recruiter CTA */}
-              <div className="mt-4 bg-gradient-to-br from-[#141042] to-[#1a1565] rounded-2xl p-5 text-white">
+              <div className="mt-4 bg-linear-to-br from-[#141042] to-[#1a1565] rounded-2xl p-5 text-white">
                 <div className="w-9 h-9 rounded-xl bg-white/15 flex items-center justify-center mb-3">
                   <Zap className="h-5 w-5 text-[#10B981]" />
                 </div>
@@ -1416,7 +1416,7 @@ function VagasContent() {
                       </div>
 
                       {/* Accent bar */}
-                      <div className={`h-[3px] bg-gradient-to-r from-[#141042] via-[#3B82F6] to-[#10B981] transition-transform duration-300 origin-left ${
+                      <div className={`h-0.75 bg-linear-to-r from-[#141042] via-[#3B82F6] to-[#10B981] transition-transform duration-300 origin-left ${
                         isSelected ? 'scale-x-100' : 'scale-x-0 group-hover:scale-x-100'
                       }`} />
                     </div>
