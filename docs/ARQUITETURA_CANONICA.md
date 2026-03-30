@@ -1,6 +1,6 @@
 # Arquitetura Canônica — TalentForge
 
-**Última atualização**: 2026-03-27 | **Score de Conformidade**: ✅ 100% (Sprint 65 — Debug geral: fix Tailwind v4 em 5 arquivos + otimizações de bundle: lazy load jspdf/xlsx/recharts, optimizePackageImports — ✅ zero erros TypeScript) | **Sprints planejados**: Sprint 41 (AI Assistant) + Sprint 44 (Gate Recrutamento)
+**Última atualização**: 2026-03-30 | **Score de Conformidade**: ✅ 100% (Sprint 66 — Publisher Engine real: adapters Gupy + Vagas.com + Meta (Facebook/Instagram), OAuth callback Meta, UI Canais de Publicação, modal guia de credenciais, banner de anúncio, sino de novidades) | **Sprints planejados**: Sprint 41 (AI Assistant) + Sprint 44 (Gate Recrutamento)
 
 ## 📜 FONTE DA VERDADE — PRINCÍPIO FUNDAMENTAL
 
@@ -191,10 +191,12 @@ PROJETO_TALENT_FORGE/
 │       │   │       ├── JobDetailsModal.tsx   # Detalhes/ações da vaga (modal overlay)
 │       │   │       ├── EditJobDrawer.tsx     # Edição inline (drawer lateral direito)
 │       │   │       └── PublishDrawer.tsx     # Gerenciar publicações (drawer lateral direito)
-│       │   ├── publisher/           # ✨ Componentes Publisher Engine (Sprint 35)
+│       │   ├── publisher/           # ✨ Componentes Publisher Engine (Sprint 35/66)
 │       │   │   ├── ChannelSelector.tsx      # Seletor de canais para publicar vaga
 │       │   │   ├── PublicationStatus.tsx    # Badge/lista/inline badges de status por canal
-│       │   │   └── PublicationTimeline.tsx  # Timeline de histórico de publicações
+│       │   │   ├── PublicationTimeline.tsx  # Timeline de histórico de publicações
+│       │   │   ├── ChannelConfigModal.tsx   # ✨ Modal configuração de credenciais (Sprint 66)
+│       │   │   └── ChannelGuideModal.tsx    # ✨ Modal passo-a-passo para obter credenciais (Sprint 66)
 │       │   └── reports/             # Componentes de relatórios
 │       │       ├── FullReportPDF.tsx        # PDF de relatório geral (jsPDF + autotable)
 │       │       ├── ReportExport.tsx         # Botão + lógica de export CSV/PDF
@@ -206,7 +208,12 @@ PROJETO_TALENT_FORGE/
 │       │   │   ├── supabase/       # Supabase clients
 │       │   │   ├── utils.ts        # Helper functions
 │       │   │   ├── constants.ts    # App constants
-│       │   │   └── cbo-data.ts     # ✨ Dataset local CBO 2002 (~350 mais comuns) + searchCbo() — fallback para /api/cbo/search (Sprint 57)
+│       │   │   ├── cbo-data.ts     # ✨ Dataset local CBO 2002 (~350 mais comuns) + searchCbo() — fallback para /api/cbo/search (Sprint 57)
+│       │   │   └── publisher/      # ✨ Adapters Publisher Engine (Sprint 66)
+│       │   │       ├── types.ts    # ChannelCode, JobCanonical, ChannelCredentials, PublishResult
+│       │   │       ├── gupy.ts     # Adapter Gupy (OAuth2 client_credentials)
+│       │   │       ├── vagas.ts    # Adapter Vagas.com (API Key)
+│       │   │       └── meta.ts     # Adapter Facebook + Instagram (Meta Graph API OAuth)
 │       │   ├── hooks/              # Custom React hooks
 │       │   ├── stores/             # Zustand stores
 │       │   ├── types/              # TypeScript types

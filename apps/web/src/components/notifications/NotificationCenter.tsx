@@ -1,19 +1,38 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { Bell, X, AlertCircle, UserPlus, FileText } from 'lucide-react';
+import { Bell, X, AlertCircle, UserPlus, FileText, Sparkles } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
 interface Notification {
   id: string;
-  type: 'application' | 'assessment' | 'message' | 'system';
+  type: 'application' | 'assessment' | 'message' | 'system' | 'feature';
   title: string;
   message: string;
   read: boolean;
   created_at: string;
   action_url?: string;
+}
+
+// Notificações locais de novidades (sem banco de dados)
+const LOCAL_FEATURE_NOTIFICATIONS: Omit<Notification, 'read'>[] = [
+  {
+    id: 'feature_publisher_channels_2026-03-30',
+    type: 'feature',
+    title: '🚀 Publicação em múltiplos canais',
+    message: 'Configure Gupy e Vagas.com em Configurações → Canais de Publicação e publique vagas automaticamente.',
+    created_at: '2026-03-30T10:00:00.000Z',
+    action_url: '/dashboard/settings/channels',
+  },
+];
+
+function getLocalNotifications(): Notification[] {
+  return LOCAL_FEATURE_NOTIFICATIONS.map((n) => ({
+    ...n,
+    read: !!localStorage.getItem(`tf_notif_read_${n.id}`),
+  }));
 }
 
 export function NotificationCenter() {
@@ -33,7 +52,7 @@ export function NotificationCenter() {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) return;
 
-        // Carregar notificações iniciais
+        // Carregar notificações do banco
         const { data } = await supabase
           .from('notifications')
           .select('*')
@@ -41,8 +60,13 @@ export function NotificationCenter() {
           .order('created_at', { ascending: false })
           .limit(20);
 
-        setNotifications(data || []);
-        setUnreadCount(data?.filter((n) => !n.read).length || 0);
+        // Mesclar notificações locais (novidades) + banco
+        const local = getLocalNotifications();
+        const db: Notification[] = data || [];
+        const merged = [...local, ...db];
+
+        setNotifications(merged);
+        setUnreadCount(merged.filter((n) => !n.read).length);
 
         // Realtime filtrado por user_id
         channelRef = supabase
@@ -88,10 +112,15 @@ export function NotificationCenter() {
   }, []);
 
   const markAsRead = async (notificationId: string) => {
-    await supabaseRef.current
-      .from('notifications')
-      .update({ read: true })
-      .eq('id', notificationId);
+    const isLocal = LOCAL_FEATURE_NOTIFICATIONS.some((n) => n.id === notificationId);
+    if (isLocal) {
+      localStorage.setItem(`tf_notif_read_${notificationId}`, '1');
+    } else {
+      await supabaseRef.current
+        .from('notifications')
+        .update({ read: true })
+        .eq('id', notificationId);
+    }
 
     setNotifications((prev) =>
       prev.map((n) => (n.id === notificationId ? { ...n, read: true } : n))
@@ -103,6 +132,12 @@ export function NotificationCenter() {
     const { data: { user } } = await supabaseRef.current.auth.getUser();
     if (!user) return;
 
+    // Marcar locais como lidas
+    LOCAL_FEATURE_NOTIFICATIONS.forEach((n) => {
+      localStorage.setItem(`tf_notif_read_${n.id}`, '1');
+    });
+
+    // Marcar do banco
     await supabaseRef.current
       .from('notifications')
       .update({ read: true })
@@ -121,6 +156,8 @@ export function NotificationCenter() {
         return <FileText className="w-5 h-5 text-green-600" />;
       case 'message':
         return <AlertCircle className="w-5 h-5 text-orange-600" />;
+      case 'feature':
+        return <Sparkles className="w-5 h-5 text-[#10B981]" />;
       default:
         return <Bell className="w-5 h-5 text-gray-600" />;
     }

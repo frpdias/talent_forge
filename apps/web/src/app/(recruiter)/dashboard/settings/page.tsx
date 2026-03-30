@@ -1639,6 +1639,29 @@ function SettingsPageContent() {
           </CardContent>
         </Card>
 
+        {/* Canais de Publicação */}
+        <div className="col-span-1 md:col-span-2">
+          <Card className="rounded-xl shadow-sm hover:shadow-md transition-shadow">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-base text-[#141042]">
+                <Globe className="h-4 w-4" />
+                Canais de Publicação
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-gray-500 mb-4">
+                Configure integrações com Gupy, Vagas.com, LinkedIn e outros para publicar vagas automaticamente.
+              </p>
+              <a href="/dashboard/settings/channels">
+                <Button size="sm" variant="outline" className="text-xs">
+                  <ExternalLink className="h-3.5 w-3.5 mr-1.5" />
+                  Gerenciar canais
+                </Button>
+              </a>
+            </CardContent>
+          </Card>
+        </div>
+
         {/* Webhooks */}
         <div className="col-span-1 md:col-span-2">
           <WebhookManager />

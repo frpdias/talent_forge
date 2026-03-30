@@ -30,6 +30,7 @@ import {
 import { NotificationCenter } from '@/components/notifications/NotificationCenter';
 import { OnboardingManualModal } from '@/components/onboarding/OnboardingManualModal';
 import { AgendaModal } from '@/components/calendar/AgendaModal';
+import { FeatureAnnouncementBanner } from '@/components/announcements/FeatureAnnouncementBanner';
 
 // Itens de Recrutamento
 const recruitmentItems = [
@@ -484,6 +485,7 @@ export default function RecruiterLayout({ children }: { children: React.ReactNod
 
         {/* Conteúdo principal */}
         <div className="flex min-h-screen flex-col">
+          <FeatureAnnouncementBanner />
           {/* Header desktop */}
           <header className="hidden md:flex sticky top-0 z-30 bg-white/85 backdrop-blur-xl border-b border-[#E5E5DC]">
             <div className="flex items-center justify-between h-16 w-full pl-0 pr-6">
