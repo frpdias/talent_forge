@@ -1,6 +1,6 @@
 # Arquitetura Canônica — TalentForge
 
-**Última atualização**: 2026-03-30 | **Score de Conformidade**: ✅ 100% (Sprint 66 — Publisher Engine real: adapters Gupy + Vagas.com + Meta (Facebook/Instagram), OAuth callback Meta, UI Canais de Publicação, modal guia de credenciais, banner de anúncio, sino de novidades) | **Sprints planejados**: Sprint 41 (AI Assistant) + Sprint 44 (Gate Recrutamento)
+**Última atualização**: 2026-04-08 | **Score de Conformidade**: ✅ 100% (Sprint 67 — AI Chat PHP: 7 rotas Next.js `/api/php/ai/*` implementadas — health, usage, chat, report, predict-turnover, forecast-performance, smart-recommendations) | **Sprints planejados**: Sprint 44 (Gate Recrutamento)
 
 ## 📜 FONTE DA VERDADE — PRINCÍPIO FUNDAMENTAL
 
@@ -1419,7 +1419,7 @@ O TalentForge é organizado em **módulos funcionais ativáveis por organizaçã
 |---|---|---|---|
 | **Recrutamento** | `/dashboard/*` | `recruitment_module_activations` | 🔲 Gate a implementar (Sprint 43) |
 | **PHP** (People Health Performance) | `/php/*` | `php_module_activations` | ✅ Implementado (Sprint 6) |
-| **AI Assistant** | `/php/ai-chat` | — (sub-feature do PHP) | 🔲 Planejado (Sprint 41) |
+| **AI Assistant** | `/php/ai-chat` | `php_ai_usage`, `php_ai_conversations`, `php_ai_reports` | ✅ Implementado (Sprint 41) |
 
 ### Padrão de ativação de módulo
 
@@ -7166,7 +7166,7 @@ interface Tip {
 
 ---
 
-## Sprint 41 — AI Assistant PHP Module (PLANEJADO)
+## Sprint 41 — AI Assistant PHP Module (IMPLEMENTADO)
 
 ### Diagnóstico do problema atual
 
@@ -8410,7 +8410,7 @@ O `ReportsService.getDashboard()` usa `applications.source` com fallback para `c
 | **Sprint 40** | **2026-03-11** | **Dicas de carreira — tabela `org_career_tips` com RLS + trigger updated_at, CRUD no settings (card Lightbulb, formulário inline title/summary/content), career page renderiza seção condicionalmente** | ✅ |
 | **Sprint 45** | **2026-03-16** | **Pipeline auto-save Supabase direto (remove dependência NestJS) + enum `interview_hr`/`interview_manager`, badge no card Kanban, migration `20260316_add_interview_status.sql`** | ✅ |
 | **Sprint 46** | **2026-03-16** | **Currículo PDF profissional candidato (`CandidateCurriculumPDF.ts`) — jsPDF 2 colunas, foto circular via Canvas API, header roxo escuro, seções Experiência/Formação/Contato/Diferenciais, rodapé TalentForge; fix: exibe status do currículo no banco em vez do nome do arquivo; COPC: botão Tendências linkando `/php/copc/trends`** | ✅ |
-| **Sprint 41** | **PLANEJADO** | **AI Assistant PHP Module — 7 endpoints `/api/php/ai/*`, tabela `php_ai_usage`, correção `orgId` no frontend, integração com provedor AI (Anthropic/OpenAI)** | 🔲 |
+| **Sprint 41** | **2026-04-08** | **AI Assistant PHP Module — 7 rotas Next.js `/api/php/ai/*` (health, usage, chat, report, predict-turnover, forecast-performance, smart-recommendations), tabelas `php_ai_usage`/`php_ai_conversations`/`php_ai_reports`, integração `callLLM` (OpenAI/Ollama)** | ✅ |
 | **Sprint 43** | **2026-03-12** | **Landing Polish + Avatar Candidato — título hero com `clamp()`, badge MÓDULO PREMIUM ampliado, avatar upload com modal de recorte (`react-easy-crop`), bucket `candidate-avatars`, migration `avatar_url`** | ✅ |
 | **Hotfix** | **2026-03-13** | **Botão Analytics Dashboard — removida guarda `isLocalhost` em `(recruiter)/dashboard/page.tsx`; botão "Analytics" e `AnalyticsPanel` (recharts) agora visíveis em produção para todos os usuários** | ✅ |
 | **Sprint 44** | **PLANEJADO** | **Gate de ativação do módulo Recrutamento — tabela `recruitment_module_activations`, `GET /api/v1/recruitment/status`, endpoints admin, guard no `dashboard/layout.tsx`, card no Admin Panel** | 🔲 |

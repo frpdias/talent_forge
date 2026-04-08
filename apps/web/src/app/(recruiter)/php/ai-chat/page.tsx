@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { useAuth } from '@/hooks/useAuth';
+import { useOrgStore } from '@/lib/store';
+import { getAuthToken } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -42,7 +43,7 @@ interface UsageStats {
 }
 
 export default function AiChatPage() {
-  const { session } = useAuth();
+  const { currentOrg, phpContextOrgId } = useOrgStore();
   const { toast } = useToast();
   
   const [activeTab, setActiveTab] = useState('chat');
@@ -58,7 +59,7 @@ export default function AiChatPage() {
   } | null>(null);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const orgId = session?.user?.user_metadata?.org_id;
+  const orgId = phpContextOrgId || currentOrg?.id;
 
   useEffect(() => {
     if (orgId) {
@@ -73,8 +74,12 @@ export default function AiChatPage() {
 
   const checkAiStatus = async () => {
     try {
+      const token = await getAuthToken();
       const res = await fetch('/api/php/ai/health', {
-        headers: { 'x-org-id': orgId },
+        headers: {
+          Authorization: `Bearer ${token ?? ''}`,
+          'x-org-id': orgId ?? '',
+        },
       });
       if (res.ok) {
         const data = await res.json();
@@ -87,8 +92,12 @@ export default function AiChatPage() {
 
   const loadUsageStats = async () => {
     try {
+      const token = await getAuthToken();
       const res = await fetch(`/api/php/ai/usage?org_id=${orgId}`, {
-        headers: { 'x-org-id': orgId },
+        headers: {
+          Authorization: `Bearer ${token ?? ''}`,
+          'x-org-id': orgId ?? '',
+        },
       });
       if (res.ok) {
         const data = await res.json();
@@ -113,11 +122,13 @@ export default function AiChatPage() {
     setIsLoading(true);
 
     try {
+      const token = await getAuthToken();
       const res = await fetch('/api/php/ai/chat', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-org-id': orgId,
+          Authorization: `Bearer ${token ?? ''}`,
+          'x-org-id': orgId ?? '',
         },
         body: JSON.stringify({
           org_id: orgId,
@@ -161,11 +172,13 @@ export default function AiChatPage() {
   const generateReport = async (reportType: string) => {
     setIsLoading(true);
     try {
+      const token = await getAuthToken();
       const res = await fetch('/api/php/ai/report', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-org-id': orgId,
+          Authorization: `Bearer ${token ?? ''}`,
+          'x-org-id': orgId ?? '',
         },
         body: JSON.stringify({
           org_id: orgId,
@@ -424,11 +437,13 @@ export default function AiChatPage() {
                   onClick={async () => {
                     setIsLoading(true);
                     try {
+                      const token = await getAuthToken();
                       const res = await fetch('/api/php/ai/predict-turnover', {
                         method: 'POST',
                         headers: {
                           'Content-Type': 'application/json',
-                          'x-org-id': orgId,
+                          Authorization: `Bearer ${token ?? ''}`,
+                          'x-org-id': orgId ?? '',
                         },
                         body: JSON.stringify({ org_id: orgId }),
                       });
@@ -463,11 +478,13 @@ export default function AiChatPage() {
                   onClick={async () => {
                     setIsLoading(true);
                     try {
+                      const token = await getAuthToken();
                       const res = await fetch('/api/php/ai/forecast-performance', {
                         method: 'POST',
                         headers: {
                           'Content-Type': 'application/json',
-                          'x-org-id': orgId,
+                          Authorization: `Bearer ${token ?? ''}`,
+                          'x-org-id': orgId ?? '',
                         },
                         body: JSON.stringify({ org_id: orgId, months_ahead: 3 }),
                       });
@@ -501,11 +518,13 @@ export default function AiChatPage() {
                   onValueChange={async (goal) => {
                     setIsLoading(true);
                     try {
+                      const token = await getAuthToken();
                       const res = await fetch('/api/php/ai/smart-recommendations', {
                         method: 'POST',
                         headers: {
                           'Content-Type': 'application/json',
-                          'x-org-id': orgId,
+                          Authorization: `Bearer ${token ?? ''}`,
+                          'x-org-id': orgId ?? '',
                         },
                         body: JSON.stringify({ org_id: orgId, goal }),
                       });
