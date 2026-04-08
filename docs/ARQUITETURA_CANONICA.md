@@ -1417,7 +1417,7 @@ O TalentForge é organizado em **módulos funcionais ativáveis por organizaçã
 
 | Módulo | Rota Frontend | Tabela de Ativação | Status |
 |---|---|---|---|
-| **Recrutamento** | `/dashboard/*` | `recruitment_module_activations` | 🔲 Gate a implementar (Sprint 43) |
+| **Recrutamento** | `/dashboard/*` | `recruitment_module_activations` | 🔲 Gate a implementar (Sprint 44) |
 | **PHP** (People Health Performance) | `/php/*` | `php_module_activations` | ✅ Implementado (Sprint 6) |
 | **AI Assistant** | `/php/ai-chat` | `php_ai_usage`, `php_ai_conversations`, `php_ai_reports` | ✅ Implementado (Sprint 41) |
 
@@ -2277,7 +2277,7 @@ nr1_risk_assessments (
 - **Propósito:** Evidência legal para compliance NR-1 (riscos psicossociais)
 - **Índices:** org_id, team_id, user_id, (org_id, assessment_date DESC), overall_risk_level
 - **RLS:** Dados sensíveis — apenas admins/RH/owner
-- **Status:** ⏳ Pendente Sprint 8
+- **Status:** ✅ Completo (Sprint 8)
 
 #### 8. **copc_metrics_catalog** — Catálogo de Métricas COPC
 ```sql
@@ -2306,7 +2306,7 @@ copc_metrics_catalog (
 - **Índices:** org_id, category, is_active
 - **RLS:** Admins gerenciam, membros veem
 - **Seed:** 10 métricas template (org_id NULL)
-- **Status:** ✅ Seed aplicado, ⏳ API pendente Sprint 9
+- **Status:** ✅ Completo — API `/api/v1/php/copc/catalog` + catálogo dinâmico por área (Sprint 9 + Sprint 25)
 
 #### 9. **copc_metrics** — Métricas COPC
 ```sql
@@ -2356,7 +2356,7 @@ copc_metrics (
 - **Propósito:** Indicadores operacionais + bem-estar
 - **Índices:** org_id, team_id, user_id, (org_id, metric_date DESC)
 - **RLS:** Gestores inserem/veem suas equipes
-- **Status:** ⏳ Pendente Sprint 9
+- **Status:** ✅ Completo — `copc_metric_entries` (catálogo dinâmico), `v_copc_dynamic_scores`, quadrante automático (Sprint 9 + Sprint 25)
 
 #### 10. **php_integrated_scores** — Score PHP Final
 ```sql
@@ -2726,7 +2726,7 @@ GET    /api/v1/php/tfci/cycles/:id/heatmap         # Heatmap agregado
   - Scores de confiança e impacto
   - Links rápidos para TFCI/NR-1/COPC
   
-- ⏳ `/php/dashboard` — Overview PHP Score (futuro)
+- ✅ `/php/dashboard` — Overview PHP Score (341 linhas, dados reais)
   - 4 cards: PHP Total, TFCI, NR-1, COPC
   - Gráfico de tendência (30 dias)
   - Alertas críticos e avisos
