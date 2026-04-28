@@ -41,6 +41,9 @@ Thumbs.db
 ._*
 .home/
 
+# ─── Assets binários (não versionar) ────────────────────
+Logos/
+
 # ─── Arquivos temporários / rascunhos locais ─────────────
 "# Arquitetura Canônica — TalentForge/"
 *.backup

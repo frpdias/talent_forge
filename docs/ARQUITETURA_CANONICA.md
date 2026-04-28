@@ -87,7 +87,16 @@ PROJETO_TALENT_FORGE/
 │   │   │   │       ├── gupy.adapter.ts     # Gupy REST API v2 (OAuth2 client_credentials)
 │   │   │   │       ├── vagas.adapter.ts    # Vagas.com Business REST API (ApiKey)
 │   │   │   │       └── linkedin.adapter.ts # LinkedIn Job Posting API (OAuth2 + ATS parceria)
-│   │   │   └── common/              # Guards, decorators, utils
+│   │   │   ├── common/              # Guards, decorators, utils
+│   │   │   ├── tfci/                # ✅ Módulo TFCI standalone (Sprint 30+) — fora do php/
+│   │   │   │   ├── tfci.module.ts
+│   │   │   │   ├── controllers/
+│   │   │   │   ├── services/
+│   │   │   │   └── dto/
+│   │   │   └── supabase/            # ✅ Módulo Supabase compartilhado (client service_role)
+│   │   │       ├── supabase.module.ts
+│   │   │       ├── supabase.service.ts
+│   │   │       └── index.ts
 │   │   ├── test/                    # E2E tests
 │   │   └── vercel.json              # Deploy config
 │   │
@@ -95,6 +104,7 @@ PROJETO_TALENT_FORGE/
 │       ├── src/
 │       │   ├── app/                 # App Router (Next.js 15)
 │       │   │   ├── (admin)/         # Rotas admin
+│       │   │   │   ├── database-schema/   # ✅ Inspeção de schema DB (ferramenta interna)
 │       │   │   │   └── admin/
 │       │   │   │       ├── page.tsx           # Dashboard admin
 │       │   │   │       ├── users/             # Gestão usuários
@@ -105,11 +115,13 @@ PROJETO_TALENT_FORGE/
 │       │   │   │       │       ├── page.tsx   # Detalhe + abas Informações/Funcionários
 │       │   │   │       │       └── employees/new/page.tsx # Cadastro funcionário
 │       │   │   │       ├── tenants/           # Gestão tenants
+│       │   │   │       │   └── [id]/          # ✅ Detalhe do tenant
 │       │   │   │       ├── security/          # Centro segurança
 │       │   │   │       ├── roles/             # Gestão roles
 │       │   │   │       ├── audit-logs/        # Logs auditoria
 │       │   │   │       ├── security-events/   # Eventos segurança
-│       │   │   │       ├── api-keys/          # Gestão API keys
+│       │   │   │       ├── api-keys/          # Gestão API keys + Monitor Ollama (Sprint 63)
+│       │   │   │       ├── email-test/        # ✅ Ferramenta de teste de envio SMTP (admin-only)
 │       │   │   │       └── settings/          # Configurações sistema
 │       │   │   ├── (recruiter)/     # Rotas recrutador
 │       │   │   │   ├── dashboard/
@@ -126,11 +138,17 @@ PROJETO_TALENT_FORGE/
 │       │   │   │   │               ├── new/page.tsx              # Cadastro funcionário
 │       │   │   │   │               └── [employeeId]/edit/page.tsx # Edição funcionário
 │       │   │   │   ├── pipeline/
-│       │   │   │   ├── candidates/
+│       │   │   │   ├── candidates/            # ✅ Lista e detalhe de candidatos (nível raiz)
+│       │   │   │   │   ├── page.tsx
+│       │   │   │   │   ├── new/page.tsx
+│       │   │   │   │   └── [id]/page.tsx
 │       │   │   │   ├── jobs/
 │       │   │   │   │   ├── page.tsx              # Lista de vagas (único entry point)
 │       │   │   │   │   └── new/page.tsx          # Formulário de nova vaga
-│       │   │   │   ├── reports/
+│       │   │   │   ├── reports/               # ✅ Relatórios (nível raiz — espelho de dashboard/)
+│       │   │   │   ├── tfci/                  # ✅ TFCI standalone (nível raiz, fora de php/)
+│       │   │   │   │   ├── cycles/page.tsx
+│       │   │   │   │   └── organogram/page.tsx
 │       │   │   │   └── php/                  # ✨ Módulo PHP (Fartech-only)
 │       │   │   │       ├── layout.tsx        # Header + nav + footer
 │       │   │   │       ├── activation/       # Toggle ativação
@@ -165,6 +183,9 @@ PROJETO_TALENT_FORGE/
 │       │   │   │   │   ├── create-user/              # POST criar usuário + envio de e-mail boas-vindas
 │       │   │   │   │   ├── delete-user/              # DELETE excluir usuário + audit log (2026-03-15)
 │       │   │   │   │   ├── resend-welcome-email/     # POST reenviar e-mail boas-vindas (2026-03-14)
+│       │   │   │   │   ├── send-test-email/          # ✅ POST envio de e-mail de teste SMTP (admin-only)
+│       │   │   │   │   ├── smtp-status/              # ✅ GET status da conexão SMTP + latência
+│       │   │   │   │   ├── ollama-status/            # ✅ GET status do servidor Ollama local (Sprint 63)
 │       │   │   │   │   ├── companies/                # CRUD empresas
 │       │   │   │   │   ├── metrics/                  # Métricas sistema
 │       │   │   │   │   ├── audit-logs/               # GET logs de auditoria
@@ -172,6 +193,18 @@ PROJETO_TALENT_FORGE/
 │       │   │   │   │   ├── tenants/                  # Gestão de tenants
 │       │   │   │   │   ├── security/                 # Score e verificações de segurança
 │       │   │   │   │   └── security-events/          # Eventos de segurança
+│       │   │   │   ├── pipeline/
+│       │   │   │   │   └── notify/                   # ✅ POST e-mail automático ao mover candidato no pipeline (Sprint 62)
+│       │   │   │   ├── recruiter/
+│       │   │   │   │   ├── settings/                 # ✅ GET/PUT review_prompt por recrutador/org
+│       │   │   │   │   └── candidates/
+│       │   │   │   │       └── [id]/
+│       │   │   │   │           ├── assessments/      # ✅ GET DISC+Color+PI do candidato (com fallbacks service_role)
+│       │   │   │   │           ├── technical-review/ # ✅ GET/POST parecer técnico IA (GPT-4o)
+│       │   │   │   │           └── it-test/          # ✅ GET cross-org; POST atribuir/substituir nível
+│       │   │   │   ├── storage/
+│       │   │   │   │   └── signed-url/               # ✅ GET signed URL para arquivos privados do Storage
+│       │   │   │   ├── debug-smtp/                   # ⚠️ DEBUG — remover em produção (risco de segurança)
 │       │   │   │   ├── alerts/
 │       │   │   │   │   └── subscribe/                # POST alertas de vagas por e-mail (Sprint 50)
 │       │   │   │   ├── cbo/
@@ -186,24 +219,24 @@ PROJETO_TALENT_FORGE/
 │       │   │   ├── forms/          # Form components
 │       │   │   ├── charts/         # Chart components
 │       │   │   ├── layout/         # Layout components
-│       │   │   └── jobs/           # Componentes do módulo de vagas
-│       │   │       ├── NewJobModal.tsx       # Criação de vaga (modal overlay)
-│       │   │       ├── JobDetailsModal.tsx   # Detalhes/ações da vaga (modal overlay)
-│       │   │       ├── EditJobDrawer.tsx     # Edição inline (drawer lateral direito)
-│       │   │       └── PublishDrawer.tsx     # Gerenciar publicações (drawer lateral direito)
-│       │   ├── publisher/           # ✨ Componentes Publisher Engine (Sprint 35/66)
-│       │   │   ├── ChannelSelector.tsx      # Seletor de canais para publicar vaga
-│       │   │   ├── PublicationStatus.tsx    # Badge/lista/inline badges de status por canal
-│       │   │   ├── PublicationTimeline.tsx  # Timeline de histórico de publicações
-│       │   │   ├── ChannelConfigModal.tsx   # ✨ Modal configuração de credenciais (Sprint 66)
-│       │   │   └── ChannelGuideModal.tsx    # ✨ Modal passo-a-passo para obter credenciais (Sprint 66)
-│       │   └── reports/             # Componentes de relatórios
-│       │       ├── FullReportPDF.tsx        # PDF de relatório geral (jsPDF + autotable)
-│       │       ├── ReportExport.tsx         # Botão + lógica de export CSV/PDF
-│       │       ├── CandidateReportPDF.tsx   # PDF de parecer do recrutador (Sprint 35)
-│       │       └── Nr1CompliancePDF.tsx     # ✨ PDF de compliance NR-1 (Sprint 35)
-│       │   └── curriculum/          # Gerador de currículo PDF do candidato
-│       │       └── CandidateCurriculumPDF.ts # ✨ PDF currículo profissional com foto circular (Sprint 46)
+│       │   │   ├── jobs/           # Componentes do módulo de vagas
+│       │   │   │   ├── NewJobModal.tsx       # Criação de vaga (modal overlay)
+│       │   │   │   ├── JobDetailsModal.tsx   # Detalhes/ações da vaga (modal overlay)
+│       │   │   │   ├── EditJobDrawer.tsx     # Edição inline (drawer lateral direito)
+│       │   │   │   └── PublishDrawer.tsx     # Gerenciar publicações (drawer lateral direito)
+│       │   │   ├── publisher/       # ✨ Componentes Publisher Engine (Sprint 35/66)
+│       │   │   │   ├── ChannelSelector.tsx      # Seletor de canais para publicar vaga
+│       │   │   │   ├── PublicationStatus.tsx    # Badge/lista/inline badges de status por canal
+│       │   │   │   ├── PublicationTimeline.tsx  # Timeline de histórico de publicações
+│       │   │   │   ├── ChannelConfigModal.tsx   # ✨ Modal configuração de credenciais (Sprint 66)
+│       │   │   │   └── ChannelGuideModal.tsx    # ✨ Modal passo-a-passo para obter credenciais (Sprint 66)
+│       │   │   ├── reports/         # Componentes de relatórios
+│       │   │   │   ├── ReportExport.tsx         # Botão + lógica de export CSV/PDF
+│       │   │   │   ├── CandidateReportPDF.tsx   # PDF de parecer do recrutador (Sprint 35)
+│       │   │   │   └── Nr1CompliancePDF.tsx     # ✨ PDF de compliance NR-1 (Sprint 35)
+│       │   │   │   # Nota: generateFullReportPDF() vive em curriculum/CandidateCurriculumPDF.ts
+│       │   │   └── curriculum/      # Gerador de currículo PDF do candidato
+│       │   │       └── CandidateCurriculumPDF.ts # ✨ PDF currículo + generateFullReportPDF() (Sprint 46/61)
 │       │   ├── lib/                # Utilities
 │       │   │   ├── supabase/       # Supabase clients
 │       │   │   ├── utils.ts        # Helper functions
@@ -532,7 +565,7 @@ docs(arquitetura): adiciona fluxo canônico de Git & Deploy
 | `.next/` | ❌ NÃO | Build output |
 | `apps/api/dist/` | ❌ NÃO | Build output |
 | `*.log` | ❌ NÃO | Logs locais |
-| `Logos/` | ❌ NÃO | Assets binários |
+| `Logos/` | ❌ NÃO | Assets binários (removidos do git em 2026-04-28) |
 | `*" 2.tsx"` | ❌ NÃO | Cópias acidentais |
 
 ### ⚙️ Configuração do Vercel — Projeto Canônico (CRÍTICO)
