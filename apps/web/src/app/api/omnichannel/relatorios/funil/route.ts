@@ -26,7 +26,8 @@ export async function GET(request: NextRequest) {
 
   const stageCounts: Record<string, number> = {};
   for (const app of data ?? []) {
-    const key = (app.pipeline_stages as { name: string } | null)?.name ?? app.status;
+    const stage = (app.pipeline_stages as unknown) as { name: string } | null;
+    const key = stage?.name ?? app.status;
     stageCounts[key] = (stageCounts[key] ?? 0) + 1;
   }
 
