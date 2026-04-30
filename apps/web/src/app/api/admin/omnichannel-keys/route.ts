@@ -6,15 +6,16 @@ export async function GET(request: NextRequest) {
   if (!user) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
 
   const orgId = request.headers.get('x-org-id');
-  if (!orgId) return NextResponse.json({ error: 'x-org-id obrigatório' }, { status: 400 });
-
   const supabase = getServiceSupabase();
-  const { data, error } = await supabase
+
+  let query = supabase
     .from('omnichannel_api_keys')
-    .select('id, label, api_key, created_at, revoked_at')
-    .eq('org_id', orgId)
+    .select('id, label, api_key, org_id, created_at, revoked_at, organizations(name)')
     .order('created_at', { ascending: false });
 
+  if (orgId) query = query.eq('org_id', orgId);
+
+  const { data, error } = await query;
   if (error) return NextResponse.json({ error: 'Erro ao buscar tokens' }, { status: 500 });
 
   const tokens = (data ?? []).map(({ api_key, ...rest }) => ({

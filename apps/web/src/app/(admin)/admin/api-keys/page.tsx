@@ -14,6 +14,8 @@ interface OmnichannelToken {
   label: string;
   api_key_prefix: string;
   api_key?: string;
+  org_id: string;
+  organizations: { name: string } | null;
   created_at: string;
   revoked_at: string | null;
 }
@@ -49,6 +51,8 @@ export default function ApiKeysPage() {
   const [omnichannelLoading, setOmnichannelLoading] = useState(true);
   const [newOmnichannelToken, setNewOmnichannelToken] = useState<string | null>(null);
   const [omnichannelLabel, setOmnichannelLabel] = useState('');
+  const [omnichannelOrgId, setOmnichannelOrgId] = useState('');
+  const [organizations, setOrganizations] = useState<{ id: string; name: string }[]>([]);
   const [showOmnichannelModal, setShowOmnichannelModal] = useState(false);
   const [confirmRevokeOmnichannelId, setConfirmRevokeOmnichannelId] = useState<string | null>(null);
 
@@ -62,35 +66,33 @@ export default function ApiKeysPage() {
   useEffect(() => {
     fetchApiKeys();
     fetchOmnichannelTokens();
-  }, []);
+    fetchOrganizations();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  async function getSessionAndOrg() {
+  async function getToken(): Promise<string | null> {
     const supabase = createClient();
     const { data: { session } } = await supabase.auth.getSession();
-    if (!session?.access_token) return null;
+    return session?.access_token ?? null;
+  }
 
-    const { data: membership } = await supabase
-      .from('org_members')
-      .select('org_id')
-      .eq('user_id', session.user.id)
-      .eq('status', 'active')
-      .limit(1)
-      .maybeSingle();
-
-    if (!membership?.org_id) return null;
-    return { token: session.access_token, orgId: membership.org_id };
+  async function fetchOrganizations() {
+    const token = await getToken();
+    if (!token) return;
+    const res = await fetch('/api/admin/organizations', {
+      headers: { 'Authorization': `Bearer ${token}` },
+    });
+    if (res.ok) {
+      const data = await res.json();
+      setOrganizations(data.organizations ?? []);
+    }
   }
 
   async function fetchOmnichannelTokens() {
     try {
-      const ctx = await getSessionAndOrg();
-      if (!ctx) return;
-
+      const token = await getToken();
+      if (!token) return;
       const res = await fetch('/api/admin/omnichannel-keys', {
-        headers: {
-          'Authorization': `Bearer ${ctx.token}`,
-          'x-org-id': ctx.orgId,
-        },
+        headers: { 'Authorization': `Bearer ${token}` },
       });
       if (res.ok) {
         const data = await res.json();
@@ -104,16 +106,15 @@ export default function ApiKeysPage() {
   }
 
   async function handleCreateOmnichannelToken() {
-    if (!omnichannelLabel.trim()) return;
+    if (!omnichannelLabel.trim() || !omnichannelOrgId) return;
     try {
-      const ctx = await getSessionAndOrg();
-      if (!ctx) return;
-
+      const token = await getToken();
+      if (!token) return;
       const res = await fetch('/api/admin/omnichannel-keys', {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${ctx.token}`,
-          'x-org-id': ctx.orgId,
+          'Authorization': `Bearer ${token}`,
+          'x-org-id': omnichannelOrgId,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ label: omnichannelLabel }),
@@ -122,9 +123,12 @@ export default function ApiKeysPage() {
         const data = await res.json();
         setNewOmnichannelToken(data.token.api_key);
         setOmnichannelLabel('');
+        setOmnichannelOrgId('');
         setShowOmnichannelModal(false);
         fetchOmnichannelTokens();
         toast.success('Token OmniChannel gerado');
+      } else {
+        toast.error('Erro ao gerar token');
       }
     } catch {
       toast.error('Erro ao gerar token');
@@ -136,15 +140,11 @@ export default function ApiKeysPage() {
     const id = confirmRevokeOmnichannelId;
     setConfirmRevokeOmnichannelId(null);
     try {
-      const ctx = await getSessionAndOrg();
-      if (!ctx) return;
-
+      const token = await getToken();
+      if (!token) return;
       const res = await fetch(`/api/admin/omnichannel-keys/${id}`, {
         method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${ctx.token}`,
-          'x-org-id': ctx.orgId,
-        },
+        headers: { 'Authorization': `Bearer ${token}` },
       });
       if (res.ok) {
         fetchOmnichannelTokens();
@@ -602,6 +602,9 @@ export default function ApiKeysPage() {
                         {token.revoked_at ? 'Revogado' : 'Ativo'}
                       </span>
                     </div>
+                    {token.organizations?.name && (
+                      <p className="text-xs text-[#3B82F6] font-medium mb-1">{token.organizations.name}</p>
+                    )}
                     <code className="text-xs font-mono text-[#666666] bg-[#F5F5F0] px-2 py-0.5 rounded">
                       {token.api_key_prefix}
                     </code>
@@ -631,29 +634,43 @@ export default function ApiKeysPage() {
           <div className="bg-white rounded-2xl w-full max-w-md mx-4">
             <div className="p-6 border-b border-[#E5E5DC]">
               <h3 className="text-lg font-semibold text-[#141042]">Novo token OmniChannel</h3>
-              <p className="text-sm text-[#666666]">Identifique o token para saber a qual empresa/ambiente pertence</p>
+              <p className="text-sm text-[#666666]">Selecione a empresa e dê um nome ao token</p>
             </div>
-            <div className="p-6">
-              <label className="block text-sm font-medium text-[#141042] mb-2">Label</label>
-              <input
-                type="text"
-                value={omnichannelLabel}
-                onChange={(e) => setOmnichannelLabel(e.target.value)}
-                placeholder="Ex: Fartech — Produção"
-                className="w-full px-4 py-3 border border-[#E5E5DC] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#141042]/20"
-                autoFocus
-              />
+            <div className="p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-[#141042] mb-2">Empresa</label>
+                <select
+                  value={omnichannelOrgId}
+                  onChange={(e) => setOmnichannelOrgId(e.target.value)}
+                  className="w-full px-4 py-3 border border-[#E5E5DC] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#141042]/20 bg-white"
+                >
+                  <option value="">Selecionar empresa...</option>
+                  {organizations.map((org) => (
+                    <option key={org.id} value={org.id}>{org.name}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-[#141042] mb-2">Label</label>
+                <input
+                  type="text"
+                  value={omnichannelLabel}
+                  onChange={(e) => setOmnichannelLabel(e.target.value)}
+                  placeholder="Ex: Fartech — Produção"
+                  className="w-full px-4 py-3 border border-[#E5E5DC] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#141042]/20"
+                />
+              </div>
             </div>
             <div className="p-6 border-t border-[#E5E5DC] flex justify-end gap-3">
               <button
-                onClick={() => { setShowOmnichannelModal(false); setOmnichannelLabel(''); }}
+                onClick={() => { setShowOmnichannelModal(false); setOmnichannelLabel(''); setOmnichannelOrgId(''); }}
                 className="px-5 py-2.5 border border-[#E5E5DC] text-[#141042] rounded-xl hover:bg-[#FAFAF8] transition-colors"
               >
                 Cancelar
               </button>
               <button
                 onClick={handleCreateOmnichannelToken}
-                disabled={!omnichannelLabel.trim()}
+                disabled={!omnichannelLabel.trim() || !omnichannelOrgId}
                 className="px-5 py-2.5 bg-[#141042] text-white rounded-xl hover:bg-[#1e1a5e] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Gerar token
