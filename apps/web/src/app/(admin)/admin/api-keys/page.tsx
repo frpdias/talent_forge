@@ -170,8 +170,8 @@ export default function ApiKeysPage() {
         const data = await res.json();
         setApiKeys(data);
       }
-    } catch (error) {
-      console.error('Error fetching API keys:', error);
+    } catch {
+      // NestJS backend não disponível em produção — falha silenciosa
     } finally {
       setLoading(false);
     }
@@ -205,8 +205,8 @@ export default function ApiKeysPage() {
         fetchApiKeys();
         setFormData({ name: '', permissions: [], expires_in_days: 30 });
       }
-    } catch (error) {
-      console.error('Error creating API key:', error);
+    } catch {
+      // NestJS backend não disponível em produção — falha silenciosa
     }
   }
 
@@ -222,7 +222,7 @@ export default function ApiKeysPage() {
     try {
       const supabase = createClient();
       const { data: { session } } = await supabase.auth.getSession();
-      
+
       if (!session?.access_token) return;
 
       const res = await fetch(`${API_V1_URL}/api-keys/${keyId}`, {
@@ -233,8 +233,8 @@ export default function ApiKeysPage() {
       if (res.ok) {
         fetchApiKeys();
       }
-    } catch (error) {
-      console.error('Error revoking API key:', error);
+    } catch {
+      // NestJS backend não disponível em produção — falha silenciosa
     }
   }
 
