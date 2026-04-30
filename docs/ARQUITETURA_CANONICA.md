@@ -1,6 +1,6 @@
 # Arquitetura Canônica — TalentForge
 
-**Última atualização**: 2026-04-08 | **Score de Conformidade**: ✅ 100% (Sprint 67 — AI Chat PHP: 7 rotas Next.js `/api/php/ai/*` implementadas — health, usage, chat, report, predict-turnover, forecast-performance, smart-recommendations) | **Sprints planejados**: Sprint 44 (Gate Recrutamento)
+**Última atualização**: 2026-04-30 | **Score de Conformidade**: ✅ 100% (Sprint 68 — OmniChannel API: 5 endpoints `/api/omnichannel/*` + tokens por org + seção admin) | **Sprints planejados**: Sprint 44 (Gate Recrutamento)
 
 ## 📜 FONTE DA VERDADE — PRINCÍPIO FUNDAMENTAL
 
@@ -209,6 +209,16 @@ PROJETO_TALENT_FORGE/
 │       │   │   │   │   └── subscribe/                # POST alertas de vagas por e-mail (Sprint 50)
 │       │   │   │   ├── cbo/
 │       │   │   │   │   └── search/                   # GET busca CBO 2002 — código/título, FTS + ILIKE + fallback local (Sprint 57)
+│       │   │   │   ├── omnichannel-keys/             # ✨ GET/POST tokens OmniChannel por org (Sprint 68)
+│       │   │   │   │   └── [id]/                     # DELETE revogar token
+│       │   │   ├── omnichannel/                      # ✨ API pública OmniChannel — Bearer token por org (Sprint 68)
+│       │   │   │   │                                 # ⚠️ x-org-id NÃO obrigatório — org_id derivado do token
+│       │   │   │   ├── vagas/                        # GET listar vagas (filtros: area, status, limit)
+│       │   │   │   ├── candidatos/
+│       │   │   │   │   ├── busca/                    # GET buscar por nome ou UUID
+│       │   │   │   │   └── [candidato_id]/etapa/     # POST mover no pipeline (gestor+)
+│       │   │   │   ├── entrevistas/                  # POST agendar entrevista
+│       │   │   │   └── relatorios/funil/             # GET funil por org ou vaga
 │       │   │   │   └── v1/
 │       │   │   │       └── career-page/
 │       │   │   │           └── [slug]/               # ✨ GET dados públicos da career page (sem auth) — retorna org + 18 campos tipografia (Sprint 58)
@@ -322,6 +332,7 @@ PROJETO_TALENT_FORGE/
 │   │   └── 20260325_it_test_module.sql ✅ Módulo Teste de Informática: tabelas it_test_questions + it_test_assignments + it_test_results + RLS (Sprint 61)
 │   │   └── 20260325_job_company_disclosure.sql ✅ Divulgação opcional da empresa na vaga: ADD COLUMN company_disclosed/company_name/company_logo_url em jobs; bucket job-logos (público, 2MB) com políticas RLS via is_org_member() (Sprint 61)
 │   │   └── 20260325_organizations_plan.sql ✅ Coluna `plan` em organizations: 'free' (Ollama local) | 'pro' | 'enterprise' (OpenAI GPT-4o) — DEFAULT 'free' (Sprint 62)
+│   │   └── 20260430_omnichannel_api_keys.sql ✅ Tabela omnichannel_api_keys (tokens por org) + função validate_omnichannel_key() SECURITY DEFINER (Sprint 68)
 │   ├── VALIDATE_IMPROVEMENTS.sql  # Script de validação
 │   └── README.md                  # Instruções de migrations
 │

@@ -1,13 +1,22 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Key, Plus, Copy, Trash2, Eye, EyeOff, Search, Calendar, Check, X, AlertCircle, Globe } from 'lucide-react';
+import { Key, Plus, Copy, Trash2, Search, Calendar, AlertCircle, Globe, MessageSquare, RefreshCw } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { API_V1_URL } from '@/lib/api-config';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { toast } from 'sonner';
 import { OllamaMonitorCard } from '@/components/admin/OllamaMonitorCard';
 import { ApiCatalogModal } from '@/components/admin/ApiCatalog';
+
+interface OmnichannelToken {
+  id: string;
+  label: string;
+  api_key_prefix: string;
+  api_key?: string;
+  created_at: string;
+  revoked_at: string | null;
+}
 
 interface ApiKey {
   id: string;
@@ -35,6 +44,14 @@ export default function ApiKeysPage() {
   const [confirmRevokeId, setConfirmRevokeId] = useState<string | null>(null);
   const [showCatalog, setShowCatalog] = useState(false);
 
+  // OmniChannel state
+  const [omnichannelTokens, setOmnichannelTokens] = useState<OmnichannelToken[]>([]);
+  const [omnichannelLoading, setOmnichannelLoading] = useState(true);
+  const [newOmnichannelToken, setNewOmnichannelToken] = useState<string | null>(null);
+  const [omnichannelLabel, setOmnichannelLabel] = useState('');
+  const [showOmnichannelModal, setShowOmnichannelModal] = useState(false);
+  const [confirmRevokeOmnichannelId, setConfirmRevokeOmnichannelId] = useState<string | null>(null);
+
   const availablePermissions = [
     'jobs:read', 'jobs:write',
     'candidates:read', 'candidates:write',
@@ -44,7 +61,99 @@ export default function ApiKeysPage() {
 
   useEffect(() => {
     fetchApiKeys();
+    fetchOmnichannelTokens();
   }, []);
+
+  async function getSessionAndOrg() {
+    const supabase = createClient();
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.access_token) return null;
+
+    const { data: membership } = await supabase
+      .from('org_members')
+      .select('org_id')
+      .eq('user_id', session.user.id)
+      .eq('status', 'active')
+      .limit(1)
+      .maybeSingle();
+
+    if (!membership?.org_id) return null;
+    return { token: session.access_token, orgId: membership.org_id };
+  }
+
+  async function fetchOmnichannelTokens() {
+    try {
+      const ctx = await getSessionAndOrg();
+      if (!ctx) return;
+
+      const res = await fetch('/api/admin/omnichannel-keys', {
+        headers: {
+          'Authorization': `Bearer ${ctx.token}`,
+          'x-org-id': ctx.orgId,
+        },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setOmnichannelTokens(data.tokens ?? []);
+      }
+    } catch {
+      // silencioso — omnichannel é feature opcional
+    } finally {
+      setOmnichannelLoading(false);
+    }
+  }
+
+  async function handleCreateOmnichannelToken() {
+    if (!omnichannelLabel.trim()) return;
+    try {
+      const ctx = await getSessionAndOrg();
+      if (!ctx) return;
+
+      const res = await fetch('/api/admin/omnichannel-keys', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${ctx.token}`,
+          'x-org-id': ctx.orgId,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ label: omnichannelLabel }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setNewOmnichannelToken(data.token.api_key);
+        setOmnichannelLabel('');
+        setShowOmnichannelModal(false);
+        fetchOmnichannelTokens();
+        toast.success('Token OmniChannel gerado');
+      }
+    } catch {
+      toast.error('Erro ao gerar token');
+    }
+  }
+
+  async function doRevokeOmnichannel() {
+    if (!confirmRevokeOmnichannelId) return;
+    const id = confirmRevokeOmnichannelId;
+    setConfirmRevokeOmnichannelId(null);
+    try {
+      const ctx = await getSessionAndOrg();
+      if (!ctx) return;
+
+      const res = await fetch(`/api/admin/omnichannel-keys/${id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${ctx.token}`,
+          'x-org-id': ctx.orgId,
+        },
+      });
+      if (res.ok) {
+        fetchOmnichannelTokens();
+        toast.success('Token revogado');
+      }
+    } catch {
+      toast.error('Erro ao revogar token');
+    }
+  }
 
   async function fetchApiKeys() {
     try {
@@ -418,6 +527,150 @@ export default function ApiKeysPage() {
         onCancel={() => setConfirmRevokeId(null)}
       />
       {showCatalog && <ApiCatalogModal onClose={() => setShowCatalog(false)} />}
+
+      {/* ── Seção OmniChannel ───────────────────────────────────── */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pt-4 border-t border-[#E5E5DC]">
+        <div>
+          <h2 className="text-xl sm:text-2xl font-semibold text-[#141042] flex items-center gap-2">
+            <MessageSquare className="w-5 h-5" />
+            Integrações OmniChannel
+          </h2>
+          <p className="text-sm text-[#666666]">Tokens para o chatbot Fartech acessar vagas e candidatos via WhatsApp</p>
+        </div>
+        <button
+          onClick={() => setShowOmnichannelModal(true)}
+          className="flex items-center space-x-2 px-5 py-2.5 bg-[#141042] text-white rounded-xl hover:bg-[#1e1a5e] transition-colors"
+        >
+          <Plus className="w-5 h-5" />
+          <span>Gerar token</span>
+        </button>
+      </div>
+
+      {newOmnichannelToken && (
+        <div className="bg-amber-50 border border-amber-200 rounded-2xl p-6">
+          <div className="flex items-start space-x-3">
+            <AlertCircle className="w-6 h-6 text-amber-600 shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <h3 className="font-semibold text-amber-800 mb-2">Token OmniChannel gerado!</h3>
+              <p className="text-sm text-amber-700 mb-4">
+                Copie agora e configure no Fartech Admin. Não será exibido novamente.
+              </p>
+              <div className="flex items-center space-x-2 p-3 bg-white rounded-lg border border-amber-200">
+                <code className="flex-1 text-sm font-mono text-[#141042] break-all">{newOmnichannelToken}</code>
+                <button
+                  onClick={() => { navigator.clipboard.writeText(newOmnichannelToken); toast.success('Copiado!'); }}
+                  className="p-2 hover:bg-amber-100 rounded-lg transition-colors"
+                >
+                  <Copy className="w-4 h-4 text-amber-600" />
+                </button>
+              </div>
+              <button onClick={() => setNewOmnichannelToken(null)} className="mt-4 text-sm text-amber-700 hover:text-amber-900 underline">
+                Entendido, já copiei
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className="bg-white border border-[#E5E5DC] rounded-2xl overflow-hidden">
+        {omnichannelLoading ? (
+          <div className="p-8 text-center">
+            <RefreshCw className="w-6 h-6 text-[#999] mx-auto animate-spin" />
+          </div>
+        ) : omnichannelTokens.length === 0 ? (
+          <div className="p-10 text-center">
+            <MessageSquare className="w-10 h-10 text-[#999] mx-auto mb-3" />
+            <p className="text-sm font-medium text-[#141042]">Nenhum token gerado</p>
+            <p className="text-xs text-[#666666] mt-1">Gere um token para conectar o OmniChannel Fartech</p>
+          </div>
+        ) : (
+          <div className="divide-y divide-[#E5E5DC]">
+            {omnichannelTokens.map((token) => (
+              <div key={token.id} className="p-5 hover:bg-[#FAFAF8] flex flex-col sm:flex-row justify-between gap-3">
+                <div className="flex items-start gap-3">
+                  <div className={`p-2 rounded-xl ${token.revoked_at ? 'bg-gray-50' : 'bg-green-50'}`}>
+                    <MessageSquare className={`w-5 h-5 ${token.revoked_at ? 'text-gray-400' : 'text-green-600'}`} />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="font-medium text-[#141042]">{token.label}</span>
+                      <span className={`px-2 py-0.5 rounded-lg text-xs font-medium border ${
+                        token.revoked_at
+                          ? 'bg-red-50 text-red-700 border-red-200'
+                          : 'bg-green-50 text-green-700 border-green-200'
+                      }`}>
+                        {token.revoked_at ? 'Revogado' : 'Ativo'}
+                      </span>
+                    </div>
+                    <code className="text-xs font-mono text-[#666666] bg-[#F5F5F0] px-2 py-0.5 rounded">
+                      {token.api_key_prefix}
+                    </code>
+                    <p className="text-xs text-[#999] mt-1 flex items-center gap-1">
+                      <Calendar className="w-3 h-3" />
+                      Criado em {new Date(token.created_at).toLocaleDateString('pt-BR')}
+                    </p>
+                  </div>
+                </div>
+                {!token.revoked_at && (
+                  <button
+                    onClick={() => setConfirmRevokeOmnichannelId(token.id)}
+                    className="flex items-center gap-2 px-4 py-2 bg-red-50 text-red-700 rounded-xl hover:bg-red-100 transition-colors self-start text-sm font-medium"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    Revogar
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {showOmnichannelModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-white rounded-2xl w-full max-w-md mx-4">
+            <div className="p-6 border-b border-[#E5E5DC]">
+              <h3 className="text-lg font-semibold text-[#141042]">Novo token OmniChannel</h3>
+              <p className="text-sm text-[#666666]">Identifique o token para saber a qual empresa/ambiente pertence</p>
+            </div>
+            <div className="p-6">
+              <label className="block text-sm font-medium text-[#141042] mb-2">Label</label>
+              <input
+                type="text"
+                value={omnichannelLabel}
+                onChange={(e) => setOmnichannelLabel(e.target.value)}
+                placeholder="Ex: Fartech — Produção"
+                className="w-full px-4 py-3 border border-[#E5E5DC] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#141042]/20"
+                autoFocus
+              />
+            </div>
+            <div className="p-6 border-t border-[#E5E5DC] flex justify-end gap-3">
+              <button
+                onClick={() => { setShowOmnichannelModal(false); setOmnichannelLabel(''); }}
+                className="px-5 py-2.5 border border-[#E5E5DC] text-[#141042] rounded-xl hover:bg-[#FAFAF8] transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleCreateOmnichannelToken}
+                disabled={!omnichannelLabel.trim()}
+                className="px-5 py-2.5 bg-[#141042] text-white rounded-xl hover:bg-[#1e1a5e] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Gerar token
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <ConfirmDialog
+        open={!!confirmRevokeOmnichannelId}
+        title="Revogar token OmniChannel"
+        message="O chatbot deixará de funcionar imediatamente para esta empresa. Esta ação não pode ser desfeita."
+        confirmLabel="Revogar"
+        onConfirm={doRevokeOmnichannel}
+        onCancel={() => setConfirmRevokeOmnichannelId(null)}
+      />
     </div>
   );
 }
